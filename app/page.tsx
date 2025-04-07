@@ -1,4 +1,5 @@
 import Hero from "@/components/landing/Hero";
+import MainSection from "@/components/landing/MainSection";
 
 export default function Home() {
   return (
@@ -7,11 +8,7 @@ export default function Home() {
       <Hero />
 
       {/* Main Section */}
-      <section className="py-16 md:py-24 bg-light">
-        <div className="container mx-auto px-6 md:px-12">
-          <h2 className="text-center text-2xl font-bold">Main Section</h2>
-        </div>
-      </section>
+      <MainSection />
 
       {/* Creative Experiences Section */}
       <section className="py-20 md:py-28">
