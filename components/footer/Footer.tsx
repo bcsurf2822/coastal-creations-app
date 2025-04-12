@@ -29,9 +29,9 @@ export default function Footer() {
           <div>
             <h3 className="text-xl font-semibold mb-4">Contact Us</h3>
             <div className="space-y-2 text-gray-300">
-              <p>123 Coastal Drive</p>
-              <p>Beach City, CA 90210</p>
-              <p>Phone: (555) 123-4567</p>
+              <p>123 Asbury Ave</p>
+              <p>Ocean City, NJ 08226</p>
+              <p>Phone: (609) 399-0030</p>
               <p>Email: info@coastalcreations.com</p>
             </div>
             <div className="mt-4 flex space-x-4">
