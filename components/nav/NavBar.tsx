@@ -2,21 +2,25 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="py-6 border-b border-gray-100">
+    <header className="border-b border-gray-100">
       <div className="container mx-auto px-6 md:px-12">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center py-2">
           <div className="flex items-center space-x-4">
-            <div className="w-10 h-10 flex items-center justify-center rounded-full bg-[#0c4a6e] text-white text-lg font-bold">
-              C
+            <div className="relative w-20 h-20 md:w-40 md:h-40">
+              <Image
+                src="/assets/logos/ccLogo.png"
+                alt="Coastal Creations Studio Logo"
+                fill
+                className="object-contain"
+                priority
+              />
             </div>
-            <h1 className="text-xl font-medium text-[#0c4a6e]">
-              Coastal Creations Studio
-            </h1>
           </div>
 
           {/* Desktop Navigation */}
