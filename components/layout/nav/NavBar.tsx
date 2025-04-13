@@ -8,7 +8,7 @@ export default function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="border-b border-gray-100">
+    <header className="border-b border-gray-100 bg-blue-50">
       <div className="container mx-auto px-6 md:px-12">
         <div className="flex justify-between items-center py-2">
           <div className="flex items-center space-x-4">
@@ -41,7 +41,13 @@ export default function NavBar() {
               href="/classes"
               className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full"
             >
-              Classes
+              Offerings
+            </Link>
+            <Link
+              href="/classes"
+              className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full"
+            >
+              Events Calendar
             </Link>
             <Link
               href="/blog"
@@ -124,6 +130,13 @@ export default function NavBar() {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Classes
+              </Link>
+              <Link
+                href="/classes"
+                className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Calendar of Events
               </Link>
               <Link
                 href="/blog"
