@@ -9,72 +9,71 @@ import {
   isToday,
   addMonths,
   subMonths,
+  parseISO,
 } from "date-fns";
+import CalendarData, { GoogleCalendarEvent } from "./CalendarData";
 
-type EventType = "class" | "workshop" | "event" | "exhibition";
+type EventType = "class" | "workshop" | "event" | "exhibition" | "default";
 
 interface CalendarEvent {
   date: Date;
   title: string;
   time: string;
   type: EventType;
+  id: string;
 }
 
 export default function Calendar() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
-  // Mock events data
-  const events: CalendarEvent[] = [
-    {
-      date: new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 5),
-      title: "Watercolor Workshop",
-      time: "10:00 AM",
-      type: "class",
-    },
-    {
-      date: new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 8),
-      title: "Kids Craft Hour",
-      time: "3:30 PM",
-      type: "workshop",
-    },
-    {
-      date: new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 12),
-      title: "Advanced Pottery",
-      time: "6:00 PM",
-      type: "class",
-    },
-    {
-      date: new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 15),
-      title: "Paint & Sip",
-      time: "7:00 PM",
-      type: "event",
-    },
-    {
-      date: new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 20),
-      title: "Coastal Art Exhibition",
-      time: "All Day",
-      type: "exhibition",
-    },
-    {
-      date: new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 22),
-      title: "Beginners Sketching",
-      time: "4:00 PM",
-      type: "class",
-    },
-    {
-      date: new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 25),
-      title: "Photography Basics",
-      time: "1:00 PM",
-      type: "workshop",
-    },
-  ];
+  const handleEventsLoaded = (events: GoogleCalendarEvent[]) => {
+    // Transform Google Calendar events to our format
+    const transformedEvents = events.map((event) => {
+      // Parse the date from the event
+      const startDate = event.start.dateTime
+        ? parseISO(event.start.dateTime)
+        : event.start.date
+        ? parseISO(event.start.date)
+        : new Date();
+
+      // Format the time
+      const time = event.start.dateTime
+        ? format(parseISO(event.start.dateTime), "h:mm a")
+        : "All Day";
+
+      // Determine event type based on summary or other properties
+      let type: EventType = "default";
+      const summary = event.summary.toLowerCase();
+
+      if (summary.includes("paint") || summary.includes("canvas")) {
+        type = "class";
+      } else if (summary.includes("sip") || summary.includes("create")) {
+        type = "event";
+      } else if (summary.includes("workshop")) {
+        type = "workshop";
+      } else if (summary.includes("exhibition")) {
+        type = "exhibition";
+      }
+
+      return {
+        id: event.id,
+        date: startDate,
+        title: event.summary,
+        time: time,
+        type: type,
+      };
+    });
+
+    setCalendarEvents(transformedEvents);
+  };
 
   const getEventsForDay = (day: Date) => {
-    return events.filter(
+    return calendarEvents.filter(
       (event) =>
         event.date.getDate() === day.getDate() &&
         event.date.getMonth() === day.getMonth() &&
@@ -98,8 +97,9 @@ export default function Calendar() {
       workshop: "bg-green-100 text-green-800",
       event: "bg-purple-100 text-purple-800",
       exhibition: "bg-orange-100 text-orange-800",
+      default: "bg-gray-100 text-gray-800",
     };
-    return colors[type] || "bg-gray-100 text-gray-800";
+    return colors[type];
   };
 
   const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -238,9 +238,7 @@ export default function Calendar() {
         </div>
 
         <div className="text-center mt-10">
-          <button className="px-6 py-3 bg-primary text-white text-lg font-medium rounded-md shadow-md hover:bg-primary/90 transition-colors">
-            View All Events
-          </button>
+          <CalendarData onEventsLoaded={handleEventsLoaded} />
         </div>
       </div>
     </div>
