@@ -36,19 +36,25 @@ export default function NavBar() {
               href="/classes"
               className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full"
             >
-              Offerings
+              Classes
             </Link>
             <Link
-              href="/classes"
+              href="/calendar"
               className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full"
             >
-              Events Calendar
+              Calendar
             </Link>
             <Link
               href="/blog"
               className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full"
             >
               Blog
+            </Link>
+            <Link
+              href="/blog"
+              className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full"
+            >
+              Test
             </Link>
             <Link
               href="/about"

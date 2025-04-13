@@ -15,13 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Coastal Creation Studios",
-  description: "Coastal Creation Studios",
-  icons: {
-    favicon: "/assets/favicons/favicon.ico",
-    shortcut: "/assets/favicons/favicon-16x16.png",
-    apple: "/assets/favicons/apple-touch-icon.png",
-  },
+  title: "Coastal Creation Studios, OC",
+  description: "Coastal Creation Studio, Ocean City, NJ",
 };
 
 export default function RootLayout({
