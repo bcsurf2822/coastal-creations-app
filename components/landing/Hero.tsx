@@ -23,13 +23,13 @@ export default function Hero() {
 
           <div className="flex flex-wrap justify-center gap-6">
             <Link
-              href="#"
+              href="/classes"
               className="bg-neutral-900 hover:bg-neutral-600 text-white font-medium px-8 py-3 rounded-md transition duration-300"
             >
               Classes
             </Link>
             <Link
-              href="#"
+              href="/about"
               className="bg-white border border-gray-300 hover:border-gray-600 text-primary hover:bg-light font-medium px-8 py-3 rounded-md transition duration-300"
             >
               About

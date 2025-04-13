@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 
 export default function Calendar() {
   const [dates, setDates] = useState<Date[]>([]);
@@ -28,7 +29,7 @@ export default function Calendar() {
   };
 
   return (
-    <section className="py-20 md:py-28">
+    <section className="py-20 md:py-28 bg-gray-50">
       <div className="container mx-auto px-6 md:px-12">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
@@ -92,12 +93,12 @@ export default function Calendar() {
             </div>
           </div>
           <div className="text-center mt-10">
-            <a
-              href="#"
-              className="inline-block border border-primary text-primary hover:bg-primary hover:text-white font-medium px-8 py-3 rounded-md transition duration-300"
+            <Link
+              href="/classes"
+              className="inline-block bg-primary text-black hover:bg-primary/90 font-medium px-8 py-3 rounded-md transition duration-300 shadow-md hover:shadow-lg"
             >
               View Full Calendar
-            </a>
+            </Link>
           </div>
         </div>
       </div>
