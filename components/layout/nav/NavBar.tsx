@@ -12,9 +12,9 @@ export default function NavBar() {
       <div className="container mx-auto px-6 md:px-12">
         <div className="flex justify-between items-center py-2">
           <div className="flex items-center space-x-4">
-            <div className="relative w-20 h-20 md:w-40 md:h-40">
+            <div className="relative w-20 h-20 md:w-40 md:h-40 ">
               <Image
-                src="/assets/logos/ccLogo.png"
+                src="/assets/logos/coastalLogo.png"
                 alt="Coastal Creations Studio Logo"
                 fill
                 className="object-contain"

@@ -1,4 +1,5 @@
 import { FaFacebook, FaInstagram, FaTwitter } from "react-icons/fa";
+import Image from "next/image";
 
 export default function Footer() {
   return (
@@ -7,12 +8,14 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Studio Info */}
           <div>
-            <h3 className="text-2xl font-bold mb-4">
-              Coastal Creation Studios
-            </h3>
-            <p className="text-gray-300">
-              Creating beautiful coastal-inspired designs and experiences
-            </p>
+            <div className="relative w-48 h-48 mb-4">
+              <Image
+                src="/assets/logos/coastalLogo.png"
+                alt="Coastal Creations Logo"
+                fill
+                className="object-contain"
+              />
+            </div>
           </div>
 
           {/* Hours */}
