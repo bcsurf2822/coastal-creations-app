@@ -17,6 +17,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Coastal Creation Studios",
   description: "Coastal Creation Studios",
+  icons: {
+    favicon: "/assets/favicons/favicon.ico",
+    shortcut: "/assets/favicons/favicon-16x16.png",
+    apple: "/assets/favicons/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({
