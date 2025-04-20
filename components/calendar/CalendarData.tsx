@@ -224,7 +224,7 @@ export default function CalendarData({
               onChange={(e) => setClientId(e.target.value)}
             />
             <button
-              className="bg-primary hover:bg-primary/90 text-white font-bold py-2 px-4 rounded w-full"
+              className="bg-primary hover:bg-primary/90 text-white bg-blue-500 font-bold py-2 px-4 rounded w-full"
               onClick={handleAuthClick}
             >
               Connect Calendar
