@@ -35,26 +35,20 @@ export default function Footer() {
               <p>123 Asbury Ave</p>
               <p>Ocean City, NJ 08226</p>
               <p>Phone: (609) 399-0030</p>
-              <p>Email: info@coastalcreations.com</p>
+              <p>Email: ashley@coastalcreationsstudio.com</p>
             </div>
             <div className="mt-3 flex space-x-3">
               <a
-                href="#"
+                href="https://www.facebook.com/p/Coastal-Creations-Studio-61574989546371"
                 className="text-black hover:text-gray-700 transition-colors"
               >
                 <FaFacebook size={20} />
               </a>
               <a
-                href="#"
+                href="https://www.instagram.com/coastalcreationsocnj/?igsh=MTZrMG5odHJ4bXZrZA%3D%3D"
                 className="text-black hover:text-gray-700 transition-colors"
               >
                 <FaInstagram size={20} />
-              </a>
-              <a
-                href="#"
-                className="text-black hover:text-gray-700 transition-colors"
-              >
-                <FaTwitter size={20} />
               </a>
             </div>
           </div>
