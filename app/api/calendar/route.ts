@@ -2,10 +2,8 @@
 import { google } from "googleapis";
 import { NextResponse } from "next/server";
 
-// --- CONFIGURATION ---
-// *** REPLACE WITH YOUR CALENDAR ID ***
-// Found in Google Calendar settings > Integrate calendar
-const CALENDAR_ID = "YOUR_CALENDAR_ID_HERE";
+
+const CALENDAR_ID = "ashley@coastalcreationsstudio.com";
 // *********************
 
 // Scopes needed to read calendar data
