@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   format,
   startOfMonth,
@@ -11,7 +11,6 @@ import {
   subMonths,
   parseISO,
 } from "date-fns";
-import CalendarData, { GoogleCalendarEvent } from "./CalendarData";
 
 type EventType = "class" | "workshop" | "event" | "exhibition" | "default";
 
@@ -23,17 +22,69 @@ interface CalendarEvent {
   id: string;
 }
 
+// Define API response event type
+interface ApiCalendarEvent {
+  id: string;
+  summary: string;
+  description?: string;
+  start: {
+    dateTime: string;
+    date?: string;
+    timeZone?: string;
+  };
+  end: {
+    dateTime: string;
+    date?: string;
+    timeZone?: string;
+  };
+  status: string;
+}
+
 export default function Calendar() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
-  const handleEventsLoaded = (events: GoogleCalendarEvent[]) => {
-    // Transform Google Calendar events to our format
-    const transformedEvents = events.map((event) => {
+  // Fetch calendar events from API
+  useEffect(() => {
+    const fetchEvents = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch("/api/calendar");
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.events) {
+          const transformedEvents = transformEvents(data.events);
+          setCalendarEvents(transformedEvents);
+        }
+      } catch (err) {
+        console.error("Error fetching calendar events:", err);
+        setError(
+          err instanceof Error ? err.message : "An unknown error occurred"
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, [currentMonth]); // Refetch when month changes
+
+  // Transform API events to our format
+  const transformEvents = (events: ApiCalendarEvent[]) => {
+    return events.map((event) => {
       // Parse the date from the event
       const startDate = event.start.dateTime
         ? parseISO(event.start.dateTime)
@@ -58,6 +109,8 @@ export default function Calendar() {
         type = "workshop";
       } else if (summary.includes("exhibition")) {
         type = "exhibition";
+      } else if (summary.includes("block party")) {
+        type = "event";
       }
 
       return {
@@ -68,8 +121,6 @@ export default function Calendar() {
         type: type,
       };
     });
-
-    setCalendarEvents(transformedEvents);
   };
 
   const getEventsForDay = (day: Date) => {
@@ -193,53 +244,63 @@ export default function Calendar() {
           ))}
         </div>
 
-        <div className="grid grid-cols-7 gap-1 mb-8">
-          {Array.from({ length: monthStart.getDay() }).map((_, index) => (
-            <div
-              key={`empty-start-${index}`}
-              className="bg-gray-50 min-h-[100px] border border-gray-200 rounded"
-            ></div>
-          ))}
-
-          {daysInMonth.map((day) => {
-            const dayEvents = getEventsForDay(day);
-
-            return (
+        {isLoading ? (
+          <div className="text-center py-10">
+            <p>Loading calendar events...</p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-10">
+            <p className="text-red-500">Error loading events: {error}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-7 gap-1 mb-8">
+            {Array.from({ length: monthStart.getDay() }).map((_, index) => (
               <div
-                key={day.toString()}
-                className={`min-h-[100px] p-1 sm:p-2 border ${
-                  isToday(day) ? "border-2 border-primary" : "border-gray-200"
-                } rounded flex flex-col overflow-hidden`}
-              >
-                <div className="text-right font-medium">{format(day, "d")}</div>
-                <div className="flex flex-col gap-1 flex-grow overflow-y-auto">
-                  {dayEvents.map((event, idx) => (
-                    <div
-                      key={idx}
-                      className={`mt-1 p-1 sm:p-2 rounded text-xs sm:text-sm ${getEventTypeColor(
-                        event.type
-                      )}`}
-                    >
-                      <div className="font-medium truncate">{event.title}</div>
-                      <div className="text-xs">{event.time}</div>
-                    </div>
-                  ))}
+                key={`empty-start-${index}`}
+                className="bg-gray-50 min-h-[100px] border border-gray-200 rounded"
+              ></div>
+            ))}
+
+            {daysInMonth.map((day) => {
+              const dayEvents = getEventsForDay(day);
+
+              return (
+                <div
+                  key={day.toString()}
+                  className={`min-h-[100px] p-1 sm:p-2 border ${
+                    isToday(day) ? "border-2 border-primary" : "border-gray-200"
+                  } rounded flex flex-col overflow-hidden`}
+                >
+                  <div className="text-right font-medium">
+                    {format(day, "d")}
+                  </div>
+                  <div className="flex flex-col gap-1 flex-grow overflow-y-auto">
+                    {dayEvents.map((event, idx) => (
+                      <div
+                        key={idx}
+                        className={`mt-1 p-1 sm:p-2 rounded text-xs sm:text-sm ${getEventTypeColor(
+                          event.type
+                        )}`}
+                      >
+                        <div className="font-medium truncate">
+                          {event.title}
+                        </div>
+                        <div className="text-xs">{event.time}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
 
-          {Array.from({ length: 6 - monthEnd.getDay() }).map((_, index) => (
-            <div
-              key={`empty-end-${index}`}
-              className="bg-gray-50 min-h-[100px] border border-gray-200 rounded"
-            ></div>
-          ))}
-        </div>
-
-        <div className="text-center mt-10">
-          <CalendarData onEventsLoaded={handleEventsLoaded} />
-        </div>
+            {Array.from({ length: 6 - monthEnd.getDay() }).map((_, index) => (
+              <div
+                key={`empty-end-${index}`}
+                className="bg-gray-50 min-h-[100px] border border-gray-200 rounded"
+              ></div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
