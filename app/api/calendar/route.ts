@@ -1,27 +1,24 @@
-// File: app/api/getCalendarEvents/route.js
 import { google } from "googleapis";
 import { NextResponse } from "next/server";
+import { OAuth2Client } from "google-auth-library";
 
 const CALENDAR_ID = "ashley@coastalcreationsstudio.com";
-// *********************
 
-// Scopes needed to read calendar data
 const SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"];
 // ---------------------
 
 export async function GET() {
   try {
-    // 1. Authenticate using the Service Account credentials
-    // Reads the GOOGLE_APPLICATION_CREDENTIALS environment variable automatically
     const auth = new google.auth.GoogleAuth({
       scopes: SCOPES,
-      // Optional: Explicitly specify credentials path if needed, but env var is standard
-      // keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS
     });
     const authClient = await auth.getClient();
 
     // 2. Create the Google Calendar API client
-    const calendar = google.calendar({ version: "v3", auth: authClient });
+    const calendar = google.calendar({
+      version: "v3",
+      auth: authClient as OAuth2Client,
+    });
 
     // 3. Fetch upcoming events from the specified calendar
     const response = await calendar.events.list({
@@ -40,14 +37,13 @@ export async function GET() {
     // 5. Handle errors
 
     // Log the detailed error server-side (won't be sent to client)
-    // console.error(error);
+    console.error("Calendar API Error:", e);
 
     // Return a generic error response to the client
     return NextResponse.json(
       {
         error: "Failed to fetch calendar events.",
-        // Optionally include non-sensitive error details
-        // details: error.message
+        details: e instanceof Error ? e.message : String(e),
       },
       { status: 500 }
     );
