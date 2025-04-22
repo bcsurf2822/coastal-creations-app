@@ -2,7 +2,6 @@
 import { google } from "googleapis";
 import { NextResponse } from "next/server";
 
-
 const CALENDAR_ID = "ashley@coastalcreationsstudio.com";
 // *********************
 
@@ -10,7 +9,7 @@ const CALENDAR_ID = "ashley@coastalcreationsstudio.com";
 const SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"];
 // ---------------------
 
-export async function GET(request) {
+export async function GET() {
   try {
     // 1. Authenticate using the Service Account credentials
     // Reads the GOOGLE_APPLICATION_CREDENTIALS environment variable automatically
