@@ -32,7 +32,7 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-2">Contact Us</h3>
             <div className="space-y-1 text-black text-sm">
-              <p>123 Asbury Ave</p>
+              <p>411 E 8th Street</p>
               <p>Ocean City, NJ 08226</p>
               <p>Phone: (609) 399-0030</p>
               <p>Email: ashley@coastalcreationsstudio.com</p>
