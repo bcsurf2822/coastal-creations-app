@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import NavBar from "@/components/nav/NavBar";
-import Footer from "@/components/footer/Footer";
+import NavBar from "@/components/layout/nav/NavBar";
+import Footer from "@/components/layout/footer/Footer";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Coastal Creation Studios",
-  description: "Coastal Creation Studios",
+  title: "Coastal Creation Studios, OC",
+  description: "Coastal Creation Studio, Ocean City, NJ",
 };
 
 export default function RootLayout({
