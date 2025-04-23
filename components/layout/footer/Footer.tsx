@@ -20,33 +20,48 @@ export default function Footer() {
 
           {/* Hours */}
           <div>
-            <h3 className="text-lg font-semibold mb-2">Hours</h3>
-            <ul className="space-y-1 text-black text-sm">
-              <li>Monday - Friday: 9:00 AM - 6:00 PM</li>
-              <li>Saturday: 10:00 AM - 4:00 PM</li>
-              <li>Sunday: Closed</li>
+            <h3 className="text-lg font-semibold mb-3">Hours</h3>
+            <ul className="space-y-2 text-black">
+              <li>
+                <span className="font-semibold">Monday - Friday:</span> 9:00 AM
+                - 6:00 PM
+              </li>
+              <li>
+                <span className="font-semibold">Saturday:</span> 10:00 AM - 4:00
+                PM
+              </li>
+              <li>
+                <span className="font-semibold">Sunday:</span> Closed
+              </li>
             </ul>
           </div>
 
           {/* Contact & Social */}
           <div>
-            <h3 className="text-lg font-semibold mb-2">Contact Us</h3>
-            <div className="space-y-1 text-black text-sm">
-              <p>411 E 8th Street</p>
+            <h3 className="text-lg font-semibold mb-3">Contact Us</h3>
+            <div className="space-y-2 text-black">
+              <p className="flex items-center">
+                <span className="font-medium">411 E 8th Street</span>
+              </p>
               <p>Ocean City, NJ 08226</p>
-              <p>Phone: (609) 399-0030</p>
-              <p>Email: ashley@coastalcreationsstudio.com</p>
+              <p>
+                <span className="font-medium">Phone:</span> (609) 399-0030
+              </p>
+              <p>
+                <span className="font-medium">Email:</span>{" "}
+                ashley@coastalcreationsstudio.com
+              </p>
             </div>
-            <div className="mt-3 flex space-x-3">
+            <div className="mt-4 flex space-x-4">
               <a
                 href="https://www.facebook.com/p/Coastal-Creations-Studio-61574989546371"
-                className="text-black hover:text-gray-700 transition-colors"
+                className="text-black hover:text-blue-700 transition-colors"
               >
                 <FaFacebook size={20} />
               </a>
               <a
                 href="https://www.instagram.com/coastalcreationsocnj/?igsh=MTZrMG5odHJ4bXZrZA%3D%3D"
-                className="text-black hover:text-gray-700 transition-colors"
+                className="text-black hover:text-pink-600 transition-colors"
               >
                 <FaInstagram size={20} />
               </a>
