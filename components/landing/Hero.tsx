@@ -21,18 +21,18 @@ export default function Hero() {
             Welcome to Coastal Creations Studio
           </h2>
 
-          <div className="flex flex-wrap justify-center gap-6">
+          <div className="flex flex-wrap justify-center gap-6 mt-10">
             <Link
               href="/classes"
-              className="bg-neutral-900 hover:bg-neutral-600 text-white font-medium px-8 py-3 rounded-md transition duration-300"
+              className="bg-slate-800 hover:bg-slate-700 text-white font-semibold px-8 py-3.5 rounded-lg transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg text-lg tracking-wide"
             >
-              Classes
+              Explore Classes
             </Link>
             <Link
               href="/about"
-              className="bg-white border border-gray-300 hover:border-gray-600 text-primary hover:bg-light font-medium px-8 py-3 rounded-md transition duration-300"
+              className="bg-white hover:bg-gray-50 border-2 border-slate-600 text-slate-700 font-semibold px-8 py-3.5 rounded-lg transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg text-lg tracking-wide"
             >
-              About
+              About Us
             </Link>
           </div>
         </div>
