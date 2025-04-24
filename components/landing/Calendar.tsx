@@ -180,10 +180,36 @@ export default function Calendar() {
                                     : "All Day"}
                                 </p>
                               </div>
+                              <div className="mt-2 flex justify-between items-center">
+                                <Link
+                                  href={`/calendar/${event.id}`}
+                                  className="text-sm font-medium text-secondary hover:text-primary transition-colors inline-flex items-center"
+                                >
+                                  View Details
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-4 w-4 ml-1"
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z"
+                                      clipRule="evenodd"
+                                    />
+                                  </svg>
+                                </Link>
+                                <Link
+                                  href={`/calendar/${event.id}`}
+                                  className="text-xs font-bold px-3 py-1 bg-primary text-black rounded-md shadow-sm hover:bg-primary/90 transition-colors border border-primary"
+                                >
+                                  Sign Up
+                                </Link>
+                              </div>
                             </div>
                           ))
                         ) : (
-                          <div className="py-6 text-center text-gray-500">
+                          <div className="py-6 text-center text-gray-500 min-h-[100px] flex items-center justify-center">
                             <p>No events scheduled</p>
                           </div>
                         )}
