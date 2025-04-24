@@ -170,38 +170,20 @@ export default function Calendar() {
                                   : ""
                               }`}
                             >
-                              <div className="flex justify-between items-center mb-1">
-                                <p className="font-medium text-primary">
+                              <div className="flex flex-col items-start mb-2">
+                                <p className="font-medium text-primary text-left">
                                   {event.summary}
                                 </p>
-                                <p className="text-xs bg-blue-100 text-secondary px-2 py-1 rounded-full">
+                                <p className="text-xs bg-blue-100 text-secondary px-2 py-1 rounded-full mt-1">
                                   {event.start.dateTime
                                     ? formatEventTime(event.start.dateTime)
                                     : "All Day"}
                                 </p>
                               </div>
-                              <div className="mt-2 flex justify-between items-center">
+                              <div className="mt-3 flex justify-end">
                                 <Link
                                   href={`/calendar/${event.id}`}
-                                  className="text-sm font-medium text-secondary hover:text-primary transition-colors inline-flex items-center"
-                                >
-                                  View Details
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="h-4 w-4 ml-1"
-                                    viewBox="0 0 20 20"
-                                    fill="currentColor"
-                                  >
-                                    <path
-                                      fillRule="evenodd"
-                                      d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z"
-                                      clipRule="evenodd"
-                                    />
-                                  </svg>
-                                </Link>
-                                <Link
-                                  href={`/calendar/${event.id}`}
-                                  className="text-xs font-bold px-3 py-1 bg-primary text-black rounded-md shadow-sm hover:bg-primary/90 transition-colors border border-primary"
+                                  className="text-xs font-bold px-3 py-1.5 bg-primary text-black rounded-md shadow-sm hover:bg-blue-400 hover:text-white transition-all duration-300 border border-primary hover:border-blue-700 transform hover:-translate-y-0.5"
                                 >
                                   Sign Up
                                 </Link>
