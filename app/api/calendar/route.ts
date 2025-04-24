@@ -11,7 +11,10 @@ export async function GET() {
   try {
     console.log("Starting calendar API request...");
 
+    const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON!);
+
     const auth = new google.auth.GoogleAuth({
+      credentials,
       scopes: SCOPES,
     });
     console.log("GoogleAuth instance created");
