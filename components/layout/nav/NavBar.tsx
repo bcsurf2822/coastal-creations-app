@@ -13,13 +13,15 @@ export default function NavBar() {
         <div className="flex justify-between items-center py-2">
           <div className="flex items-center space-x-4">
             <div className="relative w-20 h-20 md:w-40 md:h-40 ">
-              <Image
-                src="/assets/logos/coastalLogo.png"
-                alt="Coastal Creations Studio Logo"
-                fill
-                className="object-contain"
-                priority
-              />
+              <Link className="cursor-pointer" href="/">
+                <Image
+                  src="/assets/logos/coastalLogo.png"
+                  alt="Coastal Creations Studio Logo"
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </Link>
             </div>
           </div>
 
@@ -114,13 +116,6 @@ export default function NavBar() {
                 Home
               </Link>
               <Link
-                href="/about"
-                className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                About
-              </Link>
-              <Link
                 href="/classes"
                 className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2"
                 onClick={() => setIsMenuOpen(false)}
@@ -128,11 +123,11 @@ export default function NavBar() {
                 Classes
               </Link>
               <Link
-                href="/classes"
+                href="/calendar"
                 className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Calendar of Events
+                Calendar
               </Link>
               <Link
                 href="/blog"
@@ -142,11 +137,11 @@ export default function NavBar() {
                 Blog
               </Link>
               <Link
-                href="/contact"
+                href="/about"
                 className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Contact
+                About
               </Link>
             </nav>
           </div>
