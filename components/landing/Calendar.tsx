@@ -197,7 +197,7 @@ export default function Calendar() {
 
           <div className="text-center mt-10">
             <Link
-              href="/classes"
+              href="/calendar"
               className="inline-block bg-primary text-black hover:bg-primary/90 font-medium px-8 py-3 rounded-md transition duration-300 shadow-md hover:shadow-lg"
             >
               View Full Calendar

@@ -11,6 +11,7 @@ import {
   subMonths,
   parseISO,
 } from "date-fns";
+import Link from "next/link";
 
 type EventType = "class" | "workshop" | "event" | "exhibition" | "default";
 
@@ -84,6 +85,8 @@ export default function Calendar() {
 
   // Transform API events to our format
   const transformEvents = (events: ApiCalendarEvent[]) => {
+    console.log("Raw events from API:", events);
+
     return events.map((event) => {
       // Parse the date from the event
       const startDate = event.start.dateTime
@@ -112,6 +115,8 @@ export default function Calendar() {
       } else if (summary.includes("block party")) {
         type = "event";
       }
+
+      console.log(`Event ID: ${event.id}, Title: ${event.summary}`);
 
       return {
         id: event.id,
@@ -286,6 +291,15 @@ export default function Calendar() {
                           {event.title}
                         </div>
                         <div className="text-xs">{event.time}</div>
+                        <Link
+                          href={`/calendar/${event.id}`}
+                          className="mt-2 px-3 py-1.5 bg-primary text-black text-xs font-bold rounded-md shadow-sm hover:bg-primary/90 transition-colors w-full flex justify-center items-center border border-primary"
+                          onClick={() =>
+                            console.log(`Clicked on event: ${event.id}`)
+                          }
+                        >
+                          Sign Up
+                        </Link>
                       </div>
                     ))}
                   </div>
