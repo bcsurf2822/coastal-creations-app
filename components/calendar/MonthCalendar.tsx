@@ -285,21 +285,25 @@ export default function Calendar() {
                         key={idx}
                         className={`mt-1 p-1 sm:p-2 rounded text-xs sm:text-sm ${getEventTypeColor(
                           event.type
-                        )}`}
+                        )} flex flex-col h-full justify-between`}
                       >
-                        <div className="font-medium truncate">
-                          {event.title}
+                        <div>
+                          <div className="font-medium truncate">
+                            {event.title}
+                          </div>
+                          <div className="text-xs">{event.time}</div>
                         </div>
-                        <div className="text-xs">{event.time}</div>
-                        <Link
-                          href={`/calendar/${event.id}`}
-                          className="mt-2 px-3 py-1.5 bg-primary text-black text-xs font-bold rounded-md shadow-sm hover:bg-primary/90 transition-colors w-full flex justify-center items-center border border-primary"
-                          onClick={() =>
-                            console.log(`Clicked on event: ${event.id}`)
-                          }
-                        >
-                          Sign Up
-                        </Link>
+                        <div className="flex justify-end mt-auto pt-1">
+                          <Link
+                            href={`/calendar/${event.id}`}
+                            className="px-3 py-1 bg-primary text-black text-xs font-bold rounded-md shadow-sm hover:bg-blue-400 hover:text-white transition-all duration-300 border border-primary hover:border-blue-700 transform hover:-translate-y-0.5"
+                            onClick={() =>
+                              console.log(`Clicked on event: ${event.id}`)
+                            }
+                          >
+                            Sign Up
+                          </Link>
+                        </div>
                       </div>
                     ))}
                   </div>
