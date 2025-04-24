@@ -11,6 +11,7 @@ import {
   subMonths,
   parseISO,
 } from "date-fns";
+import Link from "next/link";
 
 type EventType = "class" | "workshop" | "event" | "exhibition" | "default";
 
@@ -84,6 +85,8 @@ export default function Calendar() {
 
   // Transform API events to our format
   const transformEvents = (events: ApiCalendarEvent[]) => {
+    console.log("Raw events from API:", events);
+
     return events.map((event) => {
       // Parse the date from the event
       const startDate = event.start.dateTime
@@ -112,6 +115,8 @@ export default function Calendar() {
       } else if (summary.includes("block party")) {
         type = "event";
       }
+
+      console.log(`Event ID: ${event.id}, Title: ${event.summary}`);
 
       return {
         id: event.id,
@@ -280,12 +285,25 @@ export default function Calendar() {
                         key={idx}
                         className={`mt-1 p-1 sm:p-2 rounded text-xs sm:text-sm ${getEventTypeColor(
                           event.type
-                        )}`}
+                        )} flex flex-col h-full justify-between`}
                       >
-                        <div className="font-medium truncate">
-                          {event.title}
+                        <div>
+                          <div className="font-medium truncate">
+                            {event.title}
+                          </div>
+                          <div className="text-xs">{event.time}</div>
                         </div>
-                        <div className="text-xs">{event.time}</div>
+                        <div className="flex justify-end mt-auto pt-1">
+                          <Link
+                            href={`/calendar/${event.id}`}
+                            className="px-3 py-1 bg-primary text-black text-xs font-bold rounded-md shadow-sm hover:bg-blue-400 hover:text-white transition-all duration-300 border border-primary hover:border-blue-700 transform hover:-translate-y-0.5"
+                            onClick={() =>
+                              console.log(`Clicked on event: ${event.id}`)
+                            }
+                          >
+                            Sign Up
+                          </Link>
+                        </div>
                       </div>
                     ))}
                   </div>

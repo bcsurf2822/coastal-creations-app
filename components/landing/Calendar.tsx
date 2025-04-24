@@ -170,20 +170,28 @@ export default function Calendar() {
                                   : ""
                               }`}
                             >
-                              <div className="flex justify-between items-center mb-1">
-                                <p className="font-medium text-primary">
+                              <div className="flex flex-col items-start mb-2">
+                                <p className="font-medium text-primary text-left">
                                   {event.summary}
                                 </p>
-                                <p className="text-xs bg-blue-100 text-secondary px-2 py-1 rounded-full">
+                                <p className="text-xs bg-blue-100 text-secondary px-2 py-1 rounded-full mt-1">
                                   {event.start.dateTime
                                     ? formatEventTime(event.start.dateTime)
                                     : "All Day"}
                                 </p>
                               </div>
+                              <div className="mt-3 flex justify-end">
+                                <Link
+                                  href={`/calendar/${event.id}`}
+                                  className="text-xs font-bold px-3 py-1.5 bg-primary text-black rounded-md shadow-sm hover:bg-blue-400 hover:text-white transition-all duration-300 border border-primary hover:border-blue-700 transform hover:-translate-y-0.5"
+                                >
+                                  Sign Up
+                                </Link>
+                              </div>
                             </div>
                           ))
                         ) : (
-                          <div className="py-6 text-center text-gray-500">
+                          <div className="py-6 text-center text-gray-500 min-h-[100px] flex items-center justify-center">
                             <p>No events scheduled</p>
                           </div>
                         )}
@@ -197,7 +205,7 @@ export default function Calendar() {
 
           <div className="text-center mt-10">
             <Link
-              href="/classes"
+              href="/calendar"
               className="inline-block bg-primary text-black hover:bg-primary/90 font-medium px-8 py-3 rounded-md transition duration-300 shadow-md hover:shadow-lg"
             >
               View Full Calendar

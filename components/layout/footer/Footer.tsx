@@ -41,15 +41,20 @@ export default function Footer() {
             <h3 className="text-lg font-semibold mb-3">Contact Us</h3>
             <div className="space-y-2 text-black">
               <p className="flex items-center">
-                <span className="font-medium">411 E 8th Street</span>
+                <span>411 E 8th Street</span>
               </p>
               <p>Ocean City, NJ 08226</p>
               <p>
-                <span className="font-medium">Phone:</span> (609) 399-0030
+                <span className="font-bold">Phone:</span> (609) 399-0030
               </p>
               <p>
-                <span className="font-medium">Email:</span>{" "}
-                ashley@coastalcreationsstudio.com
+                <span className="font-bold">Email:</span>{" "}
+                <a
+                  href="mailto:ashley@coastalcreationsstudio.com"
+                  className="hover:underline"
+                >
+                  ashley@coastalcreationsstudio.com
+                </a>
               </p>
             </div>
             <div className="mt-4 flex space-x-4">
