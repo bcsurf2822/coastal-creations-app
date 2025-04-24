@@ -9,41 +9,87 @@ const SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"];
 
 export async function GET() {
   try {
+    console.log("Starting calendar API request...");
+
+    const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON!);
+
     const auth = new google.auth.GoogleAuth({
+      credentials,
       scopes: SCOPES,
     });
-    const authClient = await auth.getClient();
+    console.log("GoogleAuth instance created");
 
-    // 2. Create the Google Calendar API client
-    const calendar = google.calendar({
-      version: "v3",
-      auth: authClient as OAuth2Client,
-    });
+    try {
+      const authClient = await auth.getClient();
+      console.log("Auth client successfully obtained");
 
-    // 3. Fetch upcoming events from the specified calendar
-    const response = await calendar.events.list({
-      calendarId: CALENDAR_ID,
-      timeMin: new Date().toISOString(), // Start from the current time
-      maxResults: 15, // Fetch up to 15 events
-      singleEvents: true, // Expand recurring events
-      orderBy: "startTime", // Order by start time
-    });
+      // 2. Create the Google Calendar API client
+      const calendar = google.calendar({
+        version: "v3",
+        auth: authClient as OAuth2Client,
+      });
+      console.log("Calendar client created");
 
-    const events = response.data.items || []; // Ensure events is always an array
+      // 3. Fetch upcoming events from the specified calendar
+      console.log(`Fetching events for calendar: ${CALENDAR_ID}`);
+      const response = await calendar.events.list({
+        calendarId: CALENDAR_ID,
+        timeMin: new Date().toISOString(), // Start from the current time
+        maxResults: 15, // Fetch up to 15 events
+        singleEvents: true, // Expand recurring events
+        orderBy: "startTime", // Order by start time
+      });
+      console.log(
+        `Successfully fetched ${response.data.items?.length || 0} events`
+      );
 
-    // 4. Return the events successfully
-    return NextResponse.json({ events }, { status: 200 });
+      const events = response.data.items || []; // Ensure events is always an array
+
+      // 4. Return the events successfully
+      return NextResponse.json({ events }, { status: 200 });
+    } catch (authError) {
+      console.error("Authentication error:", authError);
+      console.error(
+        "Auth error stack:",
+        authError instanceof Error ? authError.stack : "No stack trace"
+      );
+
+      if (authError instanceof Error && "response" in authError) {
+        // @ts-expect-error - For capturing API-specific error details
+        console.error("API Error details:", authError.response?.data);
+      }
+
+      throw authError; // Rethrow to be caught by outer try/catch
+    }
   } catch (e) {
-    // 5. Handle errors
-
-    // Log the detailed error server-side (won't be sent to client)
+    // 5. Handle errors with enhanced logging
     console.error("Calendar API Error:", e);
+    console.error(
+      "Error stack trace:",
+      e instanceof Error ? e.stack : "No stack trace"
+    );
 
-    // Return a generic error response to the client
+    // Check for specific Google API error types
+    if (e instanceof Error) {
+      console.error("Error name:", e.name);
+      console.error("Error message:", e.message);
+
+      // Try to extract more details if it's a Google API error
+      if ("response" in e) {
+        // @ts-expect-error - For capturing API-specific error details
+        console.error("Response status:", e.response?.status);
+        // @ts-expect-error - For capturing API-specific error details
+        const responseData = e.response?.data || {};
+        console.error("Response data:", JSON.stringify(responseData, null, 2));
+      }
+    }
+
+    // Return a more detailed error response
     return NextResponse.json(
       {
         error: "Failed to fetch calendar events.",
         details: e instanceof Error ? e.message : String(e),
+        errorType: e instanceof Error ? e.name : "Unknown",
       },
       { status: 500 }
     );
