@@ -1,59 +1,174 @@
+"use client";
+
+import { useState, useEffect } from "react";
+
+// Define TypeScript interfaces for the event data
+interface EventDateTime {
+  dateTime: string;
+  timeZone: string;
+}
+
+interface CalendarEvent {
+  id: string;
+  summary: string;
+  description?: string;
+  start?: EventDateTime;
+  end?: EventDateTime;
+}
+
 export default function Classes() {
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [filter, setFilter] = useState("all");
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch("/api/calendar");
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch events");
+        }
+
+        const data = await response.json();
+        setEvents(data.events || []);
+      } catch (err: unknown) {
+        console.error("Error fetching events:", err);
+        setError(err instanceof Error ? err.message : "An error occurred");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, []);
+
+  // Filter events by type and keep only the first occurrence of events with the same name
+  const filteredEvents = events.reduce<CalendarEvent[]>((acc, event) => {
+    // First, check if the event matches the filter
+    if (filter !== "all") {
+      const summary = event.summary?.toLowerCase() || "";
+      if (!summary.includes(filter.toLowerCase())) {
+        return acc; // Skip this event if it doesn't match the filter
+      }
+    }
+
+    // Check if we already have an event with this summary
+    const existingIndex = acc.findIndex((e) => e.summary === event.summary);
+
+    if (existingIndex === -1) {
+      // If no event with this name exists yet, add it
+      acc.push(event);
+    }
+
+    return acc;
+  }, []);
+
+  const formatDate = (dateTimeString?: string): string => {
+    if (!dateTimeString) return "";
+    const date = new Date(dateTimeString);
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const formatTime = (dateTimeString?: string): string => {
+    if (!dateTimeString) return "";
+    const date = new Date(dateTimeString);
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-[32px] row-start-2 items-center w-full max-w-4xl">
         <h1 className="text-3xl font-bold text-center mb-8">Our Classes</h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
-          {/* Canvas Easel Party */}
-          <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-            <h2 className="text-2xl font-semibold mb-2">Canvas Easel Party</h2>
-            <p className="text-lg font-medium text-blue-600 mb-4">
-              $30 per child (10 child minimum)
-            </p>
+        <div className="w-full mt-12">
+          <h2 className="text-2xl font-semibold mb-6">
+            Upcoming Classes & Events
+          </h2>
 
-            <h3 className="text-lg font-medium mb-2">What&apos;s Included:</h3>
-            <ul className="list-disc pl-5 mb-4">
-              <li>1.5 Hours Studio Rental</li>
-              <li>Guided Instruction</li>
-              <li>Pre-Designed Canvas</li>
-              <li>
-                Easel, Canvas Pad, Paint, and a Travel Friendly Carrying Case
-              </li>
-            </ul>
-
-            <p className="text-gray-700">
-              Choose up to 6 unique pre-designed canvas options! Our instructor
-              will guide your group through the painting process. Each child
-              will take home their very own masterpiece and a travel tote with a
-              canvas pad and paint for future creative adventures.
-            </p>
+          <div className="mb-6">
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setFilter("all")}
+                className={`px-4 py-2 rounded-lg ${
+                  filter === "all" ? "bg-blue-500 text-white" : "bg-gray-200"
+                }`}
+              >
+                All Events
+              </button>
+              <button
+                onClick={() => setFilter("camp")}
+                className={`px-4 py-2 rounded-lg ${
+                  filter === "camp" ? "bg-blue-500 text-white" : "bg-gray-200"
+                }`}
+              >
+                Camps
+              </button>
+              <button
+                onClick={() => setFilter("workshop")}
+                className={`px-4 py-2 rounded-lg ${
+                  filter === "workshop"
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-200"
+                }`}
+              >
+                Workshops
+              </button>
+            </div>
           </div>
 
-          {/* Expressive Paint Party */}
-          <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-            <h2 className="text-2xl font-semibold mb-2">
-              Expressive Paint Party
-            </h2>
-            <p className="text-lg font-medium text-blue-600 mb-4">
-              $25 per child (10 child minimum)
-            </p>
-
-            <h3 className="text-lg font-medium mb-2">What&apos;s Included:</h3>
-            <ul className="list-disc pl-5 mb-4">
-              <li>1.5 Hours Studio Rental</li>
-              <li>Facilitator for Assistance</li>
-              <li>8x10 Canvas and Paint</li>
-              <li>Specialty tool, brushes, and textures</li>
-            </ul>
-
-            <p className="text-gray-700">
-              Children receive an 8x10 canvas with all paints, brushes,
-              specialty tools, and textures to create an abstract masterpiece.
-              This party does not have guidelines to paint. Grab a tool &amp;
-              paint your heart out!
-            </p>
-          </div>
+          {isLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+              <p className="mt-4">Loading events...</p>
+            </div>
+          ) : error ? (
+            <div className="bg-red-100 border border-red-300 text-red-700 p-4 rounded-lg">
+              <p>Error loading events: {error}</p>
+            </div>
+          ) : filteredEvents.length === 0 ? (
+            <div className="bg-gray-100 p-6 rounded-lg text-center">
+              <p>
+                No {filter !== "all" ? filter : ""} events currently scheduled.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {filteredEvents.map((event) => (
+                <div
+                  key={event.id}
+                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
+                >
+                  <h3 className="text-xl font-medium">{event.summary}</h3>
+                  <div className="flex flex-col sm:flex-row sm:justify-between mt-2">
+                    <div className="text-gray-600">
+                      <span className="font-medium">Date:</span>{" "}
+                      {formatDate(event.start?.dateTime)}
+                    </div>
+                    <div className="text-gray-600">
+                      <span className="font-medium">Time:</span>{" "}
+                      {formatTime(event.start?.dateTime)} -{" "}
+                      {formatTime(event.end?.dateTime)}
+                    </div>
+                  </div>
+                  {event.description && (
+                    <p className="mt-2 text-gray-700">{event.description}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="text-center mt-8">
