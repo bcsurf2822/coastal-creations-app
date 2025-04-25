@@ -35,7 +35,7 @@ export async function GET() {
       const response = await calendar.events.list({
         calendarId: CALENDAR_ID,
         timeMin: new Date().toISOString(), // Start from the current time
-        maxResults: 15, // Fetch up to 15 events
+        maxResults: 500, // Fetch up to 15 events
         singleEvents: true, // Expand recurring events
         orderBy: "startTime", // Order by start time
       });
