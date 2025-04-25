@@ -184,21 +184,21 @@ export default function Calendar() {
   ];
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:py-12 sm:px-6 md:px-8 lg:px-12">
+    <div className="min-h-screen py-8 px-2 sm:px-4 sm:py-12 md:px-8 lg:px-12">
       <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="p-4 sm:p-6 md:p-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-6">
+        <div className="p-3 sm:p-6 md:p-8">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-4 sm:mb-6">
             {format(currentMonth, "MMMM yyyy")}
           </h2>
 
-          <div className="flex justify-between items-center mb-6 md:mb-8">
+          <div className="flex justify-between items-center mb-4 sm:mb-6 md:mb-8">
             <button
               onClick={prevMonth}
-              className="p-2 rounded-full hover:bg-gray-100"
+              className="p-1 sm:p-2 rounded-full hover:bg-gray-100"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
+                className="h-5 w-5 sm:h-6 sm:w-6"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -212,11 +212,11 @@ export default function Calendar() {
               </svg>
             </button>
 
-            <div className="flex space-x-2">
+            <div className="flex space-x-1 sm:space-x-2">
               <select
                 value={currentMonth.getMonth()}
                 onChange={handleMonthChange}
-                className="py-2 px-3 border border-gray-300 rounded-md bg-white"
+                className="py-1 px-2 sm:py-2 sm:px-3 text-sm sm:text-base border border-gray-300 rounded-md bg-white"
               >
                 {months.map((month) => (
                   <option key={month.value} value={month.value}>
@@ -228,7 +228,7 @@ export default function Calendar() {
               <select
                 value={currentMonth.getFullYear()}
                 onChange={handleYearChange}
-                className="py-2 px-3 border border-gray-300 rounded-md bg-white"
+                className="py-1 px-2 sm:py-2 sm:px-3 text-sm sm:text-base border border-gray-300 rounded-md bg-white"
               >
                 {years.map((year) => (
                   <option key={year} value={year}>
@@ -240,11 +240,11 @@ export default function Calendar() {
 
             <button
               onClick={nextMonth}
-              className="p-2 rounded-full hover:bg-gray-100"
+              className="p-1 sm:p-2 rounded-full hover:bg-gray-100"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
+                className="h-5 w-5 sm:h-6 sm:w-6"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -259,31 +259,33 @@ export default function Calendar() {
             </button>
           </div>
 
-          <div className="grid grid-cols-7 mb-2">
+          <div className="grid grid-cols-7 mb-1 sm:mb-2 text-xs sm:text-sm">
             {weekdays.map((day) => (
               <div
                 key={day}
-                className="text-center font-medium text-gray-500 py-2 md:py-4 md:text-lg"
+                className="text-center font-medium text-gray-500 py-1 sm:py-2 md:py-4 md:text-lg"
               >
-                {day}
+                {/* Show shorter day names on small screens */}
+                <span className="block sm:hidden">{day.charAt(0)}</span>
+                <span className="hidden sm:block">{day}</span>
               </div>
             ))}
           </div>
 
           {isLoading ? (
-            <div className="text-center py-16 md:py-24">
+            <div className="text-center py-8 sm:py-16 md:py-24">
               <p>Loading calendar events...</p>
             </div>
           ) : error ? (
-            <div className="text-center py-16 md:py-24">
+            <div className="text-center py-8 sm:py-16 md:py-24">
               <p className="text-red-500">Error loading events: {error}</p>
             </div>
           ) : (
-            <div className="grid grid-cols-7">
+            <div className="grid grid-cols-7 text-xs sm:text-sm">
               {Array.from({ length: monthStart.getDay() }).map((_, index) => (
                 <div
                   key={`empty-start-${index}`}
-                  className="aspect-square p-1 md:p-2 border border-gray-100"
+                  className="aspect-square p-1 sm:p-1 md:p-2 border border-gray-100"
                 ></div>
               ))}
 
@@ -294,32 +296,32 @@ export default function Calendar() {
                 return (
                   <div
                     key={day.toString()}
-                    className={`aspect-square p-1 md:p-2 border border-gray-100 ${
+                    className={`aspect-square p-0.5 sm:p-1 md:p-2 border border-gray-100 ${
                       isToday(day) ? "bg-blue-50" : ""
                     } flex flex-col`}
                   >
                     <div
-                      className={`text-center font-medium md:text-lg ${
+                      className={`text-center font-medium ${
                         isToday(day)
-                          ? "bg-primary text-white rounded-full w-7 h-7 md:w-9 md:h-9 flex items-center justify-center mx-auto"
+                          ? "bg-primary text-white rounded-full w-5 h-5 sm:w-7 sm:h-7 md:w-9 md:h-9 flex items-center justify-center mx-auto"
                           : ""
-                      } mb-1`}
+                      } mb-0.5 sm:mb-1`}
                     >
                       {format(day, "d")}
                     </div>
 
                     <div className="flex-grow overflow-y-auto">
                       {/* On mobile, just show dots for events */}
-                      <div className="flex justify-center md:hidden mt-1">
+                      <div className="flex justify-center md:hidden mt-0.5 sm:mt-1">
                         {hasEvents && (
                           <>
                             <div
-                              className={`w-2 h-2 rounded-full ${getEventDotColor(
+                              className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${getEventDotColor(
                                 dayEvents[0].type
                               )}`}
                             ></div>
                             {dayEvents.length > 1 && (
-                              <div className="w-2 h-2 rounded-full bg-gray-400 ml-1"></div>
+                              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gray-400 ml-0.5 sm:ml-1"></div>
                             )}
                           </>
                         )}
@@ -385,8 +387,8 @@ export default function Calendar() {
         </div>
 
         {/* Event list below calendar */}
-        <div className="px-6 py-4 md:px-8 md:py-6 bg-gray-50 border-t">
-          <h3 className="text-lg md:text-xl font-medium mb-4">
+        <div className="px-3 py-3 sm:px-6 sm:py-4 md:px-8 md:py-6 bg-gray-50 border-t">
+          <h3 className="text-base sm:text-lg md:text-xl font-medium mb-2 sm:mb-4">
             Upcoming Events
           </h3>
 
@@ -395,7 +397,7 @@ export default function Calendar() {
           ) : error ? (
             <p className="text-red-500">Error loading events</p>
           ) : calendarEvents.length > 0 ? (
-            <div className="space-y-3 md:space-y-4">
+            <div className="space-y-2 sm:space-y-3 md:space-y-4">
               {calendarEvents
                 .filter((event) => event.date >= new Date()) // Only show future events
                 .sort((a, b) => a.date.getTime() - b.date.getTime()) // Sort by date
@@ -409,20 +411,20 @@ export default function Calendar() {
                   return (
                     <div
                       key={event.id}
-                      className="flex border-l-4 pl-3 py-2 md:py-3"
+                      className="flex border-l-4 pl-2 sm:pl-3 py-1.5 sm:py-2 md:py-3 text-xs sm:text-sm md:text-base"
                       style={{ borderColor: getEventBorderColor(event.type) }}
                     >
-                      <div className="w-24 md:w-32 flex-shrink-0">
-                        <div className="text-sm md:text-base font-medium">
+                      <div className="w-16 sm:w-24 md:w-32 flex-shrink-0">
+                        <div className="font-medium">
                           {format(event.date, "MMM d")}
                         </div>
-                        <div className="text-xs md:text-sm text-gray-600">
+                        <div className="text-xs sm:text-xs md:text-sm text-gray-600">
                           {event.time}
                           {event.endTime ? ` - ${event.endTime}` : ""}
                         </div>
                       </div>
-                      <div className="flex-grow">
-                        <div className="font-medium md:text-lg">
+                      <div className="flex-grow min-w-0">
+                        <div className="font-medium truncate">
                           {event.title}
                         </div>
                         {isFirstOccurrence && (

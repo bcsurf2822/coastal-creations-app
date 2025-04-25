@@ -172,7 +172,7 @@ export default function EventPage({
             </div>
           )}
 
-          <button className="px-6 py-3 bg-primary text-white font-medium rounded-md hover:bg-primary/90 transition-colors">
+          <button className="px-6 py-3 bg-primary text-black font-medium rounded-md hover:bg-blue-400 hover:text-white transition-colors border-2 border-black cursor-pointer">
             Register for this event
           </button>
         </div>
