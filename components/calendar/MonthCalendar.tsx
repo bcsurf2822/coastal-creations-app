@@ -19,6 +19,7 @@ interface CalendarEvent {
   date: Date;
   title: string;
   time: string;
+  endTime?: string;
   type: EventType;
   id: string;
 }
@@ -100,6 +101,11 @@ export default function Calendar() {
         ? format(parseISO(event.start.dateTime), "h:mm a")
         : "All Day";
 
+      // Format end time if available
+      const endTime = event.end.dateTime
+        ? format(parseISO(event.end.dateTime), "h:mm a")
+        : "";
+
       // Determine event type based on summary or other properties
       let type: EventType = "default";
       const summary = event.summary.toLowerCase();
@@ -123,6 +129,7 @@ export default function Calendar() {
         date: startDate,
         title: event.summary,
         time: time,
+        endTime: endTime,
         type: type,
       };
     });
@@ -147,16 +154,16 @@ export default function Calendar() {
     setCurrentMonth(newDate);
   };
 
-  const getEventTypeColor = (type: EventType) => {
-    const colors = {
-      class: "bg-blue-100 text-blue-800",
-      workshop: "bg-green-100 text-green-800",
-      event: "bg-purple-100 text-purple-800",
-      exhibition: "bg-orange-100 text-orange-800",
-      default: "bg-gray-100 text-gray-800",
-    };
-    return colors[type];
+  const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newYear = parseInt(e.target.value);
+    const newDate = new Date(currentMonth);
+    newDate.setFullYear(newYear);
+    setCurrentMonth(newDate);
   };
+
+  // Generate array of years (current year and 2 years before and after)
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
 
   const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -176,150 +183,304 @@ export default function Calendar() {
     { value: 11, label: "December" },
   ];
 
-  const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newYear = parseInt(e.target.value);
-    const newDate = new Date(currentMonth);
-    newDate.setFullYear(newYear);
-    setCurrentMonth(newDate);
-  };
-
-  // Generate array of years (current year and 2 years before and after)
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
-
   return (
-    <div className="min-h-screen p-6 sm:p-12">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-8 text-primary">
-          Calendar of Events
-        </h1>
-
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={prevMonth}
-              className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors"
-            >
-              Previous
-            </button>
-            <button
-              onClick={nextMonth}
-              className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors"
-            >
-              Next
-            </button>
-          </div>
-
-          <h2 className="text-xl sm:text-2xl font-bold order-first sm:order-none">
+    <div className="min-h-screen py-8 px-4 sm:py-12 sm:px-6 md:px-8 lg:px-12">
+      <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="p-4 sm:p-6 md:p-8">
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-6">
             {format(currentMonth, "MMMM yyyy")}
           </h2>
 
-          <div className="flex gap-2">
-            <select
-              value={currentMonth.getMonth()}
-              onChange={handleMonthChange}
-              className="py-2 px-3 border border-gray-300 rounded-md"
+          <div className="flex justify-between items-center mb-6 md:mb-8">
+            <button
+              onClick={prevMonth}
+              className="p-2 rounded-full hover:bg-gray-100"
             >
-              {months.map((month) => (
-                <option key={month.value} value={month.value}>
-                  {month.label}
-                </option>
-              ))}
-            </select>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </button>
 
-            <select
-              value={currentMonth.getFullYear()}
-              onChange={handleYearChange}
-              className="py-2 px-3 border border-gray-300 rounded-md"
-            >
-              {years.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+            <div className="flex space-x-2">
+              <select
+                value={currentMonth.getMonth()}
+                onChange={handleMonthChange}
+                className="py-2 px-3 border border-gray-300 rounded-md bg-white"
+              >
+                {months.map((month) => (
+                  <option key={month.value} value={month.value}>
+                    {month.label}
+                  </option>
+                ))}
+              </select>
 
-        <div className="grid grid-cols-7 gap-1 mb-2">
-          {weekdays.map((day) => (
-            <div key={day} className="text-center font-bold py-2">
-              {day}
+              <select
+                value={currentMonth.getFullYear()}
+                onChange={handleYearChange}
+                className="py-2 px-3 border border-gray-300 rounded-md bg-white"
+              >
+                {years.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
             </div>
-          ))}
+
+            <button
+              onClick={nextMonth}
+              className="p-2 rounded-full hover:bg-gray-100"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-7 mb-2">
+            {weekdays.map((day) => (
+              <div
+                key={day}
+                className="text-center font-medium text-gray-500 py-2 md:py-4 md:text-lg"
+              >
+                {day}
+              </div>
+            ))}
+          </div>
+
+          {isLoading ? (
+            <div className="text-center py-16 md:py-24">
+              <p>Loading calendar events...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-16 md:py-24">
+              <p className="text-red-500">Error loading events: {error}</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-7">
+              {Array.from({ length: monthStart.getDay() }).map((_, index) => (
+                <div
+                  key={`empty-start-${index}`}
+                  className="aspect-square p-1 md:p-2 border border-gray-100"
+                ></div>
+              ))}
+
+              {daysInMonth.map((day) => {
+                const dayEvents = getEventsForDay(day);
+                const hasEvents = dayEvents.length > 0;
+
+                return (
+                  <div
+                    key={day.toString()}
+                    className={`aspect-square p-1 md:p-2 border border-gray-100 ${
+                      isToday(day) ? "bg-blue-50" : ""
+                    } flex flex-col`}
+                  >
+                    <div
+                      className={`text-center font-medium md:text-lg ${
+                        isToday(day)
+                          ? "bg-primary text-white rounded-full w-7 h-7 md:w-9 md:h-9 flex items-center justify-center mx-auto"
+                          : ""
+                      } mb-1`}
+                    >
+                      {format(day, "d")}
+                    </div>
+
+                    <div className="flex-grow overflow-y-auto">
+                      {/* On mobile, just show dots for events */}
+                      <div className="flex justify-center md:hidden mt-1">
+                        {hasEvents && (
+                          <>
+                            <div
+                              className={`w-2 h-2 rounded-full ${getEventDotColor(
+                                dayEvents[0].type
+                              )}`}
+                            ></div>
+                            {dayEvents.length > 1 && (
+                              <div className="w-2 h-2 rounded-full bg-gray-400 ml-1"></div>
+                            )}
+                          </>
+                        )}
+                      </div>
+
+                      {/* On desktop, show event details */}
+                      <div className="hidden md:flex md:flex-col md:gap-1 md:overflow-y-auto">
+                        {dayEvents.slice(0, 2).map((event, idx) => {
+                          // Check if this is the first occurrence of this event title
+                          const isFirstOccurrence =
+                            calendarEvents.findIndex(
+                              (e) => e.title === event.title
+                            ) === calendarEvents.indexOf(event);
+
+                          return (
+                            <div
+                              key={idx}
+                              className={`p-1 rounded text-xs ${getEventTypeColor(
+                                event.type
+                              )} flex flex-col h-auto`}
+                            >
+                              <div>
+                                <div className="font-medium truncate">
+                                  {event.title}
+                                </div>
+                                <div className="text-xs">
+                                  {event.time}
+                                  {event.endTime ? ` - ${event.endTime}` : ""}
+                                </div>
+                              </div>
+                              {isFirstOccurrence && (
+                                <div className="flex justify-end mt-1">
+                                  <Link
+                                    href={`/calendar/${event.id}`}
+                                    className="px-2 py-0.5 bg-primary text-black text-xs font-bold rounded-md shadow-sm hover:bg-blue-400 hover:text-white transition-all duration-300 border border-primary hover:border-blue-700"
+                                  >
+                                    Sign Up
+                                  </Link>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                        {dayEvents.length > 2 && (
+                          <div className="text-xs text-center text-gray-500">
+                            +{dayEvents.length - 2} more
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {Array.from({ length: 6 - monthEnd.getDay() }).map((_, index) => (
+                <div
+                  key={`empty-end-${index}`}
+                  className="aspect-square p-1 md:p-2 border border-gray-100"
+                ></div>
+              ))}
+            </div>
+          )}
         </div>
 
-        {isLoading ? (
-          <div className="text-center py-10">
-            <p>Loading calendar events...</p>
-          </div>
-        ) : error ? (
-          <div className="text-center py-10">
-            <p className="text-red-500">Error loading events: {error}</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-7 gap-1 mb-8">
-            {Array.from({ length: monthStart.getDay() }).map((_, index) => (
-              <div
-                key={`empty-start-${index}`}
-                className="bg-gray-50 min-h-[100px] border border-gray-200 rounded"
-              ></div>
-            ))}
+        {/* Event list below calendar */}
+        <div className="px-6 py-4 md:px-8 md:py-6 bg-gray-50 border-t">
+          <h3 className="text-lg md:text-xl font-medium mb-4">
+            Upcoming Events
+          </h3>
 
-            {daysInMonth.map((day) => {
-              const dayEvents = getEventsForDay(day);
+          {isLoading ? (
+            <p>Loading events...</p>
+          ) : error ? (
+            <p className="text-red-500">Error loading events</p>
+          ) : calendarEvents.length > 0 ? (
+            <div className="space-y-3 md:space-y-4">
+              {calendarEvents
+                .filter((event) => event.date >= new Date()) // Only show future events
+                .sort((a, b) => a.date.getTime() - b.date.getTime()) // Sort by date
+                .slice(0, 5) // Show only 5 events
+                .map((event) => {
+                  // Check if this is the first occurrence of this event title
+                  const isFirstOccurrence =
+                    calendarEvents.findIndex((e) => e.title === event.title) ===
+                    calendarEvents.indexOf(event);
 
-              return (
-                <div
-                  key={day.toString()}
-                  className={`min-h-[100px] p-1 sm:p-2 border ${
-                    isToday(day) ? "border-2 border-primary" : "border-gray-200"
-                  } rounded flex flex-col overflow-hidden`}
-                >
-                  <div className="text-right font-medium">
-                    {format(day, "d")}
-                  </div>
-                  <div className="flex flex-col gap-1 flex-grow overflow-y-auto">
-                    {dayEvents.map((event, idx) => (
-                      <div
-                        key={idx}
-                        className={`mt-1 p-1 sm:p-2 rounded text-xs sm:text-sm ${getEventTypeColor(
-                          event.type
-                        )} flex flex-col h-full justify-between`}
-                      >
-                        <div>
-                          <div className="font-medium truncate">
-                            {event.title}
-                          </div>
-                          <div className="text-xs">{event.time}</div>
+                  return (
+                    <div
+                      key={event.id}
+                      className="flex border-l-4 pl-3 py-2 md:py-3"
+                      style={{ borderColor: getEventBorderColor(event.type) }}
+                    >
+                      <div className="w-24 md:w-32 flex-shrink-0">
+                        <div className="text-sm md:text-base font-medium">
+                          {format(event.date, "MMM d")}
                         </div>
-                        <div className="flex justify-end mt-auto pt-1">
-                          <Link
-                            href={`/calendar/${event.id}`}
-                            className="px-3 py-1 bg-primary text-black text-xs font-bold rounded-md shadow-sm hover:bg-blue-400 hover:text-white transition-all duration-300 border border-primary hover:border-blue-700 transform hover:-translate-y-0.5"
-                            onClick={() =>
-                              console.log(`Clicked on event: ${event.id}`)
-                            }
-                          >
-                            Sign Up
-                          </Link>
+                        <div className="text-xs md:text-sm text-gray-600">
+                          {event.time}
+                          {event.endTime ? ` - ${event.endTime}` : ""}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-
-            {Array.from({ length: 6 - monthEnd.getDay() }).map((_, index) => (
-              <div
-                key={`empty-end-${index}`}
-                className="bg-gray-50 min-h-[100px] border border-gray-200 rounded"
-              ></div>
-            ))}
-          </div>
-        )}
+                      <div className="flex-grow">
+                        <div className="font-medium md:text-lg">
+                          {event.title}
+                        </div>
+                        {isFirstOccurrence && (
+                          <div className="mt-1 md:mt-2">
+                            <Link
+                              href={`/calendar/${event.id}`}
+                              className="text-xs md:text-sm font-medium text-primary hover:underline"
+                            >
+                              Sign Up
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          ) : (
+            <p>No upcoming events</p>
+          )}
+        </div>
       </div>
     </div>
   );
 }
+
+// Helper function to get event dot color
+const getEventDotColor = (type: EventType) => {
+  const colors = {
+    class: "bg-blue-500",
+    workshop: "bg-green-500",
+    event: "bg-purple-500",
+    exhibition: "bg-orange-500",
+    default: "bg-gray-500",
+  };
+  return colors[type];
+};
+
+// Helper function to get event border color
+const getEventBorderColor = (type: EventType) => {
+  const colors = {
+    class: "#3b82f6", // blue-500
+    workshop: "#22c55e", // green-500
+    event: "#a855f7", // purple-500
+    exhibition: "#f97316", // orange-500
+    default: "#6b7280", // gray-500
+  };
+  return colors[type];
+};
+
+// Event type color for desktop view
+const getEventTypeColor = (type: EventType) => {
+  const colors = {
+    class: "bg-blue-100 text-blue-800",
+    workshop: "bg-green-100 text-green-800",
+    event: "bg-purple-100 text-purple-800",
+    exhibition: "bg-orange-100 text-orange-800",
+    default: "bg-gray-100 text-gray-800",
+  };
+  return colors[type];
+};
