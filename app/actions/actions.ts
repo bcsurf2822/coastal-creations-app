@@ -7,11 +7,31 @@ const { paymentsApi } = new Client({
   environment: Environment.Sandbox,
 });
 
-export async function submitPayment(sourceId: string) {
+export async function submitPayment(
+  sourceId: string,
+  billingDetails: {
+    addressLine1: string;
+    addressLine2?: string;
+    givenName: string;
+    familyName: string;
+    countryCode: string;
+    city: string;
+    state: string;
+    postalCode: string;
+  }
+) {
   try {
     const result = await paymentsApi.createPayment({
       idempotencyKey: randomUUID(),
       sourceId,
+      billingAddress: {
+        addressLine1: billingDetails.addressLine1,
+        addressLine2: billingDetails.addressLine2 || "",
+        firstName: billingDetails.givenName,
+        lastName: billingDetails.familyName,
+        country: billingDetails.countryCode,
+        postalCode: billingDetails.postalCode,
+      },
       amountMoney: {
         amount: BigInt(700),
         currency: "USD",
