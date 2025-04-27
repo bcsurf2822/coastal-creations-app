@@ -172,9 +172,14 @@ export default function EventPage({
             </div>
           )}
 
-          <button className="px-6 py-3 bg-primary text-black font-medium rounded-md hover:bg-blue-400 hover:text-white transition-colors border-2 border-black cursor-pointer">
+          <a
+            href={`/payments?eventId=${encodeURIComponent(
+              eventData.id
+            )}&eventTitle=${encodeURIComponent(eventData.title)}`}
+            className="px-6 py-3 bg-primary text-black font-medium rounded-md hover:bg-blue-400 hover:text-white transition-colors border-2 border-black cursor-pointer inline-block"
+          >
             Register for this event
-          </button>
+          </a>
         </div>
       </div>
     </div>

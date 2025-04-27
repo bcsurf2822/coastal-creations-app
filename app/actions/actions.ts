@@ -1,6 +1,11 @@
 "use server";
 import { randomUUID } from "crypto";
-import { Client, Environment } from "square/legacy";
+import {
+  Client,
+  Environment,
+  ApiResponse,
+  CreatePaymentResponse,
+} from "square/legacy";
 
 const { paymentsApi } = new Client({
   accessToken: process.env.NEXT_PUBLIC_SANDBOX_ACCESS_TOKEN,
@@ -18,13 +23,21 @@ export async function submitPayment(
     city: string;
     state: string;
     postalCode: string;
+    eventId?: string;
+    eventTitle?: string;
   }
-) {
+): Promise<ApiResponse<CreatePaymentResponse> | undefined> {
   try {
+    // Extract event info for use in metadata or note
+    const eventInfo = billingDetails.eventTitle
+      ? `Registration for: ${billingDetails.eventTitle}`
+      : "Event registration";
+
     const result = await paymentsApi.createPayment({
       idempotencyKey: randomUUID(),
       sourceId,
-      referenceId: "4elkql4m3b5gnkfsgud0abpl9m",
+      referenceId: billingDetails.eventId || "4elkql4m3b5gnkfsgud0abpl9m",
+      note: eventInfo,
       billingAddress: {
         addressLine1: billingDetails.addressLine1,
         addressLine2: billingDetails.addressLine2 || "",
@@ -42,5 +55,6 @@ export async function submitPayment(
     return result;
   } catch (error) {
     console.log(error);
+    return undefined;
   }
 }

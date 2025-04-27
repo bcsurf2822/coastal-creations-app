@@ -3,10 +3,18 @@
 import { submitPayment } from "@/app/actions/actions";
 import { CreditCard, PaymentForm } from "react-square-web-payments-sdk";
 import { useState, ChangeEvent } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 
 export default function Payment() {
   const appId = process.env.NEXT_PUBLIC_SANDBOX_APPLICATION_ID || "";
   const locationId = "main";
+  const redirectUrl =
+    process.env.NEXT_PUBLIC_SANDBOX_REDIRECT_URL || "/payment-success";
+  const router = useRouter();
+
+  const searchParams = useSearchParams();
+  const eventId = searchParams.get("eventId") || "";
+  const eventTitle = searchParams.get("eventTitle") || "";
 
   const [billingDetails, setBillingDetails] = useState({
     addressLine1: "",
@@ -31,6 +39,16 @@ export default function Payment() {
 
   return (
     <div className="max-w-md mx-auto p-4">
+      {eventTitle && (
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-center mb-2">Registration</h1>
+          <p className="text-lg text-center">
+            You&apos;re registering for:{" "}
+            <span className="font-semibold">{eventTitle}</span>
+          </p>
+        </div>
+      )}
+
       <h2 className="text-xl font-bold mb-4">Billing Information</h2>
 
       <div className="space-y-4 mb-6">
@@ -195,8 +213,32 @@ export default function Payment() {
             };
 
             console.log("Billing contact:", contact);
-            const result = await submitPayment(token.token, billingDetails);
-            console.log(result);
+            try {
+              const result = await submitPayment(token.token, {
+                ...billingDetails,
+                eventId,
+                eventTitle,
+              });
+
+              console.log(result);
+
+              if (result?.result?.payment?.status === "COMPLETED") {
+                const paymentId = result.result.payment.id;
+                const receiptUrl = result.result.payment.receiptUrl || "";
+
+                // Use environment variable for redirect URL
+                router.push(
+                  `${redirectUrl}?paymentId=${paymentId}&receiptUrl=${encodeURIComponent(
+                    receiptUrl
+                  )}`
+                );
+              } else {
+                // Handle payment not completed
+                console.error("Payment not completed");
+              }
+            } catch (error) {
+              console.error("Payment error:", error);
+            }
           } else {
             console.error("Payment token is undefined");
           }
