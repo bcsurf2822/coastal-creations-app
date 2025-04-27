@@ -225,13 +225,36 @@ export default function Payment() {
               if (result?.result?.payment?.status === "COMPLETED") {
                 const paymentId = result.result.payment.id;
                 const receiptUrl = result.result.payment.receiptUrl || "";
+                const note = result.result.payment.note || "";
+
+                // Safely extract amount and currency with fallbacks
+                const amount =
+                  result.result.payment.amountMoney?.amount?.toString() || "0";
+                const currency =
+                  result.result.payment.amountMoney?.currency || "USD";
+
+                // Get card details if available
+                const last4 =
+                  result.result.payment.cardDetails?.card?.last4 || "";
+                const cardBrand =
+                  result.result.payment.cardDetails?.card?.cardBrand || "";
+
+                // Build query parameters with all relevant information
+                const queryParams = new URLSearchParams();
+                queryParams.set("paymentId", paymentId || "");
+                queryParams.set("status", "COMPLETED");
+                queryParams.set("receiptUrl", receiptUrl);
+                queryParams.set("firstName", billingDetails.givenName);
+                queryParams.set("lastName", billingDetails.familyName);
+                queryParams.set("eventTitle", eventTitle || "");
+                queryParams.set("note", note);
+                queryParams.set("amount", amount);
+                queryParams.set("currency", currency);
+                queryParams.set("last4", last4);
+                queryParams.set("cardBrand", cardBrand);
 
                 // Use environment variable for redirect URL
-                router.push(
-                  `${redirectUrl}?paymentId=${paymentId}&receiptUrl=${encodeURIComponent(
-                    receiptUrl
-                  )}`
-                );
+                router.push(`${redirectUrl}?${queryParams.toString()}`);
               } else {
                 // Handle payment not completed
                 console.error("Payment not completed");
