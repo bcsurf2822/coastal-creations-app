@@ -50,10 +50,10 @@ export default function Footer() {
               <p>
                 <span className="font-bold">Email:</span>{" "}
                 <a
-                  href="mailto:ashley@coastalcreationsstudio.com"
+                  href="mailto:info@coastalcreationsstudio.com"
                   className="hover:underline"
                 >
-                  ashley@coastalcreationsstudio.com
+                  info@coastalcreationsstudio.com
                 </a>
               </p>
             </div>
