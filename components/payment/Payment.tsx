@@ -7,8 +7,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 
 function PaymentContent() {
   const appId = process.env.PRODUCTION_APPLICATION_ID || "";
-  const locationId = "main";
-  // const locationId = process.env.PRODUCTION_LOCATION_ID || "";
+  const locationId = process.env.PRODUCTION_LOCATION_ID || "";
+  // const locationId = "main";
 
   const redirectUrl = process.env.PRODUCTION_REDIRECT_URL;
   const router = useRouter();
@@ -215,6 +215,7 @@ function PaymentContent() {
 
             console.log("Billing contact:", contact);
             try {
+              // Pass the token as sourceId to the submitPayment function
               const result = await submitPayment(token.token, {
                 ...billingDetails,
                 eventId,
@@ -223,22 +224,21 @@ function PaymentContent() {
 
               console.log(result);
 
-              if (result?.result?.payment?.status === "COMPLETED") {
-                const paymentId = result.result.payment.id;
-                const receiptUrl = result.result.payment.receiptUrl || "";
-                const note = result.result.payment.note || "";
+              // Update to match the new response structure
+              if (result?.payment?.status === "COMPLETED") {
+                const paymentId = result.payment.id;
+                const receiptUrl = result.payment.receiptUrl || "";
+                const note = result.payment.note || "";
 
                 // Safely extract amount and currency with fallbacks
                 const amount =
-                  result.result.payment.amountMoney?.amount?.toString() || "0";
-                const currency =
-                  result.result.payment.amountMoney?.currency || "USD";
+                  result.payment.amountMoney?.amount?.toString() || "0";
+                const currency = result.payment.amountMoney?.currency || "USD";
 
                 // Get card details if available
-                const last4 =
-                  result.result.payment.cardDetails?.card?.last4 || "";
+                const last4 = result.payment.cardDetails?.card?.last4 || "";
                 const cardBrand =
-                  result.result.payment.cardDetails?.card?.cardBrand || "";
+                  result.payment.cardDetails?.card?.cardBrand || "";
 
                 // Build query parameters with all relevant information
                 const queryParams = new URLSearchParams();
