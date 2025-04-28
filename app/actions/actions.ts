@@ -8,8 +8,9 @@ import {
 } from "square/legacy";
 
 const { paymentsApi } = new Client({
-  accessToken: process.env.NEXT_PUBLIC_SANDBOX_ACCESS_TOKEN,
-  environment: Environment.Sandbox,
+  // accessToken: process.env.NEXT_PUBLIC_SANDBOX_ACCESS_TOKEN,
+  accessToken: process.env.PRODUCTION_ACCESS_TOKEN,
+  environment: Environment.Production,
 });
 
 export async function submitPayment(
@@ -36,7 +37,7 @@ export async function submitPayment(
     const result = await paymentsApi.createPayment({
       idempotencyKey: randomUUID(),
       sourceId,
-      referenceId: billingDetails.eventId || "4elkql4m3b5gnkfsgud0abpl9m",
+      referenceId: billingDetails.eventId,
       note: eventInfo,
       billingAddress: {
         addressLine1: billingDetails.addressLine1,
