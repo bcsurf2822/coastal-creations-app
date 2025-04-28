@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -17,7 +17,7 @@ interface PaymentDetails {
   cardBrand?: string;
 }
 
-export default function SquareRedirectPage() {
+function SquareRedirectContent() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<"success" | "error" | "pending">(
@@ -293,5 +293,19 @@ export default function SquareRedirectPage() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function SquareRedirectPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-lg mx-auto p-8 text-center">
+          Loading payment status...
+        </div>
+      }
+    >
+      <SquareRedirectContent />
+    </Suspense>
   );
 }
