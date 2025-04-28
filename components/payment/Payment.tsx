@@ -7,7 +7,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 
 function PaymentContent() {
   const appId = process.env.PRODUCTION_APPLICATION_ID || "";
-  const locationId = process.env.PRODUCTION_LOCATION_ID || "main";
+  const locationId = "main";
 
   const redirectUrl = process.env.PRODUCTION_REDIRECT_URL;
   const router = useRouter();
@@ -196,29 +196,23 @@ function PaymentContent() {
       <PaymentForm
         applicationId={appId}
         locationId={locationId}
-        /**
-         * This function enables Strong Customer Authentication (SCA) flow
-         * to verify the buyer and reduce the chance of fraudulent transactions
-         */
-        createVerificationDetails={() => ({
-          amount: "1.00",
-          billingContact: {
-            addressLines: [
-              billingDetails.addressLine1,
-              billingDetails.addressLine2,
-            ].filter(Boolean) as string[],
-            familyName: billingDetails.familyName,
-            givenName: billingDetails.givenName,
-            countryCode: billingDetails.countryCode,
-            city: billingDetails.city,
-            postalCode: billingDetails.postalCode,
-          },
-          currencyCode: "USD",
-          intent: "CHARGE",
-        })}
-        cardTokenizeResponseReceived={async (token, buyer) => {
+        cardTokenizeResponseReceived={async (token) => {
           if (token.token) {
-            console.log("Buyer information:", buyer);
+            // Prepare billing contact from form inputs
+            const contact = {
+              addressLines: [
+                billingDetails.addressLine1,
+                billingDetails.addressLine2,
+              ].filter(Boolean),
+              familyName: billingDetails.familyName,
+              givenName: billingDetails.givenName,
+              countryCode: billingDetails.countryCode,
+              city: billingDetails.city,
+              state: billingDetails.state,
+              postalCode: billingDetails.postalCode,
+            };
+
+            console.log("Billing contact:", contact);
             try {
               const result = await submitPayment(token.token, {
                 ...billingDetails,
