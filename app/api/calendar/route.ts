@@ -2,7 +2,7 @@ import { google } from "googleapis";
 import { NextResponse } from "next/server";
 import { OAuth2Client } from "google-auth-library";
 
-const CALENDAR_ID = "ashley@coastalcreationsstudio.com";
+const CALENDAR_ID = process.env.CALENDAR_ID;
 
 const SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"];
 // ---------------------

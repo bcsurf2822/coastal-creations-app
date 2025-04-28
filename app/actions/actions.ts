@@ -48,7 +48,7 @@ export async function submitPayment(
         postalCode: billingDetails.postalCode,
       },
       amountMoney: {
-        amount: BigInt(700),
+        amount: BigInt(500),
         currency: "USD",
       },
     });
