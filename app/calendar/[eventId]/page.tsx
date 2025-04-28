@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from "react";
 import { parseISO, format } from "date-fns";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 
 interface ApiCalendarEvent {
   id: string;
@@ -172,14 +173,14 @@ export default function EventPage({
             </div>
           )}
 
-          <a
+          <Link
             href={`/payments?eventId=${encodeURIComponent(
               eventData.id
             )}&eventTitle=${encodeURIComponent(eventData.title)}`}
             className="px-6 py-3 bg-primary text-black font-medium rounded-md hover:bg-blue-400 hover:text-white transition-colors border-2 border-black cursor-pointer inline-block"
           >
             Register for this event
-          </a>
+          </Link>
         </div>
       </div>
     </div>
