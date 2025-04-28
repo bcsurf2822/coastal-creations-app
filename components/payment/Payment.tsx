@@ -2,14 +2,12 @@
 
 import { submitPayment } from "@/app/actions/actions";
 import { CreditCard, PaymentForm } from "react-square-web-payments-sdk";
-import { useState, ChangeEvent } from "react";
+import { useState, ChangeEvent, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
-export default function Payment() {
-  // const appId = process.env.NEXT_PUBLIC_SANDBOX_APPLICATION_ID || "";
+function PaymentContent() {
   const appId = process.env.PRODUCTION_APPLICATION_ID || "";
   const locationId = "main";
-  // const redirectUrl = process.env.NEXT_PUBLIC_SANDBOX_REDIRECT_URL;
   const redirectUrl = process.env.PRODUCTION_REDIRECT_URL;
   const router = useRouter();
 
@@ -271,5 +269,17 @@ export default function Payment() {
         <CreditCard />
       </PaymentForm>
     </div>
+  );
+}
+
+export default function Payment() {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-md mx-auto p-4">Loading payment form...</div>
+      }
+    >
+      <PaymentContent />
+    </Suspense>
   );
 }
