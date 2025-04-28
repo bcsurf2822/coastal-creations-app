@@ -7,8 +7,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 
 function PaymentContent() {
   const appId = process.env.PRODUCTION_APPLICATION_ID || "";
-  // const locationId = "main";
-  const locationId = process.env.PRODUCTION_LOCATION_ID || "";
+  const locationId = "main";
+  // const locationId = process.env.PRODUCTION_LOCATION_ID || "";
 
   const redirectUrl = process.env.PRODUCTION_REDIRECT_URL;
   const router = useRouter();
