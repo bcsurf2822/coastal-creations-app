@@ -2,54 +2,25 @@
 
 import { submitPayment } from "@/app/actions/actions";
 import { CreditCard, PaymentForm } from "react-square-web-payments-sdk";
-import { useState, ChangeEvent, Suspense, useEffect } from "react";
+import { useState, ChangeEvent } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
-function PaymentContent() {
-  const appId = process.env.SANDBOX_APPLICATION_ID || "";
+export default function Payment() {
+  const appId = process.env.NEXT_PUBLIC_ASHLEY_SANDBOX_APPLICATION_ID || "";
   const locationId = "main";
-
-  const redirectUrl = process.env.SANDBOX_REDIRECT_URL;
+  const redirectUrl = process.env.NEXT_PUBLIC_SANDBOX_REDIRECT_URL;
   const router = useRouter();
 
   const searchParams = useSearchParams();
   const eventId = searchParams.get("eventId") || "";
   const eventTitle = searchParams.get("eventTitle") || "";
 
-  useEffect(() => {
-    // Log critical information for debugging
-    console.log("Environment check:", {
-      appId: appId,
-      locationId: locationId,
-      redirectUrl: redirectUrl,
-      envs: {
-        SANDBOX_APPLICATION_ID: process.env.SANDBOX_APPLICATION_ID,
-        NEXT_PUBLIC_SANDBOX_APPLICATION_ID:
-          process.env.NEXT_PUBLIC_SANDBOX_APPLICATION_ID,
-        NODE_ENV: process.env.NODE_ENV,
-      },
-    });
-
-    console.log("URL parameters:", {
-      eventId,
-      eventTitle,
-    });
-
-    if (!appId) {
-      console.error("Missing applicationId - Payment SDK will fail to load");
-    }
-
-    if (!locationId) {
-      console.error("Missing locationId - Payment SDK will fail to load");
-    }
-  }, [appId, locationId, redirectUrl, eventId, eventTitle]);
-
   const [billingDetails, setBillingDetails] = useState({
     addressLine1: "",
     addressLine2: "",
     familyName: "",
     givenName: "",
-    countryCode: "GB",
+    countryCode: "US",
     city: "",
     state: "",
     postalCode: "",
@@ -64,9 +35,6 @@ function PaymentContent() {
       [name]: value,
     }));
   };
-
-  // Check if we have the required credentials
-  const hasRequiredCredentials = !!appId && !!locationId;
 
   return (
     <div className="max-w-md mx-auto p-4">
@@ -224,128 +192,82 @@ function PaymentContent() {
       </div>
 
       <h2 className="text-xl font-bold mb-4">Payment Details</h2>
+      <PaymentForm
+        applicationId={appId}
+        locationId={locationId}
+        cardTokenizeResponseReceived={async (token) => {
+          if (token.token) {
+            // Prepare billing contact from form inputs
+            const contact = {
+              addressLines: [
+                billingDetails.addressLine1,
+                billingDetails.addressLine2,
+              ].filter(Boolean),
+              familyName: billingDetails.familyName,
+              givenName: billingDetails.givenName,
+              countryCode: billingDetails.countryCode,
+              city: billingDetails.city,
+              state: billingDetails.state,
+              postalCode: billingDetails.postalCode,
+            };
 
-      {!hasRequiredCredentials && (
-        <div className="p-4 mb-4 bg-red-100 border border-red-400 text-red-700 rounded">
-          <p>
-            Missing required payment credentials. Please check your environment
-            configuration.
-          </p>
-        </div>
-      )}
+            console.log("Billing contact:", contact);
+            try {
+              const result = await submitPayment(token.token, {
+                ...billingDetails,
+                eventId,
+                eventTitle,
+              });
 
-      {hasRequiredCredentials ? (
-        <div>
-          <div className="mb-4">
-            <p className="text-sm text-gray-600">
-              Debug info: Using applicationId:{" "}
-              {appId ? `${appId.substring(0, 6)}...` : "missing"}
-            </p>
-          </div>
-          <PaymentForm
-            applicationId={appId}
-            locationId={locationId}
-            cardTokenizeResponseReceived={async (token) => {
-              console.log(
-                "Token received:",
-                token ? "Token exists" : "No token"
-              );
-              if (token.token) {
-                // Prepare billing contact from form inputs
-                const contact = {
-                  addressLines: [
-                    billingDetails.addressLine1,
-                    billingDetails.addressLine2,
-                  ].filter(Boolean),
-                  familyName: billingDetails.familyName,
-                  givenName: billingDetails.givenName,
-                  countryCode: billingDetails.countryCode,
-                  city: billingDetails.city,
-                  state: billingDetails.state,
-                  postalCode: billingDetails.postalCode,
-                };
+              console.log(result);
 
-                console.log("Billing contact:", contact);
-                try {
-                  console.log(
-                    "Submitting payment with token:",
-                    token.token.substring(0, 10) + "..."
-                  );
-                  const result = await submitPayment(token.token, {
-                    ...billingDetails,
-                    eventId,
-                    eventTitle,
-                  });
+              if (result?.result?.payment?.status === "COMPLETED") {
+                const paymentId = result.result.payment.id;
+                const receiptUrl = result.result.payment.receiptUrl || "";
+                const note = result.result.payment.note || "";
 
-                  console.log("Payment result:", result);
+                // Safely extract amount and currency with fallbacks
+                const amount =
+                  result.result.payment.amountMoney?.amount?.toString() || "0";
+                const currency =
+                  result.result.payment.amountMoney?.currency || "USD";
 
-                  if (result?.result?.payment?.status === "COMPLETED") {
-                    const paymentId = result.result.payment.id;
-                    const receiptUrl = result.result.payment.receiptUrl || "";
-                    const note = result.result.payment.note || "";
+                // Get card details if available
+                const last4 =
+                  result.result.payment.cardDetails?.card?.last4 || "";
+                const cardBrand =
+                  result.result.payment.cardDetails?.card?.cardBrand || "";
 
-                    // Safely extract amount and currency with fallbacks
-                    const amount =
-                      result.result.payment.amountMoney?.amount?.toString() ||
-                      "0";
-                    const currency =
-                      result.result.payment.amountMoney?.currency || "USD";
+                // Build query parameters with all relevant information
+                const queryParams = new URLSearchParams();
+                queryParams.set("paymentId", paymentId || "");
+                queryParams.set("status", "COMPLETED");
+                queryParams.set("receiptUrl", receiptUrl);
+                queryParams.set("firstName", billingDetails.givenName);
+                queryParams.set("lastName", billingDetails.familyName);
+                queryParams.set("eventTitle", eventTitle || "");
+                queryParams.set("note", note);
+                queryParams.set("amount", amount);
+                queryParams.set("currency", currency);
+                queryParams.set("last4", last4);
+                queryParams.set("cardBrand", cardBrand);
 
-                    // Get card details if available
-                    const last4 =
-                      result.result.payment.cardDetails?.card?.last4 || "";
-                    const cardBrand =
-                      result.result.payment.cardDetails?.card?.cardBrand || "";
-
-                    // Build query parameters with all relevant information
-                    const queryParams = new URLSearchParams();
-                    queryParams.set("paymentId", paymentId || "");
-                    queryParams.set("status", "COMPLETED");
-                    queryParams.set("receiptUrl", receiptUrl);
-                    queryParams.set("firstName", billingDetails.givenName);
-                    queryParams.set("lastName", billingDetails.familyName);
-                    queryParams.set("eventTitle", eventTitle || "");
-                    queryParams.set("note", note);
-                    queryParams.set("amount", amount);
-                    queryParams.set("currency", currency);
-                    queryParams.set("last4", last4);
-                    queryParams.set("cardBrand", cardBrand);
-
-                    // Use environment variable for redirect URL
-                    console.log("Redirecting to:", redirectUrl);
-                    router.push(`${redirectUrl}?${queryParams.toString()}`);
-                  } else {
-                    // Handle payment not completed
-                    console.error("Payment not completed:", result);
-                  }
-                } catch (error) {
-                  console.error("Payment error:", error);
-                }
+                // Use environment variable for redirect URL
+                router.push(`${redirectUrl}?${queryParams.toString()}`);
               } else {
-                console.error("Payment token is undefined");
+                // Handle payment not completed
+                console.error("Payment not completed");
               }
-            }}
-          >
-            <CreditCard />
-          </PaymentForm>
-        </div>
-      ) : (
-        <div className="p-4 border border-yellow-400 bg-yellow-50 rounded">
-          Loading payment form...
-        </div>
-      )}
+            } catch (error) {
+              console.error("Payment error:", error);
+            }
+          } else {
+            console.error("Payment token is undefined");
+          }
+        }}
+      >
+        <CreditCard />
+      </PaymentForm>
     </div>
-  );
-}
-
-export default function Payment() {
-  return (
-    <Suspense
-      fallback={
-        <div className="max-w-md mx-auto p-4">Loading payment form...</div>
-      }
-    >
-      <PaymentContent />
-    </Suspense>
   );
 }

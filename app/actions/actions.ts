@@ -8,8 +8,7 @@ import {
 } from "square/legacy";
 
 const { paymentsApi } = new Client({
-  // accessToken: process.env.NEXT_PUBLIC_SANDBOX_ACCESS_TOKEN,
-  accessToken: process.env.SANDBOX_ACCESS_TOKEN,
+  accessToken: process.env.NEXT_PUBLIC_ASHLEY_SANDBOX_ACCESS_TOKEN,
   environment: Environment.Sandbox,
 });
 
