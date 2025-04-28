@@ -29,6 +29,7 @@ export async function submitPayment(
   }
 ): Promise<ApiResponse<CreatePaymentResponse> | undefined> {
   try {
+    console.log("Payment Environment:", Environment.Production);
     // Extract event info for use in metadata or note
     const eventInfo = billingDetails.eventTitle
       ? `Registration for: ${billingDetails.eventTitle}`
