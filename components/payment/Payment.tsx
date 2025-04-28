@@ -6,10 +6,10 @@ import { useState, ChangeEvent, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
 function PaymentContent() {
-  const appId = process.env.PRODUCTION_APPLICATION_ID || "";
+  const appId = process.env.SANDBOX_APPLICATION_ID || "";
   const locationId = "main";
 
-  const redirectUrl = process.env.PRODUCTION_REDIRECT_URL;
+  const redirectUrl = process.env.SANDBOX_REDIRECT_URL;
   const router = useRouter();
 
   const searchParams = useSearchParams();
