@@ -5,12 +5,20 @@ import { CreditCard, PaymentForm } from "react-square-web-payments-sdk";
 import { useState, ChangeEvent, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
+interface PaymentConfig {
+  applicationId: string;
+  locationId: string;
+  redirectUrl: string;
+}
+
 export default function Payment() {
-  const appId = process.env.PRODUCTION_APPLICATION_ID || "";
-  const locationId = "main";
-  const redirectUrl = process.env.PRODUCTION_REDIRECT_URL || "";
   const router = useRouter();
   const [isLoaded, setIsLoaded] = useState(false);
+  const [config, setConfig] = useState<PaymentConfig>({
+    applicationId: '',
+    locationId: 'main',
+    redirectUrl: '',
+  });
 
   const searchParams = useSearchParams();
   const eventId = searchParams.get("eventId") || "";
@@ -27,26 +35,38 @@ export default function Payment() {
     postalCode: "",
   });
 
-  // Add debug logs to check environment variables
+  // Fetch payment configuration from API
   useEffect(() => {
-    console.log("Square SDK Parameters:");
-    console.log("Application ID:", appId);
-    console.log("Location ID:", locationId);
-    console.log("Redirect URL:", redirectUrl);
-
-    if (!appId) {
-      console.error("MISSING: PRODUCTION_APPLICATION_ID environment variable");
+    async function fetchConfig() {
+      try {
+        const response = await fetch('/api/payment-config');
+        if (!response.ok) {
+          throw new Error('Failed to fetch payment configuration');
+        }
+        const data = await response.json();
+        setConfig(data);
+        
+        // Add debug logs to check fetched config
+        console.log("Fetched Square SDK Parameters:");
+        console.log("Application ID:", data.applicationId);
+        console.log("Location ID:", data.locationId);
+        console.log("Redirect URL:", data.redirectUrl);
+        
+        if (!data.applicationId) {
+          console.error("MISSING: PRODUCTION_APPLICATION_ID environment variable");
+        }
+        if (!data.redirectUrl) {
+          console.error("MISSING: PRODUCTION_REDIRECT_URL environment variable");
+        }
+        
+        setIsLoaded(true);
+      } catch (error) {
+        console.error("Error fetching payment configuration:", error);
+      }
     }
-    if (locationId !== "main") {
-      console.log("Location ID is set to:", locationId);
-    }
-    if (!redirectUrl) {
-      console.error("MISSING: PRODUCTION_REDIRECT_URL environment variable");
-    }
-
-    // Set loaded state after a small delay to ensure env variables are properly loaded
-    setTimeout(() => setIsLoaded(true), 500);
-  }, [appId, locationId, redirectUrl]);
+    
+    fetchConfig();
+  }, []);
 
   const handleInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -216,8 +236,8 @@ export default function Payment() {
       <h2 className="text-xl font-bold mb-4">Payment Details</h2>
       {isLoaded ? (
         <PaymentForm
-          applicationId={appId}
-          locationId={locationId}
+          applicationId={config.applicationId}
+          locationId={config.locationId}
           createPaymentRequest={() => {
             console.log("createPaymentRequest called");
             return {
@@ -288,8 +308,8 @@ export default function Payment() {
                   queryParams.set("last4", last4);
                   queryParams.set("cardBrand", cardBrand);
 
-                  // Use environment variable for redirect URL
-                  router.push(`${redirectUrl}?${queryParams.toString()}`);
+                  // Use config for redirect URL
+                  router.push(`${config.redirectUrl}?${queryParams.toString()}`);
                 } else {
                   // Handle payment not completed
                   console.error("Payment not completed");
