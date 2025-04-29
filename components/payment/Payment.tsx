@@ -2,7 +2,7 @@
 
 import { submitPayment } from "@/app/actions/actions";
 import { CreditCard, PaymentForm } from "react-square-web-payments-sdk";
-import { useState, ChangeEvent } from "react";
+import { useState, ChangeEvent, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
 export default function Payment() {
@@ -25,6 +25,24 @@ export default function Payment() {
     state: "",
     postalCode: "",
   });
+
+  // Add debug logs to check environment variables
+  useEffect(() => {
+    console.log("Square SDK Parameters:");
+    console.log("Application ID:", appId);
+    console.log("Location ID:", locationId);
+    console.log("Redirect URL:", redirectUrl);
+
+    if (!appId) {
+      console.error("MISSING: PRODUCTION_APPLICATION_ID environment variable");
+    }
+    if (locationId !== "main") {
+      console.log("Location ID is set to:", locationId);
+    }
+    if (!redirectUrl) {
+      console.error("MISSING: PRODUCTION_REDIRECT_URL environment variable");
+    }
+  }, [appId, locationId, redirectUrl]);
 
   const handleInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -195,7 +213,19 @@ export default function Payment() {
       <PaymentForm
         applicationId={appId}
         locationId={locationId}
+        createPaymentRequest={() => {
+          console.log("createPaymentRequest called");
+          return {
+            countryCode: "US",
+            currencyCode: "USD",
+            total: {
+              amount: "99.00",
+              label: "Total",
+            },
+          };
+        }}
         cardTokenizeResponseReceived={async (token) => {
+          console.log("Card tokenize response received:", token);
           if (token.token) {
             // Prepare billing contact from form inputs
             const contact = {
