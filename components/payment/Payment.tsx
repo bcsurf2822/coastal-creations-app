@@ -8,8 +8,9 @@ import { useSearchParams, useRouter } from "next/navigation";
 export default function Payment() {
   const appId = process.env.PRODUCTION_APPLICATION_ID || "";
   const locationId = "main";
-  const redirectUrl = process.env.PRODUCTION_REDIRECT_URL;
+  const redirectUrl = process.env.PRODUCTION_REDIRECT_URL || "";
   const router = useRouter();
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const searchParams = useSearchParams();
   const eventId = searchParams.get("eventId") || "";
@@ -42,6 +43,9 @@ export default function Payment() {
     if (!redirectUrl) {
       console.error("MISSING: PRODUCTION_REDIRECT_URL environment variable");
     }
+
+    // Set loaded state after a small delay to ensure env variables are properly loaded
+    setTimeout(() => setIsLoaded(true), 500);
   }, [appId, locationId, redirectUrl]);
 
   const handleInputChange = (
@@ -210,94 +214,101 @@ export default function Payment() {
       </div>
 
       <h2 className="text-xl font-bold mb-4">Payment Details</h2>
-      <PaymentForm
-        applicationId={appId}
-        locationId={locationId}
-        createPaymentRequest={() => {
-          console.log("createPaymentRequest called");
-          return {
-            countryCode: "US",
-            currencyCode: "USD",
-            total: {
-              amount: "99.00",
-              label: "Total",
-            },
-          };
-        }}
-        cardTokenizeResponseReceived={async (token) => {
-          console.log("Card tokenize response received:", token);
-          if (token.token) {
-            // Prepare billing contact from form inputs
-            const contact = {
-              addressLines: [
-                billingDetails.addressLine1,
-                billingDetails.addressLine2,
-              ].filter(Boolean),
-              familyName: billingDetails.familyName,
-              givenName: billingDetails.givenName,
-              countryCode: billingDetails.countryCode,
-              city: billingDetails.city,
-              state: billingDetails.state,
-              postalCode: billingDetails.postalCode,
+      {isLoaded ? (
+        <PaymentForm
+          applicationId={appId}
+          locationId={locationId}
+          createPaymentRequest={() => {
+            console.log("createPaymentRequest called");
+            return {
+              countryCode: "US",
+              currencyCode: "USD",
+              total: {
+                amount: "99.00",
+                label: "Total",
+              },
             };
+          }}
+          cardTokenizeResponseReceived={async (token) => {
+            console.log("Card tokenize response received:", token);
+            if (token.token) {
+              // Prepare billing contact from form inputs
+              const contact = {
+                addressLines: [
+                  billingDetails.addressLine1,
+                  billingDetails.addressLine2,
+                ].filter(Boolean),
+                familyName: billingDetails.familyName,
+                givenName: billingDetails.givenName,
+                countryCode: billingDetails.countryCode,
+                city: billingDetails.city,
+                state: billingDetails.state,
+                postalCode: billingDetails.postalCode,
+              };
 
-            console.log("Billing contact:", contact);
-            try {
-              const result = await submitPayment(token.token, {
-                ...billingDetails,
-                eventId,
-                eventTitle,
-              });
+              console.log("Billing contact:", contact);
+              try {
+                const result = await submitPayment(token.token, {
+                  ...billingDetails,
+                  eventId,
+                  eventTitle,
+                });
 
-              console.log(result);
+                console.log(result);
 
-              if (result?.result?.payment?.status === "COMPLETED") {
-                const paymentId = result.result.payment.id;
-                const receiptUrl = result.result.payment.receiptUrl || "";
-                const note = result.result.payment.note || "";
+                if (result?.result?.payment?.status === "COMPLETED") {
+                  const paymentId = result.result.payment.id;
+                  const receiptUrl = result.result.payment.receiptUrl || "";
+                  const note = result.result.payment.note || "";
 
-                // Safely extract amount and currency with fallbacks
-                const amount =
-                  result.result.payment.amountMoney?.amount?.toString() || "0";
-                const currency =
-                  result.result.payment.amountMoney?.currency || "USD";
+                  // Safely extract amount and currency with fallbacks
+                  const amount =
+                    result.result.payment.amountMoney?.amount?.toString() ||
+                    "0";
+                  const currency =
+                    result.result.payment.amountMoney?.currency || "USD";
 
-                // Get card details if available
-                const last4 =
-                  result.result.payment.cardDetails?.card?.last4 || "";
-                const cardBrand =
-                  result.result.payment.cardDetails?.card?.cardBrand || "";
+                  // Get card details if available
+                  const last4 =
+                    result.result.payment.cardDetails?.card?.last4 || "";
+                  const cardBrand =
+                    result.result.payment.cardDetails?.card?.cardBrand || "";
 
-                // Build query parameters with all relevant information
-                const queryParams = new URLSearchParams();
-                queryParams.set("paymentId", paymentId || "");
-                queryParams.set("status", "COMPLETED");
-                queryParams.set("receiptUrl", receiptUrl);
-                queryParams.set("firstName", billingDetails.givenName);
-                queryParams.set("lastName", billingDetails.familyName);
-                queryParams.set("eventTitle", eventTitle || "");
-                queryParams.set("note", note);
-                queryParams.set("amount", amount);
-                queryParams.set("currency", currency);
-                queryParams.set("last4", last4);
-                queryParams.set("cardBrand", cardBrand);
+                  // Build query parameters with all relevant information
+                  const queryParams = new URLSearchParams();
+                  queryParams.set("paymentId", paymentId || "");
+                  queryParams.set("status", "COMPLETED");
+                  queryParams.set("receiptUrl", receiptUrl);
+                  queryParams.set("firstName", billingDetails.givenName);
+                  queryParams.set("lastName", billingDetails.familyName);
+                  queryParams.set("eventTitle", eventTitle || "");
+                  queryParams.set("note", note);
+                  queryParams.set("amount", amount);
+                  queryParams.set("currency", currency);
+                  queryParams.set("last4", last4);
+                  queryParams.set("cardBrand", cardBrand);
 
-                // Use environment variable for redirect URL
-                router.push(`${redirectUrl}?${queryParams.toString()}`);
-              } else {
-                // Handle payment not completed
-                console.error("Payment not completed");
+                  // Use environment variable for redirect URL
+                  router.push(`${redirectUrl}?${queryParams.toString()}`);
+                } else {
+                  // Handle payment not completed
+                  console.error("Payment not completed");
+                }
+              } catch (error) {
+                console.error("Payment error:", error);
               }
-            } catch (error) {
-              console.error("Payment error:", error);
+            } else {
+              console.error("Payment token is undefined");
             }
-          } else {
-            console.error("Payment token is undefined");
-          }
-        }}
-      >
-        <CreditCard />
-      </PaymentForm>
+          }}
+        >
+          <CreditCard />
+        </PaymentForm>
+      ) : (
+        <div className="text-center py-8">
+          <p>Loading payment form...</p>
+        </div>
+      )}
     </div>
   );
 }
