@@ -15,9 +15,9 @@ export default function Payment() {
   const router = useRouter();
   const [isLoaded, setIsLoaded] = useState(false);
   const [config, setConfig] = useState<PaymentConfig>({
-    applicationId: '',
-    locationId: 'main',
-    redirectUrl: '',
+    applicationId: "",
+    locationId: "main",
+    redirectUrl: "",
   });
 
   const searchParams = useSearchParams();
@@ -39,32 +39,19 @@ export default function Payment() {
   useEffect(() => {
     async function fetchConfig() {
       try {
-        const response = await fetch('/api/payment-config');
+        const response = await fetch("/api/payment-config");
         if (!response.ok) {
-          throw new Error('Failed to fetch payment configuration');
+          throw new Error("Failed to fetch payment configuration");
         }
         const data = await response.json();
         setConfig(data);
-        
-        // Add debug logs to check fetched config
-        console.log("Fetched Square SDK Parameters:");
-        console.log("Application ID:", data.applicationId);
-        console.log("Location ID:", data.locationId);
-        console.log("Redirect URL:", data.redirectUrl);
-        
-        if (!data.applicationId) {
-          console.error("MISSING: PRODUCTION_APPLICATION_ID environment variable");
-        }
-        if (!data.redirectUrl) {
-          console.error("MISSING: PRODUCTION_REDIRECT_URL environment variable");
-        }
-        
+
         setIsLoaded(true);
       } catch (error) {
         console.error("Error fetching payment configuration:", error);
       }
     }
-    
+
     fetchConfig();
   }, []);
 
@@ -239,7 +226,6 @@ export default function Payment() {
           applicationId={config.applicationId}
           locationId={config.locationId}
           createPaymentRequest={() => {
-            console.log("createPaymentRequest called");
             return {
               countryCode: "US",
               currencyCode: "USD",
@@ -250,31 +236,13 @@ export default function Payment() {
             };
           }}
           cardTokenizeResponseReceived={async (token) => {
-            console.log("Card tokenize response received:", token);
             if (token.token) {
-              // Prepare billing contact from form inputs
-              const contact = {
-                addressLines: [
-                  billingDetails.addressLine1,
-                  billingDetails.addressLine2,
-                ].filter(Boolean),
-                familyName: billingDetails.familyName,
-                givenName: billingDetails.givenName,
-                countryCode: billingDetails.countryCode,
-                city: billingDetails.city,
-                state: billingDetails.state,
-                postalCode: billingDetails.postalCode,
-              };
-
-              console.log("Billing contact:", contact);
               try {
                 const result = await submitPayment(token.token, {
                   ...billingDetails,
                   eventId,
                   eventTitle,
                 });
-
-                console.log(result);
 
                 if (result?.result?.payment?.status === "COMPLETED") {
                   const paymentId = result.result.payment.id;
@@ -309,7 +277,9 @@ export default function Payment() {
                   queryParams.set("cardBrand", cardBrand);
 
                   // Use config for redirect URL
-                  router.push(`${config.redirectUrl}?${queryParams.toString()}`);
+                  router.push(
+                    `${config.redirectUrl}?${queryParams.toString()}`
+                  );
                 } else {
                   // Handle payment not completed
                   console.error("Payment not completed");
