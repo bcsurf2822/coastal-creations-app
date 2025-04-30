@@ -43,20 +43,25 @@ const extractJsonFromDescription = (
   try {
     console.log("Raw description:", description);
 
-    // Based on the console output, we have a format like:
-    // <p><br> "price": "4500",<br> "description": "Bring your own mat"<br></p>
-
-    // First, clean the description by removing HTML tags
+    // Clean the description by removing HTML tags
     const textContent = description.replace(/<[^>]*>/g, " ").trim();
     console.log("Cleaned description:", textContent);
 
-    // Extract price and description using case-insensitive regex with flexible quote matching
-    const priceMatch = textContent.match(
+    // First try to extract using JSON-like format with quotes
+    const priceJsonMatch = textContent.match(
       /["']price["']\s*:\s*["']([^"']+)["']/i
     );
-    const descMatch = textContent.match(
+    const descJsonMatch = textContent.match(
       /["']description["']\s*:\s*["']([^"']+)["']/i
     );
+
+    // Then try to extract using simpler "key: value" format
+    const priceSimpleMatch = textContent.match(/price\s*:\s*([^\n,]+)/i);
+    const descSimpleMatch = textContent.match(/description\s*:\s*([^\n]+)/i);
+
+    // Use the matches in order of preference
+    const priceMatch = priceJsonMatch || priceSimpleMatch;
+    const descMatch = descJsonMatch || descSimpleMatch;
 
     console.log("Price match:", priceMatch?.[1]);
     console.log("Description match:", descMatch?.[1]);
@@ -65,11 +70,11 @@ const extractJsonFromDescription = (
     const result: { price?: string; description?: string } = {};
 
     if (priceMatch?.[1]) {
-      result.price = priceMatch[1];
+      result.price = priceMatch[1].trim();
     }
 
     if (descMatch?.[1]) {
-      result.description = descMatch[1];
+      result.description = descMatch[1].trim();
     } else if (!priceMatch) {
       // If no price and no description found, use the whole text as description
       result.description = textContent;
