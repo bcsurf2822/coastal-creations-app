@@ -2,7 +2,7 @@
 
 import { submitPayment } from "@/app/actions/actions";
 import { CreditCard, PaymentForm } from "react-square-web-payments-sdk";
-import { useState, ChangeEvent, useEffect } from "react";
+import { useState, ChangeEvent, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { PiSquareLogoFill } from "react-icons/pi";
 
@@ -20,6 +20,9 @@ export default function Payment() {
     locationId: "main",
     redirectUrl: "",
   });
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const errorRef = useRef<HTMLDivElement>(null);
 
   const searchParams = useSearchParams();
   const eventId = searchParams.get("eventId") || "";
@@ -94,6 +97,13 @@ export default function Payment() {
       [name]: value,
     }));
   };
+
+  // Scroll to error when it appears
+  useEffect(() => {
+    if (paymentError && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [paymentError]);
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -345,9 +355,15 @@ export default function Payment() {
                         },
                       };
                     }}
-                    cardTokenizeResponseReceived={async (token) => {
+                    cardTokenizeResponseReceived={async (
+                      token,
+                      verifiedBuyer
+                    ) => {
                       if (token.token) {
                         try {
+                          setIsProcessing(true);
+                          setPaymentError(null);
+
                           const result = await submitPayment(token.token, {
                             ...billingDetails,
                             eventId,
@@ -404,17 +420,109 @@ export default function Payment() {
                           } else {
                             // Handle payment not completed
                             console.error("Payment not completed");
+                            const errorMessage =
+                              result?.error?.message ||
+                              "Your payment could not be processed. Please try again.";
+                            setPaymentError(errorMessage);
                           }
-                        } catch (error) {
+                        } catch (error: any) {
                           console.error("Payment error:", error);
+
+                          // Handle Square API specific errors
+                          if (error.name === "SqError") {
+                            if (error.message.includes("card declined")) {
+                              setPaymentError(
+                                "Your card was declined. Please try a different payment method."
+                              );
+                            } else if (
+                              error.message.includes("insufficient_funds")
+                            ) {
+                              setPaymentError(
+                                "Your card has insufficient funds. Please try a different payment method."
+                              );
+                            } else if (error.message.includes("invalid_card")) {
+                              setPaymentError(
+                                "The card information you provided is invalid. Please check your card details."
+                              );
+                            } else if (error.message.includes("expired_card")) {
+                              setPaymentError(
+                                "Your card has expired. Please try a different card."
+                              );
+                            } else {
+                              setPaymentError(
+                                "There was an issue with your payment. Please try again or use a different card."
+                              );
+                            }
+                          } else {
+                            setPaymentError(
+                              "An error occurred while processing your payment. Please try again or contact support."
+                            );
+                          }
+                        } finally {
+                          setIsProcessing(false);
                         }
                       } else {
                         console.error("Payment token is undefined");
+                        setPaymentError(
+                          "Could not secure your payment details. Please try again."
+                        );
                       }
                     }}
                   >
                     <div className="max-w-md mx-auto">
                       <CreditCard />
+                      {paymentError && (
+                        <div
+                          ref={errorRef}
+                          className="mt-4 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-md shadow-sm"
+                          role="alert"
+                        >
+                          <div className="flex items-center">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-5 w-5 mr-2 text-red-500"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                              />
+                            </svg>
+                            <span className="font-medium">Payment Error</span>
+                          </div>
+                          <p className="mt-1 ml-7">{paymentError}</p>
+                          <button
+                            onClick={() => setPaymentError(null)}
+                            className="mt-2 text-sm text-red-700 hover:text-red-900 flex items-center ml-7"
+                          >
+                            Dismiss
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-4 w-4 ml-1"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M6 18L18 6M6 6l12 12"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
+                      {isProcessing && (
+                        <div className="mt-4 p-3 bg-blue-100 border border-blue-400 text-blue-700 rounded-md flex items-center justify-center">
+                          <div className="animate-spin mr-2 h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                          Processing your payment...
+                        </div>
+                      )}
                     </div>
                   </PaymentForm>
                 </div>
