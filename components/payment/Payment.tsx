@@ -438,7 +438,7 @@ export default function Payment() {
                             );
                           }
                         } catch (error) {
-                          console.error("Payment error:", error);
+                          console.error("Error:", error);
                           setError(
                             "Payment failed: Error: request failed with status 404. Please check your payment details and try again."
                           );
