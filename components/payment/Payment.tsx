@@ -4,6 +4,7 @@ import { submitPayment } from "@/app/actions/actions";
 import { CreditCard, PaymentForm } from "react-square-web-payments-sdk";
 import { useState, ChangeEvent, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { PiSquareLogoFill } from "react-icons/pi";
 
 interface PaymentConfig {
   applicationId: string;
@@ -426,7 +427,10 @@ export default function Payment() {
             </div>
 
             <div className="text-sm text-gray-500 text-center mt-4">
-              <p>Secure payment processing by Square</p>
+              <p className="flex items-center justify-center gap-1">
+                Secure payment processing by{" "}
+                <PiSquareLogoFill className="text-xl" /> Square
+              </p>
             </div>
           </div>
         ) : (
