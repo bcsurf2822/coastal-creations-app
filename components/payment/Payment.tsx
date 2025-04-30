@@ -15,6 +15,7 @@ interface PaymentConfig {
 export default function Payment() {
   const router = useRouter();
   const [isLoaded, setIsLoaded] = useState(false);
+  const [error, setError] = useState<string>("");
   const [config, setConfig] = useState<PaymentConfig>({
     applicationId: "",
     locationId: "main",
@@ -79,6 +80,9 @@ export default function Payment() {
         setIsLoaded(true);
       } catch (error) {
         console.error("Error fetching payment configuration:", error);
+        setError(
+          "Failed to load payment configuration. Please try again later."
+        );
       }
     }
 
@@ -330,6 +334,31 @@ export default function Payment() {
                 Payment Details
               </h2>
 
+              {/* Error Alert */}
+              {error && (
+                <div
+                  className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6"
+                  role="alert"
+                >
+                  <strong className="font-bold">Payment Error: </strong>
+                  <span className="block sm:inline">{error}</span>
+                  <button
+                    className="absolute top-0 bottom-0 right-0 px-4 py-3"
+                    onClick={() => setError("")}
+                  >
+                    <span className="sr-only">Close</span>
+                    <svg
+                      className="fill-current h-6 w-6 text-red-500"
+                      role="button"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+
               {isLoaded ? (
                 <div className="p-6 bg-gray-50 rounded-lg">
                   <PaymentForm
@@ -404,12 +433,21 @@ export default function Payment() {
                           } else {
                             // Handle payment not completed
                             console.error("Payment not completed");
+                            setError(
+                              "Payment could not be completed. Please try again."
+                            );
                           }
                         } catch (error) {
                           console.error("Payment error:", error);
+                          setError(
+                            "Payment failed: Error: request failed with status 404. Please check your payment details and try again."
+                          );
                         }
                       } else {
                         console.error("Payment token is undefined");
+                        setError(
+                          "Payment token is undefined. Please try again."
+                        );
                       }
                     }}
                   >
