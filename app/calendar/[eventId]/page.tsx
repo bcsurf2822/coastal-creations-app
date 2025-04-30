@@ -27,11 +27,61 @@ interface EventData {
   id: string;
   title: string;
   description?: string;
+  price?: string;
   startDate: Date;
   endDate?: Date;
   startTime: string;
   endTime?: string;
 }
+
+// Helper function to extract price and description from the formatted string
+const extractJsonFromDescription = (
+  description?: string
+): { price?: string; description?: string } => {
+  if (!description) return {};
+
+  try {
+    console.log("Raw description:", description);
+
+    // Based on the console output, we have a format like:
+    // <p><br> "price": "4500",<br> "description": "Bring your own mat"<br></p>
+
+    // First, clean the description by removing HTML tags
+    const textContent = description.replace(/<[^>]*>/g, " ").trim();
+    console.log("Cleaned description:", textContent);
+
+    // Extract price and description using case-insensitive regex with flexible quote matching
+    const priceMatch = textContent.match(
+      /["']price["']\s*:\s*["']([^"']+)["']/i
+    );
+    const descMatch = textContent.match(
+      /["']description["']\s*:\s*["']([^"']+)["']/i
+    );
+
+    console.log("Price match:", priceMatch?.[1]);
+    console.log("Description match:", descMatch?.[1]);
+
+    // Build return object
+    const result: { price?: string; description?: string } = {};
+
+    if (priceMatch?.[1]) {
+      result.price = priceMatch[1];
+    }
+
+    if (descMatch?.[1]) {
+      result.description = descMatch[1];
+    } else if (!priceMatch) {
+      // If no price and no description found, use the whole text as description
+      result.description = textContent;
+    }
+
+    console.log("Extracted result:", result);
+    return result;
+  } catch (error) {
+    console.error("Error parsing description:", error);
+    return { description };
+  }
+};
 
 export default function EventPage({
   params,
@@ -77,11 +127,16 @@ export default function EventPage({
           console.log("Found event:", foundEvent);
 
           if (foundEvent) {
+            // Extract price and description from JSON in the description field
+            const { price, description: extractedDescription } =
+              extractJsonFromDescription(foundEvent.description);
+
             // Transform the event to a simpler format
             const transformedEvent = {
               id: foundEvent.id,
               title: foundEvent.summary,
-              description: foundEvent.description,
+              description: extractedDescription,
+              price: price,
               startDate: foundEvent.start.dateTime
                 ? parseISO(foundEvent.start.dateTime)
                 : foundEvent.start.date
@@ -173,10 +228,21 @@ export default function EventPage({
             </div>
           )}
 
+          {eventData.price && (
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold mb-2">Price</h2>
+              <p className="text-lg font-medium">${eventData.price}</p>
+            </div>
+          )}
+
           <Link
             href={`/payments?eventId=${encodeURIComponent(
               eventData.id
-            )}&eventTitle=${encodeURIComponent(eventData.title)}`}
+            )}&eventTitle=${encodeURIComponent(eventData.title)}${
+              eventData.price
+                ? `&price=${encodeURIComponent(eventData.price)}`
+                : ""
+            }`}
             className="px-6 py-3 bg-primary text-black font-medium rounded-md hover:bg-blue-400 hover:text-white transition-colors border-2 border-black cursor-pointer inline-block"
           >
             Register for this event

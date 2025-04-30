@@ -25,14 +25,31 @@ export async function submitPayment(
     postalCode: string;
     eventId?: string;
     eventTitle?: string;
+    eventPrice?: string;
   }
 ): Promise<ApiResponse<CreatePaymentResponse> | undefined> {
   try {
     console.log("Payment Environment:", Environment.Production);
+
+    // Check if price is provided
+    if (!billingDetails.eventPrice) {
+      console.log("No price provided for payment - aborting transaction");
+      return undefined;
+    }
+
     // Extract event info for use in metadata or note
     const eventInfo = billingDetails.eventTitle
       ? `Registration for: ${billingDetails.eventTitle}`
       : "Event registration";
+
+    // Convert price from dollars to cents (multiply by 100)
+    const priceInCents = BigInt(
+      Math.round(parseFloat(billingDetails.eventPrice) * 100)
+    );
+
+    console.log(
+      `Processing payment: $${billingDetails.eventPrice} for ${eventInfo}`
+    );
 
     const result = await paymentsApi.createPayment({
       idempotencyKey: randomUUID(),
@@ -48,14 +65,19 @@ export async function submitPayment(
         postalCode: billingDetails.postalCode,
       },
       amountMoney: {
-        amount: BigInt(500),
+        amount: priceInCents,
         currency: "USD",
       },
     });
 
+    console.log(
+      "Payment processing result:",
+      result.statusCode,
+      result.result?.payment?.status
+    );
     return result;
   } catch (error) {
-    console.log(error);
+    console.log("Payment processing error:", error);
     return undefined;
   }
 }
