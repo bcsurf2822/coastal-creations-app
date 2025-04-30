@@ -93,8 +93,8 @@ export default function Calendar() {
       const startDate = event.start.dateTime
         ? parseISO(event.start.dateTime)
         : event.start.date
-        ? parseISO(event.start.date)
-        : new Date();
+          ? parseISO(event.start.date)
+          : new Date();
 
       // Format the time
       const time = event.start.dateTime
