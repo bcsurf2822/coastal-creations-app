@@ -23,6 +23,28 @@ export default function Payment() {
   const searchParams = useSearchParams();
   const eventId = searchParams.get("eventId") || "";
   const eventTitle = searchParams.get("eventTitle") || "";
+  const eventPrice = searchParams.get("price") || "99.00"; // Default to 99.00 if no price provided
+
+  const [formattedPrice, setFormattedPrice] = useState<string>("99.00");
+
+  // Format price for display and ensure it's a valid number
+  useEffect(() => {
+    try {
+      // Remove any non-numeric characters except decimal point
+      const cleanPrice = eventPrice.replace(/[^\d.]/g, "");
+      const price = parseFloat(cleanPrice);
+
+      if (!isNaN(price)) {
+        // Format to 2 decimal places
+        setFormattedPrice(price.toFixed(2));
+      } else {
+        setFormattedPrice("99.00"); // Default fallback
+      }
+    } catch (e) {
+      console.error("Error formatting price:", e);
+      setFormattedPrice("99.00"); // Default fallback
+    }
+  }, [eventPrice]);
 
   const [billingDetails, setBillingDetails] = useState({
     addressLine1: "",
@@ -73,6 +95,9 @@ export default function Payment() {
           <p className="text-lg text-center">
             You&apos;re registering for:{" "}
             <span className="font-semibold">{eventTitle}</span>
+          </p>
+          <p className="text-lg text-center mt-2">
+            Price: <span className="font-semibold">${formattedPrice}</span>
           </p>
         </div>
       )}
@@ -230,7 +255,7 @@ export default function Payment() {
               countryCode: "US",
               currencyCode: "USD",
               total: {
-                amount: "99.00",
+                amount: formattedPrice,
                 label: "Total",
               },
             };
@@ -242,6 +267,7 @@ export default function Payment() {
                   ...billingDetails,
                   eventId,
                   eventTitle,
+                  eventPrice: formattedPrice,
                 });
 
                 if (result?.result?.payment?.status === "COMPLETED") {

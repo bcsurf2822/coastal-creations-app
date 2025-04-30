@@ -25,6 +25,7 @@ export async function submitPayment(
     postalCode: string;
     eventId?: string;
     eventTitle?: string;
+    eventPrice?: string;
   }
 ): Promise<ApiResponse<CreatePaymentResponse> | undefined> {
   try {
@@ -33,6 +34,13 @@ export async function submitPayment(
     const eventInfo = billingDetails.eventTitle
       ? `Registration for: ${billingDetails.eventTitle}`
       : "Event registration";
+
+    // Convert price from dollars to cents (multiply by 100)
+    const priceInCents = billingDetails.eventPrice
+      ? BigInt(Math.round(parseFloat(billingDetails.eventPrice) * 100))
+      : BigInt(500); // Default to $5.00 if no price provided
+
+    console.log(`Processing payment: $${billingDetails.eventPrice || "5.00"}`);
 
     const result = await paymentsApi.createPayment({
       idempotencyKey: randomUUID(),
@@ -48,7 +56,7 @@ export async function submitPayment(
         postalCode: billingDetails.postalCode,
       },
       amountMoney: {
-        amount: BigInt(500),
+        amount: priceInCents,
         currency: "USD",
       },
     });
