@@ -1,3 +1,5 @@
+"use client";
+
 import { FaFacebook, FaInstagram } from "react-icons/fa";
 import Image from "next/image";
 import { useState, FormEvent } from "react";
