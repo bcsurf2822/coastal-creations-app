@@ -3,7 +3,7 @@
 
 import { useEffect } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { pageview } from '../lib/gtag'; // Adjust path if lib is elsewhere
+import { pageview } from '@/lib/gtag'; 
 
 export default function AnalyticsEvents() {
   const pathname = usePathname();
