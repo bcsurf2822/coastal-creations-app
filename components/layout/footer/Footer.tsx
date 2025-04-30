@@ -1,7 +1,46 @@
+"use client";
+
 import { FaFacebook, FaInstagram } from "react-icons/fa";
 import Image from "next/image";
+import { useState, FormEvent } from "react";
 
 export default function Footer() {
+  const [email, setEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const handleSubscribe = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!email) return;
+
+    setIsSubmitting(true);
+    setMessage("");
+
+    try {
+      const response = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage("Thank you for subscribing!");
+        setEmail("");
+      } else {
+        setMessage(data.error || "Something went wrong. Please try again.");
+      }
+    } catch (error: unknown) {
+      console.error("Newsletter subscription error:", error);
+      setMessage("An error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <footer className="bg-blue-100 text-black py-8">
       <div className="container mx-auto px-4">
@@ -79,18 +118,29 @@ export default function Footer() {
               Sign Up for our Newsletter
             </h3>
 
-            <form className="flex flex-col gap-2">
+            <form className="flex flex-col gap-2" onSubmit={handleSubscribe}>
               <input
                 type="email"
                 placeholder="Enter your email"
                 className="px-3 py-1.5 rounded text-gray-900 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
               />
               <button
                 type="submit"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm transition-colors"
+                disabled={isSubmitting}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm transition-colors disabled:opacity-70"
               >
-                Subscribe
+                {isSubmitting ? "Subscribing..." : "Subscribe"}
               </button>
+              {message && (
+                <p
+                  className={`text-sm ${message.includes("error") || message.includes("wrong") ? "text-red-600" : "text-green-600"}`}
+                >
+                  {message}
+                </p>
+              )}
             </form>
           </div>
         </div>
