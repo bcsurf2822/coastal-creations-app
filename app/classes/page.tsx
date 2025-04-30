@@ -34,6 +34,7 @@ export default function Classes() {
         }
 
         const data = await response.json();
+        console.log(data);
         setEvents(data.events || []);
       } catch (err: unknown) {
         console.error("Error fetching events:", err);
@@ -86,6 +87,32 @@ export default function Classes() {
       minute: "2-digit",
       hour12: true,
     });
+  };
+
+  // Parse description to extract description and price
+  const parseEventDetails = (
+    description?: string
+  ): { description: string; price: string } => {
+    const result = { description: "", price: "" };
+
+    if (!description) return result;
+
+    // Check for "description:" in the text
+    const descMatch = description.match(/description:\s*(.*?)(?:\n|$)/i);
+    if (descMatch && descMatch[1]) {
+      result.description = descMatch[1].trim();
+    } else {
+      // If no "description:" tag, use the whole text as description
+      result.description = description.trim();
+    }
+
+    // Check for "price:" in the text
+    const priceMatch = description.match(/price:\s*(.*?)(?:\n|$)/i);
+    if (priceMatch && priceMatch[1]) {
+      result.price = priceMatch[1].trim();
+    }
+
+    return result;
   };
 
   return (
@@ -265,9 +292,34 @@ export default function Classes() {
                       {formatTime(event.end?.dateTime)}
                     </div>
                   </div>
-                  {event.description && (
-                    <p className="mt-2 text-gray-700">{event.description}</p>
-                  )}
+                  {/* Extract and display description and price */}
+                  {(() => {
+                    const { description, price } = parseEventDetails(
+                      event.description
+                    );
+                    return (
+                      <>
+                        <div className="mt-2">
+                          <span className="font-medium">Description: </span>
+                          <span className="text-gray-700">{description}</span>
+                        </div>
+                        <div className="mt-1">
+                          <span className="font-medium">Price: </span>
+                          <span className="text-gray-700">
+                            {price ? `$${price}` : "TBA"}
+                          </span>
+                        </div>
+                      </>
+                    );
+                  })()}
+                  <div className="mt-4">
+                    <Link
+                      href={`/calendar/${event.id}`}
+                      className="inline-block px-4 py-2 bg-primary text-black font-medium rounded-md hover:bg-blue-400 hover:text-white transition-colors border-2 border-black"
+                    >
+                      Sign Up
+                    </Link>
+                  </div>
                 </div>
               ))}
             </div>
