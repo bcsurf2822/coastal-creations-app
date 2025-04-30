@@ -355,10 +355,7 @@ export default function Payment() {
                         },
                       };
                     }}
-                    cardTokenizeResponseReceived={async (
-                      token,
-                      verifiedBuyer
-                    ) => {
+                    cardTokenizeResponseReceived={async (token) => {
                       if (token.token) {
                         try {
                           setIsProcessing(true);
@@ -425,32 +422,50 @@ export default function Payment() {
                               "Your payment could not be processed. Please try again.";
                             setPaymentError(errorMessage);
                           }
-                        } catch (error: any) {
+                        } catch (error: unknown) {
                           console.error("Payment error:", error);
 
                           // Handle Square API specific errors
-                          if (error.name === "SqError") {
-                            if (error.message.includes("card declined")) {
-                              setPaymentError(
-                                "Your card was declined. Please try a different payment method."
-                              );
-                            } else if (
-                              error.message.includes("insufficient_funds")
-                            ) {
-                              setPaymentError(
-                                "Your card has insufficient funds. Please try a different payment method."
-                              );
-                            } else if (error.message.includes("invalid_card")) {
-                              setPaymentError(
-                                "The card information you provided is invalid. Please check your card details."
-                              );
-                            } else if (error.message.includes("expired_card")) {
-                              setPaymentError(
-                                "Your card has expired. Please try a different card."
-                              );
+                          if (
+                            error &&
+                            typeof error === "object" &&
+                            "name" in error
+                          ) {
+                            const sqError = error as {
+                              name: string;
+                              message: string;
+                            };
+                            if (sqError.name === "SqError") {
+                              if (sqError.message.includes("card declined")) {
+                                setPaymentError(
+                                  "Your card was declined. Please try a different payment method."
+                                );
+                              } else if (
+                                sqError.message.includes("insufficient_funds")
+                              ) {
+                                setPaymentError(
+                                  "Your card has insufficient funds. Please try a different payment method."
+                                );
+                              } else if (
+                                sqError.message.includes("invalid_card")
+                              ) {
+                                setPaymentError(
+                                  "The card information you provided is invalid. Please check your card details."
+                                );
+                              } else if (
+                                sqError.message.includes("expired_card")
+                              ) {
+                                setPaymentError(
+                                  "Your card has expired. Please try a different card."
+                                );
+                              } else {
+                                setPaymentError(
+                                  "There was an issue with your payment. Please try again or use a different card."
+                                );
+                              }
                             } else {
                               setPaymentError(
-                                "There was an issue with your payment. Please try again or use a different card."
+                                "An error occurred while processing your payment. Please try again or contact support."
                               );
                             }
                           } else {
