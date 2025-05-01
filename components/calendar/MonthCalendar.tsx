@@ -363,7 +363,7 @@ export default function Calendar() {
                                 <div className="flex justify-end mt-1">
                                   <Link
                                     href={`/calendar/${event.id}`}
-                                    className="px-2 py-0.5 bg-primary text-black text-xs font-bold rounded-md shadow-sm hover:bg-blue-400 hover:text-white transition-all duration-300 border border-primary hover:border-blue-700"
+                                    className="px-2 py-0.5 bg-white text-xs font-medium rounded-full shadow-sm hover:bg-gray-50 transition-all duration-300 border border-gray-300 hover:border-gray-400"
                                   >
                                     Sign Up
                                   </Link>
@@ -428,29 +428,26 @@ export default function Calendar() {
                       className="flex border-l-4 pl-2 sm:pl-3 py-1.5 sm:py-2 md:py-3 text-xs sm:text-sm md:text-base"
                       style={{ borderColor: getEventBorderColor(event.type) }}
                     >
-                      <div className="w-16 sm:w-24 md:w-32 flex-shrink-0">
-                        <div className="font-medium">
-                          {format(event.date, "MMM d")}
-                        </div>
-                        <div className="text-xs sm:text-xs md:text-sm text-gray-600">
-                          {event.time}
-                          {event.endTime ? ` - ${event.endTime}` : ""}
-                        </div>
-                      </div>
                       <div className="flex-grow min-w-0">
-                        <div className="font-medium truncate">
+                        <div className="font-medium truncate mb-1">
                           {event.title}
                         </div>
-                        {showSignUp && (
-                          <div className="mt-1 md:mt-2">
-                            <Link
-                              href={`/calendar/${event.id}`}
-                              className="text-xs md:text-sm font-medium text-primary hover:underline"
-                            >
-                              Sign Up
-                            </Link>
+                        <div className="flex items-center justify-between">
+                          <div className="text-xs sm:text-xs md:text-sm text-gray-600">
+                            {format(event.date, "MMM d")} • {event.time}
+                            {event.endTime ? ` - ${event.endTime}` : ""}
                           </div>
-                        )}
+                          {showSignUp && (
+                            <div>
+                              <Link
+                                href={`/calendar/${event.id}`}
+                                className="px-2 py-0.5 bg-white text-xs font-medium rounded-full shadow-sm hover:bg-gray-50 transition-all duration-300 border border-gray-300 hover:border-gray-400"
+                              >
+                                Sign Up
+                              </Link>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
