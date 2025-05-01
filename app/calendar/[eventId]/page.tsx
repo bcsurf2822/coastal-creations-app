@@ -41,11 +41,11 @@ const extractJsonFromDescription = (
   if (!description) return {};
 
   try {
-    console.log("Raw description:", description);
+
 
     // Clean the description by removing HTML tags
     const textContent = description.replace(/<[^>]*>/g, " ").trim();
-    console.log("Cleaned description:", textContent);
+
 
     // First try to extract using JSON-like format with quotes
     const priceJsonMatch = textContent.match(
@@ -63,8 +63,7 @@ const extractJsonFromDescription = (
     const priceMatch = priceJsonMatch || priceSimpleMatch;
     const descMatch = descJsonMatch || descSimpleMatch;
 
-    console.log("Price match:", priceMatch?.[1]);
-    console.log("Description match:", descMatch?.[1]);
+
 
     // Build return object
     const result: { price?: string; description?: string } = {};
@@ -80,7 +79,6 @@ const extractJsonFromDescription = (
       result.description = textContent;
     }
 
-    console.log("Extracted result:", result);
     return result;
   } catch (error) {
     console.error("Error parsing description:", error);
@@ -106,7 +104,7 @@ export default function EventPage({
       setIsLoading(true);
       setError(null);
 
-      console.log(`Looking for event with ID: ${eventId}`);
+   
 
       try {
         const response = await fetch("/api/calendar");
@@ -117,19 +115,16 @@ export default function EventPage({
 
         const data = await response.json();
 
-        console.log("All events:", data.events);
+  
 
         if (data.events) {
-          console.log(
-            "Event IDs from API:",
-            data.events.map((e: ApiCalendarEvent) => e.id)
-          );
+   
 
           const foundEvent = data.events.find(
             (e: ApiCalendarEvent) => e.id === eventId
           );
 
-          console.log("Found event:", foundEvent);
+     
 
           if (foundEvent) {
             // Extract price and description from JSON in the description field

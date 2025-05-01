@@ -9,7 +9,7 @@ const SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"];
 
 export async function GET() {
   try {
-    console.log("Starting calendar API request...");
+
 
     const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON!);
 
@@ -17,21 +17,20 @@ export async function GET() {
       credentials,
       scopes: SCOPES,
     });
-    console.log("GoogleAuth instance created");
+
 
     try {
       const authClient = await auth.getClient();
-      console.log("Auth client successfully obtained");
+ 
 
       // 2. Create the Google Calendar API client
       const calendar = google.calendar({
         version: "v3",
         auth: authClient as OAuth2Client,
       });
-      console.log("Calendar client created");
 
-      // 3. Fetch upcoming events from the specified calendar
-      console.log(`Fetching events for calendar: ${CALENDAR_ID}`);
+
+
       const response = await calendar.events.list({
         calendarId: CALENDAR_ID,
         timeMin: new Date().toISOString(), // Start from the current time
@@ -39,9 +38,7 @@ export async function GET() {
         singleEvents: true, // Expand recurring events
         orderBy: "startTime", // Order by start time
       });
-      console.log(
-        `Successfully fetched ${response.data.items?.length || 0} events`
-      );
+
 
       const events = response.data.items || []; // Ensure events is always an array
 

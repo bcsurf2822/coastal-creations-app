@@ -29,11 +29,11 @@ export async function submitPayment(
   }
 ): Promise<ApiResponse<CreatePaymentResponse> | undefined> {
   try {
-    console.log("Payment Environment:", Environment.Production);
+
 
     // Check if price is provided
     if (!billingDetails.eventPrice) {
-      console.log("No price provided for payment - aborting transaction");
+
       return undefined;
     }
 
@@ -47,9 +47,7 @@ export async function submitPayment(
       Math.round(parseFloat(billingDetails.eventPrice) * 100)
     );
 
-    console.log(
-      `Processing payment: $${billingDetails.eventPrice} for ${eventInfo}`
-    );
+
 
     const result = await paymentsApi.createPayment({
       idempotencyKey: randomUUID(),

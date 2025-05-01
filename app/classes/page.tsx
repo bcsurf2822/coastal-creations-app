@@ -35,7 +35,7 @@ export default function Classes() {
         }
 
         const data = await response.json();
-        console.log(data);
+        
         setEvents(data.events || []);
       } catch (err: unknown) {
         console.error("Error fetching events:", err);

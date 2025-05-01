@@ -86,7 +86,7 @@ export default function Calendar() {
 
   // Transform API events to our format
   const transformEvents = (events: ApiCalendarEvent[]) => {
-    console.log("Raw events from API:", events);
+   
 
     return events.map((event) => {
       // Parse the date from the event
@@ -122,7 +122,7 @@ export default function Calendar() {
         type = "event";
       }
 
-      console.log(`Event ID: ${event.id}, Title: ${event.summary}`);
+
 
       return {
         id: event.id,
