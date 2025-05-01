@@ -58,11 +58,19 @@ export default function Classes() {
       }
     }
 
-    // Check if we already have an event with this summary
-    const existingIndex = acc.findIndex((e) => e.summary === event.summary);
+    // Get lowercase summary to check for camp events
+    const summary = event.summary?.toLowerCase() || "";
+    const isCampEvent = summary.includes("camp");
 
-    if (existingIndex === -1) {
-      // If no event with this name exists yet, add it
+    // For camp events, check if we already have an event with this summary
+    if (isCampEvent) {
+      const existingIndex = acc.findIndex((e) => e.summary === event.summary);
+      if (existingIndex === -1) {
+        // If no event with this name exists yet, add it
+        acc.push(event);
+      }
+    } else {
+      // For non-camp events, always add them
       acc.push(event);
     }
 

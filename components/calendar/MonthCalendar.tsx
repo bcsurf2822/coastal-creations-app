@@ -336,6 +336,13 @@ export default function Calendar() {
                               (e) => e.title === event.title
                             ) === calendarEvents.indexOf(event);
 
+                          // Only apply "first occurrence" rule to camp events, show Sign Up for all others
+                          const isCampEvent = event.title
+                            .toLowerCase()
+                            .includes("camp");
+                          const showSignUp =
+                            !isCampEvent || (isCampEvent && isFirstOccurrence);
+
                           return (
                             <div
                               key={idx}
@@ -352,7 +359,7 @@ export default function Calendar() {
                                   {event.endTime ? ` - ${event.endTime}` : ""}
                                 </div>
                               </div>
-                              {isFirstOccurrence && (
+                              {showSignUp && (
                                 <div className="flex justify-end mt-1">
                                   <Link
                                     href={`/calendar/${event.id}`}
@@ -408,6 +415,13 @@ export default function Calendar() {
                     calendarEvents.findIndex((e) => e.title === event.title) ===
                     calendarEvents.indexOf(event);
 
+                  // Only apply "first occurrence" rule to camp events, show Sign Up for all others
+                  const isCampEvent = event.title
+                    .toLowerCase()
+                    .includes("camp");
+                  const showSignUp =
+                    !isCampEvent || (isCampEvent && isFirstOccurrence);
+
                   return (
                     <div
                       key={event.id}
@@ -427,7 +441,7 @@ export default function Calendar() {
                         <div className="font-medium truncate">
                           {event.title}
                         </div>
-                        {isFirstOccurrence && (
+                        {showSignUp && (
                           <div className="mt-1 md:mt-2">
                             <Link
                               href={`/calendar/${event.id}`}
