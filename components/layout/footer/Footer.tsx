@@ -2,6 +2,7 @@
 
 import { FaFacebook, FaInstagram } from "react-icons/fa";
 import Image from "next/image";
+import Link from "next/link";
 import { useState, FormEvent } from "react";
 
 export default function Footer() {
@@ -88,27 +89,31 @@ export default function Footer() {
               </p>
               <p>
                 <span className="font-bold">Email:</span>{" "}
-                <a
+                <Link
                   href="mailto:info@coastalcreationsstudio.com"
                   className="hover:underline"
                 >
                   info@coastalcreationsstudio.com
-                </a>
+                </Link>
               </p>
             </div>
             <div className="mt-4 flex space-x-4">
-              <a
+              <Link
                 href="https://www.facebook.com/p/Coastal-Creations-Studio-61574989546371"
                 className="text-black hover:text-blue-700 transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 <FaFacebook size={20} />
-              </a>
-              <a
+              </Link>
+              <Link
                 href="https://www.instagram.com/coastalcreationsocnj/?igsh=MTZrMG5odHJ4bXZrZA%3D%3D"
                 className="text-black hover:text-pink-600 transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 <FaInstagram size={20} />
-              </a>
+              </Link>
             </div>
           </div>
 
