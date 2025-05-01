@@ -125,18 +125,8 @@ export default function Payment() {
                 </div>
               ) : (
                 <div className="mt-4 bg-white/70 py-3 px-8 rounded-lg inline-block shadow-md">
-                  <p className="text-xl font-medium text-black">
-                    Sorry, please email us to register for this event.
-                  </p>
-                  <p className="text-lg text-black mt-1">
-                    <button
-                      onClick={() =>
-                        (window.location.href = "mailto:info@example.com")
-                      }
-                      className="underline"
-                    >
-                      Email info@example.com
-                    </button>
+                  <p className="text-xl font-medium text-red-500">
+                    Sorry, payments are currently not available for this event.
                   </p>
                 </div>
               )}
@@ -478,16 +468,14 @@ export default function Payment() {
           </div>
         ) : (
           <div className="p-10 text-center">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">
-              Alternative Registration Options
-            </h2>
             <p className="text-lg mb-6">
               To register for this event, please contact us directly by email.
             </p>
             <div className="flex justify-center gap-4 mb-8">
               <button
                 onClick={() =>
-                  (window.location.href = "mailto:info@example.com")
+                  (window.location.href =
+                    "mailto:info@coastalcreationsstudio.com")
                 }
                 className="px-6 py-3 bg-white text-black font-medium rounded-md hover:bg-gray-100 transition-colors border-2 border-black flex items-center justify-center"
               >
@@ -505,7 +493,7 @@ export default function Payment() {
                     d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                   />
                 </svg>
-                Email Us
+                Email
               </button>
             </div>
             <p className="text-gray-600">
