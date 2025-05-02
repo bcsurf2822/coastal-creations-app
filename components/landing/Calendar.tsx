@@ -84,8 +84,8 @@ export default function Calendar() {
       const eventDate = event.start.dateTime
         ? new Date(event.start.dateTime)
         : event.start.date
-        ? new Date(event.start.date)
-        : null;
+          ? new Date(event.start.date)
+          : null;
 
       if (!eventDate) return false;
 
@@ -138,20 +138,30 @@ export default function Calendar() {
               <div className="flex space-x-6 min-w-max pb-4">
                 {dates.map((date, index) => {
                   const dayEvents = getEventsForDay(date);
+                  const isToday =
+                    new Date().toDateString() === date.toDateString();
 
                   return (
                     <div
                       key={index}
-                      className="workshop-day border border-gray-200 rounded-lg overflow-hidden min-w-[220px] shadow-sm hover:shadow-md transition-shadow duration-300"
+                      className="workshop-day border border-gray-200 rounded-lg overflow-hidden min-w-[240px] shadow-md hover:shadow-lg transition-all duration-300"
                     >
-                      <div className="bg-primary text-black text-center py-4">
-                        <p className="text-lg font-medium mt-2 text-black">
+                      <div
+                        className={`text-center py-4 ${isToday ? "bg-blue-300 text-white" : "bg-gray-200 text-black"}`}
+                      >
+                        <p
+                          className={`text-lg font-medium mt-2 ${isToday ? "text-white" : "text-black"}`}
+                        >
                           {formatDay(date)}
                         </p>
-                        <p className="text-sm uppercase tracking-wider text-black/80">
+                        <p
+                          className={`text-sm uppercase tracking-wider ${isToday ? "text-white/90" : "text-black/80"}`}
+                        >
                           {formatMonth(date)}
                         </p>
-                        <p className="text-3xl font-bold mt-1 text-black">
+                        <p
+                          className={`text-3xl font-bold mt-1 ${isToday ? "text-white" : "text-black"}`}
+                        >
                           {formatDate(date)}
                         </p>
                       </div>
@@ -164,17 +174,13 @@ export default function Calendar() {
                                 idx !== 0
                                   ? "border-t border-gray-100 pt-4 mt-4"
                                   : ""
-                              } ${
-                                idx !== dayEvents.length - 1
-                                  ? "border-b border-gray-100 pb-4 mb-4"
-                                  : ""
                               }`}
                             >
                               <div className="flex flex-col items-start mb-2">
                                 <p className="font-medium text-primary text-left">
                                   {event.summary}
                                 </p>
-                                <p className="text-xs bg-blue-100 text-secondary px-2 py-1 rounded-full mt-1">
+                                <p className="text-xs bg-blue-100 text-secondary px-2 py-1 rounded-full mt-1 font-medium">
                                   {event.start.dateTime
                                     ? formatEventTime(event.start.dateTime)
                                     : "All Day"}
@@ -183,7 +189,7 @@ export default function Calendar() {
                               <div className="mt-3 flex justify-end">
                                 <Link
                                   href={`/calendar/${event.id}`}
-                                  className="text-xs font-bold px-3 py-1.5 bg-primary text-black rounded-md shadow-sm hover:bg-blue-400 hover:text-white transition-all duration-300 border border-primary hover:border-blue-700 transform hover:-translate-y-0.5"
+                                  className="text-xs font-bold px-3 py-1.5 bg-blue-500 text-white rounded-md shadow-sm hover:bg-blue-600 transition-all duration-300 transform hover:-translate-y-0.5"
                                 >
                                   Sign Up
                                 </Link>
@@ -191,7 +197,21 @@ export default function Calendar() {
                             </div>
                           ))
                         ) : (
-                          <div className="py-6 text-center text-gray-500 min-h-[100px] flex items-center justify-center">
+                          <div className="py-8 text-center text-gray-500 min-h-[120px] flex flex-col items-center justify-center">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-6 w-6 text-gray-400 mb-2"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                              />
+                            </svg>
                             <p>No events scheduled</p>
                           </div>
                         )}
@@ -206,7 +226,7 @@ export default function Calendar() {
           <div className="text-center mt-10">
             <Link
               href="/calendar"
-              className="inline-block bg-primary text-black hover:bg-primary/90 font-medium px-8 py-3 rounded-md transition duration-300 shadow-md hover:shadow-lg"
+              className="inline-block bg-blue-500 text-white hover:bg-blue-600 font-medium px-8 py-3 rounded-md transition duration-300 shadow-md hover:shadow-lg"
             >
               View Full Calendar
             </Link>

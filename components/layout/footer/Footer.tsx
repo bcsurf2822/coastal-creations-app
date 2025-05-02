@@ -135,7 +135,7 @@ export default function Footer() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm transition-colors disabled:opacity-70"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded text-sm transition-colors disabled:opacity-70 cursor-pointer"
               >
                 {isSubmitting ? "Subscribing..." : "Subscribe"}
               </button>
