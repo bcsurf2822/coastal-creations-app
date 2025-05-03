@@ -84,9 +84,7 @@ export default function Footer() {
                 <span>411 E 8th Street</span>
               </p>
               <p>Ocean City, NJ 08226</p>
-              <p>
-                <span className="font-bold">Phone:</span> (609) 399-0030
-              </p>
+             
               <p>
                 <span className="font-bold">Email:</span>{" "}
                 <Link
