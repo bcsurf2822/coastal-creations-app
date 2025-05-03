@@ -16,6 +16,7 @@ export default function Payment() {
   const router = useRouter();
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState<string>("");
+  const [formValid, setFormValid] = useState(false);
   const [config, setConfig] = useState<PaymentConfig>({
     applicationId: "",
     locationId: "main",
@@ -29,6 +30,19 @@ export default function Payment() {
 
   const [formattedPrice, setFormattedPrice] = useState<string>("");
   const [isPriceAvailable, setIsPriceAvailable] = useState<boolean>(true);
+
+  const [billingDetails, setBillingDetails] = useState({
+    addressLine1: "",
+    addressLine2: "",
+    familyName: "",
+    givenName: "",
+    countryCode: "US",
+    city: "",
+    state: "",
+    postalCode: "",
+    email: "",
+    phoneNumber: "",
+  });
 
   // Format price for display and ensure it's a valid number
   useEffect(() => {
@@ -55,16 +69,23 @@ export default function Payment() {
     }
   }, [eventPrice]);
 
-  const [billingDetails, setBillingDetails] = useState({
-    addressLine1: "",
-    addressLine2: "",
-    familyName: "",
-    givenName: "",
-    countryCode: "US",
-    city: "",
-    state: "",
-    postalCode: "",
-  });
+  // Validate form fields
+  useEffect(() => {
+    const isContactProvided =
+      billingDetails.email.trim() !== "" ||
+      billingDetails.phoneNumber.trim() !== "";
+
+    const areRequiredFieldsFilled =
+      billingDetails.givenName.trim() !== "" &&
+      billingDetails.familyName.trim() !== "" &&
+      billingDetails.addressLine1.trim() !== "" &&
+      billingDetails.city.trim() !== "" &&
+      billingDetails.state.trim() !== "" &&
+      billingDetails.postalCode.trim() !== "" &&
+      isContactProvided;
+
+    setFormValid(areRequiredFieldsFilled);
+  }, [billingDetails]);
 
   // Fetch payment configuration from API
   useEffect(() => {
@@ -306,6 +327,47 @@ export default function Payment() {
                     <option value="AU">Australia</option>
                   </select>
                 </div>
+
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={billingDetails.email}
+                    onChange={handleInputChange}
+                    className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="phoneNumber"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    id="phoneNumber"
+                    name="phoneNumber"
+                    value={billingDetails.phoneNumber}
+                    onChange={handleInputChange}
+                    className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <p className="text-sm text-gray-600 italic">
+                    * Either Email Address or Phone Number is required for
+                    contact purposes.
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -356,6 +418,27 @@ export default function Payment() {
 
               {isLoaded ? (
                 <div className="p-6 bg-gray-50 rounded-lg">
+                  {!formValid && (
+                    <div className="mb-4 p-3 bg-yellow-50 border border-yellow-300 text-yellow-800 rounded-lg">
+                      <p className="flex items-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5 mr-2"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Please complete all required fields above before
+                        proceeding with payment. You must provide either an
+                        email address or phone number.
+                      </p>
+                    </div>
+                  )}
                   <PaymentForm
                     applicationId={config.applicationId}
                     locationId={config.locationId}
@@ -370,6 +453,27 @@ export default function Payment() {
                       };
                     }}
                     cardTokenizeResponseReceived={async (token) => {
+                      // Validate form before proceeding
+                      const isContactProvided =
+                        billingDetails.email.trim() !== "" ||
+                        billingDetails.phoneNumber.trim() !== "";
+
+                      const areRequiredFieldsFilled =
+                        billingDetails.givenName.trim() !== "" &&
+                        billingDetails.familyName.trim() !== "" &&
+                        billingDetails.addressLine1.trim() !== "" &&
+                        billingDetails.city.trim() !== "" &&
+                        billingDetails.state.trim() !== "" &&
+                        billingDetails.postalCode.trim() !== "" &&
+                        isContactProvided;
+
+                      if (!areRequiredFieldsFilled) {
+                        setError(
+                          "Please fill in all required fields. Either email or phone number must be provided."
+                        );
+                        return;
+                      }
+
                       if (token.token) {
                         try {
                           const result = await submitPayment(token.token, {
@@ -421,6 +525,17 @@ export default function Payment() {
                             queryParams.set("last4", last4);
                             queryParams.set("cardBrand", cardBrand);
 
+                            // Add contact information to success page
+                            if (billingDetails.email) {
+                              queryParams.set("email", billingDetails.email);
+                            }
+                            if (billingDetails.phoneNumber) {
+                              queryParams.set(
+                                "phone",
+                                billingDetails.phoneNumber
+                              );
+                            }
+
                             // Use config for redirect URL
                             router.push(
                               `${config.redirectUrl}?${queryParams.toString()}`
@@ -448,6 +563,12 @@ export default function Payment() {
                   >
                     <div className="max-w-md mx-auto">
                       <CreditCard />
+                      {!formValid && (
+                        <div className="mt-4 text-red-600 text-center text-sm font-medium">
+                          Please complete all required fields above before
+                          submitting payment
+                        </div>
+                      )}
                     </div>
                   </PaymentForm>
                 </div>
