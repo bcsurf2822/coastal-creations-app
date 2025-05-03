@@ -17,6 +17,18 @@ interface CalendarEvent {
   end?: EventDateTime;
 }
 
+// New interface for grouped events
+interface GroupedEvent {
+  summary: string;
+  description: string;
+  price: string;
+  occurrences: {
+    id: string;
+    start?: EventDateTime;
+    end?: EventDateTime;
+  }[];
+}
+
 export default function Classes() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,7 +47,7 @@ export default function Classes() {
         }
 
         const data = await response.json();
-        
+
         setEvents(data.events || []);
       } catch (err: unknown) {
         console.error("Error fetching events:", err);
@@ -47,56 +59,6 @@ export default function Classes() {
 
     fetchEvents();
   }, []);
-
-  // Filter events by type and keep only the first occurrence of events with the same name
-  const filteredEvents = events.reduce<CalendarEvent[]>((acc, event) => {
-    // First, check if the event matches the filter
-    if (filter !== "all") {
-      const summary = event.summary?.toLowerCase() || "";
-      if (!summary.includes(filter.toLowerCase())) {
-        return acc; // Skip this event if it doesn't match the filter
-      }
-    }
-
-    // Get lowercase summary to check for camp events
-    const summary = event.summary?.toLowerCase() || "";
-    const isCampEvent = summary.includes("camp");
-
-    // For camp events, check if we already have an event with this summary
-    if (isCampEvent) {
-      const existingIndex = acc.findIndex((e) => e.summary === event.summary);
-      if (existingIndex === -1) {
-        // If no event with this name exists yet, add it
-        acc.push(event);
-      }
-    } else {
-      // For non-camp events, always add them
-      acc.push(event);
-    }
-
-    return acc;
-  }, []);
-
-  const formatDate = (dateTimeString?: string): string => {
-    if (!dateTimeString) return "";
-    const date = new Date(dateTimeString);
-    return date.toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
-  const formatTime = (dateTimeString?: string): string => {
-    if (!dateTimeString) return "";
-    const date = new Date(dateTimeString);
-    return date.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
-  };
 
   // Parse description to extract description and price
   const parseEventDetails = (
@@ -124,10 +86,125 @@ export default function Classes() {
     return result;
   };
 
+  // Group events by name and organize dates
+  const groupEvents = (events: CalendarEvent[]): GroupedEvent[] => {
+    const eventMap = new Map<string, GroupedEvent>();
+
+    events.forEach((event) => {
+      // First, check if the event matches the filter
+      if (filter !== "all") {
+        const summary = event.summary?.toLowerCase() || "";
+        if (!summary.includes(filter.toLowerCase())) {
+          return; // Skip this event if it doesn't match the filter
+        }
+      }
+
+      const summary = event.summary || "Untitled Event";
+      const { description, price } = parseEventDetails(event.description);
+
+      if (!eventMap.has(summary)) {
+        // Create a new group for this event name
+        eventMap.set(summary, {
+          summary,
+          description,
+          price,
+          occurrences: [
+            {
+              id: event.id,
+              start: event.start,
+              end: event.end,
+            },
+          ],
+        });
+      } else {
+        // Add this occurrence to the existing group
+        const group = eventMap.get(summary)!;
+        group.occurrences.push({
+          id: event.id,
+          start: event.start,
+          end: event.end,
+        });
+      }
+    });
+
+    // Sort events alphabetically by name
+    return Array.from(eventMap.values());
+  };
+
+  // Sort dates for display
+  const sortDates = (occurrences: GroupedEvent["occurrences"]) => {
+    return occurrences.sort((a, b) => {
+      const dateA = a.start?.dateTime
+        ? new Date(a.start.dateTime)
+        : new Date(0);
+      const dateB = b.start?.dateTime
+        ? new Date(b.start.dateTime)
+        : new Date(0);
+      return dateA.getTime() - dateB.getTime();
+    });
+  };
+
+  const formatDate = (dateTimeString?: string): string => {
+    if (!dateTimeString) return "";
+    const date = new Date(dateTimeString);
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const formatTime = (dateTimeString?: string): string => {
+    if (!dateTimeString) return "";
+    const date = new Date(dateTimeString);
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  // Format dates in a compact way
+  const formatCompactDates = (
+    occurrences: GroupedEvent["occurrences"]
+  ): string => {
+    // Sort the occurrences by date
+    const sortedOccurrences = sortDates(occurrences);
+
+    // Group by month
+    const datesByMonth: Record<string, number[]> = {};
+
+    sortedOccurrences.forEach((occurrence) => {
+      if (!occurrence.start?.dateTime) return;
+
+      const date = new Date(occurrence.start.dateTime);
+      const month = date.toLocaleDateString("en-US", { month: "long" });
+      const day = date.getDate();
+
+      if (!datesByMonth[month]) {
+        datesByMonth[month] = [];
+      }
+
+      datesByMonth[month].push(day);
+    });
+
+    // Format each month's dates
+    const formattedDates = Object.entries(datesByMonth).map(([month, days]) => {
+      const sortedDays = days.sort((a, b) => a - b);
+      return `${month} ${sortedDays.join(", ")}`;
+    });
+
+    return formattedDates.join(" | ");
+  };
+
   // Toggle the accordion state
   const toggleAccordion = (id: string) => {
     setOpenAccordion(openAccordion === id ? null : id);
   };
+
+  // Get grouped events
+  const groupedEvents = groupEvents(events);
 
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
@@ -320,7 +397,7 @@ export default function Classes() {
             <div className="bg-red-100 border border-red-300 text-red-700 p-4 rounded-lg">
               <p>Error loading events: {error}</p>
             </div>
-          ) : filteredEvents.length === 0 ? (
+          ) : groupedEvents.length === 0 ? (
             <div className="bg-gray-100 p-6 rounded-lg text-center">
               <p>
                 No {filter !== "all" ? filter : ""} events currently scheduled.
@@ -328,46 +405,57 @@ export default function Classes() {
             </div>
           ) : (
             <div className="grid gap-4">
-              {filteredEvents.map((event) => (
+              {groupedEvents.map((event) => (
                 <div
-                  key={event.id}
+                  key={event.summary}
                   className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
                 >
                   <h3 className="text-xl font-medium">{event.summary}</h3>
-                  <div className="flex flex-col sm:flex-row sm:justify-between mt-2">
-                    <div className="text-gray-600">
-                      <span className="font-medium">Date:</span>{" "}
-                      {formatDate(event.start?.dateTime)}
+
+                  {event.occurrences.length > 1 ? (
+                    // Multiple occurrences - show compact date format
+                    <div className="mt-2">
+                      <div className="text-gray-600">
+                        <span className="font-medium">Dates: </span>
+                        {formatCompactDates(event.occurrences)}
+                      </div>
+                      <div className="text-gray-600">
+                        <span className="font-medium">Time: </span>
+                        {formatTime(
+                          event.occurrences[0].start?.dateTime
+                        )} - {formatTime(event.occurrences[0].end?.dateTime)}
+                      </div>
                     </div>
-                    <div className="text-gray-600">
-                      <span className="font-medium">Time:</span>{" "}
-                      {formatTime(event.start?.dateTime)} -{" "}
-                      {formatTime(event.end?.dateTime)}
+                  ) : (
+                    // Single occurrence - show full date/time
+                    <div className="flex flex-col sm:flex-row sm:justify-between mt-2">
+                      <div className="text-gray-600">
+                        <span className="font-medium">Date: </span>
+                        {formatDate(event.occurrences[0].start?.dateTime)}
+                      </div>
+                      <div className="text-gray-600">
+                        <span className="font-medium">Time: </span>
+                        {formatTime(
+                          event.occurrences[0].start?.dateTime
+                        )} - {formatTime(event.occurrences[0].end?.dateTime)}
+                      </div>
                     </div>
+                  )}
+
+                  <div className="mt-2">
+                    <span className="font-medium">Description: </span>
+                    <span className="text-gray-700">{event.description}</span>
                   </div>
-                  {/* Extract and display description and price */}
-                  {(() => {
-                    const { description, price } = parseEventDetails(
-                      event.description
-                    );
-                    return (
-                      <>
-                        <div className="mt-2">
-                          <span className="font-medium">Description: </span>
-                          <span className="text-gray-700">{description}</span>
-                        </div>
-                        <div className="mt-1">
-                          <span className="font-medium">Price: </span>
-                          <span className="text-gray-700">
-                            {price ? `$${price}` : "TBA"}
-                          </span>
-                        </div>
-                      </>
-                    );
-                  })()}
+                  <div className="mt-1">
+                    <span className="font-medium">Price: </span>
+                    <span className="text-gray-700">
+                      {event.price ? `$${event.price}` : "TBA"}
+                    </span>
+                  </div>
+
                   <div className="mt-4">
                     <Link
-                      href={`/calendar/${event.id}`}
+                      href={`/calendar/${event.occurrences[0].id}`}
                       className="inline-block px-4 py-2 bg-primary text-black font-medium rounded-md hover:bg-blue-400 hover:text-white transition-colors border-2 border-black"
                     >
                       Sign Up
