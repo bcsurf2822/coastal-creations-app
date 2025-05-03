@@ -47,6 +47,10 @@ export default function Calendar() {
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Track which event titles should show sign up buttons
+  const [eventsWithSignUp, setEventsWithSignUp] = useState<Set<string>>(
+    new Set()
+  );
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -69,6 +73,25 @@ export default function Calendar() {
         console.log(data);
         if (data.events) {
           const transformedEvents = transformEvents(data.events);
+
+          // Identify unique event titles and their first occurrences
+          const eventTitlesToFirstId = new Map<string, string>();
+
+          // Sort all events by date first to ensure we identify the earliest occurrence
+          const allEventsSorted = [...transformedEvents].sort(
+            (a, b) => a.date.getTime() - b.date.getTime()
+          );
+
+          // Identify the first occurrence of each unique title
+          allEventsSorted.forEach((event) => {
+            if (!eventTitlesToFirstId.has(event.title)) {
+              eventTitlesToFirstId.set(event.title, event.id);
+            }
+          });
+
+          // Create a set of event IDs that should show the Sign Up button
+          const signUpIds = new Set(eventTitlesToFirstId.values());
+          setEventsWithSignUp(signUpIds);
           setCalendarEvents(transformedEvents);
         }
       } catch (err) {
@@ -104,21 +127,8 @@ export default function Calendar() {
         ? format(parseISO(event.end.dateTime), "h:mm a")
         : "";
 
-      // Determine event type based on summary or other properties
-      let type: EventType = "default";
-      const summary = event.summary.toLowerCase();
-
-      if (summary.includes("paint") || summary.includes("canvas")) {
-        type = "class";
-      } else if (summary.includes("sip") || summary.includes("create")) {
-        type = "event";
-      } else if (summary.includes("workshop")) {
-        type = "workshop";
-      } else if (summary.includes("exhibition")) {
-        type = "exhibition";
-      } else if (summary.includes("block party")) {
-        type = "event";
-      }
+      // Set default event type
+      const type: EventType = "default";
 
       return {
         id: event.id,
@@ -132,12 +142,22 @@ export default function Calendar() {
   };
 
   const getEventsForDay = (day: Date) => {
-    return calendarEvents.filter(
-      (event) =>
-        event.date.getDate() === day.getDate() &&
-        event.date.getMonth() === day.getMonth() &&
-        event.date.getFullYear() === day.getFullYear()
-    );
+    return calendarEvents
+      .filter(
+        (event) =>
+          event.date.getDate() === day.getDate() &&
+          event.date.getMonth() === day.getMonth() &&
+          event.date.getFullYear() === day.getFullYear()
+      )
+      .map((event) => {
+        // Check if this event should show the Sign Up button
+        const showSignUp = eventsWithSignUp.has(event.id);
+
+        return {
+          ...event,
+          showSignUp,
+        };
+      });
   };
 
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
@@ -157,9 +177,9 @@ export default function Calendar() {
     setCurrentMonth(newDate);
   };
 
-  // Generate array of years (current year and 2 years before and after)
+  // Generate array of years (current year and next year only)
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
+  const years = [currentYear, currentYear + 1];
 
   const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -326,19 +346,6 @@ export default function Calendar() {
                       {/* On desktop, show event details */}
                       <div className="hidden md:flex md:flex-col md:gap-1 md:overflow-y-auto">
                         {dayEvents.slice(0, 2).map((event, idx) => {
-                          // Check if this is the first occurrence of this event title
-                          const isFirstOccurrence =
-                            calendarEvents.findIndex(
-                              (e) => e.title === event.title
-                            ) === calendarEvents.indexOf(event);
-
-                          // Only apply "first occurrence" rule to camp events, show Sign Up for all others
-                          const isCampEvent = event.title
-                            .toLowerCase()
-                            .includes("camp");
-                          const showSignUp =
-                            !isCampEvent || (isCampEvent && isFirstOccurrence);
-
                           return (
                             <div
                               key={idx}
@@ -355,7 +362,7 @@ export default function Calendar() {
                                   {event.endTime ? ` - ${event.endTime}` : ""}
                                 </div>
                               </div>
-                              {showSignUp && (
+                              {event.showSignUp && (
                                 <div className="flex justify-end mt-1">
                                   <Link
                                     href={`/calendar/${event.id}`}
@@ -406,17 +413,8 @@ export default function Calendar() {
                 .sort((a, b) => a.date.getTime() - b.date.getTime()) // Sort by date
                 .slice(0, 5) // Show only 5 events
                 .map((event) => {
-                  // Check if this is the first occurrence of this event title
-                  const isFirstOccurrence =
-                    calendarEvents.findIndex((e) => e.title === event.title) ===
-                    calendarEvents.indexOf(event);
-
-                  // Only apply "first occurrence" rule to camp events, show Sign Up for all others
-                  const isCampEvent = event.title
-                    .toLowerCase()
-                    .includes("camp");
-                  const showSignUp =
-                    !isCampEvent || (isCampEvent && isFirstOccurrence);
+                  // Check if this event should show the Sign Up button
+                  const showSignUp = eventsWithSignUp.has(event.id);
 
                   return (
                     <div
