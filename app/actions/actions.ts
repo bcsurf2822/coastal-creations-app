@@ -23,37 +23,45 @@ export async function submitPayment(
     city: string;
     state: string;
     postalCode: string;
+    email?: string;
+    phoneNumber?: string;
     eventId?: string;
     eventTitle?: string;
     eventPrice?: string;
   }
 ): Promise<ApiResponse<CreatePaymentResponse> | undefined> {
   try {
-
-
     // Check if price is provided
     if (!billingDetails.eventPrice) {
-
       return undefined;
     }
 
     // Extract event info for use in metadata or note
     const eventInfo = billingDetails.eventTitle
-      ? `Registration for: ${billingDetails.eventTitle}`
+      ? `Event: ${billingDetails.eventTitle}`
       : "Event registration";
+
+    // Add contact information to the note if available
+    const contactInfo = [];
+    if (billingDetails.email) {
+      contactInfo.push(`Email: ${billingDetails.email}`);
+    }
+    if (billingDetails.phoneNumber) {
+      contactInfo.push(`Phone: ${billingDetails.phoneNumber}`);
+    }
+
+    const note = [eventInfo, ...contactInfo].join(" | ");
 
     // Convert price from dollars to cents (multiply by 100)
     const priceInCents = BigInt(
       Math.round(parseFloat(billingDetails.eventPrice) * 100)
     );
 
-
-
     const result = await paymentsApi.createPayment({
       idempotencyKey: randomUUID(),
       sourceId,
       referenceId: billingDetails.eventId,
-      note: eventInfo,
+      note,
       billingAddress: {
         addressLine1: billingDetails.addressLine1,
         addressLine2: billingDetails.addressLine2 || "",

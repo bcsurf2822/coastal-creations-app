@@ -9,8 +9,6 @@ const SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"];
 
 export async function GET() {
   try {
-
-
     const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON!);
 
     const auth = new google.auth.GoogleAuth({
@@ -18,18 +16,14 @@ export async function GET() {
       scopes: SCOPES,
     });
 
-
     try {
       const authClient = await auth.getClient();
- 
 
       // 2. Create the Google Calendar API client
       const calendar = google.calendar({
         version: "v3",
         auth: authClient as OAuth2Client,
       });
-
-
 
       const response = await calendar.events.list({
         calendarId: CALENDAR_ID,
@@ -39,11 +33,15 @@ export async function GET() {
         orderBy: "startTime", // Order by start time
       });
 
-
       const events = response.data.items || []; // Ensure events is always an array
 
-      // 4. Return the events successfully
-      return NextResponse.json({ events }, { status: 200 });
+      // Filter out events with private visibility
+      const publicEvents = events.filter(
+        (event) => event.visibility !== "private"
+      );
+
+      // 4. Return the filtered events successfully
+      return NextResponse.json({ events: publicEvents }, { status: 200 });
     } catch (authError) {
       console.error("Authentication error:", authError);
       console.error(

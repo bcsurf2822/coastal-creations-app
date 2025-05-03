@@ -66,7 +66,7 @@ export default function Calendar() {
         }
 
         const data = await response.json();
-
+        console.log(data);
         if (data.events) {
           const transformedEvents = transformEvents(data.events);
           setCalendarEvents(transformedEvents);
@@ -86,8 +86,6 @@ export default function Calendar() {
 
   // Transform API events to our format
   const transformEvents = (events: ApiCalendarEvent[]) => {
-   
-
     return events.map((event) => {
       // Parse the date from the event
       const startDate = event.start.dateTime
@@ -121,8 +119,6 @@ export default function Calendar() {
       } else if (summary.includes("block party")) {
         type = "event";
       }
-
-
 
       return {
         id: event.id,
