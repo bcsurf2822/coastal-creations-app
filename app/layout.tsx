@@ -1,13 +1,12 @@
-// app/layout.js
-
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
-import Script from "next/script"; // <-- Import Script
-import { Suspense } from "react"; // <-- Import Suspense
+import Script from "next/script";
+import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import NavBar from "@/components/layout/nav/NavBar";
 import Footer from "@/components/layout/footer/Footer";
-import AnalyticsEvents from "@/components/AnalyticsEvents"; // <-- Import the client component
-import { GA_TRACKING_ID } from "@/lib/gtag"; // <-- Import your tracking ID
+import AnalyticsEvents from "@/components/AnalyticsEvents";
+import { GA_TRACKING_ID } from "@/lib/gtag";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -35,7 +34,6 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {/* Suspense is needed because AnalyticsEvents uses useSearchParams */}
         <Suspense fallback={null}>
           <AnalyticsEvents />
         </Suspense>
@@ -44,8 +42,6 @@ export default function RootLayout({
         {children}
         <Footer />
 
-        {/* --- Google Analytics Scripts Start --- */}
-        {/* Only add scripts if GA_TRACKING_ID is available */}
         {GA_TRACKING_ID && (
           <>
             <Script
@@ -68,7 +64,8 @@ export default function RootLayout({
             />
           </>
         )}
-        {/* --- Google Analytics Scripts End --- */}
+
+        <Analytics />
       </body>
     </html>
   );
