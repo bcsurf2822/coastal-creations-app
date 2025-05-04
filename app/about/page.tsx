@@ -22,15 +22,16 @@ export default function About() {
                   Our Studio
                 </h2>
                 <p className="text-gray-600 text-lg md:text-xl mb-6 leading-relaxed">
-                  Laura Epsom tax and a space for an image. Lorem ipsum dolor
-                  sit amet, consectetur adipiscing elit. Nullam in dui mauris.
-                  Vivamus hendrerit arcu sed erat molestie vehicula. Sed auctor
-                  neque eu tellus rhoncus ut eleifend nibh porttitor.
+                  Coastal Creations is a community-focused art studio located in
+                  the heart of Ocean City, New Jersey. Born from a lifelong
+                  dream and a love for creativity, our studio is a space where
+                  imagination thrives and artistic connections grow.
                 </p>
                 <p className="text-gray-600 text-lg md:text-xl leading-relaxed">
-                  Fusce dapibus, tellus ac cursus commodo, tortor mauris
-                  condimentum nibh, ut fermentum massa justo sit amet risus.
-                  Cras mattis consectetur purus sit amet fermentum.
+                  Since I was 16, I&apos;ve dreamed of creating a place where
+                  people of all ages and backgrounds could come together to
+                  express themselves through art — and now, that dream is a
+                  reality.
                 </p>
               </div>
             </div>
