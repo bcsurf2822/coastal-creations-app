@@ -70,7 +70,7 @@ export default function Calendar() {
         }
 
         const data = await response.json();
-        console.log(data);
+        // console.log(data);
         if (data.events) {
           const transformedEvents = transformEvents(data.events);
 
