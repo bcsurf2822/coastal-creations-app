@@ -3,12 +3,59 @@
 import { FaFacebook, FaInstagram } from "react-icons/fa";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
+
+// Define type for hours data to match new schema
+type DayHours = {
+  isClosed?: boolean;
+  hours?: {
+    open?: string;
+    close?: string;
+  };
+};
+
+type HoursData = {
+  monday?: DayHours;
+  tuesday?: DayHours;
+  wednesday?: DayHours;
+  thursday?: DayHours;
+  friday?: DayHours;
+  saturday?: DayHours;
+  sunday?: DayHours;
+};
 
 export default function Footer() {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+  const [hoursData, setHoursData] = useState<HoursData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHours = async () => {
+      try {
+        const response = await fetch("/api/hours");
+        const data = await response.json();
+        setHoursData(data);
+      } catch (error) {
+        console.error("Error fetching hours:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHours();
+  }, []);
+
+  const formatDayHours = (day: DayHours | undefined) => {
+    if (!day || day.isClosed) {
+      return "Closed";
+    }
+    if (day.hours?.open && day.hours.close) {
+      return `${day.hours.open} - ${day.hours.close}`;
+    }
+    return "Not specified";
+  };
 
   const handleSubscribe = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -61,19 +108,68 @@ export default function Footer() {
           {/* Hours */}
           <div>
             <h3 className="text-lg font-semibold mb-3">Hours</h3>
-            <ul className="space-y-2 text-black">
-              <li>
-                <span className="font-semibold">Monday - Friday:</span> 9:00 AM
-                - 6:00 PM
-              </li>
-              <li>
-                <span className="font-semibold">Saturday:</span> 10:00 AM - 4:00
-                PM
-              </li>
-              <li>
-                <span className="font-semibold">Sunday:</span> Closed
-              </li>
-            </ul>
+            {loading ? (
+              <p>Loading hours...</p>
+            ) : (
+              <ul className="space-y-1 text-black text-sm">
+                <li className="flex justify-between">
+                  <span className="font-semibold">Monday:</span>
+                  <span>
+                    {hoursData
+                      ? formatDayHours(hoursData.monday)
+                      : "Not available"}
+                  </span>
+                </li>
+                <li className="flex justify-between">
+                  <span className="font-semibold">Tuesday:</span>
+                  <span>
+                    {hoursData
+                      ? formatDayHours(hoursData.tuesday)
+                      : "Not available"}
+                  </span>
+                </li>
+                <li className="flex justify-between">
+                  <span className="font-semibold">Wednesday:</span>
+                  <span>
+                    {hoursData
+                      ? formatDayHours(hoursData.wednesday)
+                      : "Not available"}
+                  </span>
+                </li>
+                <li className="flex justify-between">
+                  <span className="font-semibold">Thursday:</span>
+                  <span>
+                    {hoursData
+                      ? formatDayHours(hoursData.thursday)
+                      : "Not available"}
+                  </span>
+                </li>
+                <li className="flex justify-between">
+                  <span className="font-semibold">Friday:</span>
+                  <span>
+                    {hoursData
+                      ? formatDayHours(hoursData.friday)
+                      : "Not available"}
+                  </span>
+                </li>
+                <li className="flex justify-between">
+                  <span className="font-semibold">Saturday:</span>
+                  <span>
+                    {hoursData
+                      ? formatDayHours(hoursData.saturday)
+                      : "Not available"}
+                  </span>
+                </li>
+                <li className="flex justify-between">
+                  <span className="font-semibold">Sunday:</span>
+                  <span>
+                    {hoursData
+                      ? formatDayHours(hoursData.sunday)
+                      : "Not available"}
+                  </span>
+                </li>
+              </ul>
+            )}
           </div>
 
           {/* Contact & Social */}
@@ -84,7 +180,7 @@ export default function Footer() {
                 <span>411 E 8th Street</span>
               </p>
               <p>Ocean City, NJ 08226</p>
-             
+
               <p>
                 <span className="font-bold">Email:</span>{" "}
                 <Link
