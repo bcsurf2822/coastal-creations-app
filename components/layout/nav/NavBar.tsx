@@ -137,6 +137,15 @@ export default function NavBar() {
 
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
+                href="/gallery"
+                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full"
+              >
+                Gallery
+              </Link>
+            </motion.div>
+
+            <motion.div variants={itemVariants} whileHover="hover">
+              <Link
                 href="/blog"
                 className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full"
               >

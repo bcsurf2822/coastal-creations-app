@@ -6,6 +6,7 @@ import Link from "next/link";
 import { client } from "@/sanity/client";
 
 const POST_QUERY = `*[_type == "post" && slug.current == $slug][0]`;
+const HOURS_QUERY = `*[_type == "hoursOfOperation"][0]`;
 
 const { projectId, dataset } = client.config();
 const urlFor = (source: SanityImageSource) =>
@@ -18,11 +19,22 @@ const options = { next: { revalidate: 30 } };
 export default async function PostPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string[] }>;
 }) {
+  const resolvedParams = await params;
+  const slugSegments = Array.isArray(resolvedParams.slug)
+    ? resolvedParams.slug
+    : [resolvedParams.slug];
+
+  // Use the second segment to determine if we should show the hours page
+  if (slugSegments.length > 1 && slugSegments[1] === "hours") {
+    return HoursPage();
+  }
+
+  // Continue with regular post page
   const post = await client.fetch<SanityDocument>(
     POST_QUERY,
-    await params,
+    { slug: slugSegments[0] },
     options
   );
   const postImageUrl = post.image
@@ -47,6 +59,67 @@ export default async function PostPage({
       <div className="prose">
         <p>Published: {new Date(post.publishedAt).toLocaleDateString()}</p>
         {Array.isArray(post.body) && <PortableText value={post.body} />}
+      </div>
+    </main>
+  );
+}
+
+async function HoursPage() {
+  const hoursData = await client.fetch<SanityDocument>(
+    HOURS_QUERY,
+    {},
+    options
+  );
+
+  // Define type for day data to match new schema
+  type DayHours = {
+    isClosed?: boolean;
+    hours?: {
+      open?: string;
+      close?: string;
+    };
+  };
+
+  // Helper function to format day's hours
+  const formatDayHours = (day: DayHours | undefined) => {
+    if (!day || day.isClosed) {
+      return "Closed";
+    }
+    if (day.hours?.open && day.hours.close) {
+      return `${day.hours.open} - ${day.hours.close}`;
+    }
+    return "Not specified";
+  };
+
+  const days = [
+    { name: "Monday", data: hoursData?.monday as DayHours },
+    { name: "Tuesday", data: hoursData?.tuesday as DayHours },
+    { name: "Wednesday", data: hoursData?.wednesday as DayHours },
+    { name: "Thursday", data: hoursData?.thursday as DayHours },
+    { name: "Friday", data: hoursData?.friday as DayHours },
+    { name: "Saturday", data: hoursData?.saturday as DayHours },
+    { name: "Sunday", data: hoursData?.sunday as DayHours },
+  ];
+
+  return (
+    <main className="container mx-auto min-h-screen max-w-3xl p-8 flex flex-col gap-4">
+      <h1 className="text-4xl font-bold mb-8">Hours of Operation</h1>
+
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="w-full">
+          <div className="border-b-2 border-gray-200 flex">
+            <div className="text-left py-2 font-bold w-1/2">Day</div>
+            <div className="text-left py-2 font-bold w-1/2">Hours</div>
+          </div>
+          <div>
+            {days.map((day) => (
+              <div key={day.name} className="border-b border-gray-100 flex">
+                <div className="py-3 font-medium w-1/2">{day.name}</div>
+                <div className="py-3 w-1/2">{formatDayHours(day.data)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </main>
   );
