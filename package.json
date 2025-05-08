@@ -17,6 +17,8 @@
     "@vercel/analytics": "^1.5.0",
     "date-fns": "^4.1.0",
     "googleapis": "^148.0.0",
+    "mongodb": "^6.16.0",
+    "mongoose": "^8.14.1",
     "motion": "^12.9.4",
     "next": "15.2.4",
     "next-auth": "^4.24.11",
@@ -31,6 +33,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/mongodb": "^4.0.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
