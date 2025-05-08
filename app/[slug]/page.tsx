@@ -7,7 +7,7 @@ import { client } from "@/sanity/client";
 
 const POST_QUERY = `*[_type == "post" && slug.current == $slug][0]`;
 const HOURS_QUERY = `*[_type == "hoursOfOperation"][0]`;
-const GALLERY_QUERY = `*[_type == "gallery"][0]`;
+// const GALLERY_QUERY = `*[_type == "gallery"][0]`;
 
 const { projectId, dataset } = client.config();
 const urlFor = (source: SanityImageSource) =>
