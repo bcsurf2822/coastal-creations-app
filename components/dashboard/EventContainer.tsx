@@ -98,7 +98,3 @@ export default function EventContainer() {
     </div>
   );
 }
-
-export const config = {
-  maxDuration: 60, // Maximum execution time in seconds (default is 10s)
-};
