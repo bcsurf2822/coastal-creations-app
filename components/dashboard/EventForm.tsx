@@ -185,7 +185,7 @@ const EventForm: React.FC = () => {
         console.log("Sending data to API:", apiData);
 
         // Send data to API
-        const response = await fetch("/api/add-event", {
+        const response = await fetch("/api/events/add-event", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -202,9 +202,8 @@ const EventForm: React.FC = () => {
         setSubmitSuccess(true);
         console.log("Event created successfully:", result.event);
 
-
         setTimeout(() => {
-          router.push("/dashboard/");
+          router.push("/admin/dashboard/");
         }, 2000);
       } catch (error) {
         console.error("Error submitting form:", error);

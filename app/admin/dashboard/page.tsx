@@ -1,19 +1,6 @@
 import EventContainer from "@/components/dashboard/EventContainer";
 import Sidebar from "@/components/layout/nav/SideBar";
 
-interface Event {
-  id: string;
-  name: string;
-}
-
-// Hardcoded list of events
-const hardcodedEvents: Event[] = [
-  { id: "1", name: "Team Meeting - 10:00 AM" },
-  { id: "2", name: "Project Deadline - 2:00 PM" },
-  { id: "3", name: "Client Call - 3:30 PM" },
-  { id: "4", name: "Training Session - 4:00 PM" },
-];
-
 export default function DashboardPage() {
   return (
     // Applying Tailwind classes for the main flex layout
@@ -28,8 +15,8 @@ export default function DashboardPage() {
           <h1 className="text-2xl text-gray-800 m-0">Welcome!</h1>
         </header>
 
-        {/* Render the EventContainer and pass the initial events */}
-        <EventContainer initialEvents={hardcodedEvents} />
+        {/* Render the EventContainer component */}
+        <EventContainer />
       </div>
     </div>
   );
