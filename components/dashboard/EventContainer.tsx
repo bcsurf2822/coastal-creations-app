@@ -27,10 +27,20 @@ export default function EventContainer() {
         // Debug: log response status and text before parsing
         console.log("API Response Status:", response.status);
         const responseText = await response.text();
-        console.log("API Response Text:", responseText);
 
-        // Parse the text manually since we already consumed the response
-        const result = responseText ? JSON.parse(responseText) : {};
+        // Log the first few characters to diagnose without exposing credentials
+        console.log(
+          "API Response Text (first 50 chars):",
+          responseText.substring(0, 50)
+        );
+
+        let result;
+        try {
+          result = responseText ? JSON.parse(responseText) : {};
+        } catch (parseError) {
+          console.error("Failed to parse response as JSON:", parseError);
+          throw new Error("API returned invalid JSON response");
+        }
 
         if (!response.ok) {
           throw new Error(result.error || "Failed to fetch events");
