@@ -38,6 +38,23 @@ export default async function PostPage({
     { slug: slugSegments[0] },
     options
   );
+
+  // Check if post exists
+  if (!post) {
+    return (
+      <main className="container mx-auto min-h-screen max-w-3xl p-8 flex flex-col gap-4">
+        <Link href="/blog" className="hover:underline">
+          ← Back to posts
+        </Link>
+        <h1 className="text-4xl font-bold mb-8">Post not found</h1>
+        <p>
+          The post you&apos;re looking for doesn&apos;t exist or has been
+          removed.
+        </p>
+      </main>
+    );
+  }
+
   const postImageUrl = post.image
     ? urlFor(post.image)?.width(550).height(310).url()
     : null;
