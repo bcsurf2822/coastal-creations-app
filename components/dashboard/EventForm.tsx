@@ -2,17 +2,18 @@
 
 import { useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
+import { useRouter } from "next/navigation";
 
 interface EventFormData {
   eventName: string;
-  eventType: string;
+  eventType: "class" | "workshop" | "camp";
   description: string;
   price: string;
   startDate: string;
   startTime: Dayjs | null;
   endTime: Dayjs | null;
   isRecurring: boolean;
-  recurringPattern: string;
+  recurringPattern: "daily" | "weekly" | "monthly" | "yearly";
   recurringEndDate: string;
   image: File | null;
 }
@@ -30,6 +31,7 @@ interface FormErrors {
 }
 
 const EventForm: React.FC = () => {
+  const router = useRouter();
   const [formData, setFormData] = useState<EventFormData>({
     eventName: "",
     eventType: "class",
@@ -46,6 +48,8 @@ const EventForm: React.FC = () => {
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -140,16 +144,76 @@ const EventForm: React.FC = () => {
     return newErrors;
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const validationErrors = validate(formData);
     setErrors(validationErrors);
+    setSubmitError(null);
 
     if (Object.keys(validationErrors).length === 0) {
       setIsSubmitting(true);
-      console.log("Form Data Submitted:", formData);
-      setIsSubmitting(false);
+
+      try {
+        // Format the data for API to match Event.ts model structure exactly
+        const apiData = {
+          eventName: formData.eventName,
+          eventType: formData.eventType, // Already restricted to valid enum values in the interface
+          description: formData.description,
+          price: parseFloat(formData.price),
+          // Match dates structure from Event.ts model
+          dates: {
+            startDate: formData.startDate, // Send the date string
+            isRecurring: formData.isRecurring,
+            recurringPattern: formData.isRecurring
+              ? formData.recurringPattern
+              : undefined,
+            recurringEndDate: formData.isRecurring
+              ? formData.recurringEndDate
+              : undefined,
+          },
+          // Match time structure from Event.ts model
+          time: {
+            startTime: formData.startTime
+              ? formData.startTime.format("HH:mm")
+              : "",
+            endTime: formData.endTime ? formData.endTime.format("HH:mm") : "",
+          },
+          // Note: Image handling will need to be addressed separately
+        };
+
+        console.log("Sending data to API:", apiData);
+
+        // Send data to API
+        const response = await fetch("/api/add-event", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(apiData),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || "Failed to create event");
+        }
+
+        setSubmitSuccess(true);
+        console.log("Event created successfully:", result.event);
+
+        // Redirect or clear form after successful submission
+        setTimeout(() => {
+          router.push("/dashboard/events");
+        }, 2000);
+      } catch (error) {
+        console.error("Error submitting form:", error);
+        setSubmitError(
+          typeof error === "string" ? error : (error as Error).message
+        );
+      } finally {
+        setIsSubmitting(false);
+      }
     } else {
       console.log("Form has validation errors:", validationErrors);
     }
@@ -176,6 +240,19 @@ const EventForm: React.FC = () => {
       <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
         Create New Event
       </h2>
+
+      {submitSuccess && (
+        <div className="mb-6 p-4 bg-green-100 text-green-700 rounded-md">
+          Event created successfully! Redirecting to events dashboard...
+        </div>
+      )}
+
+      {submitError && (
+        <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-md">
+          Error: {submitError}
+        </div>
+      )}
+
       <form
         onSubmit={handleSubmit}
         className="grid grid-cols-1 md:grid-cols-2 gap-6"
@@ -217,8 +294,7 @@ const EventForm: React.FC = () => {
           >
             <option value="class">Class</option>
             <option value="workshop">Workshop</option>
-            <option value="event">Event</option>
-            <option value="meeting">Meeting</option>
+            <option value="camp">Camp</option>
           </select>
           {errors.eventType && (
             <p className="mt-1 text-sm text-red-600">{errors.eventType}</p>
@@ -352,6 +428,7 @@ const EventForm: React.FC = () => {
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>
                 <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
               </select>
             </div>
 
