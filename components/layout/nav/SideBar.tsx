@@ -18,7 +18,7 @@ export default function Sidebar() {
 
           <li className="mb-3">
             <Link
-              href="/admin/dashboard/add-events"
+              href="/admin/dashboard/add-event"
               className="block p-3 rounded hover:bg-gray-700 transition-colors duration-300 ease-in-out"
             >
               Events
@@ -26,7 +26,7 @@ export default function Sidebar() {
           </li>
           <li className="mb-3">
             <Link
-              href="/admin/dashboard/reports"
+              href="/admin/dashboard"
               className="block p-3 rounded hover:bg-gray-700 transition-colors duration-300 ease-in-out"
             >
               Reports
