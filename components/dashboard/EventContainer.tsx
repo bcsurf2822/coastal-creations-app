@@ -1,4 +1,3 @@
-// components/EventContainer.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -25,7 +24,13 @@ export default function EventContainer() {
           },
         });
 
-        const result = await response.json();
+        // Debug: log response status and text before parsing
+        console.log("API Response Status:", response.status);
+        const responseText = await response.text();
+        console.log("API Response Text:", responseText);
+
+        // Parse the text manually since we already consumed the response
+        const result = responseText ? JSON.parse(responseText) : {};
 
         if (!response.ok) {
           throw new Error(result.error || "Failed to fetch events");
@@ -57,27 +62,6 @@ export default function EventContainer() {
     fetchEvents();
   }, []);
 
-  const handleDelete = async (id: string) => {
-    try {
-      const response = await fetch(`/api/events/delete-event?id=${id}`, {
-        method: "DELETE",
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to delete event");
-      }
-
-      const updatedEvents = events.filter((event) => event.id !== id);
-      setEvents(updatedEvents);
-      console.log(`Deleted event with id: ${id}`);
-    } catch (error) {
-      console.error("Error deleting event:", error);
-      alert("Failed to delete event. Please try again.");
-    }
-  };
-
   return (
     // Applying Tailwind classes for styling
     <div className="bg-white p-5 rounded-lg shadow-md">
@@ -94,15 +78,9 @@ export default function EventContainer() {
           {events.map((event) => (
             <li
               key={event.id}
-              className="bg-gray-200 p-4 mb-3 rounded flex justify-between items-center"
+              className="bg-gray-200 p-4 mb-3 rounded flex items-center"
             >
-              <span className="flex-grow mr-3 text-gray-800">{event.name}</span>
-              <button
-                className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition-colors duration-300 ease-in-out cursor-pointer flex-shrink-0"
-                onClick={() => handleDelete(event.id)}
-              >
-                Delete
-              </button>
+              <span className="text-gray-800">{event.name}</span>
             </li>
           ))}
         </ul>
