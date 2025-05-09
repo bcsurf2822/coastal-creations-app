@@ -202,9 +202,9 @@ const EventForm: React.FC = () => {
         setSubmitSuccess(true);
         console.log("Event created successfully:", result.event);
 
-        // Redirect or clear form after successful submission
+
         setTimeout(() => {
-          router.push("/dashboard/events");
+          router.push("/dashboard/");
         }, 2000);
       } catch (error) {
         console.error("Error submitting form:", error);
