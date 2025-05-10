@@ -1,7 +1,13 @@
 import EventContainer from "@/components/dashboard/EventContainer";
 import Sidebar from "@/components/layout/nav/SideBar";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const session = await auth();
+  if (!session) {
+    redirect("/admin");
+  }
   return (
     // Applying Tailwind classes for the main flex layout
     <div className="flex min-h-screen bg-gray-100">
