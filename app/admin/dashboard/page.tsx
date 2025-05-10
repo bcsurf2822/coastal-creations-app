@@ -1,10 +1,11 @@
 import EventContainer from "@/components/dashboard/EventContainer";
 import Sidebar from "@/components/layout/nav/SideBar";
-import { auth } from "@/auth";
+import { authOptions } from "@/auth";
+import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
   if (!session) {
     redirect("/admin");
   }
