@@ -80,10 +80,46 @@ export default function NavBar() {
       transition={{ duration: 0.5 }}
     >
       <div className="container mx-auto px-6 md:px-12">
-        <div className="flex justify-between items-center py-2">
-          <div className="flex items-center space-x-4">
+        <div className="flex justify-between items-center py-1">
+          {/* Left Navigation */}
+          <motion.nav
+            className="hidden md:flex items-center justify-center space-x-10 h-full"
+            variants={navVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <motion.div variants={itemVariants} whileHover="hover">
+              <Link
+                href="/"
+                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-medium"
+              >
+                Home
+              </Link>
+            </motion.div>
+
+            <motion.div variants={itemVariants} whileHover="hover">
+              <Link
+                href="/classes"
+                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-medium"
+              >
+                Classes
+              </Link>
+            </motion.div>
+
+            <motion.div variants={itemVariants} whileHover="hover">
+              <Link
+                href="/calendar"
+                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-medium"
+              >
+                Calendar
+              </Link>
+            </motion.div>
+          </motion.nav>
+
+          {/* Logo */}
+          <div className="flex items-center relative">
             <motion.div
-              className="relative w-20 h-20 md:w-40 md:h-40"
+              className="relative w-32 h-32 md:w-56 md:h-56 -mt-2 -mb-10 md:-mt-2 md:-mb-16"
               variants={logoVariants}
               initial="initial"
               animate="animate"
@@ -91,7 +127,7 @@ export default function NavBar() {
             >
               <Link className="cursor-pointer" href="/">
                 <Image
-                  src="/assets/logos/coastalLogo.png"
+                  src="/assets/logos/coastalLogoFull.png"
                   alt="Coastal Creations Studio Logo"
                   fill
                   className="object-contain"
@@ -101,44 +137,17 @@ export default function NavBar() {
             </motion.div>
           </div>
 
-          {/* Desktop Navigation */}
+          {/* Right Navigation */}
           <motion.nav
-            className="hidden md:flex items-center space-x-10"
+            className="hidden md:flex items-center justify-center space-x-10 h-full"
             variants={navVariants}
             initial="hidden"
             animate="visible"
           >
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
-                href="/"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full"
-              >
-                Home
-              </Link>
-            </motion.div>
-
-            <motion.div variants={itemVariants} whileHover="hover">
-              <Link
-                href="/classes"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full"
-              >
-                Classes
-              </Link>
-            </motion.div>
-
-            <motion.div variants={itemVariants} whileHover="hover">
-              <Link
-                href="/calendar"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full"
-              >
-                Calendar
-              </Link>
-            </motion.div>
-
-            <motion.div variants={itemVariants} whileHover="hover">
-              <Link
                 href="/gallery"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full"
+                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-medium"
               >
                 Gallery
               </Link>
@@ -147,7 +156,7 @@ export default function NavBar() {
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/blog"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full"
+                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-medium"
               >
                 Blog
               </Link>
@@ -156,7 +165,7 @@ export default function NavBar() {
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/about"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full"
+                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-medium"
               >
                 About
               </Link>
