@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import dbConnect from "@/lib/mongoose";
+import { connectMongo } from "@/lib/mongoose";
 import Event from "@/lib/models/Event";
 
 export async function POST(request: Request) {
   try {
-    await dbConnect();
+    await connectMongo();
     const data = await request.json();
     const event = await Event.create(data);
     return NextResponse.json({ success: true, event }, { status: 201 });
