@@ -8,7 +8,7 @@ import Footer from "@/components/layout/footer/Footer";
 import AnalyticsEvents from "@/components/AnalyticsEvents";
 import { GA_TRACKING_ID } from "@/lib/gtag";
 import "./globals.css";
-import AuthProvider from "../components/providers/AuthProvider";
+// import AuthProvider from "../components/providers/AuthProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,11 +38,11 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <AnalyticsEvents />
         </Suspense>
-        <AuthProvider>
-          <NavBar />
-          {children}
-          <Footer />
-        </AuthProvider>
+        {/* <AuthProvider> */}
+        <NavBar />
+        {children}
+        <Footer />
+        {/* </AuthProvider> */}
 
         {GA_TRACKING_ID && (
           <>

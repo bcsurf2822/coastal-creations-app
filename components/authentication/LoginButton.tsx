@@ -1,32 +1,19 @@
 "use client";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { signIn } from "next-auth/react";
+import { FaGoogle } from "react-icons/fa";
 
 export default function LoginButton() {
-  const { data: session } = useSession();
+  const dashURL = "/admin/dashboard";
 
   return (
     <button
-      onClick={() => (session ? signOut() : signIn())}
-      style={{
-        padding: "0.75rem 2rem",
-        borderRadius: "2rem",
-        background: session ? "#f87171" : "#6366f1",
-        color: "white",
-        fontWeight: 600,
-        fontSize: "1.1rem",
-        border: "none",
-        boxShadow: "0 2px 8px rgba(99, 102, 241, 0.08)",
-        cursor: "pointer",
-        transition: "background 0.2s",
+      onClick={() => {
+        signIn("google", { callbackUrl: dashURL });
       }}
-      onMouseOver={(e) =>
-        (e.currentTarget.style.background = session ? "#ef4444" : "#4f46e5")
-      }
-      onMouseOut={(e) =>
-        (e.currentTarget.style.background = session ? "#f87171" : "#6366f1")
-      }
+      className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium rounded-lg shadow-sm transition-all duration-200 hover:shadow"
     >
-      {session ? "Sign out" : "Sign in"}
+      <FaGoogle className="text-red-500" size={18} />
+      <span>Sign In With Google</span>
     </button>
   );
 }
