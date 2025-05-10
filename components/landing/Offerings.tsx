@@ -37,11 +37,11 @@ export default function Offerings() {
                 ></i>
               </div>
               <h4 className="text-xl font-semibold text-primary mb-4">
-                Canvas & Collage
+                Art Camps
               </h4>
               <p className="text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300">
-                Regular classes in various mediums including watercolor,
-                acrylics, oils, collage, and mixed media.
+                Kids and teens can explore their creativity through painting,
+                drawing, sculpture, and mixed media projects
               </p>
               <div className="mt-auto flex justify-end">
                 <Link
@@ -56,7 +56,7 @@ export default function Offerings() {
             <div className="group p-8 border border-gray-200 rounded-lg hover:border-primary hover:shadow-lg transition duration-300 flex flex-col h-full">
               <div className="relative w-full h-48 mb-6 rounded-lg overflow-hidden">
                 <Image
-                  src="/assets/images/studio.jpeg"
+                  src="/assets/images/cupcakePainting.png"
                   alt="Workshops"
                   fill
                   className="object-cover"
@@ -104,8 +104,8 @@ export default function Offerings() {
                 Birthday Parties
               </h4>
               <p className="text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300">
-                Celebrate your child&apos;s birthday with a fun and creative
-                party
+                Our art-themed celebrations include guided projects, all
+                materials, and plenty of colorful memories!
               </p>
               <div className="mt-auto flex justify-end">
                 <Link
