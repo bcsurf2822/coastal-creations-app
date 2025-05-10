@@ -1,41 +1,31 @@
-import { MongoClient, ServerApiVersion } from "mongodb";
+import { MongoClient } from "mongodb";
 
-if (!process.env.MONGODB_URI) {
-  console.error("Error: MONGODB_URI environment variable is missing.");
-  throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
+const uri = process.env.MONGODB_URI as string;
+
+if (!uri) {
+  throw new Error("Please add your Mongo URI to .env");
 }
 
-const uri = process.env.MONGODB_URI;
-const options = {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
-};
+const options = {};
+
+// Add a custom type to extend the global object
+declare global {
+  // eslint-disable-next-line no-var
+  var _mongoClientPromise: Promise<MongoClient> | undefined;
+}
 
 let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
 
 if (process.env.NODE_ENV === "development") {
-  const globalWithMongo = global as typeof globalThis & {
-    _mongoClientPromise?: Promise<MongoClient>;
-  };
-
-  if (!globalWithMongo._mongoClientPromise) {
+  if (!global._mongoClientPromise) {
     client = new MongoClient(uri, options);
-    globalWithMongo._mongoClientPromise = client.connect();
+    global._mongoClientPromise = client.connect();
   }
-  clientPromise = globalWithMongo._mongoClientPromise;
+  clientPromise = global._mongoClientPromise;
 } else {
   client = new MongoClient(uri, options);
   clientPromise = client.connect();
 }
-
-clientPromise
-  .then(() => console.log("MongoDB connection successful."))
-  .catch((err: Error) =>
-    console.error("Error connecting to MongoDB:", err.message)
-  );
 
 export default clientPromise;
