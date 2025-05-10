@@ -15,6 +15,15 @@ export const authOptions: AuthOptions = {
   session: {
     strategy: "jwt", // Now TypeScript knows this is valid
   },
+  callbacks: {
+    async signIn({ user }) {
+      const allowedEmails = ["crystaledgedev22@gmail.com"];
+      if (user.email && allowedEmails.includes(user.email)) {
+        return true; // allow sign in
+      }
+      return false; // deny sign in
+    },
+  },
 };
 
 export const { handlers, signIn, signOut, auth } = NextAuth(authOptions);
