@@ -1,3 +1,4 @@
+import LogoutButton from "@/components/authentication/LogoutButton";
 import Link from "next/link";
 
 export default function Sidebar() {
@@ -31,6 +32,9 @@ export default function Sidebar() {
             >
               Reports
             </Link>
+          </li>
+          <li className="mb-3">
+            <LogoutButton />
           </li>
         </ul>
       </nav>
