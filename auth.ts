@@ -17,7 +17,10 @@ export const authOptions: AuthOptions = {
   },
   callbacks: {
     async signIn({ user }) {
-      const allowedEmails = ["crystaledgedev22@gmail.com"];
+      const allowedEmails = [
+        "crystaledgedev22@gmail.com",
+        "ashley@coastalcreationsstudio.com",
+      ];
       if (user.email && allowedEmails.includes(user.email)) {
         return true; // allow sign in
       }
