@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function Offerings() {
   return (
-    <section className="py-20 md:py-28">
+    <section className="py-20 md:py-28 bg-neutral-50">
       <div className="container mx-auto px-6 md:px-12">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-end mb-16">

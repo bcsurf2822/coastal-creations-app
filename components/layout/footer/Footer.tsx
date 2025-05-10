@@ -90,7 +90,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-gray-100 text-black py-8 border-t-4 border-gray-400">
+    <footer className="bg-neutral-50 text-black py-8 border-t-4 border-neutral-200">
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row gap-8">
           {/* Logo Container */}
@@ -111,7 +111,7 @@ export default function Footer() {
             <div className="flex flex-col md:flex-row justify-between gap-8">
               {/* Hours */}
               <div className="bg-white rounded-lg p-6 shadow-sm md:w-[48%]">
-                <h3 className="text-lg font-semibold mb-4 pb-2 border-b border-gray-300">
+                <h3 className="text-lg font-semibold mb-4 pb-2 border-b border-neutral-300">
                   Hours
                 </h3>
                 {loading ? (

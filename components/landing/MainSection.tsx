@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function MainSection() {
   return (
-    <section className="py-16 md:py-24 bg-gray-50">
+    <section className="py-16 md:py-24 bg-white">
       <div className="container mx-auto px-6 md:px-12">
         <div className="max-w-6xl mx-auto">
           <div className="relative w-full h-[500px] md:h-[600px] mb-8 overflow-hidden">
