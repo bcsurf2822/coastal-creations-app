@@ -1,20 +1,20 @@
-import NextAuth from "next-auth";
-import { MongoDBAdapter } from "@auth/mongodb-adapter";
+import NextAuth, { type AuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import clientPromise from "./lib/mongodb";
 
 if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
   throw new Error("Missing Google OAuth credentials");
 }
 
-export const authOptions = {
+export const authOptions: AuthOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
   ],
-  adapter: MongoDBAdapter(clientPromise),
+  session: {
+    strategy: "jwt", // Now TypeScript knows this is valid
+  },
 };
 
 export const { handlers, signIn, signOut, auth } = NextAuth(authOptions);
