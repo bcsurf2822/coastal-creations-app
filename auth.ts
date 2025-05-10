@@ -1,15 +1,15 @@
 import NextAuth from "next-auth";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
-import Google from "next-auth/providers/google";
+import GoogleProvider from "next-auth/providers/google";
 import clientPromise from "./lib/mongodb";
 
 if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
   throw new Error("Missing Google OAuth credentials");
 }
 
-const config = {
+export const authOptions = {
   providers: [
-    Google({
+    GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
@@ -17,4 +17,4 @@ const config = {
   adapter: MongoDBAdapter(clientPromise),
 };
 
-export const { handlers, signIn, signOut, auth } = NextAuth(config);
+export const { handlers, signIn, signOut, auth } = NextAuth(authOptions);
