@@ -8,7 +8,7 @@ export default function MainSection() {
         <div className="max-w-6xl mx-auto">
           <div className="relative w-full h-[500px] md:h-[600px] mb-8 overflow-hidden">
             <Image
-              src="/assets/images/pastelsAndNote.png"
+              src="/assets/images/ccStudio1.png"
               alt="Group Collage"
               fill
               className="object-cover rounded-lg"
