@@ -46,7 +46,7 @@ export default function Hero() {
       <div className="container mx-auto px-6 md:px-12 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
           {isClient ? (
-            <div className="mb-20 sm:mb-24 h-[320px] md:h-[280px] flex items-center justify-center relative">
+            <div className="mb-20 sm:mb-24 h-[320px] md:h-[280px] flex items-center justify-center relative text-blue-900">
               {words.map((word, index) => {
                 // Define specific positioning for each word based on device size
                 const getPosition = () => {
