@@ -119,7 +119,7 @@ export default function NavBar() {
           {/* Logo */}
           <div className="flex items-center relative">
             <motion.div
-              className="relative w-48 h-32 md:w-96 md:h-56 -mt-2 -mb-5 md:-mt-2 md:-mb-5"
+              className="relative w-48 h-32 md:w-96 -mt-2 -mb-5 ml-10 md:ml-0 md:h-56 md:-mt-2 md:-mb-5"
               variants={logoVariants}
               initial="initial"
               animate="animate"

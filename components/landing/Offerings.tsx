@@ -91,7 +91,7 @@ export default function Offerings() {
                   src="/assets/images/groupCollage.jpeg"
                   alt="Birthday Parties"
                   fill
-                  className="object-cover"
+                  className="object-cover object-[center_40%]"
                 />
               </div>
               <div className="w-12 h-12 bg-light rounded-lg flex items-center justify-center mb-6 group-hover:bg-primary transition duration-300">
