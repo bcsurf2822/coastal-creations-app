@@ -169,38 +169,43 @@ export default function EventContainer() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <h4 className="font-medium text-gray-700 mb-1">Details</h4>
-                  <p className="text-gray-600 mb-2">
-                    {selectedEvent.description || "No description available"}
-                  </p>
+                  <h4 className="font-medium text-gray-700 mb-3">Details</h4>
 
-                  <div className="mt-3">
-                    <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                      {selectedEvent.eventType || "Event"}
-                    </span>
-                    {selectedEvent.price !== undefined && (
-                      <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded ml-2">
-                        ${selectedEvent.price}
-                      </span>
-                    )}
+                  <div className="space-y-2">
+                    <p>
+                      <span className="font-bold">Description:</span>{" "}
+                      {selectedEvent.description || "No description available"}
+                    </p>
+
+                    <p>
+                      <span className="font-bold">Type:</span>{" "}
+                      {selectedEvent.eventType || "N/A"}
+                    </p>
+
+                    <p>
+                      <span className="font-bold">Price:</span>{" "}
+                      {selectedEvent.price !== undefined
+                        ? `$${selectedEvent.price}`
+                        : "N/A"}
+                    </p>
                   </div>
 
                   {selectedEvent.options &&
                     selectedEvent.options.length > 0 && (
                       <div className="mt-4">
-                        <h4 className="font-medium text-gray-700 mb-1">
+                        <h4 className="font-medium text-gray-700 mb-2">
                           Options
                         </h4>
                         {selectedEvent.options.map((option, index) => (
                           <div
                             key={index}
-                            className="mb-2 border-l-2 border-blue-200 pl-2"
+                            className="mb-3 border-l-2 border-gray-200 pl-3"
                           >
-                            <p className="font-medium text-sm text-gray-700">
+                            <p className="font-bold text-sm">
                               {option.categoryName}
                             </p>
                             {option.categoryDescription && (
-                              <p className="text-xs text-gray-500 mb-1">
+                              <p className="text-sm text-gray-600 mb-1">
                                 {option.categoryDescription}
                               </p>
                             )}
@@ -208,9 +213,9 @@ export default function EventContainer() {
                               {option.choices.map((choice, choiceIndex) => (
                                 <span
                                   key={choiceIndex}
-                                  className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                                  className="text-sm mr-2"
                                 >
-                                  {choice.name}
+                                  • {choice.name}
                                 </span>
                               ))}
                             </div>
@@ -221,28 +226,28 @@ export default function EventContainer() {
                 </div>
 
                 <div>
-                  <h4 className="font-medium text-gray-700 mb-1">Schedule</h4>
-                  <div className="space-y-1 text-sm">
+                  <h4 className="font-medium text-gray-700 mb-3">Schedule</h4>
+                  <div className="space-y-2">
                     <p>
-                      <span className="text-gray-500">Start:</span>{" "}
+                      <span className="font-bold">Start Date:</span>{" "}
                       {formatDate(selectedEvent.startDate)}
                     </p>
                     {selectedEvent.endDate && (
                       <p>
-                        <span className="text-gray-500">End:</span>{" "}
+                        <span className="font-bold">End Date:</span>{" "}
                         {formatDate(selectedEvent.endDate)}
                       </p>
                     )}
                     {selectedEvent.isRecurring &&
                       selectedEvent.recurringEndDate && (
                         <p>
-                          <span className="text-gray-500">Recurring End:</span>{" "}
+                          <span className="font-bold">Recurring End Date:</span>{" "}
                           {formatDate(selectedEvent.recurringEndDate)}
                         </p>
                       )}
                     {selectedEvent.startTime && (
                       <p>
-                        <span className="text-gray-500">Time:</span>{" "}
+                        <span className="font-bold">Time:</span>{" "}
                         {formatTime(selectedEvent.startTime)}
                         {selectedEvent.endTime
                           ? ` - ${formatTime(selectedEvent.endTime)}`
