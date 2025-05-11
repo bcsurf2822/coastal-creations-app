@@ -133,7 +133,7 @@ export default function Footer() {
               {/* Hours */}
               <div className="bg-white rounded-lg p-6 shadow-md md:w-[48%] border border-orange-200 flex flex-col h-full">
                 <h3 className="text-lg font-semibold mb-4 pb-2 border-b border-orange-200">
-                  Hours
+                  Studio Hours
                 </h3>
                 {loading ? (
                   <p>Loading hours...</p>
