@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function MainSection() {
   return (
-    <section className="py-16 md:py-24 bg-white">
+    <section className="py-16 md:py-24 bg-white relative">
       <div className="container mx-auto px-6 md:px-12">
         <div className="max-w-6xl mx-auto">
           <div className="relative w-full h-[500px] md:h-[600px] mb-8 overflow-hidden">
@@ -41,6 +41,8 @@ export default function MainSection() {
           </div>
         </div>
       </div>
+      {/* Gradient overlay for smooth transition */}
+      <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#7CD4D2] via-[#7CD4D2]/50 to-transparent"></div>
     </section>
   );
 }

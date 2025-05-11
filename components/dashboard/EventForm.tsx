@@ -15,6 +15,14 @@ interface EventFormData {
   isRecurring: boolean;
   recurringPattern: "daily" | "weekly" | "monthly" | "yearly";
   recurringEndDate: string;
+  hasOptions: boolean;
+  optionCategories: Array<{
+    categoryName: string;
+    categoryDescription: string;
+    choices: Array<{
+      name: string;
+    }>;
+  }>;
   image: File | null;
 }
 
@@ -43,6 +51,14 @@ const EventForm: React.FC = () => {
     isRecurring: false,
     recurringPattern: "weekly",
     recurringEndDate: "",
+    hasOptions: false,
+    optionCategories: [
+      {
+        categoryName: "",
+        categoryDescription: "",
+        choices: [{ name: "" }],
+      },
+    ],
     image: null,
   });
 
@@ -179,13 +195,19 @@ const EventForm: React.FC = () => {
               : "",
             endTime: formData.endTime ? formData.endTime.format("HH:mm") : "",
           },
+          // Add options if they exist
+          options: formData.hasOptions
+            ? formData.optionCategories.filter(
+                (cat) => cat.categoryName.trim() !== ""
+              )
+            : undefined,
           // Note: Image handling will need to be addressed separately
         };
 
         console.log("Sending data to API:", apiData);
 
         // Send data to API
-        const response = await fetch("/api/events/add-event", {
+        const response = await fetch("/api/events", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -220,7 +242,8 @@ const EventForm: React.FC = () => {
 
   const generateTimeOptions = () => {
     const options = [];
-    for (let hour = 0; hour < 24; hour++) {
+    // Start at 9 AM (hour 9) and end at 7 PM (hour 19)
+    for (let hour = 9; hour <= 19; hour++) {
       for (const minute of [0, 30]) {
         const time = dayjs().hour(hour).minute(minute).second(0);
         const timeStr = time.format("HH:mm");
@@ -232,6 +255,94 @@ const EventForm: React.FC = () => {
       }
     }
     return options;
+  };
+
+  // Add these new functions to handle options
+  const handleOptionCategoryChange = (
+    index: number,
+    field: keyof (typeof formData.optionCategories)[0],
+    value: string
+  ) => {
+    const updatedCategories = [...formData.optionCategories];
+    updatedCategories[index] = {
+      ...updatedCategories[index],
+      [field]: value,
+    };
+    setFormData({
+      ...formData,
+      optionCategories: updatedCategories,
+    });
+  };
+
+  const handleOptionChoiceChange = (
+    categoryIndex: number,
+    choiceIndex: number,
+    value: string
+  ) => {
+    const updatedCategories = [...formData.optionCategories];
+    updatedCategories[categoryIndex].choices[choiceIndex] = {
+      name: value,
+    };
+    setFormData({
+      ...formData,
+      optionCategories: updatedCategories,
+    });
+  };
+
+  const addOptionCategory = () => {
+    setFormData({
+      ...formData,
+      optionCategories: [
+        ...formData.optionCategories,
+        {
+          categoryName: "",
+          categoryDescription: "",
+          choices: [{ name: "" }],
+        },
+      ],
+    });
+  };
+
+  const removeOptionCategory = (index: number) => {
+    const updatedCategories = [...formData.optionCategories];
+    updatedCategories.splice(index, 1);
+    setFormData({
+      ...formData,
+      optionCategories: updatedCategories.length
+        ? updatedCategories
+        : [
+            {
+              categoryName: "",
+              categoryDescription: "",
+              choices: [{ name: "" }],
+            },
+          ],
+    });
+  };
+
+  const addOptionChoice = (categoryIndex: number) => {
+    const updatedCategories = [...formData.optionCategories];
+    updatedCategories[categoryIndex].choices.push({
+      name: "",
+    });
+    setFormData({
+      ...formData,
+      optionCategories: updatedCategories,
+    });
+  };
+
+  const removeOptionChoice = (categoryIndex: number, choiceIndex: number) => {
+    const updatedCategories = [...formData.optionCategories];
+    updatedCategories[categoryIndex].choices.splice(choiceIndex, 1);
+    if (updatedCategories[categoryIndex].choices.length === 0) {
+      updatedCategories[categoryIndex].choices.push({
+        name: "",
+      });
+    }
+    setFormData({
+      ...formData,
+      optionCategories: updatedCategories,
+    });
   };
 
   return (
@@ -475,6 +586,164 @@ const EventForm: React.FC = () => {
             <p className="mt-1 text-sm text-red-600">{errors.description}</p>
           )}
         </div>
+
+        <div className="col-span-1 md:col-span-2 flex items-center mt-4">
+          <input
+            type="checkbox"
+            id="hasOptions"
+            name="hasOptions"
+            checked={formData.hasOptions}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                hasOptions: e.target.checked,
+              })
+            }
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          />
+          <label
+            htmlFor="hasOptions"
+            className="ml-2 block text-sm font-medium text-gray-700"
+          >
+            Does this event have options? (Optional)
+          </label>
+        </div>
+
+        {formData.hasOptions && (
+          <div className="col-span-1 md:col-span-2 bg-gray-50 p-4 rounded-md border border-gray-200">
+            <h3 className="text-lg font-medium text-gray-800 mb-3">
+              Event Options
+            </h3>
+
+            {formData.optionCategories.map((category, categoryIndex) => (
+              <div
+                key={categoryIndex}
+                className="mb-6 p-4 bg-white rounded-md shadow-sm"
+              >
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="text-md font-medium text-gray-700">
+                    Option Category {categoryIndex + 1}
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() => removeOptionCategory(categoryIndex)}
+                    className="text-red-600 hover:text-red-800"
+                  >
+                    Remove
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label
+                      htmlFor={`categoryName-${categoryIndex}`}
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Category Name
+                    </label>
+                    <input
+                      type="text"
+                      id={`categoryName-${categoryIndex}`}
+                      value={category.categoryName}
+                      onChange={(e) =>
+                        handleOptionCategoryChange(
+                          categoryIndex,
+                          "categoryName",
+                          e.target.value
+                        )
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Material, Skill Level"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor={`categoryDescription-${categoryIndex}`}
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Category Description
+                    </label>
+                    <input
+                      type="text"
+                      id={`categoryDescription-${categoryIndex}`}
+                      value={category.categoryDescription}
+                      onChange={(e) =>
+                        handleOptionCategoryChange(
+                          categoryIndex,
+                          "categoryDescription",
+                          e.target.value
+                        )
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Brief description of this option category"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Choices
+                  </label>
+                  {category.choices.map((choice, choiceIndex) => (
+                    <div
+                      key={choiceIndex}
+                      className="flex flex-row gap-3 mb-3 p-3 bg-gray-50 rounded-md"
+                    >
+                      <div className="flex-1">
+                        <label
+                          htmlFor={`choice-name-${categoryIndex}-${choiceIndex}`}
+                          className="block text-xs font-medium text-gray-700 mb-1"
+                        >
+                          Choice Name
+                        </label>
+                        <input
+                          type="text"
+                          id={`choice-name-${categoryIndex}-${choiceIndex}`}
+                          value={choice.name}
+                          onChange={(e) =>
+                            handleOptionChoiceChange(
+                              categoryIndex,
+                              choiceIndex,
+                              e.target.value
+                            )
+                          }
+                          className="w-full px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="e.g., Canvas, Beginner"
+                        />
+                      </div>
+                      <div className="flex items-end">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            removeOptionChoice(categoryIndex, choiceIndex)
+                          }
+                          className="px-2 py-1 text-xs text-red-600 hover:text-red-800"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => addOptionChoice(categoryIndex)}
+                    className="mt-2 px-3 py-1 text-sm text-blue-600 hover:text-blue-800 border border-blue-300 rounded-md"
+                  >
+                    + Add Choice
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={addOptionCategory}
+              className="mt-2 px-4 py-2 text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-300 rounded-md"
+            >
+              + Add Option Category
+            </button>
+          </div>
+        )}
 
         <div className="col-span-1 md:col-span-2">
           <label
