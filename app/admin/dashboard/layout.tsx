@@ -27,11 +27,12 @@ export default async function AdminDashboardLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Check authentication
-  //   const session = await getServerSession(authOptions);
-  //   if (!session) {
-  //     redirect("/admin");
-  //   }
+  const session = getServerSession(authOptions);
+  if (!session) {
+    if (process.env.NODE_ENV === "production") {
+      redirect("/admin");
+    }
+  }
 
   return (
     <div className={`${geistSans.variable} ${geistMono.variable}`}>

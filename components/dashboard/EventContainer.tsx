@@ -13,6 +13,13 @@ interface Event {
   endDate?: Date;
   startTime?: string;
   endTime?: string;
+  options?: Array<{
+    categoryName: string;
+    categoryDescription?: string;
+    choices: Array<{
+      name: string;
+    }>;
+  }>;
 }
 
 export default function EventContainer() {
@@ -72,6 +79,7 @@ export default function EventContainer() {
           endDate: event.dates?.endDate,
           startTime: event.time?.startTime,
           endTime: event.time?.endTime,
+          options: event.options,
         }));
 
         setEvents(transformedEvents);
@@ -172,6 +180,40 @@ export default function EventContainer() {
                       </span>
                     )}
                   </div>
+
+                  {selectedEvent.options &&
+                    selectedEvent.options.length > 0 && (
+                      <div className="mt-4">
+                        <h4 className="font-medium text-gray-700 mb-1">
+                          Options
+                        </h4>
+                        {selectedEvent.options.map((option, index) => (
+                          <div
+                            key={index}
+                            className="mb-2 border-l-2 border-blue-200 pl-2"
+                          >
+                            <p className="font-medium text-sm text-gray-700">
+                              {option.categoryName}
+                            </p>
+                            {option.categoryDescription && (
+                              <p className="text-xs text-gray-500 mb-1">
+                                {option.categoryDescription}
+                              </p>
+                            )}
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {option.choices.map((choice, choiceIndex) => (
+                                <span
+                                  key={choiceIndex}
+                                  className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                                >
+                                  {choice.name}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                 </div>
 
                 <div>
@@ -202,7 +244,7 @@ export default function EventContainer() {
 
               <div className="mt-4 flex justify-end">
                 <button
-                  className="text-sm text-red-600 hover:text-red-800"
+                  className="text-sm text-red-600 hover:text-red-800 hover:cursor-pointer"
                   onClick={async () => {
                     if (
                       confirm("Are you sure you want to delete this event?")
