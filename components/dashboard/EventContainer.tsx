@@ -17,7 +17,7 @@ export default function EventContainer() {
     const fetchEvents = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch("/api/events/get-events", {
+        const response = await fetch("/api/events", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
