@@ -207,7 +207,7 @@ const EventForm: React.FC = () => {
         console.log("Sending data to API:", apiData);
 
         // Send data to API
-        const response = await fetch("/api/events/add-event", {
+        const response = await fetch("/api/events", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -242,7 +242,8 @@ const EventForm: React.FC = () => {
 
   const generateTimeOptions = () => {
     const options = [];
-    for (let hour = 0; hour < 24; hour++) {
+    // Start at 9 AM (hour 9) and end at 7 PM (hour 19)
+    for (let hour = 9; hour <= 19; hour++) {
       for (const minute of [0, 30]) {
         const time = dayjs().hour(hour).minute(minute).second(0);
         const timeStr = time.format("HH:mm");
