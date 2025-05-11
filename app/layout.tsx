@@ -8,6 +8,7 @@ import Footer from "@/components/layout/footer/Footer";
 import AnalyticsEvents from "@/components/AnalyticsEvents";
 import { GA_TRACKING_ID } from "@/lib/gtag";
 import "./globals.css";
+import Image from "next/image";
 // import AuthProvider from "../components/providers/AuthProvider";
 
 const geistSans = Geist({
@@ -40,7 +41,22 @@ export default function RootLayout({
         </Suspense>
         {/* <AuthProvider> */}
         <NavBar />
-        {children}
+        <div className="relative">
+          {/* Background image */}
+          {/* <Image
+            src="/assets/backgrounds/spatterBg.png"
+            alt="Splatter background"
+            fill
+            className="object-cover z-0"
+            priority
+          /> */}
+
+          {/* Optional gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#87d8d8] to-[#dfdfdf]  z-10"></div>
+
+          {/* Content */}
+          <div className="relative z-20">{children}</div>
+        </div>
         <Footer />
         {/* </AuthProvider> */}
 

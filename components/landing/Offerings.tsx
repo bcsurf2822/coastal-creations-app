@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function Offerings() {
   return (
-    <section className="py-20 md:py-28 bg-neutral-50">
+    <section className="py-20 md:py-28 ">
       <div className="container mx-auto px-6 md:px-12">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-end mb-16">
@@ -11,17 +11,17 @@ export default function Offerings() {
               <h4 className="text-secondary uppercase tracking-widest text-sm font-medium mb-3">
                 What We Offer
               </h4>
-              <h3 className="serif text-4xl font-bold text-primary">
+              <h3 className="serif text-4xl font-bold text-primary ">
                 Creative Experiences
               </h3>
             </div>
-            <p className="text-gray-600 max-w-md mt-4 md:mt-0">
+            <p className="text-neutral-900 max-w-md mt-4 md:mt-0">
               We provide a variety of classes, workshops, and creative
               opportunities for artists of all ages and skill levels.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="group p-8 border border-gray-200 rounded-lg hover:border-primary hover:shadow-lg transition duration-300 flex flex-col h-full">
+            <div className="group p-8 border border-neutral-100 bg-neutral-50 rounded-lg hover:border-primary shadow-[-8px_8px_15px_rgba(0,0,0,0.15)] hover:shadow-lg transition duration-300 flex flex-col h-full">
               <div className="relative w-full h-48 mb-6 rounded-lg overflow-hidden">
                 <Image
                   src="/assets/images/paintingAction1.jpeg"
@@ -53,7 +53,7 @@ export default function Offerings() {
                 </Link>
               </div>
             </div>
-            <div className="group p-8 border border-gray-200 rounded-lg hover:border-primary hover:shadow-lg transition duration-300 flex flex-col h-full">
+            <div className="group p-8 border border-neutral-100 bg-neutral-50 rounded-lg hover:border-primary shadow-[-8px_8px_15px_rgba(0,0,0,0.15)] hover:shadow-lg transition duration-300 flex flex-col h-full">
               <div className="relative w-full h-48 mb-6 rounded-lg overflow-hidden">
                 <Image
                   src="/assets/images/cupcakePainting.png"
@@ -85,7 +85,7 @@ export default function Offerings() {
                 </Link>
               </div>
             </div>
-            <div className="group p-8 border border-gray-200 rounded-lg hover:border-primary hover:shadow-lg transition duration-300 flex flex-col h-full">
+            <div className="group p-8 border border-neutral-100 bg-neutral-50 rounded-lg hover:border-primary shadow-[-8px_8px_15px_rgba(0,0,0,0.15)] hover:shadow-lg transition duration-300 flex flex-col h-full">
               <div className="relative w-full h-48 mb-6 rounded-lg overflow-hidden">
                 <Image
                   src="/assets/images/groupCollage.jpeg"
