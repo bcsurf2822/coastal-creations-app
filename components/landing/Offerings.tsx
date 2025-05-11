@@ -40,8 +40,8 @@ export default function Offerings() {
                 Art Camps
               </h4>
               <p className="text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300">
-                Kids and teens can explore their creativity through painting,
-                drawing, sculpture, and mixed media projects
+                Hands-on art camps where kids explore creativity, build skills,
+                and have fun together.
               </p>
               <div className="mt-auto flex justify-end">
                 <Link
@@ -72,8 +72,8 @@ export default function Offerings() {
                 Workshops
               </h4>
               <p className="text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300">
-                Focused sessions on specific techniques, coastal themes, and
-                guest artist presentations.
+                Weekly workshops offering focused, guided art sessions for kids
+                and adults of all skill levels.
               </p>
               <div className="mt-auto flex justify-end">
                 <Link
@@ -104,8 +104,8 @@ export default function Offerings() {
                 Birthday Parties
               </h4>
               <p className="text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300">
-                Our art-themed celebrations include guided projects, all
-                materials, and plenty of colorful memories!
+                Our art-themed celebrations include guided projects, materials,
+                and colorful memories!
               </p>
               <div className="mt-auto flex justify-end">
                 <Link
