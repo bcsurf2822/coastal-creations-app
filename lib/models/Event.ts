@@ -20,6 +20,13 @@ export interface IEvent extends Document {
     startTime: string;
     endTime?: string;
   };
+  options?: Array<{
+    categoryName: string;
+    categoryDescription?: string;
+    choices: Array<{
+      name: string;
+    }>;
+  }>;
   image?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -67,6 +74,27 @@ const EventTimeSchema = new Schema({
   },
 });
 
+const OptionChoiceSchema = new Schema({
+  name: {
+    type: String,
+    required: true,
+  },
+});
+
+const OptionSchema = new Schema({
+  categoryName: {
+    type: String,
+    required: true,
+  },
+  categoryDescription: {
+    type: String,
+  },
+  choices: {
+    type: [OptionChoiceSchema],
+    required: true,
+  },
+});
+
 // Main Event schema
 const EventSchema = new Schema<IEvent>(
   {
@@ -96,6 +124,10 @@ const EventSchema = new Schema<IEvent>(
     time: {
       type: EventTimeSchema,
       required: true,
+    },
+    options: {
+      type: [OptionSchema],
+      required: false,
     },
     image: {
       type: String,
