@@ -11,6 +11,8 @@ interface Event {
   price?: number;
   startDate?: Date;
   endDate?: Date;
+  isRecurring?: boolean;
+  recurringEndDate?: Date;
   startTime?: string;
   endTime?: string;
   options?: Array<{
@@ -77,6 +79,8 @@ export default function EventContainer() {
           price: event.price,
           startDate: event.dates?.startDate,
           endDate: event.dates?.endDate,
+          isRecurring: event.dates?.isRecurring,
+          recurringEndDate: event.dates?.recurringEndDate,
           startTime: event.time?.startTime,
           endTime: event.time?.endTime,
           options: event.options,
@@ -229,6 +233,13 @@ export default function EventContainer() {
                         {formatDate(selectedEvent.endDate)}
                       </p>
                     )}
+                    {selectedEvent.isRecurring &&
+                      selectedEvent.recurringEndDate && (
+                        <p>
+                          <span className="text-gray-500">Recurring End:</span>{" "}
+                          {formatDate(selectedEvent.recurringEndDate)}
+                        </p>
+                      )}
                     {selectedEvent.startTime && (
                       <p>
                         <span className="text-gray-500">Time:</span>{" "}
