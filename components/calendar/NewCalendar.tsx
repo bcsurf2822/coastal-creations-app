@@ -8,51 +8,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import React, { useState, useEffect } from "react";
 import "./calendar.css";
 import { useRouter } from "next/navigation";
-
-// Define the type for calendar events
-interface CalendarEvent {
-  title: string;
-  start: Date | string;
-  end?: Date | string;
-  resourceId?: string;
-  allDay?: boolean;
-  id?: string;
-  extendedProps?: {
-    _id?: string;
-    description?: string;
-    eventType?: string;
-    price?: number;
-    timeDisplay?: string;
-    isRecurring?: boolean;
-    recurringPattern?: string;
-    recurringEndDate?: string | Date;
-    originalStartDate?: string;
-  };
-}
-
-// Define the type for API events based on your mongoose model
-interface ApiEvent {
-  _id: string;
-  eventName: string;
-  eventType: string;
-  description: string;
-  price: number;
-  dates: {
-    startDate: string;
-    endDate?: string;
-    isRecurring: boolean;
-    recurringPattern?: string;
-    recurringEndDate?: string;
-    specificDates?: string[];
-    excludeDates?: string[];
-  };
-  time: {
-    startTime: string;
-    endTime?: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
+import { CalendarEvent, ApiEvent } from "@/types/interfaces";
 
 export default function NewCalendar() {
   const [calendarView, setCalendarView] = useState("dayGridMonth");
