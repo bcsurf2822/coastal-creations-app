@@ -7,53 +7,14 @@ import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import React, { useState, useEffect } from "react";
 import "./calendar.css";
-
-// Define the type for calendar events
-interface CalendarEvent {
-  title: string;
-  start: Date | string;
-  end?: Date | string;
-  resourceId?: string;
-  allDay?: boolean;
-  id?: string;
-  extendedProps?: {
-    description?: string;
-    eventType?: string;
-    price?: number;
-    timeDisplay?: string;
-    isRecurring?: boolean;
-    recurringPattern?: string;
-    recurringEndDate?: string | Date;
-  };
-}
-
-// Define the type for API events based on your mongoose model
-interface ApiEvent {
-  _id: string;
-  eventName: string;
-  eventType: string;
-  description: string;
-  price: number;
-  dates: {
-    startDate: string;
-    endDate?: string;
-    isRecurring: boolean;
-    recurringPattern?: string;
-    recurringEndDate?: string;
-    specificDates?: string[];
-    excludeDates?: string[];
-  };
-  time: {
-    startTime: string;
-    endTime?: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
+import { useRouter } from "next/navigation";
+import { CalendarEvent, ApiEvent } from "@/types/interfaces";
 
 export default function NewCalendar() {
   const [calendarView, setCalendarView] = useState("dayGridMonth");
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+
+  const router = useRouter();
 
   const resources = [
     { id: "class", title: "Classes", eventColor: "#3788d8" },
@@ -107,6 +68,7 @@ export default function NewCalendar() {
           end,
           resourceId: event.eventType,
           extendedProps: {
+            _id: event._id,
             description: event.description,
             eventType: event.eventType,
             price: event.price,
@@ -143,6 +105,8 @@ export default function NewCalendar() {
         instances.forEach((instance) => {
           instance.resourceId = event.eventType;
           instance.extendedProps = {
+            ...instance.extendedProps,
+            _id: event._id,
             description: event.description,
             eventType: event.eventType,
             price: event.price,
@@ -228,6 +192,9 @@ export default function NewCalendar() {
           title: title,
           start: new Date(currentDate),
           end: eventEnd,
+          extendedProps: {
+            originalStartDate: new Date(startDate).toISOString(),
+          },
         });
       }
 
@@ -290,6 +257,12 @@ export default function NewCalendar() {
       default:
         return "#3788d8"; // Default blue
     }
+  };
+
+  // Add a handler for event signup
+  const navigateToEvent = (eventId: string, eventTitle: string) => {
+    console.log(`Navigating to event: ${eventTitle} (ID: ${eventId})`);
+    router.push(`/calendar/${eventId}`);
   };
 
   return (
@@ -372,8 +345,39 @@ export default function NewCalendar() {
             tooltipContent += `<div class="tooltip-description">${info.event.extendedProps.description.substring(0, 100)}${info.event.extendedProps.description.length > 100 ? "..." : ""}</div>`;
           }
 
+          const isRecurring = info.event.extendedProps?.isRecurring;
+          const isFirstOccurrence = isRecurring
+            ? info.event.start &&
+              info.event.extendedProps?.originalStartDate &&
+              new Date(info.event.start).toDateString() ===
+                new Date(
+                  info.event.extendedProps.originalStartDate
+                ).toDateString()
+            : true;
+
+          if (!isRecurring || isFirstOccurrence) {
+            tooltipContent += `<div class="tooltip-signup">
+       
+              <button id="signup-${info.event.extendedProps?._id || "event"}" type="button">Sign Up</button>
+            </div>`;
+          }
+
           tooltip.innerHTML = tooltipContent;
           info.el.appendChild(tooltip);
+          setTimeout(() => {
+            const signupButton = document.getElementById(
+              `signup-${info.event.extendedProps?._id || "event"}`
+            );
+            if (signupButton) {
+              signupButton.addEventListener("click", (e) => {
+                e.stopPropagation();
+                navigateToEvent(
+                  info.event.extendedProps?._id || "unknown",
+                  info.event.title
+                );
+              });
+            }
+          }, 0);
         }}
       />
     </div>

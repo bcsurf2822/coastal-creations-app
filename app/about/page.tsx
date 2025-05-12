@@ -2,7 +2,7 @@ import About from "@/components/about/About";
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen ">
       {/* Studio Section */}
       <section className="py-20 md:py-28">
         <About />
