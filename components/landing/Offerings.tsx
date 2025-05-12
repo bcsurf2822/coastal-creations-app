@@ -6,16 +6,16 @@ export default function Offerings() {
     <section className="py-20 md:py-28 ">
       <div className="container mx-auto px-6 md:px-12">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-16">
-            <div>
+          <div className="mb-16 flex flex-col items-start">
+            <div className="mb-6">
               <h4 className="text-secondary uppercase tracking-widest text-sm font-medium mb-3">
                 What We Offer
               </h4>
-              <h3 className="serif text-4xl font-bold text-primary ">
+              <h3 className="serif text-4xl font-bold text-primary">
                 Creative Experiences
               </h3>
             </div>
-            <p className="text-neutral-900 max-w-md mt-4 md:mt-0">
+            <p className="text-neutral-900 max-w-md mx-auto text-end  font-semibold">
               We provide a variety of classes, workshops, and creative
               opportunities for artists of all ages and skill levels.
             </p>
