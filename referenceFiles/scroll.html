@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scroll Effect Page</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the header and footer animations */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            /* Initially visible at the top */
+            transform: translateY(0);
+            /* Smooth slide effect */
+            transition: transform 0.3s ease-in-out;
+            /* Ensure header is above other content */
+            z-index: 10;
+        }
+
+        .header.hide-header {
+            /* Slide up out of view */
+            transform: translateY(-100%);
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            /* Initially hidden below the viewport */
+            transform: translateY(100%);
+            /* Smooth slide effect */
+            transition: transform 0.3s ease-in-out;
+            /* Ensure footer is above other content */
+            z-index: 10;
+        }
+
+        .footer.show-footer {
+            /* Slide up into view */
+            transform: translateY(0);
+        }
+
+        /* Ensure body has enough height to enable scrolling */
+        body {
+            min-height: 250vh; /* Increased height to ensure significant scrolling */
+            /* Add a subtle background texture - diagonal lines */
+            background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.05), rgba(0,0,0,0.05) 1px, transparent 1px, transparent 20px);
+            background-size: 20px 20px; /* Adjust size for desired texture density */
+            background-color: #64748b; /* Bluish-gray background color */
+
+            /* Flexbox properties for layout - removed centering to allow scrolling */
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center content horizontally */
+
+            /* Add padding to prevent content being hidden by fixed header/footer */
+            padding-top: 80px;
+            padding-bottom: 80px;
+            box-sizing: border-box; /* Include padding in element's total width and height */
+        }
+
+        /* Style for the individual experiment boxes */
+        .experiment-box {
+             /* Allow boxes to grow/shrink, with a base of 30% width */
+             flex: 1 1 30%;
+             /* Minimum width to prevent crushing on small screens */
+             min-width: 150px;
+        }
+
+         /* Style for the experiment area containers */
+         .experiment-area {
+             width: 100%; /* Make experiment areas take full width */
+             max-width: 640px; /* Max width similar to a typical content column */
+             background-color: rgba(255, 255, 255, 0.9); /* White background with 90% opacity */
+             border-radius: 0.5rem; /* Rounded corners */
+             box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1); /* Shadow effect */
+             padding: 1.5rem; /* Padding inside the area */
+             box-sizing: border-box; /* Include padding in width */
+             margin-left: auto; /* Center the block */
+             margin-right: auto; /* Center the block */
+         }
+
+    </style>
+</head>
+<body>
+
+    <header class="header bg-gray-900 text-white p-4 text-center shadow-lg">
+        <h2 class="text-xl font-semibold">This is the Sliding Header</h2>
+    </header>
+
+    <div class="experiment-area mb-12">
+        <h2 class="text-xl font-semibold mb-4 text-center">Experiment Area 1 (3 Boxes)</h2>
+        <div class="flex flex-wrap justify-around gap-4">
+            <div class="experiment-box p-4 bg-gray-100 rounded-md shadow-sm text-sm text-center">Box 1.1</div>
+            <div class="experiment-box p-4 bg-gray-100 rounded-md shadow-sm text-sm text-center">Box 1.2</div>
+            <div class="experiment-box p-4 bg-gray-100 rounded-md shadow-sm text-sm text-center">Box 1.3</div>
+        </div>
+    </div>
+
+    <div class="experiment-area mb-16">
+         <h2 class="text-xl font-semibold mb-4 text-center">Experiment Area 2 (4 Boxes)</h2>
+         <div class="flex flex-wrap justify-around gap-4">
+             <div class="experiment-box p-4 bg-gray-100 rounded-md shadow-sm text-sm text-center">Box 2.1</div>
+             <div class="experiment-box p-4 bg-gray-100 rounded-md shadow-sm text-sm text-center">Box 2.2</div>
+             <div class="experiment-box p-4 bg-gray-100 rounded-md shadow-sm text-sm text-center">Box 2.3</div>
+             <div class="experiment-box p-4 bg-gray-100 rounded-md shadow-sm text-sm text-center">Box 2.4</div>
+         </div>
+     </div>
+
+     <div class="experiment-area mb-20">
+          <h2 class="text-xl font-semibold mb-4 text-center">Experiment Area 3 (5 Boxes)</h2>
+          <div class="flex flex-wrap justify-around gap-4">
+              <div class="experiment-box p-4 bg-gray-100 rounded-md shadow-sm text-sm text-center">Box 3.1</div>
+              <div class="experiment-box p-4 bg-gray-100 rounded-md shadow-sm text-sm text-center">Box 3.2</div>
+              <div class="experiment-box p-4 bg-gray-100 rounded-md shadow-sm text-sm text-center">Box 3.3</div>
+              <div class="experiment-box p-4 bg-gray-100 rounded-md shadow-sm text-sm text-center">Box 3.4</div>
+              <div class="experiment-box p-4 bg-gray-100 rounded-md shadow-sm text-sm text-center">Box 3.5</div>
+          </div>
+      </div>
+
+      <div class="experiment-area mb-24">
+           <h2 class="text-xl font-semibold mb-4 text-center">Experiment Area 4 (6 Boxes)</h2>
+           <div class="flex flex-wrap justify-around gap-4">
+               <div class="experiment-box p-4 bg-gray-100 rounded-md shadow-sm text-sm text-center">Box 4.1</div>
+               <div class="experiment-box p-4 bg-gray-100 rounded-md shadow-sm text-sm text-center">Box 4.2</div>
+               <div class="experiment-box p-4 bg-gray-100 rounded-md shadow-sm text-sm text-center">Box 4.3</div>
+               <div class="experiment-box p-4 bg-gray-100 rounded-md shadow-sm text-sm text-center">Box 4.4</div>
+               <div class="experiment-box p-4 bg-gray-100 rounded-md shadow-sm text-sm text-center">Box 4.5</div>
+               <div class="experiment-box p-4 bg-gray-100 rounded-md shadow-sm text-sm text-center">Box 4.6</div>
+           </div>
+       </div>
+
+       <div class="experiment-area">
+            <h2 class="text-xl font-semibold mb-4 text-center">Experiment Area 5 (3 Boxes)</h2>
+            <div class="flex flex-wrap justify-around gap-4">
+                <div class="experiment-box p-4 bg-gray-100 rounded-md shadow-sm text-sm text-center">Box 5.1</div>
+                <div class="experiment-box p-4 bg-gray-100 rounded-md shadow-sm text-sm text-center">Box 5.2</div>
+                <div class="experiment-box p-4 bg-gray-100 rounded-md shadow-sm text-sm text-center">Box 5.3</div>
+            </div>
+        </div>
+
+    <footer class="footer bg-gray-800 text-white p-4 text-center shadow-lg">
+        <p>&copy; 2023 Scroll Effect Demo</p>
+    </footer>
+
+    <script>
+        // Get references to the header and footer elements
+        const header = document.querySelector('.header');
+        const footer = document.querySelector('.footer');
+
+        // Calculate the scroll threshold for hiding the header (1/4 of the total scrollable height)
+        // This is recalculated on window resize to handle dynamic content or viewport changes
+        let headerScrollThreshold = document.body.scrollHeight / 4;
+
+        // Define the scroll threshold for showing the footer (pixels from the bottom)
+        const footerScrollThreshold = 200; // Adjust this value to control when the footer appears
+
+        // Update the header scroll threshold when the window is resized
+        window.addEventListener('resize', () => {
+             headerScrollThreshold = document.body.scrollHeight / 4;
+        });
+
+        // Add a scroll event listener to the window
+        window.addEventListener('scroll', () => {
+            // Get the current vertical scroll position
+            const scrollY = window.scrollY;
+
+            // Logic to show/hide the header based on scroll position from the top
+            if (scrollY > headerScrollThreshold) {
+                // If scrolled past the threshold, hide the header
+                header.classList.add('hide-header');
+            } else {
+                // If within the threshold (near the top), show the header
+                header.classList.remove('hide-header');
+            }
+
+            // Calculate the distance from the bottom of the page
+            const distanceFromBottom = document.body.scrollHeight - window.innerHeight - scrollY;
+
+            // Logic to show/hide the footer based on scroll position from the bottom
+            if (distanceFromBottom < footerScrollThreshold) {
+                // If close to the bottom, show the footer
+                footer.classList.add('show-footer');
+            } else {
+                // If not close to the bottom, hide the footer
+                footer.classList.remove('show-footer');
+            }
+        });
+    </script>
+
+</body>
+</html>

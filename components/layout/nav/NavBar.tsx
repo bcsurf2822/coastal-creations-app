@@ -1,12 +1,55 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
 
 export default function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [hideNavbar, setHideNavbar] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const navRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      // Check for MainSection intersection
+      const mainSection =
+        document.querySelector("main") ||
+        document.getElementById("main-section");
+
+      if (mainSection && navRef.current) {
+        const navHeight = navRef.current.offsetHeight;
+        const mainSectionTop = mainSection.getBoundingClientRect().top;
+
+        // When MainSection is about to hit the navbar
+        if (mainSectionTop <= navHeight && currentScrollY > lastScrollY) {
+          setHideNavbar(true);
+        } else if (currentScrollY < lastScrollY) {
+          // Show navbar when scrolling up
+          setHideNavbar(false);
+        }
+      } else {
+        // Fallback to standard scroll direction logic if elements aren't found
+        if (currentScrollY > lastScrollY && currentScrollY > 100) {
+          setHideNavbar(true);
+        } else {
+          setHideNavbar(false);
+        }
+      }
+
+      // Update scroll position
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [lastScrollY]);
 
   const navVariants = {
     hidden: { opacity: 0, y: -20 },
@@ -74,10 +117,14 @@ export default function NavBar() {
 
   return (
     <motion.header
-      className="border-b border-gray-100"
+      ref={navRef}
+      className="fixed top-0 left-0 w-full border-b border-gray-100 bg-white/90 backdrop-blur-sm z-50"
       initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+      animate={{
+        opacity: hideNavbar ? 0 : 1,
+        y: hideNavbar ? -200 : 0,
+      }}
+      transition={{ duration: 0.3 }}
     >
       <div className="container mx-auto px-6 md:px-12">
         <div className="flex justify-between items-center py-1">
