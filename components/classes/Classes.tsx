@@ -5,33 +5,50 @@ import Link from "next/link";
 import { motion } from "motion/react";
 
 // Define TypeScript interfaces for the event data
-interface EventDateTime {
-  dateTime: string;
-  timeZone: string;
+interface EventTime {
+  startTime: string;
+  endTime: string;
+  _id: string;
 }
 
-interface CalendarEvent {
-  id: string;
-  summary: string;
-  description?: string;
-  start?: EventDateTime;
-  end?: EventDateTime;
+interface EventDates {
+  startDate: string;
+  isRecurring: boolean;
+  recurringPattern?: string;
+  recurringEndDate?: string;
+  excludeDates: string[];
+  specificDates: string[];
+  _id: string;
 }
 
-// New interface for grouped events
-interface GroupedEvent {
-  summary: string;
+interface OptionChoice {
+  name: string;
+  _id: string;
+}
+
+interface EventOption {
+  categoryName: string;
+  categoryDescription: string;
+  choices: OptionChoice[];
+  _id: string;
+}
+
+interface Event {
+  _id: string;
+  eventName: string;
+  eventType: string;
   description: string;
-  price: string;
-  occurrences: {
-    id: string;
-    start?: EventDateTime;
-    end?: EventDateTime;
-  }[];
+  price: number;
+  dates: EventDates;
+  time: EventTime;
+  options: EventOption[];
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
 }
 
 export default function Classes() {
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +58,7 @@ export default function Classes() {
     const fetchEvents = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch("/api/calendar");
+        const response = await fetch("/api/events");
 
         if (!response.ok) {
           throw new Error("Failed to fetch events");
@@ -61,93 +78,19 @@ export default function Classes() {
     fetchEvents();
   }, []);
 
-  // Parse description to extract description and price
-  const parseEventDetails = (
-    description?: string
-  ): { description: string; price: string } => {
-    const result = { description: "", price: "" };
-
-    if (!description) return result;
-
-    // Check for "description:" in the text
-    const descMatch = description.match(/description:\s*(.*?)(?:\n|$)/i);
-    if (descMatch && descMatch[1]) {
-      result.description = descMatch[1].trim();
-    } else {
-      // If no "description:" tag, use the whole text as description
-      result.description = description.trim();
-    }
-
-    // Check for "price:" in the text
-    const priceMatch = description.match(/price:\s*(.*?)(?:\n|$)/i);
-    if (priceMatch && priceMatch[1]) {
-      result.price = priceMatch[1].trim();
-    }
-
-    return result;
-  };
-
   // Group events by name and organize dates
-  const groupEvents = (events: CalendarEvent[]): GroupedEvent[] => {
-    const eventMap = new Map<string, GroupedEvent>();
+  const filterEvents = (events: Event[]): Event[] => {
+    if (filter === "all") return events;
 
-    events.forEach((event) => {
-      // First, check if the event matches the filter
-      if (filter !== "all") {
-        const summary = event.summary?.toLowerCase() || "";
-        if (!summary.includes(filter.toLowerCase())) {
-          return; // Skip this event if it doesn't match the filter
-        }
-      }
-
-      const summary = event.summary || "Untitled Event";
-      const { description, price } = parseEventDetails(event.description);
-
-      if (!eventMap.has(summary)) {
-        // Create a new group for this event name
-        eventMap.set(summary, {
-          summary,
-          description,
-          price,
-          occurrences: [
-            {
-              id: event.id,
-              start: event.start,
-              end: event.end,
-            },
-          ],
-        });
-      } else {
-        // Add this occurrence to the existing group
-        const group = eventMap.get(summary)!;
-        group.occurrences.push({
-          id: event.id,
-          start: event.start,
-          end: event.end,
-        });
-      }
-    });
-
-    // Sort events alphabetically by name
-    return Array.from(eventMap.values());
-  };
-
-  // Sort dates for display
-  const sortDates = (occurrences: GroupedEvent["occurrences"]) => {
-    return occurrences.sort((a, b) => {
-      const dateA = a.start?.dateTime
-        ? new Date(a.start.dateTime)
-        : new Date(0);
-      const dateB = b.start?.dateTime
-        ? new Date(b.start.dateTime)
-        : new Date(0);
-      return dateA.getTime() - dateB.getTime();
+    return events.filter((event) => {
+      const eventType = event.eventType.toLowerCase();
+      return eventType.includes(filter.toLowerCase());
     });
   };
 
-  const formatDate = (dateTimeString?: string): string => {
-    if (!dateTimeString) return "";
-    const date = new Date(dateTimeString);
+  // Format dates in a readable way
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
       weekday: "short",
       month: "short",
@@ -156,47 +99,24 @@ export default function Classes() {
     });
   };
 
-  const formatTime = (dateTimeString?: string): string => {
-    if (!dateTimeString) return "";
-    const date = new Date(dateTimeString);
-    return date.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
+  // Format time from 24-hour to 12-hour format
+  const formatTime = (timeString: string): string => {
+    const [hours, minutes] = timeString.split(":");
+    const hour = parseInt(hours, 10);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
   };
 
-  // Format dates in a compact way
-  const formatCompactDates = (
-    occurrences: GroupedEvent["occurrences"]
-  ): string => {
-    // Sort the occurrences by date
-    const sortedOccurrences = sortDates(occurrences);
+  // Generate date information for the event
+  const getDateInfo = (event: Event): string => {
+    const { dates } = event;
 
-    // Group by month
-    const datesByMonth: Record<string, number[]> = {};
-
-    sortedOccurrences.forEach((occurrence) => {
-      if (!occurrence.start?.dateTime) return;
-
-      const date = new Date(occurrence.start.dateTime);
-      const month = date.toLocaleDateString("en-US", { month: "long" });
-      const day = date.getDate();
-
-      if (!datesByMonth[month]) {
-        datesByMonth[month] = [];
-      }
-
-      datesByMonth[month].push(day);
-    });
-
-    // Format each month's dates
-    const formattedDates = Object.entries(datesByMonth).map(([month, days]) => {
-      const sortedDays = days.sort((a, b) => a - b);
-      return `${month} ${sortedDays.join(", ")}`;
-    });
-
-    return formattedDates.join(" | ");
+    if (dates.isRecurring && dates.recurringPattern && dates.recurringEndDate) {
+      return `${formatDate(dates.startDate)} to ${formatDate(dates.recurringEndDate)} (${dates.recurringPattern})`;
+    } else {
+      return formatDate(dates.startDate);
+    }
   };
 
   // Toggle the accordion state
@@ -204,8 +124,8 @@ export default function Classes() {
     setOpenAccordion(openAccordion === id ? null : id);
   };
 
-  // Get grouped events
-  const groupedEvents = groupEvents(events);
+  // Get filtered events
+  const filteredEvents = filterEvents(events);
 
   return (
     <>
@@ -221,7 +141,7 @@ export default function Classes() {
           <div className="flex flex-col items-center group">
             <div className="w-full">
               <motion.button
-                onClick={() => toggleAccordion("paint")}
+                onClick={() => toggleAccordion("class")}
                 className="flex flex-col items-center w-full cursor-pointer"
                 whileHover={{
                   scale: 1.05,
@@ -259,10 +179,10 @@ export default function Classes() {
                     y: -2,
                   }}
                 >
-                  Paint Night
+                  Classes
                 </motion.span>
               </motion.button>
-              {openAccordion === "paint" && (
+              {openAccordion === "class" && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -270,12 +190,11 @@ export default function Classes() {
                   className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200 text-center"
                 >
                   <p>
-                    Join us for a fun evening of painting! Our instructors will
-                    guide you through creating a beautiful piece of art while
-                    you enjoy a relaxing atmosphere.
+                    Join our regular art classes! Our instructors will guide you
+                    through developing your skills in a supportive environment.
                   </p>
                   <motion.button
-                    onClick={() => setFilter("paint")}
+                    onClick={() => setFilter("class")}
                     className="mt-3 px-4 py-1 text-white rounded-md cursor-pointer"
                     style={{ backgroundColor: "#3b82f6" }}
                     whileHover={{ scale: 1.05, backgroundColor: "#2563eb" }}
@@ -455,6 +374,23 @@ export default function Classes() {
               All Events
             </motion.button>
             <motion.button
+              onClick={() => setFilter("class")}
+              className={`px-5 py-2.5 rounded-lg font-medium cursor-pointer ${
+                filter === "class" ? "text-white shadow-lg" : "text-gray-700"
+              }`}
+              style={{
+                backgroundColor: filter === "class" ? "#3b82f6" : "#f3f4f6",
+              }}
+              whileHover={{
+                scale: 1.05,
+                boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
+                backgroundColor: filter === "class" ? "#2563eb" : "#e5e7eb",
+              }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Classes
+            </motion.button>
+            <motion.button
               onClick={() => setFilter("camp")}
               className={`px-5 py-2.5 rounded-lg font-medium cursor-pointer ${
                 filter === "camp" ? "text-white shadow-lg" : "text-gray-700"
@@ -488,23 +424,6 @@ export default function Classes() {
             >
               Workshops
             </motion.button>
-            <motion.button
-              onClick={() => setFilter("paint")}
-              className={`px-5 py-2.5 rounded-lg font-medium cursor-pointer ${
-                filter === "paint" ? "text-white shadow-lg" : "text-gray-700"
-              }`}
-              style={{
-                backgroundColor: filter === "paint" ? "#60a5fa" : "#f3f4f6",
-              }}
-              whileHover={{
-                scale: 1.05,
-                boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
-                backgroundColor: filter === "paint" ? "#3b82f6" : "#e5e7eb",
-              }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Paint Nights
-            </motion.button>
           </div>
         </div>
 
@@ -527,7 +446,7 @@ export default function Classes() {
           <div className="bg-red-100 border border-red-300 text-red-700 p-4 rounded-lg">
             <p>Error loading events: {error}</p>
           </div>
-        ) : groupedEvents.length === 0 ? (
+        ) : filteredEvents.length === 0 ? (
           <div className="bg-gray-100 p-6 rounded-lg text-center">
             <p>
               No {filter !== "all" ? filter : ""} events currently scheduled.
@@ -535,9 +454,9 @@ export default function Classes() {
           </div>
         ) : (
           <div className="grid gap-4">
-            {groupedEvents.map((event) => (
+            {filteredEvents.map((event) => (
               <motion.div
-                key={event.summary}
+                key={event._id}
                 className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -547,35 +466,19 @@ export default function Classes() {
                   y: -2,
                 }}
               >
-                <h3 className="text-xl font-medium">{event.summary}</h3>
+                <h3 className="text-xl font-medium">{event.eventName}</h3>
 
-                {event.occurrences.length > 1 ? (
-                  // Multiple occurrences - show compact date format
-                  <div className="mt-2">
-                    <div className="text-gray-600">
-                      <span className="font-medium">Dates: </span>
-                      {formatCompactDates(event.occurrences)}
-                    </div>
-                    <div className="text-gray-600">
-                      <span className="font-medium">Time: </span>
-                      {formatTime(event.occurrences[0].start?.dateTime)} -{" "}
-                      {formatTime(event.occurrences[0].end?.dateTime)}
-                    </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between mt-2">
+                  <div className="text-gray-600">
+                    <span className="font-medium">Date: </span>
+                    {getDateInfo(event)}
                   </div>
-                ) : (
-                  // Single occurrence - show full date/time
-                  <div className="flex flex-col sm:flex-row sm:justify-between mt-2">
-                    <div className="text-gray-600">
-                      <span className="font-medium">Date: </span>
-                      {formatDate(event.occurrences[0].start?.dateTime)}
-                    </div>
-                    <div className="text-gray-600">
-                      <span className="font-medium">Time: </span>
-                      {formatTime(event.occurrences[0].start?.dateTime)} -{" "}
-                      {formatTime(event.occurrences[0].end?.dateTime)}
-                    </div>
+                  <div className="text-gray-600">
+                    <span className="font-medium">Time: </span>
+                    {formatTime(event.time.startTime)} -{" "}
+                    {formatTime(event.time.endTime)}
                   </div>
-                )}
+                </div>
 
                 <div className="mt-2">
                   <span className="font-medium">Description: </span>
@@ -583,10 +486,26 @@ export default function Classes() {
                 </div>
                 <div className="mt-1">
                   <span className="font-medium">Price: </span>
-                  <span className="text-gray-700">
-                    {event.price ? `$${event.price}` : "TBA"}
-                  </span>
+                  <span className="text-gray-700">${event.price}</span>
                 </div>
+
+                {event.options.length > 0 && (
+                  <div className="mt-2">
+                    <span className="font-medium">Options: </span>
+                    {event.options.map((option) => (
+                      <div key={option._id} className="ml-2 mt-1">
+                        <span className="text-gray-700">
+                          {option.categoryName}:{" "}
+                        </span>
+                        <span className="text-gray-600">
+                          {option.choices
+                            .map((choice) => choice.name)
+                            .join(", ")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 <div className="mt-4">
                   <motion.div
@@ -594,7 +513,7 @@ export default function Classes() {
                     whileTap={{ scale: 0.98 }}
                   >
                     <Link
-                      href={`/calendar/${event.occurrences[0].id}`}
+                      href={`/calendar/${event._id}`}
                       className="inline-block px-4 py-2 bg-primary text-black font-medium rounded-md hover:bg-blue-400 hover:text-white transition-colors border-2 border-black"
                     >
                       Sign Up
