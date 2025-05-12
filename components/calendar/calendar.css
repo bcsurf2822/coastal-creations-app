@@ -29,6 +29,16 @@
 .fc-event {
   border-radius: 4px;
   font-size: 0.85em;
+  overflow: visible !important; /* Allow tooltip to overflow */
+}
+
+/* Style event titles to ensure they're visible */
+.fc-event-title {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 2px 4px;
 }
 
 /* Custom styling for timeline events */
@@ -39,4 +49,92 @@
 /* Hover effect for events */
 .fc-event:hover {
   opacity: 0.9;
+  z-index: 100 !important; /* Make sure hovered events are above others */
+}
+
+/* Event tooltip styling */
+.event-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 12px;
+  width: 220px;
+  max-width: 90vw;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-size: 0.8em;
+  z-index: 10;
+  display: none;
+  pointer-events: none;
+  white-space: normal; /* Allow text to wrap */
+  color: #333;
+  text-align: left;
+}
+
+/* Show tooltip on hover */
+.fc-event:hover .event-tooltip {
+  display: block;
+}
+
+/* Tooltip content styling */
+.tooltip-title {
+  font-weight: bold;
+  font-size: 1.1em;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 4px;
+}
+
+.tooltip-time {
+  margin-bottom: 4px;
+  color: #555;
+}
+
+.tooltip-type,
+.tooltip-price,
+.tooltip-recurring {
+  margin-bottom: 3px;
+  color: #666;
+}
+
+.tooltip-description {
+  margin-top: 6px;
+  font-style: italic;
+  color: #777;
+}
+
+/* Event type specific colors */
+.event-type-class {
+  background-color: #3788d8 !important;
+  border-color: #2c6fc6 !important;
+}
+
+.event-type-camp {
+  background-color: green !important;
+  border-color: darkgreen !important;
+}
+
+.event-type-workshop {
+  background-color: orange !important;
+  border-color: darkorange !important;
+}
+
+/* Better styles for different calendar views */
+.fc-daygrid-day-events {
+  min-height: 20px; /* Ensure days have some height even without events */
+}
+
+/* Style for time slot events */
+.fc-timegrid-event-harness {
+  margin-right: 1px;
+}
+
+/* Make the event border slightly darker than the background */
+.fc-h-event,
+.fc-v-event {
+  border-width: 1px;
+  border-style: solid;
 }
