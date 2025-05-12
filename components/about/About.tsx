@@ -5,7 +5,7 @@ export default function About() {
     <div className="container mx-auto px-6 md:px-12 py-16 md:py-24">
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          <div className="relative w-full h-[550px] md:h-[750px] rounded-3xl overflow-hidden shadow-xl border-2 border-gray-100">
+          <div className="relative w-full h-[550px] md:h-[750px] rounded-3xl overflow-hidden shadow-xl ">
             <Image
               src="/assets/images/ashleyInCC.png"
               alt="Laura Epsom"
