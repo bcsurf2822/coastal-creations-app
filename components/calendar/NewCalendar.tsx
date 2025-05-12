@@ -24,6 +24,7 @@ interface CalendarEvent {
     isRecurring?: boolean;
     recurringPattern?: string;
     recurringEndDate?: string | Date;
+    originalStartDate?: string;
   };
 }
 
@@ -143,6 +144,7 @@ export default function NewCalendar() {
         instances.forEach((instance) => {
           instance.resourceId = event.eventType;
           instance.extendedProps = {
+            ...instance.extendedProps,
             description: event.description,
             eventType: event.eventType,
             price: event.price,
@@ -228,6 +230,9 @@ export default function NewCalendar() {
           title: title,
           start: new Date(currentDate),
           end: eventEnd,
+          extendedProps: {
+            originalStartDate: new Date(startDate).toISOString(),
+          },
         });
       }
 
@@ -290,6 +295,16 @@ export default function NewCalendar() {
       default:
         return "#3788d8"; // Default blue
     }
+  };
+
+  // Add a handler for event signup
+  const handleEventSignup = (eventId: string, eventTitle: string) => {
+    // You can replace this with actual signup functionality
+    console.log(`Signing up for event: ${eventTitle} (ID: ${eventId})`);
+    alert(
+      `You've signed up for ${eventTitle}! A confirmation email will be sent shortly.`
+    );
+    // Here you would typically call an API to handle the signup
   };
 
   return (
@@ -372,8 +387,38 @@ export default function NewCalendar() {
             tooltipContent += `<div class="tooltip-description">${info.event.extendedProps.description.substring(0, 100)}${info.event.extendedProps.description.length > 100 ? "..." : ""}</div>`;
           }
 
+          // Add signup button - only for non-recurring events or the first occurrence of recurring events
+          const isRecurring = info.event.extendedProps?.isRecurring;
+          const isFirstOccurrence = isRecurring
+            ? info.event.start &&
+              info.event.extendedProps?.originalStartDate &&
+              new Date(info.event.start).toDateString() ===
+                new Date(
+                  info.event.extendedProps.originalStartDate
+                ).toDateString()
+            : true;
+
+          if (!isRecurring || isFirstOccurrence) {
+            tooltipContent += `<div class="tooltip-signup">
+              <button id="signup-${info.event.id || "event"}" type="button">Sign Up</button>
+            </div>`;
+          }
+
           tooltip.innerHTML = tooltipContent;
           info.el.appendChild(tooltip);
+
+          // Add event listener to the signup button
+          setTimeout(() => {
+            const signupButton = document.getElementById(
+              `signup-${info.event.id || "event"}`
+            );
+            if (signupButton) {
+              signupButton.addEventListener("click", (e) => {
+                e.stopPropagation(); // Prevent event from closing
+                handleEventSignup(info.event.id || "unknown", info.event.title);
+              });
+            }
+          }, 0);
         }}
       />
     </div>

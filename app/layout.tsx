@@ -42,7 +42,7 @@ export default function RootLayout({
         {/* <AuthProvider> */}
         <NavBar />
         <div className="relative pt-32 md:pt-56">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#e0f7fa] via-[#f0f0f0] to-[#ffffff]  z-10"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#cfdde0] via-[#f0f0f0] to-[#ffffff]  z-10"></div>
 
           <div className="relative z-20">{children}</div>
         </div>

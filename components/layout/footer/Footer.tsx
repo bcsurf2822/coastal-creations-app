@@ -149,12 +149,12 @@ export default function Footer() {
   return (
     <>
       {/* Empty spacer div to maintain layout spacing */}
-      <div className="w-full h-[var(--footer-height)] bg-gradient-to-r from-[#e0f7fa] via-[#f0f0f0] to-[#ffffff]"></div>
+      <div className="w-full h-[var(--footer-height)] bg-gradient-to-r from-[#cfdde0] via-[#f0f0f0] to-[#ffffff] "></div>
 
       {/* Actual footer */}
       <motion.footer
         ref={footerRef}
-        className="bg-gradient-to-r from-[#FBC999] to-[#ffd7b5] text-black py-8 border-t-4 border-neutral-200 fixed bottom-0 left-0 w-full z-40"
+        className="bg-gradient-to-r from-[#f5cca6] to-[#ffd7b5] text-black py-8 border-t-4 border-neutral-200 fixed bottom-0 left-0 w-full z-40"
         initial={{ y: "100%" }}
         animate={{ y: showFooter ? 0 : "100%" }}
         transition={{ duration: 0.5, ease: "easeOut" }}
@@ -163,15 +163,17 @@ export default function Footer() {
           <div className="flex flex-col md:flex-row gap-8">
             {/* Logo Container */}
             <div className="md:w-1/4 flex flex-col items-center justify-center">
-              <div className="relative w-64 h-64 flex items-center justify-center">
-                <Image
-                  src="/assets/logos/coastalLogoShell.png"
-                  alt="Coastal Creations Logo"
-                  fill
-                  className="object-contain"
-                  priority
-                />
-              </div>
+              <Link href="/">
+                <div className="relative w-80 h-80 flex items-center justify-center">
+                  <Image
+                    src="/assets/logos/coastalLogoFull.png"
+                    alt="Coastal Creations Logo"
+                    fill
+                    className="object-contain"
+                    priority
+                  />
+                </div>
+              </Link>
 
               {/* Social icons moved under logo */}
               <div className="mt-4 flex space-x-6 justify-center">

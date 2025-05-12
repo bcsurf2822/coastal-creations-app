@@ -11,6 +11,25 @@
   height: 100%;
 }
 
+/* Make all calendar lines black */
+.fc th,
+.fc td,
+.fc-divider,
+.fc-timegrid-slots td,
+.fc-timegrid-slots th,
+.fc-daygrid-day-frame,
+.fc-scrollgrid,
+.fc-scrollgrid-section > td,
+.fc-scrollgrid-section > th,
+.fc-col-header-cell,
+.fc-timegrid-axis,
+.fc-timegrid-slot,
+.fc-daygrid-day,
+.fc-daygrid-day-events,
+.fc-daygrid-day-bg {
+  border-color: black !important;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .calendar-container {
@@ -39,6 +58,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   padding: 2px 4px;
+  color: white !important; /* Make event text white */
 }
 
 /* Custom styling for timeline events */
@@ -68,7 +88,7 @@
   font-size: 0.8em;
   z-index: 10;
   display: none;
-  pointer-events: none;
+  pointer-events: auto; /* Allow interaction with tooltip */
   white-space: normal; /* Allow text to wrap */
   color: #333;
   text-align: left;
@@ -104,6 +124,28 @@
   margin-top: 6px;
   font-style: italic;
   color: #777;
+  margin-bottom: 8px;
+}
+
+/* Signup button styling */
+.tooltip-signup {
+  margin-top: 8px;
+  text-align: center;
+}
+
+.tooltip-signup button {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.tooltip-signup button:hover {
+  background-color: #45a049;
 }
 
 /* Event type specific colors */
