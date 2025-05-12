@@ -387,7 +387,6 @@ export default function NewCalendar() {
             tooltipContent += `<div class="tooltip-description">${info.event.extendedProps.description.substring(0, 100)}${info.event.extendedProps.description.length > 100 ? "..." : ""}</div>`;
           }
 
-          // Add signup button - only for non-recurring events or the first occurrence of recurring events
           const isRecurring = info.event.extendedProps?.isRecurring;
           const isFirstOccurrence = isRecurring
             ? info.event.start &&
@@ -400,21 +399,20 @@ export default function NewCalendar() {
 
           if (!isRecurring || isFirstOccurrence) {
             tooltipContent += `<div class="tooltip-signup">
+       
               <button id="signup-${info.event.id || "event"}" type="button">Sign Up</button>
             </div>`;
           }
 
           tooltip.innerHTML = tooltipContent;
           info.el.appendChild(tooltip);
-
-          // Add event listener to the signup button
           setTimeout(() => {
             const signupButton = document.getElementById(
               `signup-${info.event.id || "event"}`
             );
             if (signupButton) {
               signupButton.addEventListener("click", (e) => {
-                e.stopPropagation(); // Prevent event from closing
+                e.stopPropagation();
                 handleEventSignup(info.event.id || "unknown", info.event.title);
               });
             }
