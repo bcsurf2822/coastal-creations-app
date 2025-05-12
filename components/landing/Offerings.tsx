@@ -15,7 +15,7 @@ export default function Offerings() {
                 Creative Experiences
               </h3>
             </div>
-            <p className="text-neutral-900 max-w-md mx-auto text-end  font-semibold">
+            <p className="text-neutral-900 max-w-md mx-auto text-center  font-semibold">
               We provide a variety of classes, workshops, and creative
               opportunities for artists of all ages and skill levels.
             </p>
