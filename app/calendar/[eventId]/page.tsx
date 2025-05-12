@@ -5,86 +5,44 @@ import { parseISO, format } from "date-fns";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
-interface ApiCalendarEvent {
-  id: string;
-  summary: string;
-  description?: string;
-  start: {
-    dateTime: string;
-    date?: string;
-    timeZone?: string;
-  };
-  end: {
-    dateTime: string;
-    date?: string;
-    timeZone?: string;
-  };
-  status: string;
-  htmlLink?: string;
+interface EventOption {
+  categoryName: string;
+  categoryDescription: string;
+  choices: {
+    name: string;
+    _id: string;
+  }[];
+  _id: string;
+}
+
+interface EventDates {
+  startDate: string;
+  isRecurring: boolean;
+  recurringPattern?: string;
+  recurringEndDate?: string;
+  excludeDates: string[];
+  specificDates: string[];
+  _id: string;
+}
+
+interface EventTime {
+  startTime: string;
+  endTime: string;
+  _id: string;
 }
 
 interface EventData {
-  id: string;
-  title: string;
-  description?: string;
-  price?: string;
-  startDate: Date;
-  endDate?: Date;
-  startTime: string;
-  endTime?: string;
+  _id: string;
+  eventName: string;
+  eventType: string;
+  description: string;
+  price: number;
+  dates: EventDates;
+  time: EventTime;
+  options: EventOption[];
+  createdAt: string;
+  updatedAt: string;
 }
-
-// Helper function to extract price and description from the formatted string
-const extractJsonFromDescription = (
-  description?: string
-): { price?: string; description?: string } => {
-  if (!description) return {};
-
-  try {
-
-
-    // Clean the description by removing HTML tags
-    const textContent = description.replace(/<[^>]*>/g, " ").trim();
-
-
-    // First try to extract using JSON-like format with quotes
-    const priceJsonMatch = textContent.match(
-      /["']price["']\s*:\s*["']([^"']+)["']/i
-    );
-    const descJsonMatch = textContent.match(
-      /["']description["']\s*:\s*["']([^"']+)["']/i
-    );
-
-    // Then try to extract using simpler "key: value" format
-    const priceSimpleMatch = textContent.match(/price\s*:\s*([^\n,]+)/i);
-    const descSimpleMatch = textContent.match(/description\s*:\s*([^\n]+)/i);
-
-    // Use the matches in order of preference
-    const priceMatch = priceJsonMatch || priceSimpleMatch;
-    const descMatch = descJsonMatch || descSimpleMatch;
-
-
-
-    // Build return object
-    const result: { price?: string; description?: string } = {};
-
-    if (priceMatch?.[1]) {
-      result.price = priceMatch[1].trim();
-    }
-
-    if (descMatch?.[1]) {
-      result.description = descMatch[1].trim();
-    } else if (!priceMatch) {
-      // If no price and no description found, use the whole text as description
-      result.description = textContent;
-    }
-
-    return result;
-  } catch (error) {
-    console.error("Error parsing description:", error);
-    return { description };
-  }
-};
 
 export default function EventPage({
   params,
@@ -104,10 +62,8 @@ export default function EventPage({
       setIsLoading(true);
       setError(null);
 
-   
-
       try {
-        const response = await fetch("/api/calendar");
+        const response = await fetch(`/api/event/${eventId}`);
 
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -115,50 +71,10 @@ export default function EventPage({
 
         const data = await response.json();
 
-  
-
-        if (data.events) {
-   
-
-          const foundEvent = data.events.find(
-            (e: ApiCalendarEvent) => e.id === eventId
-          );
-
-     
-
-          if (foundEvent) {
-            // Extract price and description from JSON in the description field
-            const { price, description: extractedDescription } =
-              extractJsonFromDescription(foundEvent.description);
-
-            // Transform the event to a simpler format
-            const transformedEvent = {
-              id: foundEvent.id,
-              title: foundEvent.summary,
-              description: extractedDescription,
-              price: price,
-              startDate: foundEvent.start.dateTime
-                ? parseISO(foundEvent.start.dateTime)
-                : foundEvent.start.date
-                ? parseISO(foundEvent.start.date)
-                : new Date(),
-              endDate: foundEvent.end.dateTime
-                ? parseISO(foundEvent.end.dateTime)
-                : foundEvent.end.date
-                ? parseISO(foundEvent.end.date)
-                : undefined,
-              startTime: foundEvent.start.dateTime
-                ? format(parseISO(foundEvent.start.dateTime), "h:mm a")
-                : "All Day",
-              endTime: foundEvent.end.dateTime
-                ? format(parseISO(foundEvent.end.dateTime), "h:mm a")
-                : undefined,
-            };
-
-            setEvent(transformedEvent);
-          } else {
-            throw new Error("Event not found");
-          }
+        if (data.success && data.event) {
+          setEvent(data.event);
+        } else {
+          throw new Error(data.error || "Event not found");
         }
       } catch (err) {
         console.error("Error fetching event:", err);
@@ -197,27 +113,46 @@ export default function EventPage({
 
   // At this point, we know event is not null due to the notFound check
   const eventData = event!;
+  const formattedStartDate = eventData.dates?.startDate
+    ? format(parseISO(eventData.dates.startDate), "EEEE, MMMM d, yyyy")
+    : "Item unavailable";
+
+  const formattedEndDate = eventData.dates?.recurringEndDate
+    ? format(parseISO(eventData.dates.recurringEndDate), "EEEE, MMMM d, yyyy")
+    : "Not applicable";
 
   return (
     <div className="min-h-screen p-6 sm:p-12">
       <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
         <div className="w-full p-4 bg-primary text-white">
           <span className="inline-block px-2 py-1 rounded bg-white/20 text-sm font-medium">
-            Event
+            {eventData.eventType || "Event"}
           </span>
         </div>
 
         <div className="p-6">
-          <h1 className="text-3xl font-bold mb-4">{eventData.title}</h1>
+          <h1 className="text-3xl font-bold mb-4">
+            {eventData.eventName || "Item unavailable"}
+          </h1>
 
           <div className="mb-6">
             <p className="text-lg mb-2">
-              <span className="font-medium">Date:</span>{" "}
-              {format(eventData.startDate, "EEEE, MMMM d, yyyy")}
+              <span className="font-medium">Date:</span> {formattedStartDate}
             </p>
+            {eventData.dates?.isRecurring && (
+              <div>
+                <p className="text-lg mb-2">
+                  <span className="font-medium">Recurring:</span>{" "}
+                  {eventData.dates.recurringPattern || "Weekly"}
+                  {eventData.dates.recurringEndDate &&
+                    ` until ${formattedEndDate}`}
+                </p>
+              </div>
+            )}
             <p className="text-lg mb-2">
-              <span className="font-medium">Time:</span> {eventData.startTime}{" "}
-              {eventData.endTime ? `- ${eventData.endTime}` : ""}
+              <span className="font-medium">Time:</span>{" "}
+              {eventData.time?.startTime || "Item unavailable"}
+              {eventData.time?.endTime ? ` - ${eventData.time.endTime}` : ""}
             </p>
           </div>
 
@@ -228,18 +163,37 @@ export default function EventPage({
             </div>
           )}
 
-          {eventData.price && (
+          {eventData.price !== undefined && (
             <div className="mb-6">
               <h2 className="text-xl font-semibold mb-2">Price</h2>
               <p className="text-lg font-medium">${eventData.price}</p>
             </div>
           )}
 
+          {eventData.options && eventData.options.length > 0 && (
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold mb-2">Options</h2>
+              {eventData.options.map((option) => (
+                <div key={option._id} className="mb-4">
+                  <h3 className="text-lg font-medium">{option.categoryName}</h3>
+                  <p className="mb-2">{option.categoryDescription}</p>
+                  <div className="ml-4">
+                    {option.choices.map((choice) => (
+                      <p key={choice._id} className="mb-1">
+                        • {choice.name}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           <Link
             href={`/payments?eventId=${encodeURIComponent(
-              eventData.id
-            )}&eventTitle=${encodeURIComponent(eventData.title)}${
-              eventData.price
+              eventData._id
+            )}&eventTitle=${encodeURIComponent(eventData.eventName)}${
+              eventData.price !== undefined
                 ? `&price=${encodeURIComponent(eventData.price)}`
                 : ""
             }`}

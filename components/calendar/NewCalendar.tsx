@@ -7,6 +7,7 @@ import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import React, { useState, useEffect } from "react";
 import "./calendar.css";
+import { useRouter } from "next/navigation";
 
 // Define the type for calendar events
 interface CalendarEvent {
@@ -17,6 +18,7 @@ interface CalendarEvent {
   allDay?: boolean;
   id?: string;
   extendedProps?: {
+    _id?: string;
     description?: string;
     eventType?: string;
     price?: number;
@@ -55,6 +57,8 @@ interface ApiEvent {
 export default function NewCalendar() {
   const [calendarView, setCalendarView] = useState("dayGridMonth");
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+
+  const router = useRouter();
 
   const resources = [
     { id: "class", title: "Classes", eventColor: "#3788d8" },
@@ -108,6 +112,7 @@ export default function NewCalendar() {
           end,
           resourceId: event.eventType,
           extendedProps: {
+            _id: event._id,
             description: event.description,
             eventType: event.eventType,
             price: event.price,
@@ -145,6 +150,7 @@ export default function NewCalendar() {
           instance.resourceId = event.eventType;
           instance.extendedProps = {
             ...instance.extendedProps,
+            _id: event._id,
             description: event.description,
             eventType: event.eventType,
             price: event.price,
@@ -298,13 +304,9 @@ export default function NewCalendar() {
   };
 
   // Add a handler for event signup
-  const handleEventSignup = (eventId: string, eventTitle: string) => {
-    // You can replace this with actual signup functionality
-    console.log(`Signing up for event: ${eventTitle} (ID: ${eventId})`);
-    alert(
-      `You've signed up for ${eventTitle}! A confirmation email will be sent shortly.`
-    );
-    // Here you would typically call an API to handle the signup
+  const navigateToEvent = (eventId: string, eventTitle: string) => {
+    console.log(`Navigating to event: ${eventTitle} (ID: ${eventId})`);
+    router.push(`/calendar/${eventId}`);
   };
 
   return (
@@ -400,7 +402,7 @@ export default function NewCalendar() {
           if (!isRecurring || isFirstOccurrence) {
             tooltipContent += `<div class="tooltip-signup">
        
-              <button id="signup-${info.event.id || "event"}" type="button">Sign Up</button>
+              <button id="signup-${info.event.extendedProps?._id || "event"}" type="button">Sign Up</button>
             </div>`;
           }
 
@@ -408,12 +410,15 @@ export default function NewCalendar() {
           info.el.appendChild(tooltip);
           setTimeout(() => {
             const signupButton = document.getElementById(
-              `signup-${info.event.id || "event"}`
+              `signup-${info.event.extendedProps?._id || "event"}`
             );
             if (signupButton) {
               signupButton.addEventListener("click", (e) => {
                 e.stopPropagation();
-                handleEventSignup(info.event.id || "unknown", info.event.title);
+                navigateToEvent(
+                  info.event.extendedProps?._id || "unknown",
+                  info.event.title
+                );
               });
             }
           }, 0);
