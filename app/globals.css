@@ -8,6 +8,7 @@
   --accent: #fb923c;
   --light: #f0f9ff;
   --dark: #0f172a;
+  --footer-height: 500px; /* Default footer height, updated via JS */
 }
 
 @theme inline {
@@ -17,12 +18,29 @@
   --font-mono: var(--font-geist-mono);
 }
 
-
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Footer animation styles */
+@keyframes slideInFromBottom {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideOutToBottom {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
 }
 
 @keyframes slideIn {

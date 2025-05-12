@@ -41,25 +41,12 @@ export default function RootLayout({
         </Suspense>
         {/* <AuthProvider> */}
         <NavBar />
-        <div className="relative">
-          {/* Background image */}
-          {/* <Image
-            src="/assets/backgrounds/spatterBg.png"
-            alt="Splatter background"
-            fill
-            className="object-cover z-0"
-            priority
-          /> */}
+        <div className="relative pt-32 md:pt-56">
+          <div className="absolute inset-0 bg-gradient-to-r from-[#e0f7fa] via-[#f0f0f0] to-[#ffffff]  z-10"></div>
 
-          {/* Optional gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#87d8d8] to-[#dfdfdf]  z-10"></div>
-
-          {/* Content */}
           <div className="relative z-20">{children}</div>
         </div>
         <Footer />
-        {/* </AuthProvider> */}
-
         {GA_TRACKING_ID && (
           <>
             <Script
