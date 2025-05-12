@@ -4,11 +4,11 @@ import Event from "@/lib/models/Event";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectMongo();
-    const id = params.id;
+    const { id } = await params;
 
     const event = await Event.findById(id);
 
