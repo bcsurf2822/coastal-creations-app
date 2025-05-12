@@ -42,7 +42,11 @@ export default function Payment() {
     postalCode: "",
     email: "",
     phoneNumber: "",
+    numberOfPeople: 1,
   });
+
+  // Calculate total price based on number of people
+  const [totalPrice, setTotalPrice] = useState<string>("");
 
   // Format price for display and ensure it's a valid number
   useEffect(() => {
@@ -59,6 +63,8 @@ export default function Payment() {
       if (!isNaN(price)) {
         // Format to 2 decimal places
         setFormattedPrice(price.toFixed(2));
+        // Calculate total price
+        setTotalPrice((price * billingDetails.numberOfPeople).toFixed(2));
         setIsPriceAvailable(true);
       } else {
         setIsPriceAvailable(false);
@@ -67,7 +73,7 @@ export default function Payment() {
       console.error("Error formatting price:", e);
       setIsPriceAvailable(false);
     }
-  }, [eventPrice]);
+  }, [eventPrice, billingDetails.numberOfPeople]);
 
   // Validate form fields
   useEffect(() => {
@@ -142,6 +148,10 @@ export default function Payment() {
                     <span className="font-bold text-black">
                       ${formattedPrice}
                     </span>
+                    <span className="text-black font-medium">
+                      {" "}
+                      / Per Person
+                    </span>
                   </p>
                 </div>
               ) : (
@@ -215,6 +225,29 @@ export default function Payment() {
                     className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition"
                     required
                   />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="numberOfPeople"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Number of People
+                  </label>
+                  <select
+                    id="numberOfPeople"
+                    name="numberOfPeople"
+                    value={billingDetails.numberOfPeople}
+                    onChange={handleInputChange}
+                    className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition"
+                    required
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                      <option key={num} value={num}>
+                        {num} {num === 1 ? "Person" : "People"}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="md:col-span-2">
@@ -368,6 +401,37 @@ export default function Payment() {
                     contact purposes.
                   </p>
                 </div>
+
+                {/* Display total price calculation */}
+                {isPriceAvailable && (
+                  <div className="md:col-span-2 mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-medium text-gray-800">
+                        Price per person:
+                      </span>
+                      <span className="text-lg font-semibold">
+                        ${formattedPrice}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="text-lg font-medium text-gray-800">
+                        Number of people:
+                      </span>
+                      <span className="text-lg font-semibold">
+                        {billingDetails.numberOfPeople}
+                      </span>
+                    </div>
+                    <div className="h-px bg-gray-300 my-3"></div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xl font-bold text-gray-900">
+                        Total:
+                      </span>
+                      <span className="text-xl font-bold text-gray-900">
+                        ${totalPrice}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -447,7 +511,7 @@ export default function Payment() {
                         countryCode: "US",
                         currencyCode: "USD",
                         total: {
-                          amount: formattedPrice,
+                          amount: totalPrice,
                           label: "Total",
                         },
                       };
@@ -535,6 +599,15 @@ export default function Payment() {
                                 billingDetails.phoneNumber
                               );
                             }
+
+                            // Add number of people to success page
+                            queryParams.set(
+                              "numberOfPeople",
+                              billingDetails.numberOfPeople.toString()
+                            );
+
+                            // Add total price to success page
+                            queryParams.set("totalPrice", totalPrice);
 
                             // Use config for redirect URL
                             router.push(
