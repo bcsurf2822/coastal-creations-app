@@ -12,6 +12,23 @@ interface PaymentConfig {
   redirectUrl: string;
 }
 
+interface EventOption {
+  categoryName: string;
+  categoryDescription?: string;
+  choices: Array<{
+    name: string;
+  }>;
+}
+
+interface Participant {
+  firstName: string;
+  lastName: string;
+  selectedOptions: Array<{
+    categoryName: string;
+    choiceName: string;
+  }>;
+}
+
 export default function Payment() {
   const router = useRouter();
   const [isLoaded, setIsLoaded] = useState(false);
@@ -30,6 +47,16 @@ export default function Payment() {
 
   const [formattedPrice, setFormattedPrice] = useState<string>("");
   const [isPriceAvailable, setIsPriceAvailable] = useState<boolean>(true);
+  const [eventOptions, setEventOptions] = useState<EventOption[]>([]);
+  const [selectedOptions, setSelectedOptions] = useState<
+    Array<{ categoryName: string; choiceName: string }>
+  >([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
+
+  // New state for handling participants
+  const [isSigningUpForSelf, setIsSigningUpForSelf] = useState(true);
+  const [participants, setParticipants] = useState<Participant[]>([]);
 
   const [billingDetails, setBillingDetails] = useState({
     addressLine1: "",
@@ -47,6 +74,82 @@ export default function Payment() {
 
   // Calculate total price based on number of people
   const [totalPrice, setTotalPrice] = useState<string>("");
+
+  // Initialize participants array when number of people changes
+  useEffect(() => {
+    const newParticipants: Participant[] = [];
+
+    // If signing up for self, we only need participants for additional people
+    const participantsNeeded = isSigningUpForSelf
+      ? Math.max(0, billingDetails.numberOfPeople - 1)
+      : billingDetails.numberOfPeople;
+
+    // Preserve existing participant data for those that still exist
+    for (let i = 0; i < participantsNeeded; i++) {
+      if (i < participants.length) {
+        // Keep existing participant data
+        newParticipants.push({ ...participants[i] });
+      } else {
+        // Initialize with default empty values
+        const initialSelectedOptions = eventOptions.map((option) => ({
+          categoryName: option.categoryName,
+          choiceName: option.choices[0]?.name || "",
+        }));
+
+        newParticipants.push({
+          firstName: "",
+          lastName: "",
+          selectedOptions: initialSelectedOptions,
+        });
+      }
+    }
+
+    // Only update state if the array has actually changed
+    if (
+      newParticipants.length !== participants.length ||
+      JSON.stringify(newParticipants) !== JSON.stringify(participants)
+    ) {
+      setParticipants(newParticipants);
+    }
+  }, [billingDetails.numberOfPeople, isSigningUpForSelf, eventOptions]);
+
+  // Fetch event details including options
+  useEffect(() => {
+    if (eventId) {
+      const fetchEventDetails = async () => {
+        try {
+          const response = await fetch(`/api/event/${eventId}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (
+              data.event &&
+              data.event.options &&
+              data.event.options.length > 0
+            ) {
+              // Update event options only if they've changed
+              const newOptions = data.event.options;
+              if (JSON.stringify(newOptions) !== JSON.stringify(eventOptions)) {
+                setEventOptions(newOptions);
+
+                // Initialize selectedOptions with the first choice of each category
+                const initialSelectedOptions = newOptions.map(
+                  (option: EventOption) => ({
+                    categoryName: option.categoryName,
+                    choiceName: option.choices[0]?.name || "",
+                  })
+                );
+                setSelectedOptions(initialSelectedOptions);
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching event details:", error);
+        }
+      };
+
+      fetchEventDetails();
+    }
+  }, [eventId]);
 
   // Format price for display and ensure it's a valid number
   useEffect(() => {
@@ -90,8 +193,23 @@ export default function Payment() {
       billingDetails.postalCode.trim() !== "" &&
       isContactProvided;
 
-    setFormValid(areRequiredFieldsFilled);
-  }, [billingDetails]);
+    // Validate participant information
+    let areParticipantsValid = true;
+    if (!isSigningUpForSelf || billingDetails.numberOfPeople > 1) {
+      // For non-self registrations or multiple people, participants must have names
+      for (const participant of participants) {
+        if (!participant.firstName || !participant.lastName) {
+          areParticipantsValid = false;
+          break;
+        }
+      }
+    } else {
+      // If signing up for self with only 1 person, we don't need participants
+      areParticipantsValid = true;
+    }
+
+    setFormValid(areRequiredFieldsFilled && areParticipantsValid);
+  }, [billingDetails, participants, isSigningUpForSelf]);
 
   // Fetch payment configuration from API
   useEffect(() => {
@@ -124,6 +242,132 @@ export default function Payment() {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handleOptionChange = (categoryName: string, choiceName: string) => {
+    setSelectedOptions((prevOptions) => {
+      const newOptions = [...prevOptions];
+      const existingOptionIndex = newOptions.findIndex(
+        (option) => option.categoryName === categoryName
+      );
+
+      if (existingOptionIndex !== -1) {
+        newOptions[existingOptionIndex] = { categoryName, choiceName };
+      } else {
+        newOptions.push({ categoryName, choiceName });
+      }
+
+      return newOptions;
+    });
+  };
+
+  // Handle participant data changes
+  const handleParticipantChange = (
+    index: number,
+    field: keyof Participant,
+    value: string | Array<{ categoryName: string; choiceName: string }>
+  ) => {
+    setParticipants((prev) => {
+      const updated = [...prev];
+      if (field === "selectedOptions") {
+        // Handle selected options separately
+        updated[index] = {
+          ...updated[index],
+          selectedOptions: value as Array<{
+            categoryName: string;
+            choiceName: string;
+          }>,
+        };
+      } else {
+        // Handle simple fields (firstName, lastName)
+        updated[index] = {
+          ...updated[index],
+          [field]: value as string,
+        };
+      }
+      return updated;
+    });
+  };
+
+  // Handle option change for a specific participant
+  const handleParticipantOptionChange = (
+    participantIndex: number,
+    categoryName: string,
+    choiceName: string
+  ) => {
+    setParticipants((prev) => {
+      const updated = [...prev];
+      const participant = { ...updated[participantIndex] };
+
+      const optionIndex = participant.selectedOptions.findIndex(
+        (opt) => opt.categoryName === categoryName
+      );
+
+      if (optionIndex !== -1) {
+        participant.selectedOptions[optionIndex] = { categoryName, choiceName };
+      } else {
+        participant.selectedOptions.push({ categoryName, choiceName });
+      }
+
+      updated[participantIndex] = participant;
+      return updated;
+    });
+  };
+
+  const handleTestSubmit = async () => {
+    if (!formValid) {
+      setError("Please complete all required fields before testing");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitSuccess(null);
+
+    try {
+      const roundedTotal = Math.round(parseFloat(totalPrice) * 100) / 100;
+
+      const response = await fetch("/api/customer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          event: eventId,
+          quantity: billingDetails.numberOfPeople,
+          total: roundedTotal,
+          isSigningUpForSelf: isSigningUpForSelf,
+          participants,
+          selectedOptions,
+          billingInfo: {
+            firstName: billingDetails.givenName,
+            lastName: billingDetails.familyName,
+            addressLine1: billingDetails.addressLine1,
+            addressLine2: billingDetails.addressLine2,
+            city: billingDetails.city,
+            stateProvince: billingDetails.state,
+            postalCode: billingDetails.postalCode,
+            country: billingDetails.countryCode,
+            emailAddress: billingDetails.email,
+            phoneNumber: billingDetails.phoneNumber,
+          },
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setSubmitSuccess(
+          `Test submission successful! Customer ID: ${result.customer._id}`
+        );
+      } else {
+        setError(`Test submission failed: ${result.error}`);
+      }
+    } catch (error) {
+      console.error("Error during test submission:", error);
+      setError("Error during test submission. See console for details.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -249,6 +493,207 @@ export default function Payment() {
                     ))}
                   </select>
                 </div>
+
+                {/* Registration Type */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Registration Type
+                  </label>
+                  <div className="flex items-center space-x-6">
+                    <label className="inline-flex items-center">
+                      <input
+                        type="radio"
+                        className="form-radio h-5 w-5 text-primary"
+                        checked={isSigningUpForSelf}
+                        onChange={() => setIsSigningUpForSelf(true)}
+                      />
+                      <span className="ml-2 text-sm text-gray-700">
+                        I&apos;m registering for myself
+                      </span>
+                    </label>
+                    <label className="inline-flex items-center">
+                      <input
+                        type="radio"
+                        className="form-radio h-5 w-5 text-primary"
+                        checked={!isSigningUpForSelf}
+                        onChange={() => setIsSigningUpForSelf(false)}
+                      />
+                      <span className="ml-2 text-sm text-gray-700">
+                        I&apos;m registering for others
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Participant Information Section */}
+                {(!isSigningUpForSelf || billingDetails.numberOfPeople > 1) &&
+                  participants.length > 0 && (
+                    <div className="md:col-span-2 bg-gray-50 p-4 my-2 rounded-lg">
+                      <h3 className="text-lg font-semibold mb-3 text-gray-800">
+                        Participant Information
+                      </h3>
+
+                      {participants.map((participant, idx) => (
+                        <div
+                          key={idx}
+                          className="mb-6 p-4 border-b border-gray-200 last:border-b-0"
+                        >
+                          <h4 className="font-medium mb-3 text-gray-700">
+                            {isSigningUpForSelf
+                              ? `Additional Person ${idx + 1}`
+                              : `Person ${idx + 1}`}
+                          </h4>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <label
+                                className="block text-sm font-medium text-gray-700 mb-1"
+                                htmlFor={`participant-${idx}-firstName`}
+                              >
+                                First Name
+                              </label>
+                              <input
+                                type="text"
+                                id={`participant-${idx}-firstName`}
+                                value={participant.firstName}
+                                onChange={(e) =>
+                                  handleParticipantChange(
+                                    idx,
+                                    "firstName",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label
+                                className="block text-sm font-medium text-gray-700 mb-1"
+                                htmlFor={`participant-${idx}-lastName`}
+                              >
+                                Last Name
+                              </label>
+                              <input
+                                type="text"
+                                id={`participant-${idx}-lastName`}
+                                value={participant.lastName}
+                                onChange={(e) =>
+                                  handleParticipantChange(
+                                    idx,
+                                    "lastName",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                                required
+                              />
+                            </div>
+                          </div>
+
+                          {/* Participant Event Options */}
+                          {eventOptions.length > 0 && (
+                            <div className="mt-4">
+                              <h5 className="text-sm font-medium text-gray-700 mb-2">
+                                Options for{" "}
+                                {participant.firstName || `Person ${idx + 1}`}
+                              </h5>
+                              <div className="space-y-3">
+                                {eventOptions.map((option, optionIdx) => (
+                                  <div key={optionIdx}>
+                                    <label className="block text-sm text-gray-700 mb-1">
+                                      {option.categoryName}
+                                      {option.categoryDescription && (
+                                        <span className="text-gray-500 text-xs ml-1">
+                                          - {option.categoryDescription}
+                                        </span>
+                                      )}
+                                    </label>
+                                    <select
+                                      value={
+                                        participant.selectedOptions.find(
+                                          (so) =>
+                                            so.categoryName ===
+                                            option.categoryName
+                                        )?.choiceName || ""
+                                      }
+                                      onChange={(e) =>
+                                        handleParticipantOptionChange(
+                                          idx,
+                                          option.categoryName,
+                                          e.target.value
+                                        )
+                                      }
+                                      className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary"
+                                    >
+                                      {option.choices.map(
+                                        (choice, choiceIdx) => (
+                                          <option
+                                            key={choiceIdx}
+                                            value={choice.name}
+                                          >
+                                            {choice.name}
+                                          </option>
+                                        )
+                                      )}
+                                    </select>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                {/* Event Options Section for primary customer */}
+                {eventOptions.length > 0 && isSigningUpForSelf && (
+                  <div className="md:col-span-2 mb-4">
+                    <h3 className="text-lg font-semibold mb-3 text-gray-800">
+                      {billingDetails.numberOfPeople > 1
+                        ? "Your Event Options"
+                        : "Event Options"}
+                    </h3>
+                    <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
+                      {eventOptions.map((option, optionIndex) => (
+                        <div
+                          key={optionIndex}
+                          className="border-b border-gray-200 pb-3 last:border-0 last:pb-0"
+                        >
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            {option.categoryName}
+                            {option.categoryDescription && (
+                              <span className="text-gray-500 text-xs ml-1">
+                                - {option.categoryDescription}
+                              </span>
+                            )}
+                          </label>
+                          <select
+                            value={
+                              selectedOptions.find(
+                                (so) => so.categoryName === option.categoryName
+                              )?.choiceName || ""
+                            }
+                            onChange={(e) =>
+                              handleOptionChange(
+                                option.categoryName,
+                                e.target.value
+                              )
+                            }
+                            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition"
+                          >
+                            {option.choices.map((choice, choiceIndex) => (
+                              <option key={choiceIndex} value={choice.name}>
+                                {choice.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="md:col-span-2">
                   <label
@@ -432,6 +877,33 @@ export default function Payment() {
                     </div>
                   </div>
                 )}
+
+                {/* Test Submit Button */}
+                <div className="md:col-span-2 mt-4">
+                  <div className="border-t border-gray-300 pt-4">
+                    <h3 className="text-lg font-semibold mb-3 text-gray-800">
+                      Testing Only
+                    </h3>
+                    {submitSuccess && (
+                      <div className="mb-4 p-3 bg-green-50 border border-green-300 text-green-800 rounded-lg">
+                        {submitSuccess}
+                      </div>
+                    )}
+                    <button
+                      onClick={handleTestSubmit}
+                      disabled={isSubmitting || !formValid}
+                      className="w-full mb-4 py-3 px-6 bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 disabled:opacity-50 transition duration-200"
+                    >
+                      {isSubmitting
+                        ? "Submitting..."
+                        : "Test Database Submission Only"}
+                    </button>
+                    <p className="text-sm text-gray-500 italic">
+                      This button is for testing database submission only. No
+                      payment will be processed.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -540,6 +1012,9 @@ export default function Payment() {
 
                       if (token.token) {
                         try {
+                          const roundedTotal =
+                            Math.round(parseFloat(totalPrice) * 100) / 100;
+
                           const result = await submitPayment(token.token, {
                             ...billingDetails,
                             eventId,
@@ -613,6 +1088,42 @@ export default function Payment() {
                             router.push(
                               `${config.redirectUrl}?${queryParams.toString()}`
                             );
+
+                            // After payment success, try to save customer data to our database
+                            try {
+                              await fetch("/api/customer", {
+                                method: "POST",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                },
+                                body: JSON.stringify({
+                                  event: eventId,
+                                  quantity: billingDetails.numberOfPeople,
+                                  total: roundedTotal,
+                                  isSigningUpForSelf,
+                                  participants,
+                                  selectedOptions,
+                                  billingInfo: {
+                                    firstName: billingDetails.givenName,
+                                    lastName: billingDetails.familyName,
+                                    addressLine1: billingDetails.addressLine1,
+                                    addressLine2: billingDetails.addressLine2,
+                                    city: billingDetails.city,
+                                    stateProvince: billingDetails.state,
+                                    postalCode: billingDetails.postalCode,
+                                    country: billingDetails.countryCode,
+                                    emailAddress: billingDetails.email,
+                                    phoneNumber: billingDetails.phoneNumber,
+                                  },
+                                }),
+                              });
+                            } catch (error) {
+                              console.error(
+                                "Error saving customer data:",
+                                error
+                              );
+                              // Continue with payment success flow even if customer data save fails
+                            }
                           } else {
                             // Handle payment not completed
                             console.error("Payment not completed");
