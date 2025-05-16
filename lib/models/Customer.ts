@@ -1,16 +1,6 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
 import { IEvent } from "./Event";
 
-// TypeScript interface for Participant
-interface IParticipant {
-  firstName: string;
-  lastName: string;
-  selectedOptions?: Array<{
-    categoryName: string;
-    choiceName: string;
-  }>;
-}
-
 // TypeScript interface for Customer document
 export interface ICustomer extends Document {
   _id: string;
@@ -18,7 +8,14 @@ export interface ICustomer extends Document {
   quantity: number;
   total: number; // price x quantity
   isSigningUpForSelf: boolean;
-  participants: IParticipant[];
+  participants: Array<{
+    firstName: string;
+    lastName: string;
+    selectedOptions?: Array<{
+      categoryName: string;
+      choiceName: string;
+    }>;
+  }>;
   selectedOptions?: Array<{
     categoryName: string;
     choiceName: string;

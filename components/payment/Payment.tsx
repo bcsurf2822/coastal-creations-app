@@ -20,15 +20,6 @@ interface EventOption {
   }>;
 }
 
-interface Participant {
-  firstName: string;
-  lastName: string;
-  selectedOptions: Array<{
-    categoryName: string;
-    choiceName: string;
-  }>;
-}
-
 export default function Payment() {
   const router = useRouter();
   const [isLoaded, setIsLoaded] = useState(false);
@@ -56,7 +47,16 @@ export default function Payment() {
 
   // New state for handling participants
   const [isSigningUpForSelf, setIsSigningUpForSelf] = useState(true);
-  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [participants, setParticipants] = useState<
+    Array<{
+      firstName: string;
+      lastName: string;
+      selectedOptions?: Array<{
+        categoryName: string;
+        choiceName: string;
+      }>;
+    }>
+  >([]);
 
   const [billingDetails, setBillingDetails] = useState({
     addressLine1: "",
@@ -74,44 +74,6 @@ export default function Payment() {
 
   // Calculate total price based on number of people
   const [totalPrice, setTotalPrice] = useState<string>("");
-
-  // Initialize participants array when number of people changes
-  useEffect(() => {
-    const newParticipants: Participant[] = [];
-
-    // If signing up for self, we only need participants for additional people
-    const participantsNeeded = isSigningUpForSelf
-      ? Math.max(0, billingDetails.numberOfPeople - 1)
-      : billingDetails.numberOfPeople;
-
-    // Preserve existing participant data for those that still exist
-    for (let i = 0; i < participantsNeeded; i++) {
-      if (i < participants.length) {
-        // Keep existing participant data
-        newParticipants.push({ ...participants[i] });
-      } else {
-        // Initialize with default empty values
-        const initialSelectedOptions = eventOptions.map((option) => ({
-          categoryName: option.categoryName,
-          choiceName: option.choices[0]?.name || "",
-        }));
-
-        newParticipants.push({
-          firstName: "",
-          lastName: "",
-          selectedOptions: initialSelectedOptions,
-        });
-      }
-    }
-
-    // Only update state if the array has actually changed
-    if (
-      newParticipants.length !== participants.length ||
-      JSON.stringify(newParticipants) !== JSON.stringify(participants)
-    ) {
-      setParticipants(newParticipants);
-    }
-  }, [billingDetails.numberOfPeople, isSigningUpForSelf, eventOptions]);
 
   // Fetch event details including options
   useEffect(() => {
@@ -193,23 +155,40 @@ export default function Payment() {
       billingDetails.postalCode.trim() !== "" &&
       isContactProvided;
 
-    // Validate participant information
-    let areParticipantsValid = true;
-    if (!isSigningUpForSelf || billingDetails.numberOfPeople > 1) {
-      // For non-self registrations or multiple people, participants must have names
-      for (const participant of participants) {
-        if (!participant.firstName || !participant.lastName) {
-          areParticipantsValid = false;
-          break;
-        }
-      }
-    } else {
-      // If signing up for self with only 1 person, we don't need participants
-      areParticipantsValid = true;
-    }
+    setFormValid(areRequiredFieldsFilled);
+  }, [billingDetails]);
 
-    setFormValid(areRequiredFieldsFilled && areParticipantsValid);
-  }, [billingDetails, participants, isSigningUpForSelf]);
+  // Update participants when numberOfPeople changes or isSigningUpForSelf changes
+  useEffect(() => {
+    // If signing up for self with multiple people, we need (numberOfPeople - 1) additional participants
+    if (isSigningUpForSelf) {
+      const additionalPeople = Math.max(0, billingDetails.numberOfPeople - 1);
+      const newParticipants = Array(additionalPeople)
+        .fill(null)
+        .map((_, index) => ({
+          firstName: `Additional Person ${index + 1}`,
+          lastName: "Pending",
+          selectedOptions: [] as Array<{
+            categoryName: string;
+            choiceName: string;
+          }>,
+        }));
+      setParticipants(newParticipants);
+    } else {
+      // If signing up for others, we need numberOfPeople participants
+      const newParticipants = Array(billingDetails.numberOfPeople)
+        .fill(null)
+        .map((_, index) => ({
+          firstName: `Participant ${index + 1}`,
+          lastName: "Pending",
+          selectedOptions: [] as Array<{
+            categoryName: string;
+            choiceName: string;
+          }>,
+        }));
+      setParticipants(newParticipants);
+    }
+  }, [billingDetails.numberOfPeople, isSigningUpForSelf]);
 
   // Fetch payment configuration from API
   useEffect(() => {
@@ -261,59 +240,6 @@ export default function Payment() {
     });
   };
 
-  // Handle participant data changes
-  const handleParticipantChange = (
-    index: number,
-    field: keyof Participant,
-    value: string | Array<{ categoryName: string; choiceName: string }>
-  ) => {
-    setParticipants((prev) => {
-      const updated = [...prev];
-      if (field === "selectedOptions") {
-        // Handle selected options separately
-        updated[index] = {
-          ...updated[index],
-          selectedOptions: value as Array<{
-            categoryName: string;
-            choiceName: string;
-          }>,
-        };
-      } else {
-        // Handle simple fields (firstName, lastName)
-        updated[index] = {
-          ...updated[index],
-          [field]: value as string,
-        };
-      }
-      return updated;
-    });
-  };
-
-  // Handle option change for a specific participant
-  const handleParticipantOptionChange = (
-    participantIndex: number,
-    categoryName: string,
-    choiceName: string
-  ) => {
-    setParticipants((prev) => {
-      const updated = [...prev];
-      const participant = { ...updated[participantIndex] };
-
-      const optionIndex = participant.selectedOptions.findIndex(
-        (opt) => opt.categoryName === categoryName
-      );
-
-      if (optionIndex !== -1) {
-        participant.selectedOptions[optionIndex] = { categoryName, choiceName };
-      } else {
-        participant.selectedOptions.push({ categoryName, choiceName });
-      }
-
-      updated[participantIndex] = participant;
-      return updated;
-    });
-  };
-
   const handleTestSubmit = async () => {
     if (!formValid) {
       setError("Please complete all required fields before testing");
@@ -357,7 +283,7 @@ export default function Payment() {
 
       if (response.ok) {
         setSubmitSuccess(
-          `Test submission successful! Customer ID: ${result.customer._id}`
+          `Test submission successful! Customer ID: ${result.data._id}`
         );
       } else {
         setError(`Test submission failed: ${result.error}`);
@@ -525,128 +451,6 @@ export default function Payment() {
                   </div>
                 </div>
 
-                {/* Participant Information Section */}
-                {(!isSigningUpForSelf || billingDetails.numberOfPeople > 1) &&
-                  participants.length > 0 && (
-                    <div className="md:col-span-2 bg-gray-50 p-4 my-2 rounded-lg">
-                      <h3 className="text-lg font-semibold mb-3 text-gray-800">
-                        Participant Information
-                      </h3>
-
-                      {participants.map((participant, idx) => (
-                        <div
-                          key={idx}
-                          className="mb-6 p-4 border-b border-gray-200 last:border-b-0"
-                        >
-                          <h4 className="font-medium mb-3 text-gray-700">
-                            {isSigningUpForSelf
-                              ? `Additional Person ${idx + 1}`
-                              : `Person ${idx + 1}`}
-                          </h4>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                              <label
-                                className="block text-sm font-medium text-gray-700 mb-1"
-                                htmlFor={`participant-${idx}-firstName`}
-                              >
-                                First Name
-                              </label>
-                              <input
-                                type="text"
-                                id={`participant-${idx}-firstName`}
-                                value={participant.firstName}
-                                onChange={(e) =>
-                                  handleParticipantChange(
-                                    idx,
-                                    "firstName",
-                                    e.target.value
-                                  )
-                                }
-                                className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary"
-                                required
-                              />
-                            </div>
-                            <div>
-                              <label
-                                className="block text-sm font-medium text-gray-700 mb-1"
-                                htmlFor={`participant-${idx}-lastName`}
-                              >
-                                Last Name
-                              </label>
-                              <input
-                                type="text"
-                                id={`participant-${idx}-lastName`}
-                                value={participant.lastName}
-                                onChange={(e) =>
-                                  handleParticipantChange(
-                                    idx,
-                                    "lastName",
-                                    e.target.value
-                                  )
-                                }
-                                className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary"
-                                required
-                              />
-                            </div>
-                          </div>
-
-                          {/* Participant Event Options */}
-                          {eventOptions.length > 0 && (
-                            <div className="mt-4">
-                              <h5 className="text-sm font-medium text-gray-700 mb-2">
-                                Options for{" "}
-                                {participant.firstName || `Person ${idx + 1}`}
-                              </h5>
-                              <div className="space-y-3">
-                                {eventOptions.map((option, optionIdx) => (
-                                  <div key={optionIdx}>
-                                    <label className="block text-sm text-gray-700 mb-1">
-                                      {option.categoryName}
-                                      {option.categoryDescription && (
-                                        <span className="text-gray-500 text-xs ml-1">
-                                          - {option.categoryDescription}
-                                        </span>
-                                      )}
-                                    </label>
-                                    <select
-                                      value={
-                                        participant.selectedOptions.find(
-                                          (so) =>
-                                            so.categoryName ===
-                                            option.categoryName
-                                        )?.choiceName || ""
-                                      }
-                                      onChange={(e) =>
-                                        handleParticipantOptionChange(
-                                          idx,
-                                          option.categoryName,
-                                          e.target.value
-                                        )
-                                      }
-                                      className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary"
-                                    >
-                                      {option.choices.map(
-                                        (choice, choiceIdx) => (
-                                          <option
-                                            key={choiceIdx}
-                                            value={choice.name}
-                                          >
-                                            {choice.name}
-                                          </option>
-                                        )
-                                      )}
-                                    </select>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
                 {/* Event Options Section for primary customer */}
                 {eventOptions.length > 0 && isSigningUpForSelf && (
                   <div className="md:col-span-2 mb-4">
@@ -689,6 +493,282 @@ export default function Payment() {
                               </option>
                             ))}
                           </select>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Additional Participants Section when signing up for self with multiple people */}
+                {isSigningUpForSelf && billingDetails.numberOfPeople > 1 && (
+                  <div className="md:col-span-2 mb-4">
+                    <h3 className="text-lg font-semibold mb-3 text-gray-800">
+                      Additional Participants
+                    </h3>
+                    <div className="space-y-6 bg-gray-50 p-4 rounded-lg">
+                      {participants.map((participant, index) => (
+                        <div
+                          key={index}
+                          className="border-b border-gray-200 pb-4 last:border-0 last:pb-0"
+                        >
+                          <h4 className="font-medium text-gray-700 mb-3">
+                            Person {index + 2}
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                First Name
+                              </label>
+                              <input
+                                type="text"
+                                value={participant.firstName}
+                                onChange={(e) => {
+                                  const newParticipants = [...participants];
+                                  newParticipants[index].firstName =
+                                    e.target.value;
+                                  setParticipants(newParticipants);
+                                }}
+                                className="w-full p-2 border border-gray-300 rounded-md"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Last Name
+                              </label>
+                              <input
+                                type="text"
+                                value={participant.lastName}
+                                onChange={(e) => {
+                                  const newParticipants = [...participants];
+                                  newParticipants[index].lastName =
+                                    e.target.value;
+                                  setParticipants(newParticipants);
+                                }}
+                                className="w-full p-2 border border-gray-300 rounded-md"
+                              />
+                            </div>
+
+                            {/* Event options for each additional participant */}
+                            {eventOptions.length > 0 && (
+                              <div className="col-span-1 md:col-span-2">
+                                <h5 className="text-sm font-medium text-gray-700 mb-2">
+                                  Event Options
+                                </h5>
+                                <div className="space-y-3">
+                                  {eventOptions.map((option, optionIndex) => (
+                                    <div key={optionIndex}>
+                                      <label className="block text-sm text-gray-700 mb-1">
+                                        {option.categoryName}
+                                      </label>
+                                      <select
+                                        value={
+                                          participant.selectedOptions?.find(
+                                            (so) =>
+                                              so.categoryName ===
+                                              option.categoryName
+                                          )?.choiceName ||
+                                          option.choices[0]?.name ||
+                                          ""
+                                        }
+                                        onChange={(e) => {
+                                          const newParticipants = [
+                                            ...participants,
+                                          ];
+                                          if (
+                                            !newParticipants[index]
+                                              .selectedOptions
+                                          ) {
+                                            newParticipants[
+                                              index
+                                            ].selectedOptions = [];
+                                          }
+
+                                          const optionIndex = newParticipants[
+                                            index
+                                          ].selectedOptions?.findIndex(
+                                            (so) =>
+                                              so.categoryName ===
+                                              option.categoryName
+                                          );
+
+                                          if (
+                                            optionIndex !== -1 &&
+                                            optionIndex !== undefined
+                                          ) {
+                                            newParticipants[
+                                              index
+                                            ].selectedOptions![optionIndex] = {
+                                              categoryName: option.categoryName,
+                                              choiceName: e.target.value,
+                                            };
+                                          } else {
+                                            newParticipants[
+                                              index
+                                            ].selectedOptions?.push({
+                                              categoryName: option.categoryName,
+                                              choiceName: e.target.value,
+                                            });
+                                          }
+
+                                          setParticipants(newParticipants);
+                                        }}
+                                        className="w-full p-2 border border-gray-300 rounded-md"
+                                      >
+                                        {option.choices.map(
+                                          (choice, choiceIndex) => (
+                                            <option
+                                              key={choiceIndex}
+                                              value={choice.name}
+                                            >
+                                              {choice.name}
+                                            </option>
+                                          )
+                                        )}
+                                      </select>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Participant Details Section */}
+                {!isSigningUpForSelf && billingDetails.numberOfPeople > 0 && (
+                  <div className="md:col-span-2 mb-4">
+                    <h3 className="text-lg font-semibold mb-3 text-gray-800">
+                      Participant Information
+                    </h3>
+                    <div className="space-y-6 bg-gray-50 p-4 rounded-lg">
+                      {participants.map((participant, index) => (
+                        <div
+                          key={index}
+                          className="border-b border-gray-200 pb-4 last:border-0 last:pb-0"
+                        >
+                          <h4 className="font-medium text-gray-700 mb-3">
+                            Participant {index + 1}
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                First Name
+                              </label>
+                              <input
+                                type="text"
+                                value={participant.firstName}
+                                onChange={(e) => {
+                                  const newParticipants = [...participants];
+                                  newParticipants[index].firstName =
+                                    e.target.value;
+                                  setParticipants(newParticipants);
+                                }}
+                                className="w-full p-2 border border-gray-300 rounded-md"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Last Name
+                              </label>
+                              <input
+                                type="text"
+                                value={participant.lastName}
+                                onChange={(e) => {
+                                  const newParticipants = [...participants];
+                                  newParticipants[index].lastName =
+                                    e.target.value;
+                                  setParticipants(newParticipants);
+                                }}
+                                className="w-full p-2 border border-gray-300 rounded-md"
+                              />
+                            </div>
+
+                            {/* Event options for each participant */}
+                            {eventOptions.length > 0 && (
+                              <div className="col-span-1 md:col-span-2">
+                                <h5 className="text-sm font-medium text-gray-700 mb-2">
+                                  Event Options
+                                </h5>
+                                <div className="space-y-3">
+                                  {eventOptions.map((option, optionIndex) => (
+                                    <div key={optionIndex}>
+                                      <label className="block text-sm text-gray-700 mb-1">
+                                        {option.categoryName}
+                                      </label>
+                                      <select
+                                        value={
+                                          participant.selectedOptions?.find(
+                                            (so) =>
+                                              so.categoryName ===
+                                              option.categoryName
+                                          )?.choiceName ||
+                                          option.choices[0]?.name ||
+                                          ""
+                                        }
+                                        onChange={(e) => {
+                                          const newParticipants = [
+                                            ...participants,
+                                          ];
+                                          if (
+                                            !newParticipants[index]
+                                              .selectedOptions
+                                          ) {
+                                            newParticipants[
+                                              index
+                                            ].selectedOptions = [];
+                                          }
+
+                                          const optionIndex = newParticipants[
+                                            index
+                                          ].selectedOptions?.findIndex(
+                                            (so) =>
+                                              so.categoryName ===
+                                              option.categoryName
+                                          );
+
+                                          if (
+                                            optionIndex !== -1 &&
+                                            optionIndex !== undefined
+                                          ) {
+                                            newParticipants[
+                                              index
+                                            ].selectedOptions![optionIndex] = {
+                                              categoryName: option.categoryName,
+                                              choiceName: e.target.value,
+                                            };
+                                          } else {
+                                            newParticipants[
+                                              index
+                                            ].selectedOptions?.push({
+                                              categoryName: option.categoryName,
+                                              choiceName: e.target.value,
+                                            });
+                                          }
+
+                                          setParticipants(newParticipants);
+                                        }}
+                                        className="w-full p-2 border border-gray-300 rounded-md"
+                                      >
+                                        {option.choices.map(
+                                          (choice, choiceIndex) => (
+                                            <option
+                                              key={choiceIndex}
+                                              value={choice.name}
+                                            >
+                                              {choice.name}
+                                            </option>
+                                          )
+                                        )}
+                                      </select>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -1089,7 +1169,6 @@ export default function Payment() {
                               `${config.redirectUrl}?${queryParams.toString()}`
                             );
 
-                            // After payment success, try to save customer data to our database
                             try {
                               await fetch("/api/customer", {
                                 method: "POST",
