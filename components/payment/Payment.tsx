@@ -83,8 +83,6 @@ export default function Payment() {
   const [selectedOptions, setSelectedOptions] = useState<
     Array<{ categoryName: string; choiceName: string }>
   >([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
 
   // State for handling participants
   const [isSigningUpForSelf, setIsSigningUpForSelf] = useState(true);
@@ -147,6 +145,11 @@ export default function Payment() {
             },
           },
         };
+      }
+
+      // If payment is successful, submit customer details
+      if (result.result?.payment?.status === "COMPLETED") {
+        await submitCustomerDetails();
       }
 
       return {
@@ -352,14 +355,11 @@ export default function Payment() {
     });
   };
 
-  const handleTestSubmit = async () => {
+  const submitCustomerDetails = async () => {
     if (!formValid) {
-      setError("Please complete all required fields before testing");
+      setError("Please complete all required fields before submitting");
       return;
     }
-
-    setIsSubmitting(true);
-    setSubmitSuccess(null);
 
     try {
       const roundedTotal = Math.round(parseFloat(totalPrice) * 100) / 100;
@@ -394,17 +394,14 @@ export default function Payment() {
       const result = await response.json();
 
       if (response.ok) {
-        setSubmitSuccess(
-          `Test submission successful! Customer ID: ${result.data._id}`
+        console.log(
+          `Customer details submitted successfully. ID: ${result.data._id}`
         );
       } else {
-        setError(`Test submission failed: ${result.error}`);
+        console.error(`Customer details submission failed: ${result.error}`);
       }
     } catch (error) {
-      console.error("Error during test submission:", error);
-      setError("Error during test submission. See console for details.");
-    } finally {
-      setIsSubmitting(false);
+      console.error("Error submitting customer details:", error);
     }
   };
 
@@ -434,12 +431,8 @@ export default function Payment() {
               setParticipants={setParticipants}
               selectedOptions={selectedOptions}
               handleOptionChange={handleOptionChange}
-              formValid={formValid}
               formattedPrice={formattedPrice}
               totalPrice={totalPrice}
-              submitSuccess={submitSuccess}
-              isSubmitting={isSubmitting}
-              handleTestSubmit={handleTestSubmit}
             />
 
             {/* Payment Section */}
@@ -456,9 +449,6 @@ export default function Payment() {
               formattedPrice={formattedPrice}
               totalPrice={totalPrice}
               submitPayment={handleSubmitPayment}
-              isSigningUpForSelf={isSigningUpForSelf}
-              participants={participants}
-              selectedOptions={selectedOptions}
               router={router}
             />
           </div>

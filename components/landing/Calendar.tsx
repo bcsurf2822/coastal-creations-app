@@ -28,15 +28,19 @@ interface CalendarEvent {
 export default function Calendar() {
   const [dates, setDates] = useState<Date[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [today, setToday] = useState<string | null>(null);
 
   useEffect(() => {
+    // Set today's date string for comparison
+    setToday(new Date().toDateString());
+
     // Get today's date and create an array of the next 5 days
-    const today = new Date();
+    const currentDate = new Date();
     const nextFiveDays = Array.from({ length: 5 }, (_, i) => {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
+      const date = new Date(currentDate);
+      date.setDate(currentDate.getDate() + i);
       return date;
     });
     setDates(nextFiveDays);
@@ -118,6 +122,29 @@ export default function Calendar() {
     }
   };
 
+  // Render placeholder while client-side dates are being calculated
+  if (!today) {
+    return (
+      <section className="py-20 md:py-28">
+        <div className="container mx-auto px-6 md:px-12">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16">
+              <h4 className="text-secondary uppercase tracking-widest text-sm font-medium mb-3">
+                Plan Your Visit
+              </h4>
+              <h3 className="serif text-4xl font-bold text-primary mb-4">
+                Upcoming Workshops
+              </h3>
+              <p className="text-gray-600 max-w-2xl mx-auto">
+                Loading calendar...
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-20 md:py-28 ">
       <div className="container mx-auto px-6 md:px-12">
@@ -148,8 +175,7 @@ export default function Calendar() {
               <div className="flex space-x-6 min-w-max pb-4">
                 {dates.map((date, index) => {
                   const dayEvents = getEventsForDay(date);
-                  const isToday =
-                    new Date().toDateString() === date.toDateString();
+                  const isToday = today === date.toDateString();
 
                   return (
                     <div

@@ -1,6 +1,25 @@
-import { CreditCard, PaymentForm } from "react-square-web-payments-sdk";
-import { PiSquareLogoFill } from "react-icons/pi";
+"use client";
+
 import { useRouter } from "next/navigation";
+import { PiSquareLogoFill } from "react-icons/pi";
+import dynamic from "next/dynamic";
+
+// Dynamically import Square payment components with SSR disabled
+const DynamicPaymentForm = dynamic(
+  async () => {
+    const { PaymentForm } = await import("react-square-web-payments-sdk");
+    return PaymentForm;
+  },
+  { ssr: false }
+);
+
+const DynamicCreditCard = dynamic(
+  async () => {
+    const { CreditCard } = await import("react-square-web-payments-sdk");
+    return CreditCard;
+  },
+  { ssr: false }
+);
 
 interface PaymentConfig {
   applicationId: string;
@@ -65,16 +84,6 @@ interface PaymentProcessorProps {
     token: string,
     billingDetails: PaymentSubmitData
   ) => Promise<PaymentResult>;
-  isSigningUpForSelf: boolean;
-  participants: Array<{
-    firstName: string;
-    lastName: string;
-    selectedOptions?: Array<{
-      categoryName: string;
-      choiceName: string;
-    }>;
-  }>;
-  selectedOptions: Array<{ categoryName: string; choiceName: string }>;
   router: ReturnType<typeof useRouter>;
 }
 
@@ -87,13 +96,9 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
   billingDetails,
   eventId,
   eventTitle,
-//   eventPrice, // Kept for API compatibility
   formattedPrice,
   totalPrice,
   submitPayment,
-  isSigningUpForSelf,
-  participants,
-  selectedOptions,
   router,
 }) => {
   return (
@@ -164,7 +169,7 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
               </p>
             </div>
           )}
-          <PaymentForm
+          <DynamicPaymentForm
             applicationId={config.applicationId}
             locationId={config.locationId}
             createPaymentRequest={() => {
@@ -201,9 +206,6 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
 
               if (token.token) {
                 try {
-                  const roundedTotal =
-                    Math.round(parseFloat(totalPrice) * 100) / 100;
-
                   const result = await submitPayment(token.token, {
                     ...billingDetails,
                     eventId,
@@ -265,37 +267,7 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
                       `${config.redirectUrl}?${queryParams.toString()}`
                     );
 
-                    try {
-                      await fetch("/api/customer", {
-                        method: "POST",
-                        headers: {
-                          "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                          event: eventId,
-                          quantity: billingDetails.numberOfPeople,
-                          total: roundedTotal,
-                          isSigningUpForSelf,
-                          participants,
-                          selectedOptions,
-                          billingInfo: {
-                            firstName: billingDetails.givenName,
-                            lastName: billingDetails.familyName,
-                            addressLine1: billingDetails.addressLine1,
-                            addressLine2: billingDetails.addressLine2,
-                            city: billingDetails.city,
-                            stateProvince: billingDetails.state,
-                            postalCode: billingDetails.postalCode,
-                            country: billingDetails.countryCode,
-                            emailAddress: billingDetails.email,
-                            phoneNumber: billingDetails.phoneNumber,
-                          },
-                        }),
-                      });
-                    } catch (error) {
-                      console.error("Error saving customer data:", error);
-                      // Continue with payment success flow even if customer data save fails
-                    }
+                    // Customer data is now handled in the main component via submitCustomerDetails
                   } else {
                     // Handle payment not completed
                     console.error("Payment not completed");
@@ -316,7 +288,7 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
             }}
           >
             <div className="max-w-md mx-auto">
-              <CreditCard />
+              <DynamicCreditCard />
               {!formValid && (
                 <div className="mt-4 text-red-600 text-center text-sm font-medium">
                   Please complete all required fields above before submitting
@@ -324,7 +296,7 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
                 </div>
               )}
             </div>
-          </PaymentForm>
+          </DynamicPaymentForm>
         </div>
       ) : (
         <div className="text-center p-10 bg-gray-50 rounded-lg">

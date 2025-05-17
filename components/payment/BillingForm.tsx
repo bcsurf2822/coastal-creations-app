@@ -1,3 +1,5 @@
+"use client";
+
 import { ChangeEvent } from "react";
 
 interface EventOption {
@@ -43,12 +45,8 @@ interface BillingFormProps {
   setParticipants: (participants: Participant[]) => void;
   selectedOptions: Array<{ categoryName: string; choiceName: string }>;
   handleOptionChange: (categoryName: string, choiceName: string) => void;
-  formValid: boolean;
   formattedPrice: string;
   totalPrice: string;
-  submitSuccess: string | null;
-  isSubmitting: boolean;
-  handleTestSubmit: () => void;
 }
 
 const BillingForm: React.FC<BillingFormProps> = ({
@@ -61,12 +59,8 @@ const BillingForm: React.FC<BillingFormProps> = ({
   setParticipants,
   selectedOptions,
   handleOptionChange,
-  formValid,
   formattedPrice,
   totalPrice,
-  submitSuccess,
-  isSubmitting,
-  handleTestSubmit,
 }) => {
   return (
     <div className="mb-10">
@@ -728,31 +722,6 @@ const BillingForm: React.FC<BillingFormProps> = ({
             </div>
           </div>
         )}
-
-        {/* Test Submit Button */}
-        <div className="md:col-span-2 mt-4">
-          <div className="border-t border-gray-300 pt-4">
-            <h3 className="text-lg font-semibold mb-3 text-gray-800">
-              Testing Only
-            </h3>
-            {submitSuccess && (
-              <div className="mb-4 p-3 bg-green-50 border border-green-300 text-green-800 rounded-lg">
-                {submitSuccess}
-              </div>
-            )}
-            <button
-              onClick={handleTestSubmit}
-              disabled={isSubmitting || !formValid}
-              className="w-full mb-4 py-3 px-6 bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 disabled:opacity-50 transition duration-200"
-            >
-              {isSubmitting ? "Submitting..." : "Test Database Submission Only"}
-            </button>
-            <p className="text-sm text-gray-500 italic">
-              This button is for testing database submission only. No payment
-              will be processed.
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );
