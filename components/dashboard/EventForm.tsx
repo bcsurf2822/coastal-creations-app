@@ -204,7 +204,7 @@ const EventForm: React.FC = () => {
           // Note: Image handling will need to be addressed separately
         };
 
-        console.log("Sending data to API:", apiData);
+
 
         // Send data to API
         const response = await fetch("/api/events", {
@@ -222,7 +222,7 @@ const EventForm: React.FC = () => {
         }
 
         setSubmitSuccess(true);
-        console.log("Event created successfully:", result.event);
+
 
         setTimeout(() => {
           router.push("/admin/dashboard/");
@@ -236,7 +236,7 @@ const EventForm: React.FC = () => {
         setIsSubmitting(false);
       }
     } else {
-      console.log("Form has validation errors:", validationErrors);
+
     }
   };
 

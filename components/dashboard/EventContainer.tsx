@@ -41,15 +41,7 @@ export default function EventContainer() {
           },
         });
 
-        // Debug: log response status and text before parsing
-        console.log("API Response Status:", response.status);
         const responseText = await response.text();
-
-        // Log the first few characters to diagnose without exposing credentials
-        console.log(
-          "API Response Text (first 50 chars):",
-          responseText.substring(0, 50)
-        );
 
         let result;
         try {
@@ -87,7 +79,6 @@ export default function EventContainer() {
         }));
 
         setEvents(transformedEvents);
-        console.log("Events loaded successfully:", transformedEvents);
       } catch (error) {
         console.error("Error fetching events:", error);
         setError(typeof error === "string" ? error : (error as Error).message);
