@@ -147,9 +147,28 @@ export default function Payment() {
         };
       }
 
-      // If payment is successful, submit customer details
+      // If payment is successful, submit customer details and send confirmation email
       if (result.result?.payment?.status === "COMPLETED") {
-        await submitCustomerDetails();
+        const customerData = await submitCustomerDetails();
+
+        // Send confirmation email if customer data was successfully saved
+        if (customerData && customerData.data && customerData.data._id) {
+          try {
+            await fetch("/api/send-confirmation", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                customerId: customerData.data._id,
+                eventId: paymentData.eventId,
+              }),
+            });
+            console.log("Confirmation email sent successfully");
+          } catch (error) {
+            console.error("Error sending confirmation email:", error);
+          }
+        }
       }
 
       return {
@@ -358,7 +377,7 @@ export default function Payment() {
   const submitCustomerDetails = async () => {
     if (!formValid) {
       setError("Please complete all required fields before submitting");
-      return;
+      return null;
     }
 
     try {
@@ -397,11 +416,14 @@ export default function Payment() {
         console.log(
           `Customer details submitted successfully. ID: ${result.data._id}`
         );
+        return result; // Return the result with customer data
       } else {
         console.error(`Customer details submission failed: ${result.error}`);
+        return null;
       }
     } catch (error) {
       console.error("Error submitting customer details:", error);
+      return null;
     }
   };
 
