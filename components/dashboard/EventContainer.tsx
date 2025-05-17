@@ -249,7 +249,13 @@ export default function EventContainer() {
                 </div>
               </div>
 
-              <div className="mt-4 flex justify-end">
+              <div className="mt-4 flex justify-end space-x-4">
+                <a
+                  href={`/admin/dashboard/edit-event?id=${selectedEvent.id}`}
+                  className="text-sm text-blue-600 hover:text-blue-800 hover:cursor-pointer"
+                >
+                  Edit Event
+                </a>
                 <button
                   className="text-sm text-red-600 hover:text-red-800 hover:cursor-pointer"
                   onClick={async () => {

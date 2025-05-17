@@ -204,8 +204,6 @@ const EventForm: React.FC = () => {
           // Note: Image handling will need to be addressed separately
         };
 
-
-
         // Send data to API
         const response = await fetch("/api/events", {
           method: "POST",
@@ -223,7 +221,6 @@ const EventForm: React.FC = () => {
 
         setSubmitSuccess(true);
 
-
         setTimeout(() => {
           router.push("/admin/dashboard/");
         }, 2000);
@@ -236,7 +233,6 @@ const EventForm: React.FC = () => {
         setIsSubmitting(false);
       }
     } else {
-
     }
   };
 
@@ -425,8 +421,7 @@ const EventForm: React.FC = () => {
             value={formData.price}
             onChange={handleChange}
             className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.price ? "border-red-500" : "border-gray-300"}`}
-            placeholder="e.g., 25.00"
-            step="0.01"
+            placeholder="Enter Price"
             min="0"
           />
           {errors.price && (
@@ -653,7 +648,7 @@ const EventForm: React.FC = () => {
                         )
                       }
                       className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="e.g., Material, Skill Level"
+                      placeholder="Enter Category"
                     />
                   </div>
                   <div>
@@ -675,7 +670,7 @@ const EventForm: React.FC = () => {
                         )
                       }
                       className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Brief description of this option category"
+                      placeholder="Enter Category Description"
                     />
                   </div>
                 </div>
@@ -708,7 +703,7 @@ const EventForm: React.FC = () => {
                             )
                           }
                           className="w-full px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="e.g., Canvas, Beginner"
+                          placeholder="Enter Choice"
                         />
                       </div>
                       <div className="flex items-end">
@@ -745,7 +740,7 @@ const EventForm: React.FC = () => {
           </div>
         )}
 
-        <div className="col-span-1 md:col-span-2">
+        {/* <div className="col-span-1 md:col-span-2">
           <label
             htmlFor="image"
             className="block text-sm font-medium text-gray-700 mb-1"
@@ -774,7 +769,7 @@ const EventForm: React.FC = () => {
           {errors.image && (
             <p className="mt-1 text-sm text-red-600">{errors.image}</p>
           )}
-        </div>
+        </div> */}
 
         <div className="col-span-1 md:col-span-2 text-center">
           <button

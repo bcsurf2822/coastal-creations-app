@@ -162,9 +162,9 @@ const BillingForm: React.FC<BillingFormProps> = ({
                   );
                   const newParticipants = Array(additionalPeople)
                     .fill(null)
-                    .map((_, index) => ({
-                      firstName: `Additional Person ${index + 1}`,
-                      lastName: "Pending",
+                    .map(() => ({
+                      firstName: "",
+                      lastName: "",
                       selectedOptions: [] as Array<{
                         categoryName: string;
                         choiceName: string;
@@ -187,9 +187,9 @@ const BillingForm: React.FC<BillingFormProps> = ({
                   // Immediately update participants array for registering others
                   const newParticipants = Array(billingDetails.numberOfPeople)
                     .fill(null)
-                    .map((_, index) => ({
-                      firstName: `Participant ${index + 1}`,
-                      lastName: "Pending",
+                    .map(() => ({
+                      firstName: "",
+                      lastName: "",
                       selectedOptions: [] as Array<{
                         categoryName: string;
                         choiceName: string;
@@ -384,8 +384,8 @@ const BillingForm: React.FC<BillingFormProps> = ({
               }).map((_, index) => {
                 // Get the existing participant data if available, otherwise create default
                 const participant = participants[index] || {
-                  firstName: `Participant ${index + 1}`,
-                  lastName: "Pending",
+                  firstName: "",
+                  lastName: "",
                   selectedOptions: [],
                 };
 
@@ -411,7 +411,7 @@ const BillingForm: React.FC<BillingFormProps> = ({
                             if (!newParticipants[index]) {
                               newParticipants[index] = {
                                 firstName: e.target.value,
-                                lastName: "Pending",
+                                lastName: "",
                                 selectedOptions: [],
                               };
                             } else {
@@ -434,7 +434,7 @@ const BillingForm: React.FC<BillingFormProps> = ({
                             // Create or update the participant
                             if (!newParticipants[index]) {
                               newParticipants[index] = {
-                                firstName: `Participant ${index + 1}`,
+                                firstName: "",
                                 lastName: e.target.value,
                                 selectedOptions: [],
                               };
@@ -473,8 +473,8 @@ const BillingForm: React.FC<BillingFormProps> = ({
                                     // Create or update the participant
                                     if (!newParticipants[index]) {
                                       newParticipants[index] = {
-                                        firstName: `Participant ${index + 1}`,
-                                        lastName: "Pending",
+                                        firstName: "",
+                                        lastName: "",
                                         selectedOptions: [
                                           {
                                             categoryName: option.categoryName,
