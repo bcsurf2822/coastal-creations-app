@@ -239,6 +239,7 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
                     queryParams.set("firstName", billingDetails.givenName);
                     queryParams.set("lastName", billingDetails.familyName);
                     queryParams.set("eventTitle", eventTitle || "");
+                    queryParams.set("eventId", eventId || "");
                     queryParams.set("note", note);
                     queryParams.set("amount", amount);
                     queryParams.set("currency", currency);
