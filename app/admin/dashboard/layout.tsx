@@ -29,9 +29,7 @@ export default async function AdminDashboardLayout({
 }>) {
   const session = getServerSession(authOptions);
   if (!session) {
-    if (process.env.NODE_ENV === "production") {
-      redirect("/admin");
-    }
+    redirect("/admin");
   }
 
   return (
