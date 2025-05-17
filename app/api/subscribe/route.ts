@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 import { render } from "@react-email/render";
 import * as React from "react";
-import { NewsletterEmailTemplate } from "@/components/NewsletterEmailTemplate";
+import { NewsletterEmailTemplate } from "@/components/email-templates/NewsletterEmailTemplate";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 

@@ -1,16 +1,65 @@
 "use client";
 
 import { submitPayment } from "@/app/actions/actions";
-import { CreditCard, PaymentForm } from "react-square-web-payments-sdk";
 import { useState, ChangeEvent, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { PiSquareLogoFill } from "react-icons/pi";
+import RegistrationHeader from "./RegistrationHeader";
+import BillingForm from "./BillingForm";
+import PaymentProcessor from "./PaymentProcessor";
 
 interface PaymentConfig {
   applicationId: string;
   locationId: string;
   redirectUrl: string;
 }
+
+interface EventOption {
+  categoryName: string;
+  categoryDescription?: string;
+  choices: Array<{
+    name: string;
+  }>;
+}
+
+// Define the expected PaymentSubmitData interface based on PaymentProcessor's requirements
+type PaymentSubmitData = {
+  addressLine1: string;
+  addressLine2: string;
+  familyName: string;
+  givenName: string;
+  countryCode: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  email: string;
+  phoneNumber: string;
+  numberOfPeople: number;
+  eventId: string;
+  eventTitle: string;
+  eventPrice: string;
+};
+
+// Define the expected PaymentResult interface based on PaymentProcessor's requirements
+type PaymentResult = {
+  result?: {
+    payment?: {
+      status: string;
+      id: string;
+      receiptUrl?: string;
+      note?: string;
+      amountMoney?: {
+        amount?: number;
+        currency?: string;
+      };
+      cardDetails?: {
+        card?: {
+          last4?: string;
+          cardBrand?: string;
+        };
+      };
+    };
+  };
+};
 
 export default function Payment() {
   const router = useRouter();
@@ -30,6 +79,23 @@ export default function Payment() {
 
   const [formattedPrice, setFormattedPrice] = useState<string>("");
   const [isPriceAvailable, setIsPriceAvailable] = useState<boolean>(true);
+  const [eventOptions, setEventOptions] = useState<EventOption[]>([]);
+  const [selectedOptions, setSelectedOptions] = useState<
+    Array<{ categoryName: string; choiceName: string }>
+  >([]);
+
+  // State for handling participants
+  const [isSigningUpForSelf, setIsSigningUpForSelf] = useState(true);
+  const [participants, setParticipants] = useState<
+    Array<{
+      firstName: string;
+      lastName: string;
+      selectedOptions?: Array<{
+        categoryName: string;
+        choiceName: string;
+      }>;
+    }>
+  >([]);
 
   const [billingDetails, setBillingDetails] = useState({
     addressLine1: "",
@@ -47,6 +113,129 @@ export default function Payment() {
 
   // Calculate total price based on number of people
   const [totalPrice, setTotalPrice] = useState<string>("");
+
+  // Adapter function to match the expected signature for PaymentProcessor
+  const handleSubmitPayment = async (
+    token: string,
+    paymentData: PaymentSubmitData
+  ): Promise<PaymentResult> => {
+    try {
+      const result = await submitPayment(token, {
+        addressLine1: paymentData.addressLine1,
+        addressLine2: paymentData.addressLine2,
+        givenName: paymentData.givenName,
+        familyName: paymentData.familyName,
+        countryCode: paymentData.countryCode,
+        city: paymentData.city,
+        state: paymentData.state,
+        postalCode: paymentData.postalCode,
+        email: paymentData.email,
+        phoneNumber: paymentData.phoneNumber,
+        eventId: paymentData.eventId,
+        eventTitle: paymentData.eventTitle,
+        eventPrice: paymentData.eventPrice,
+      });
+
+      if (!result) {
+        return {
+          result: {
+            payment: {
+              status: "FAILED",
+              id: "",
+            },
+          },
+        };
+      }
+
+      // If payment is successful, submit customer details and send confirmation email
+      if (result.result?.payment?.status === "COMPLETED") {
+        const customerData = await submitCustomerDetails();
+
+        // Send confirmation email if customer data was successfully saved
+        if (customerData && customerData.data && customerData.data._id) {
+          try {
+            await fetch("/api/send-confirmation", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                customerId: customerData.data._id,
+                eventId: paymentData.eventId,
+              }),
+            });
+     
+          } catch (error) {
+            console.error("Error sending confirmation email:", error);
+          }
+        }
+      }
+
+      return {
+        result: {
+          payment: {
+            status: result.result?.payment?.status || "FAILED",
+            id: result.result?.payment?.id || "",
+            receiptUrl: result.result?.payment?.receiptUrl,
+            note: result.result?.payment?.note,
+            amountMoney: {
+              amount: Number(result.result?.payment?.amountMoney?.amount),
+              currency: result.result?.payment?.amountMoney?.currency,
+            },
+            cardDetails: result.result?.payment?.cardDetails,
+          },
+        },
+      };
+    } catch (error) {
+      console.error("Payment error:", error);
+      return {
+        result: {
+          payment: {
+            status: "FAILED",
+            id: "",
+          },
+        },
+      };
+    }
+  };
+
+  // Fetch event details including options
+  useEffect(() => {
+    if (eventId) {
+      const fetchEventDetails = async () => {
+        try {
+          const response = await fetch(`/api/event/${eventId}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (
+              data.event &&
+              data.event.options &&
+              data.event.options.length > 0
+            ) {
+              // Update event options only if they've changed
+              const newOptions = data.event.options;
+              if (JSON.stringify(newOptions) !== JSON.stringify(eventOptions)) {
+                setEventOptions(newOptions);
+
+                // Initialize selectedOptions with the first choice of each category
+                const initialSelectedOptions = newOptions.map(
+                  (option: EventOption) => ({
+                    categoryName: option.categoryName,
+                    choiceName: option.choices[0]?.name || "",
+                  })
+                );
+                setSelectedOptions(initialSelectedOptions);
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching event details:", error);
+        }
+      };
+
+      fetchEventDetails();
+    }
+  }, [eventId]);
 
   // Format price for display and ensure it's a valid number
   useEffect(() => {
@@ -93,6 +282,40 @@ export default function Payment() {
     setFormValid(areRequiredFieldsFilled);
   }, [billingDetails]);
 
+  // Update participants when numberOfPeople changes or isSigningUpForSelf changes
+  useEffect(() => {
+    // If signing up for self with multiple people, we need (numberOfPeople - 1) additional participants
+    if (isSigningUpForSelf) {
+      const additionalPeople = Math.max(0, billingDetails.numberOfPeople - 1);
+      const newParticipants = Array(additionalPeople)
+        .fill(null)
+        .map((_, index) => ({
+          firstName: `Additional Person ${index + 1}`,
+          lastName: "Pending",
+          selectedOptions: [] as Array<{
+            categoryName: string;
+            choiceName: string;
+          }>,
+        }));
+      setParticipants(newParticipants);
+
+    } else {
+      // If signing up for others, we need numberOfPeople participants
+      const newParticipants = Array(billingDetails.numberOfPeople)
+        .fill(null)
+        .map((_, index) => ({
+          firstName: `Participant ${index + 1}`,
+          lastName: "Pending",
+          selectedOptions: [] as Array<{
+            categoryName: string;
+            choiceName: string;
+          }>,
+        }));
+      setParticipants(newParticipants);
+
+    }
+  }, [billingDetails.numberOfPeople, isSigningUpForSelf]);
+
   // Fetch payment configuration from API
   useEffect(() => {
     async function fetchConfig() {
@@ -126,539 +349,120 @@ export default function Payment() {
     }));
   };
 
+  const handleOptionChange = (categoryName: string, choiceName: string) => {
+    setSelectedOptions((prevOptions) => {
+      const newOptions = [...prevOptions];
+      const existingOptionIndex = newOptions.findIndex(
+        (option) => option.categoryName === categoryName
+      );
+
+      if (existingOptionIndex !== -1) {
+        newOptions[existingOptionIndex] = { categoryName, choiceName };
+      } else {
+        newOptions.push({ categoryName, choiceName });
+      }
+
+      return newOptions;
+    });
+  };
+
+  const submitCustomerDetails = async () => {
+    if (!formValid) {
+      setError("Please complete all required fields before submitting");
+      return null;
+    }
+
+    try {
+      const roundedTotal = Math.round(parseFloat(totalPrice) * 100) / 100;
+
+      const response = await fetch("/api/customer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          event: eventId,
+          quantity: billingDetails.numberOfPeople,
+          total: roundedTotal,
+          isSigningUpForSelf: isSigningUpForSelf,
+          participants,
+          selectedOptions,
+          billingInfo: {
+            firstName: billingDetails.givenName,
+            lastName: billingDetails.familyName,
+            addressLine1: billingDetails.addressLine1,
+            addressLine2: billingDetails.addressLine2,
+            city: billingDetails.city,
+            stateProvince: billingDetails.state,
+            postalCode: billingDetails.postalCode,
+            country: billingDetails.countryCode,
+            emailAddress: billingDetails.email,
+            phoneNumber: billingDetails.phoneNumber,
+          },
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+ 
+        return result; // Return the result with customer data
+      } else {
+        console.error(`Customer details submission failed: ${result.error}`);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error submitting customer details:", error);
+      return null;
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
       <div className="bg-white rounded-xl shadow-2xl overflow-hidden">
         {/* Event Header */}
         {eventTitle && (
-          <div className="bg-primary text-black p-6 sm:p-10 mb-6 text-center relative overflow-hidden">
-            <div className="relative z-10">
-              <h1 className="text-3xl font-bold mb-2 text-black">
-                Registration
-              </h1>
-              <p className="text-xl mb-2 font-medium text-black">
-                You&apos;re registering for:{" "}
-                <span className="font-bold text-black">{eventTitle}</span>
-              </p>
-
-              {isPriceAvailable ? (
-                <div className="mt-4 bg-white/70 py-3 px-8 rounded-full inline-block shadow-md">
-                  <p className="text-xl">
-                    <span className="font-medium text-black">Price:</span>{" "}
-                    <span className="font-bold text-black">
-                      ${formattedPrice}
-                    </span>
-                    <span className="text-black font-medium">
-                      {" "}
-                      / Per Person
-                    </span>
-                  </p>
-                </div>
-              ) : (
-                <div className="mt-4 bg-white/70 py-3 px-8 rounded-lg inline-block shadow-md">
-                  <p className="text-xl font-medium text-red-500">
-                    Sorry, payments are currently not available for this event.
-                  </p>
-                </div>
-              )}
-            </div>
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/30 rounded-full -mr-32 -mt-32 z-0"></div>
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/40 rounded-full -ml-24 -mb-24 z-0"></div>
-          </div>
+          <RegistrationHeader
+            eventTitle={eventTitle}
+            formattedPrice={formattedPrice}
+            isPriceAvailable={isPriceAvailable}
+          />
         )}
 
         {isPriceAvailable ? (
           // Only show billing and payment form if price is available
           <div className="p-6 sm:p-10">
             {/* Billing Section */}
-            <div className="mb-10">
-              <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6 mr-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                  />
-                </svg>
-                Billing Information
-              </h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label
-                    htmlFor="givenName"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    First Name
-                  </label>
-                  <input
-                    type="text"
-                    id="givenName"
-                    name="givenName"
-                    value={billingDetails.givenName}
-                    onChange={handleInputChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="familyName"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Last Name
-                  </label>
-                  <input
-                    type="text"
-                    id="familyName"
-                    name="familyName"
-                    value={billingDetails.familyName}
-                    onChange={handleInputChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="numberOfPeople"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Number of People
-                  </label>
-                  <select
-                    id="numberOfPeople"
-                    name="numberOfPeople"
-                    value={billingDetails.numberOfPeople}
-                    onChange={handleInputChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition"
-                    required
-                  >
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                      <option key={num} value={num}>
-                        {num} {num === 1 ? "Person" : "People"}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="md:col-span-2">
-                  <label
-                    htmlFor="addressLine1"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Address Line 1
-                  </label>
-                  <input
-                    type="text"
-                    id="addressLine1"
-                    name="addressLine1"
-                    value={billingDetails.addressLine1}
-                    onChange={handleInputChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition"
-                    required
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label
-                    htmlFor="addressLine2"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Address Line 2 (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    id="addressLine2"
-                    name="addressLine2"
-                    value={billingDetails.addressLine2}
-                    onChange={handleInputChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="city"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    City
-                  </label>
-                  <input
-                    type="text"
-                    id="city"
-                    name="city"
-                    value={billingDetails.city}
-                    onChange={handleInputChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="state"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    State/Province
-                  </label>
-                  <input
-                    type="text"
-                    id="state"
-                    name="state"
-                    value={billingDetails.state}
-                    onChange={handleInputChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="postalCode"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Postal Code
-                  </label>
-                  <input
-                    type="text"
-                    id="postalCode"
-                    name="postalCode"
-                    value={billingDetails.postalCode}
-                    onChange={handleInputChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="countryCode"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Country
-                  </label>
-                  <select
-                    id="countryCode"
-                    name="countryCode"
-                    value={billingDetails.countryCode}
-                    onChange={handleInputChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition"
-                    required
-                  >
-                    <option value="GB">United Kingdom</option>
-                    <option value="US">United States</option>
-                    <option value="CA">Canada</option>
-                    <option value="AU">Australia</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={billingDetails.email}
-                    onChange={handleInputChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="phoneNumber"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    id="phoneNumber"
-                    name="phoneNumber"
-                    value={billingDetails.phoneNumber}
-                    onChange={handleInputChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <p className="text-sm text-gray-600 italic">
-                    * Either Email Address or Phone Number is required for
-                    contact purposes.
-                  </p>
-                </div>
-
-                {/* Display total price calculation */}
-                {isPriceAvailable && (
-                  <div className="md:col-span-2 mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="flex justify-between items-center">
-                      <span className="text-lg font-medium text-gray-800">
-                        Price per person:
-                      </span>
-                      <span className="text-lg font-semibold">
-                        ${formattedPrice}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center mt-2">
-                      <span className="text-lg font-medium text-gray-800">
-                        Number of people:
-                      </span>
-                      <span className="text-lg font-semibold">
-                        {billingDetails.numberOfPeople}
-                      </span>
-                    </div>
-                    <div className="h-px bg-gray-300 my-3"></div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xl font-bold text-gray-900">
-                        Total:
-                      </span>
-                      <span className="text-xl font-bold text-gray-900">
-                        ${totalPrice}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            <BillingForm
+              billingDetails={billingDetails}
+              handleInputChange={handleInputChange}
+              isSigningUpForSelf={isSigningUpForSelf}
+              setIsSigningUpForSelf={setIsSigningUpForSelf}
+              eventOptions={eventOptions}
+              participants={participants}
+              setParticipants={setParticipants}
+              selectedOptions={selectedOptions}
+              handleOptionChange={handleOptionChange}
+              formattedPrice={formattedPrice}
+              totalPrice={totalPrice}
+            />
 
             {/* Payment Section */}
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6 mr-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"
-                  />
-                </svg>
-                Payment Details
-              </h2>
-
-              {/* Error Alert */}
-              {error && (
-                <div
-                  className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6"
-                  role="alert"
-                >
-                  <strong className="font-bold">Payment Error: </strong>
-                  <span className="block sm:inline">{error}</span>
-                  <button
-                    className="absolute top-0 bottom-0 right-0 px-4 py-3"
-                    onClick={() => setError("")}
-                  >
-                    <span className="sr-only">Close</span>
-                    <svg
-                      className="fill-current h-6 w-6 text-red-500"
-                      role="button"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z" />
-                    </svg>
-                  </button>
-                </div>
-              )}
-
-              {isLoaded ? (
-                <div className="p-6 bg-gray-50 rounded-lg">
-                  {!formValid && (
-                    <div className="mb-4 p-3 bg-yellow-50 border border-yellow-300 text-yellow-800 rounded-lg">
-                      <p className="flex items-center">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5 mr-2"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        Please complete all required fields above before
-                        proceeding with payment. You must provide either an
-                        email address or phone number.
-                      </p>
-                    </div>
-                  )}
-                  <PaymentForm
-                    applicationId={config.applicationId}
-                    locationId={config.locationId}
-                    createPaymentRequest={() => {
-                      return {
-                        countryCode: "US",
-                        currencyCode: "USD",
-                        total: {
-                          amount: totalPrice,
-                          label: "Total",
-                        },
-                      };
-                    }}
-                    cardTokenizeResponseReceived={async (token) => {
-                      // Validate form before proceeding
-                      const isContactProvided =
-                        billingDetails.email.trim() !== "" ||
-                        billingDetails.phoneNumber.trim() !== "";
-
-                      const areRequiredFieldsFilled =
-                        billingDetails.givenName.trim() !== "" &&
-                        billingDetails.familyName.trim() !== "" &&
-                        billingDetails.addressLine1.trim() !== "" &&
-                        billingDetails.city.trim() !== "" &&
-                        billingDetails.state.trim() !== "" &&
-                        billingDetails.postalCode.trim() !== "" &&
-                        isContactProvided;
-
-                      if (!areRequiredFieldsFilled) {
-                        setError(
-                          "Please fill in all required fields. Either email or phone number must be provided."
-                        );
-                        return;
-                      }
-
-                      if (token.token) {
-                        try {
-                          const result = await submitPayment(token.token, {
-                            ...billingDetails,
-                            eventId,
-                            eventTitle,
-                            eventPrice: formattedPrice,
-                          });
-
-                          if (result?.result?.payment?.status === "COMPLETED") {
-                            const paymentId = result.result.payment.id;
-                            const receiptUrl =
-                              result.result.payment.receiptUrl || "";
-                            const note = result.result.payment.note || "";
-
-                            // Safely extract amount and currency with fallbacks
-                            const amount =
-                              result.result.payment.amountMoney?.amount?.toString() ||
-                              "0";
-                            const currency =
-                              result.result.payment.amountMoney?.currency ||
-                              "USD";
-
-                            // Get card details if available
-                            const last4 =
-                              result.result.payment.cardDetails?.card?.last4 ||
-                              "";
-                            const cardBrand =
-                              result.result.payment.cardDetails?.card
-                                ?.cardBrand || "";
-
-                            // Build query parameters with all relevant information
-                            const queryParams = new URLSearchParams();
-                            queryParams.set("paymentId", paymentId || "");
-                            queryParams.set("status", "COMPLETED");
-                            queryParams.set("receiptUrl", receiptUrl);
-                            queryParams.set(
-                              "firstName",
-                              billingDetails.givenName
-                            );
-                            queryParams.set(
-                              "lastName",
-                              billingDetails.familyName
-                            );
-                            queryParams.set("eventTitle", eventTitle || "");
-                            queryParams.set("note", note);
-                            queryParams.set("amount", amount);
-                            queryParams.set("currency", currency);
-                            queryParams.set("last4", last4);
-                            queryParams.set("cardBrand", cardBrand);
-
-                            // Add contact information to success page
-                            if (billingDetails.email) {
-                              queryParams.set("email", billingDetails.email);
-                            }
-                            if (billingDetails.phoneNumber) {
-                              queryParams.set(
-                                "phone",
-                                billingDetails.phoneNumber
-                              );
-                            }
-
-                            // Add number of people to success page
-                            queryParams.set(
-                              "numberOfPeople",
-                              billingDetails.numberOfPeople.toString()
-                            );
-
-                            // Add total price to success page
-                            queryParams.set("totalPrice", totalPrice);
-
-                            // Use config for redirect URL
-                            router.push(
-                              `${config.redirectUrl}?${queryParams.toString()}`
-                            );
-                          } else {
-                            // Handle payment not completed
-                            console.error("Payment not completed");
-                            setError(
-                              "Payment could not be completed. Please try again."
-                            );
-                          }
-                        } catch (error) {
-                          console.error("Error:", error);
-                          setError(
-                            "Payment failed: Error: request failed with status 404. Please check your payment details and try again."
-                          );
-                        }
-                      } else {
-                        console.error("Payment token is undefined");
-                        setError(
-                          "Payment token is undefined. Please try again."
-                        );
-                      }
-                    }}
-                  >
-                    <div className="max-w-md mx-auto">
-                      <CreditCard />
-                      {!formValid && (
-                        <div className="mt-4 text-red-600 text-center text-sm font-medium">
-                          Please complete all required fields above before
-                          submitting payment
-                        </div>
-                      )}
-                    </div>
-                  </PaymentForm>
-                </div>
-              ) : (
-                <div className="text-center p-10 bg-gray-50 rounded-lg">
-                  <div className="animate-pulse inline-block h-8 w-8 rounded-full bg-primary"></div>
-                  <p className="mt-4 text-gray-600">Loading payment form...</p>
-                </div>
-              )}
-            </div>
-
-            <div className="text-sm text-gray-500 text-center mt-4">
-              <p className="flex items-center justify-center gap-1">
-                Secure payment processing by{" "}
-                <PiSquareLogoFill className="text-xl" /> Square
-              </p>
-            </div>
+            <PaymentProcessor
+              error={error}
+              setError={setError}
+              isLoaded={isLoaded}
+              config={config}
+              formValid={formValid}
+              billingDetails={billingDetails}
+              eventId={eventId}
+              eventTitle={eventTitle}
+              eventPrice={eventPrice}
+              formattedPrice={formattedPrice}
+              totalPrice={totalPrice}
+              submitPayment={handleSubmitPayment}
+              router={router}
+            />
           </div>
         ) : (
           <div className="p-10 text-center">

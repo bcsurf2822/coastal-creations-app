@@ -1,4 +1,4 @@
-import { EmailTemplate } from "@/components/EmailTemplate";
+import { EmailTemplate } from "@/components/email-templates/EmailTemplate";
 import { Resend } from "resend";
 import { render } from "@react-email/render";
 import * as React from "react";

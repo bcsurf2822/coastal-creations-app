@@ -27,6 +27,7 @@ export default function Offerings() {
                   src="/assets/images/paintingAction1.jpeg"
                   alt="Canvas and Collage"
                   fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
                   className="object-cover"
                 />
               </div>
@@ -59,6 +60,7 @@ export default function Offerings() {
                   src="/assets/images/cupcakePainting.png"
                   alt="Workshops"
                   fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
                   className="object-cover"
                 />
               </div>
@@ -91,6 +93,7 @@ export default function Offerings() {
                   src="/assets/images/groupCollage.jpeg"
                   alt="Birthday Parties"
                   fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
                   className="object-cover object-[center_40%]"
                 />
               </div>

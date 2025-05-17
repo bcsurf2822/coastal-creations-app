@@ -9,7 +9,8 @@ import {
 
 const { paymentsApi } = new Client({
   accessToken: process.env.PRODUCTION_ACCESS_TOKEN,
-  environment: Environment.Production,
+  // environment: Environment.Production,
+  environment: Environment.Sandbox,
 });
 
 export async function submitPayment(
@@ -76,14 +77,14 @@ export async function submitPayment(
       },
     });
 
-    console.log(
-      "Payment processing result:",
-      result.statusCode,
-      result.result?.payment?.status
-    );
+    // console.log(
+    //   "Payment processing result:",
+    //   result.statusCode,
+    //   result.result?.payment?.status
+    // );
     return result;
   } catch (error) {
-    console.log("Payment processing error:", error);
+    console.error("Payment processing error:", error);
     return undefined;
   }
 }

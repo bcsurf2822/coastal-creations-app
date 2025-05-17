@@ -213,7 +213,7 @@ export default function NewCalendar() {
         const data = await response.json();
 
         if (data.success) {
-          console.log("Fetched events:", data.events);
+          // console.log("Fetched events:", data.events);
           if (Array.isArray(data.events) && data.events.length > 0) {
             const calendarEvents = transformEvents(data.events);
             setEvents(calendarEvents);
@@ -260,8 +260,8 @@ export default function NewCalendar() {
   };
 
   // Add a handler for event signup
-  const navigateToEvent = (eventId: string, eventTitle: string) => {
-    console.log(`Navigating to event: ${eventTitle} (ID: ${eventId})`);
+  const navigateToEvent = (eventId: string) => {
+    // console.log(`Navigating to event: ${eventTitle} (ID: ${eventId})`);
     router.push(`/calendar/${eventId}`);
   };
 
@@ -371,10 +371,7 @@ export default function NewCalendar() {
             if (signupButton) {
               signupButton.addEventListener("click", (e) => {
                 e.stopPropagation();
-                navigateToEvent(
-                  info.event.extendedProps?._id || "unknown",
-                  info.event.title
-                );
+                navigateToEvent(info.event.extendedProps?._id || "unknown");
               });
             }
           }, 0);
