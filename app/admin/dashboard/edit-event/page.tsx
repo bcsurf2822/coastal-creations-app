@@ -56,11 +56,21 @@ export default function EditEventPage() {
   // Format date string to YYYY-MM-DD for input fields
   const formatDateForInput = (dateString: string) => {
     if (!dateString) return "";
+    // Create date with no timezone conversion
     const date = new Date(dateString);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
+  };
+
+  // Prepare date for submission to prevent timezone issues
+  const prepareDateForSubmit = (dateString: string) => {
+    if (!dateString) return "";
+    const [year, month, day] = dateString.split("-").map(Number);
+    // Create a Date object using local components to prevent timezone shift
+    const date = new Date(year, month - 1, day, 12, 0, 0);
+    return date.toISOString();
   };
 
   useEffect(() => {
@@ -173,12 +183,38 @@ export default function EditEventPage() {
 
     try {
       setIsSaving(true);
+
+      // Create a copy of the event data to modify dates for submission
+      const submissionData = {
+        ...eventData,
+        dates: {
+          ...eventData.dates,
+        },
+      };
+
+      // Prepare dates for submission
+      if (submissionData.dates.startDate) {
+        submissionData.dates.startDate = prepareDateForSubmit(
+          submissionData.dates.startDate
+        );
+      }
+      if (submissionData.dates.endDate) {
+        submissionData.dates.endDate = prepareDateForSubmit(
+          submissionData.dates.endDate
+        );
+      }
+      if (submissionData.dates.recurringEndDate) {
+        submissionData.dates.recurringEndDate = prepareDateForSubmit(
+          submissionData.dates.recurringEndDate
+        );
+      }
+
       const response = await fetch(`/api/event/${eventId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(eventData),
+        body: JSON.stringify(submissionData),
       });
 
       if (!response.ok) {
