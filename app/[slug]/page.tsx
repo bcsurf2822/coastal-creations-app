@@ -3,10 +3,12 @@ import imageUrlBuilder from "@sanity/image-url";
 import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 
 import Link from "next/link";
+import Image from "next/image";
 import { client } from "@/sanity/client";
 
 const POST_QUERY = `*[_type == "post" && slug.current == $slug][0]`;
 const HOURS_QUERY = `*[_type == "hoursOfOperation"][0]`;
+const EVENT_PICTURE_QUERY = `*[_type == "eventPictureS"][0]`;
 // const GALLERY_QUERY = `*[_type == "gallery"][0]`;
 
 const { projectId, dataset } = client.config();
@@ -65,12 +67,13 @@ export default async function PostPage({
         ← Back to posts
       </Link>
       {postImageUrl && (
-        <img
+        <Image
           src={postImageUrl}
           alt={post.title}
           className="aspect-video rounded-xl"
-          width="550"
-          height="310"
+          width={550}
+          height={310}
+          priority
         />
       )}
       <h1 className="text-4xl font-bold mb-8">{post.title}</h1>
@@ -142,3 +145,11 @@ async function HoursPage() {
     </main>
   );
 }
+
+// async function EventPicturePage() {
+//   const eventPictureData = await client.fetch<SanityDocument>(
+//     EVENT_PICTURE_QUERY,
+//     {},
+//     options
+//   );
+// }
