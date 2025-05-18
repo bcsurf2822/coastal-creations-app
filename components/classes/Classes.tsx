@@ -3,6 +3,18 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
+import { type SanityDocument } from "next-sanity";
+import imageUrlBuilder from "@sanity/image-url";
+import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
+import Image from "next/image";
+import { client } from "@/sanity/client";
+
+// Setup Sanity image URL builder
+const { projectId, dataset } = client.config();
+const urlFor = (source: SanityImageSource) =>
+  projectId && dataset
+    ? imageUrlBuilder({ projectId, dataset }).image(source)
+    : null;
 
 // Define TypeScript interfaces for the event data
 interface EventTime {
@@ -53,6 +65,7 @@ export default function Classes() {
   const [filter, setFilter] = useState("all");
   const [error, setError] = useState<string | null>(null);
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
+  const [eventPictures, setEventPictures] = useState<SanityDocument[]>([]);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -65,7 +78,8 @@ export default function Classes() {
         }
 
         const data = await response.json();
-        // console.log(data);
+        console.log("Fetched events data:", data);
+
         setEvents(data.events || []);
       } catch (err: unknown) {
         console.error("Error fetching events:", err);
@@ -77,6 +91,42 @@ export default function Classes() {
 
     fetchEvents();
   }, []);
+
+  // Fetch event pictures
+  useEffect(() => {
+    const fetchEventPictures = async () => {
+      try {
+        const response = await fetch("/api/eventPictures");
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch event pictures");
+        }
+
+        const data = await response.json();
+        console.log("Fetched event pictures data:", data);
+        setEventPictures(data);
+      } catch (err) {
+        console.error("Error fetching event pictures:", err);
+      }
+    };
+
+    fetchEventPictures();
+  }, []);
+
+  // Find a matching event picture for an event
+  const findMatchingEventPicture = (eventName: string) => {
+    if (!eventPictures || eventPictures.length === 0) return null;
+
+    // Convert event name to lowercase for case-insensitive matching
+    const eventNameLower = eventName.toLowerCase();
+
+    // Find a picture where the title is included in the event name
+    return eventPictures.find((picture) => {
+      if (!picture.title) return false;
+      const titleLower = picture.title.toLowerCase();
+      return eventNameLower.includes(titleLower);
+    });
+  };
 
   // Group events by name and organize dates
   const filterEvents = (events: Event[]): Event[] => {
@@ -454,74 +504,99 @@ export default function Classes() {
           </div>
         ) : (
           <div className="grid gap-4">
-            {filteredEvents.map((event) => (
-              <motion.div
-                key={event._id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                whileHover={{
-                  boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
-                  y: -2,
-                }}
-              >
-                <h3 className="text-xl font-medium">{event.eventName}</h3>
+            {filteredEvents.map((event) => {
+              // Find a matching picture for this event
+              const matchingPicture = findMatchingEventPicture(event.eventName);
+              const imageUrl = matchingPicture?.image
+                ? urlFor(matchingPicture.image)?.width(800).height(600).url()
+                : null;
 
-                <div className="flex flex-col sm:flex-row sm:justify-between mt-2">
-                  <div className="text-gray-600">
-                    <span className="font-medium">Date: </span>
-                    {getDateInfo(event)}
-                  </div>
-                  <div className="text-gray-600">
-                    <span className="font-medium">Time: </span>
-                    {formatTime(event.time.startTime)} -{" "}
-                    {formatTime(event.time.endTime)}
-                  </div>
-                </div>
+              return (
+                <motion.div
+                  key={event._id}
+                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  whileHover={{
+                    boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
+                    y: -2,
+                  }}
+                >
+                  <div className="flex flex-col md:flex-row">
+                    <div className={imageUrl ? "md:w-2/3" : "w-full"}>
+                      <h3 className="text-xl font-medium">{event.eventName}</h3>
 
-                <div className="mt-2">
-                  <span className="font-medium">Description: </span>
-                  <span className="text-gray-700">{event.description}</span>
-                </div>
-                <div className="mt-1">
-                  <span className="font-medium">Price: </span>
-                  <span className="text-gray-700">${event.price}</span>
-                </div>
+                      <div className="flex flex-col sm:flex-row sm:justify-between mt-2">
+                        <div className="text-gray-600">
+                          <span className="font-medium">Date: </span>
+                          {getDateInfo(event)}
+                        </div>
+                        <div className="text-gray-600">
+                          <span className="font-medium">Time: </span>
+                          {formatTime(event.time.startTime)} -{" "}
+                          {formatTime(event.time.endTime)}
+                        </div>
+                      </div>
 
-                {event.options.length > 0 && (
-                  <div className="mt-2">
-                    <span className="font-medium">Options: </span>
-                    {event.options.map((option) => (
-                      <div key={option._id} className="ml-2 mt-1">
+                      <div className="mt-2">
+                        <span className="font-medium">Description: </span>
                         <span className="text-gray-700">
-                          {option.categoryName}:{" "}
-                        </span>
-                        <span className="text-gray-600">
-                          {option.choices
-                            .map((choice) => choice.name)
-                            .join(", ")}
+                          {event.description}
                         </span>
                       </div>
-                    ))}
-                  </div>
-                )}
+                      <div className="mt-1">
+                        <span className="font-medium">Price: </span>
+                        <span className="text-gray-700">${event.price}</span>
+                      </div>
 
-                <div className="mt-4">
-                  <motion.div
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <Link
-                      href={`/calendar/${event._id}`}
-                      className="inline-block px-4 py-2 bg-primary text-black font-medium rounded-md hover:bg-blue-400 hover:text-white transition-colors border-2 border-black"
-                    >
-                      Sign Up
-                    </Link>
-                  </motion.div>
-                </div>
-              </motion.div>
-            ))}
+                      {event.options.length > 0 && (
+                        <div className="mt-2">
+                          <span className="font-medium">Options: </span>
+                          {event.options.map((option) => (
+                            <div key={option._id} className="ml-2 mt-1">
+                              <span className="text-gray-700">
+                                {option.categoryName}:{" "}
+                              </span>
+                              <span className="text-gray-600">
+                                {option.choices
+                                  .map((choice) => choice.name)
+                                  .join(", ")}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="mt-4">
+                        <motion.div
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <Link
+                            href={`/calendar/${event._id}`}
+                            className="inline-block px-4 py-2 bg-primary text-black font-medium rounded-md hover:bg-blue-400 hover:text-white transition-colors border-2 border-black"
+                          >
+                            Sign Up
+                          </Link>
+                        </motion.div>
+                      </div>
+                    </div>
+                    {imageUrl && (
+                      <div className="md:w-1/3 mb-4 md:mb-0 md:ml-4 mt-4 md:mt-0">
+                        <Image
+                          src={imageUrl}
+                          alt={event.eventName}
+                          className="rounded-lg object-cover w-full h-48"
+                          width={300}
+                          height={200}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         )}
       </div>

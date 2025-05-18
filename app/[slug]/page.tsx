@@ -8,8 +8,8 @@ import { client } from "@/sanity/client";
 
 const POST_QUERY = `*[_type == "post" && slug.current == $slug][0]`;
 const HOURS_QUERY = `*[_type == "hoursOfOperation"][0]`;
-const EVENT_PICTURE_QUERY = `*[_type == "eventPictureS"][0]`;
-// const GALLERY_QUERY = `*[_type == "gallery"][0]`;
+// const EVENT_PICTURE_QUERY = `*[_type == "eventPictureS"][0]`;
+// // const GALLERY_QUERY = `*[_type == "gallery"][0]`;
 
 const { projectId, dataset } = client.config();
 const urlFor = (source: SanityImageSource) =>
@@ -146,10 +146,41 @@ async function HoursPage() {
   );
 }
 
-// async function EventPicturePage() {
+// export async function EventPicturePage() {
 //   const eventPictureData = await client.fetch<SanityDocument>(
 //     EVENT_PICTURE_QUERY,
 //     {},
 //     options
+//   );
+
+//   const imageUrl = eventPictureData?.image
+//     ? urlFor(eventPictureData.image)?.width(800).height(500).url()
+//     : null;
+
+//   return (
+//     <main className="container mx-auto min-h-screen max-w-3xl p-8 flex flex-col gap-4">
+//       <h1 className="text-4xl font-bold mb-8">
+//         {eventPictureData?.title || "Event Pictures"}
+//       </h1>
+
+//       {imageUrl && (
+//         <Image
+//           src={imageUrl}
+//           alt={eventPictureData?.title || "Event Pictures"}
+//           className="rounded-xl w-full h-auto"
+//           width={800}
+//           height={500}
+//           priority
+//         />
+//       )}
+
+//       {eventPictureData?.description && (
+//         <div className="prose mt-4">
+//           {Array.isArray(eventPictureData.description) && (
+//             <PortableText value={eventPictureData.description} />
+//           )}
+//         </div>
+//       )}
+//     </main>
 //   );
 // }
