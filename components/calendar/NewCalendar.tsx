@@ -16,19 +16,37 @@ export default function NewCalendar() {
 
   const router = useRouter();
 
+  // Add state to track the currently visible tooltip
+  const [activeTooltip, setActiveTooltip] = useState<HTMLElement | null>(null);
+
   const resources = [
     { id: "class", title: "Classes", eventColor: "#3788d8" },
     { id: "camp", title: "Camps", eventColor: "green" },
     { id: "workshop", title: "Workshops", eventColor: "orange" },
   ];
 
+  // Add a helper function to convert 24-hour time to 12-hour time
+  const convertTo12Hour = (time24: string): string => {
+    if (!time24) return "";
+
+    const [hours, minutes] = time24.split(":").map(Number);
+    const period = hours >= 12 ? "PM" : "AM";
+    const hours12 = hours % 12 || 12; // Convert 0 to 12 for 12 AM
+
+    return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
+  };
+
   // Transform API events to FullCalendar format
   const transformEvents = (apiEvents: ApiEvent[]): CalendarEvent[] => {
     let calendarEvents: CalendarEvent[] = [];
 
     apiEvents.forEach((event) => {
-      // Format time display
-      const timeDisplay = `${event.time.startTime}${event.time.endTime ? ` - ${event.time.endTime}` : ""}`;
+      // Format time display with 12-hour conversion
+      const startTime12h = convertTo12Hour(event.time.startTime);
+      const endTime12h = event.time.endTime
+        ? convertTo12Hour(event.time.endTime)
+        : "";
+      const timeDisplay = `${startTime12h}${endTime12h ? ` - ${endTime12h}` : ""}`;
 
       // Handle non-recurring events
       if (!event.dates.isRecurring) {
@@ -265,6 +283,16 @@ export default function NewCalendar() {
     router.push(`/calendar/${eventId}`);
   };
 
+  // Cleanup function for tooltips
+  useEffect(() => {
+    return () => {
+      // Remove any tooltips when component unmounts
+      if (activeTooltip && document.body.contains(activeTooltip)) {
+        document.body.removeChild(activeTooltip);
+      }
+    };
+  }, [activeTooltip]);
+
   return (
     <div className="calendar-container">
       <FullCalendar
@@ -303,19 +331,13 @@ export default function NewCalendar() {
             html: `<div class="fc-event-title">${arg.event.title}</div>`,
           };
         }}
-        eventDidMount={(info) => {
-          // Set event color based on event type
-          const eventType =
-            info.event.extendedProps?.eventType ||
-            (info.event.getResources().length > 0
-              ? info.event.getResources()[0].id
-              : "");
-
-          if (eventType) {
-            info.el.style.backgroundColor = getEventColor(eventType);
+        eventMouseEnter={(info) => {
+          // Remove any existing tooltip
+          if (activeTooltip && document.body.contains(activeTooltip)) {
+            document.body.removeChild(activeTooltip);
           }
 
-          // Create tooltip with all event details
+          // Create new tooltip
           const tooltip = document.createElement("div");
           tooltip.className = "event-tooltip";
 
@@ -357,13 +379,26 @@ export default function NewCalendar() {
 
           if (!isRecurring || isFirstOccurrence) {
             tooltipContent += `<div class="tooltip-signup">
-       
               <button id="signup-${info.event.extendedProps?._id || "event"}" type="button">Sign Up</button>
             </div>`;
           }
 
           tooltip.innerHTML = tooltipContent;
-          info.el.appendChild(tooltip);
+
+          // Position the tooltip relative to the event element
+          const rect = info.el.getBoundingClientRect();
+          tooltip.style.position = "fixed";
+          tooltip.style.left = rect.left + rect.width / 2 + "px";
+          tooltip.style.top = rect.top - 10 + "px";
+          tooltip.style.transform = "translate(-50%, -100%)";
+          tooltip.style.zIndex = "99999";
+          tooltip.style.display = "block";
+
+          // Add to body
+          document.body.appendChild(tooltip);
+          setActiveTooltip(tooltip);
+
+          // Add event listener for the signup button
           setTimeout(() => {
             const signupButton = document.getElementById(
               `signup-${info.event.extendedProps?._id || "event"}`
@@ -375,6 +410,25 @@ export default function NewCalendar() {
               });
             }
           }, 0);
+        }}
+        eventMouseLeave={() => {
+          // Remove tooltip when mouse leaves the event
+          if (activeTooltip && document.body.contains(activeTooltip)) {
+            document.body.removeChild(activeTooltip);
+            setActiveTooltip(null);
+          }
+        }}
+        eventDidMount={(info) => {
+          // Set event color based on event type
+          const eventType =
+            info.event.extendedProps?.eventType ||
+            (info.event.getResources().length > 0
+              ? info.event.getResources()[0].id
+              : "");
+
+          if (eventType) {
+            info.el.style.backgroundColor = getEventColor(eventType);
+          }
         }}
       />
     </div>
