@@ -1,5 +1,4 @@
 import React from "react";
-import EventPictures from "@/components/classes/EventPictures";
 
 export default function GalleryPage() {
   return (
@@ -10,8 +9,6 @@ export default function GalleryPage() {
             <h1 className="font-serif text-5xl md:text-6xl font-bold text-primary mb-12">
               Gallery
             </h1>
-
-            <EventPictures />
           </div>
         </div>
       </section>

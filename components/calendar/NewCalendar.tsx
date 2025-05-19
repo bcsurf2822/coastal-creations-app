@@ -18,6 +18,8 @@ export default function NewCalendar() {
 
   // Add state to track the currently visible tooltip
   const [activeTooltip, setActiveTooltip] = useState<HTMLElement | null>(null);
+  const [tooltipTimeoutId, setTooltipTimeoutId] =
+    useState<NodeJS.Timeout | null>(null);
 
   const resources = [
     { id: "class", title: "Classes", eventColor: "#3788d8" },
@@ -332,9 +334,16 @@ export default function NewCalendar() {
           };
         }}
         eventMouseEnter={(info) => {
-          // Remove any existing tooltip
+          // Remove any existing tooltip DOM element
           if (activeTooltip && document.body.contains(activeTooltip)) {
             document.body.removeChild(activeTooltip);
+            // Note: activeTooltip state will be updated by setActiveTooltip(tooltip) below
+          }
+
+          // Clear any pending hide timeout for a previous tooltip, as we are showing a new one.
+          if (tooltipTimeoutId) {
+            clearTimeout(tooltipTimeoutId);
+            setTooltipTimeoutId(null);
           }
 
           // Create new tooltip
@@ -398,6 +407,31 @@ export default function NewCalendar() {
           document.body.appendChild(tooltip);
           setActiveTooltip(tooltip);
 
+          // Add event listeners to the tooltip itself
+          tooltip.addEventListener("mouseenter", () => {
+            // If a hide timer was set by eventMouseLeave, cancel it because mouse is now over tooltip
+            if (tooltipTimeoutId) {
+              clearTimeout(tooltipTimeoutId);
+              setTooltipTimeoutId(null);
+            }
+          });
+
+          tooltip.addEventListener("mouseleave", () => {
+            // Mouse left the tooltip, so remove it
+            if (document.body.contains(tooltip)) {
+              document.body.removeChild(tooltip);
+            }
+            // If this tooltip was the active one, update state
+            if (activeTooltip === tooltip) {
+              setActiveTooltip(null);
+            }
+            // Clear any lingering timeout (safety measure)
+            if (tooltipTimeoutId) {
+              clearTimeout(tooltipTimeoutId);
+              setTooltipTimeoutId(null);
+            }
+          });
+
           // Add event listener for the signup button
           setTimeout(() => {
             const signupButton = document.getElementById(
@@ -411,12 +445,36 @@ export default function NewCalendar() {
             }
           }, 0);
         }}
-        eventMouseLeave={() => {
-          // Remove tooltip when mouse leaves the event
-          if (activeTooltip && document.body.contains(activeTooltip)) {
-            document.body.removeChild(activeTooltip);
-            setActiveTooltip(null);
+        eventMouseLeave={(leaveInfo) => {
+          const relatedTarget = leaveInfo.jsEvent.relatedTarget as Node | null;
+
+          // If the mouse is moving towards the currently active tooltip, don't set a hide timer.
+          // The tooltip's own mouseleave listener will handle its removal.
+          if (
+            activeTooltip &&
+            relatedTarget &&
+            (activeTooltip === relatedTarget ||
+              activeTooltip.contains(relatedTarget))
+          ) {
+            // If a hide timer was somehow already set (e.g., rapid flicker), clear it.
+            if (tooltipTimeoutId) {
+              clearTimeout(tooltipTimeoutId);
+              setTooltipTimeoutId(null);
+            }
+            return;
           }
+
+          // If mouse is moving elsewhere, set a cancellable timer to hide the tooltip.
+          // This gives a brief window for the mouse to enter the tooltip.
+          const newTimeoutId = setTimeout(() => {
+            if (activeTooltip && document.body.contains(activeTooltip)) {
+              // If this timeout executes, it means the mouse didn't enter the tooltip in time.
+              document.body.removeChild(activeTooltip);
+              setActiveTooltip(null);
+            }
+            setTooltipTimeoutId(null); // Clear the ID as the timeout has executed
+          }, 3000); // Adjust delay as needed (e.g., 150ms)
+          setTooltipTimeoutId(newTimeoutId);
         }}
         eventDidMount={(info) => {
           // Set event color based on event type
