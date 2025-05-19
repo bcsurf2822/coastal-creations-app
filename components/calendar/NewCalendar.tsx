@@ -16,19 +16,39 @@ export default function NewCalendar() {
 
   const router = useRouter();
 
+  // Add state to track the currently visible tooltip
+  const [activeTooltip, setActiveTooltip] = useState<HTMLElement | null>(null);
+  const [tooltipTimeoutId, setTooltipTimeoutId] =
+    useState<NodeJS.Timeout | null>(null);
+
   const resources = [
     { id: "class", title: "Classes", eventColor: "#3788d8" },
     { id: "camp", title: "Camps", eventColor: "green" },
     { id: "workshop", title: "Workshops", eventColor: "orange" },
   ];
 
+  // Add a helper function to convert 24-hour time to 12-hour time
+  const convertTo12Hour = (time24: string): string => {
+    if (!time24) return "";
+
+    const [hours, minutes] = time24.split(":").map(Number);
+    const period = hours >= 12 ? "PM" : "AM";
+    const hours12 = hours % 12 || 12; // Convert 0 to 12 for 12 AM
+
+    return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
+  };
+
   // Transform API events to FullCalendar format
   const transformEvents = (apiEvents: ApiEvent[]): CalendarEvent[] => {
     let calendarEvents: CalendarEvent[] = [];
 
     apiEvents.forEach((event) => {
-      // Format time display
-      const timeDisplay = `${event.time.startTime}${event.time.endTime ? ` - ${event.time.endTime}` : ""}`;
+      // Format time display with 12-hour conversion
+      const startTime12h = convertTo12Hour(event.time.startTime);
+      const endTime12h = event.time.endTime
+        ? convertTo12Hour(event.time.endTime)
+        : "";
+      const timeDisplay = `${startTime12h}${endTime12h ? ` - ${endTime12h}` : ""}`;
 
       // Handle non-recurring events
       if (!event.dates.isRecurring) {
@@ -265,6 +285,16 @@ export default function NewCalendar() {
     router.push(`/calendar/${eventId}`);
   };
 
+  // Cleanup function for tooltips
+  useEffect(() => {
+    return () => {
+      // Remove any tooltips when component unmounts
+      if (activeTooltip && document.body.contains(activeTooltip)) {
+        document.body.removeChild(activeTooltip);
+      }
+    };
+  }, [activeTooltip]);
+
   return (
     <div className="calendar-container">
       <FullCalendar
@@ -303,19 +333,20 @@ export default function NewCalendar() {
             html: `<div class="fc-event-title">${arg.event.title}</div>`,
           };
         }}
-        eventDidMount={(info) => {
-          // Set event color based on event type
-          const eventType =
-            info.event.extendedProps?.eventType ||
-            (info.event.getResources().length > 0
-              ? info.event.getResources()[0].id
-              : "");
-
-          if (eventType) {
-            info.el.style.backgroundColor = getEventColor(eventType);
+        eventMouseEnter={(info) => {
+          // Remove any existing tooltip DOM element
+          if (activeTooltip && document.body.contains(activeTooltip)) {
+            document.body.removeChild(activeTooltip);
+            // Note: activeTooltip state will be updated by setActiveTooltip(tooltip) below
           }
 
-          // Create tooltip with all event details
+          // Clear any pending hide timeout for a previous tooltip, as we are showing a new one.
+          if (tooltipTimeoutId) {
+            clearTimeout(tooltipTimeoutId);
+            setTooltipTimeoutId(null);
+          }
+
+          // Create new tooltip
           const tooltip = document.createElement("div");
           tooltip.className = "event-tooltip";
 
@@ -357,13 +388,51 @@ export default function NewCalendar() {
 
           if (!isRecurring || isFirstOccurrence) {
             tooltipContent += `<div class="tooltip-signup">
-       
               <button id="signup-${info.event.extendedProps?._id || "event"}" type="button">Sign Up</button>
             </div>`;
           }
 
           tooltip.innerHTML = tooltipContent;
-          info.el.appendChild(tooltip);
+
+          // Position the tooltip relative to the event element
+          const rect = info.el.getBoundingClientRect();
+          tooltip.style.position = "fixed";
+          tooltip.style.left = rect.left + rect.width / 2 + "px";
+          tooltip.style.top = rect.top - 10 + "px";
+          tooltip.style.transform = "translate(-50%, -100%)";
+          tooltip.style.zIndex = "99999";
+          tooltip.style.display = "block";
+
+          // Add to body
+          document.body.appendChild(tooltip);
+          setActiveTooltip(tooltip);
+
+          // Add event listeners to the tooltip itself
+          tooltip.addEventListener("mouseenter", () => {
+            // If a hide timer was set by eventMouseLeave, cancel it because mouse is now over tooltip
+            if (tooltipTimeoutId) {
+              clearTimeout(tooltipTimeoutId);
+              setTooltipTimeoutId(null);
+            }
+          });
+
+          tooltip.addEventListener("mouseleave", () => {
+            // Mouse left the tooltip, so remove it
+            if (document.body.contains(tooltip)) {
+              document.body.removeChild(tooltip);
+            }
+            // If this tooltip was the active one, update state
+            if (activeTooltip === tooltip) {
+              setActiveTooltip(null);
+            }
+            // Clear any lingering timeout (safety measure)
+            if (tooltipTimeoutId) {
+              clearTimeout(tooltipTimeoutId);
+              setTooltipTimeoutId(null);
+            }
+          });
+
+          // Add event listener for the signup button
           setTimeout(() => {
             const signupButton = document.getElementById(
               `signup-${info.event.extendedProps?._id || "event"}`
@@ -375,6 +444,49 @@ export default function NewCalendar() {
               });
             }
           }, 0);
+        }}
+        eventMouseLeave={(leaveInfo) => {
+          const relatedTarget = leaveInfo.jsEvent.relatedTarget as Node | null;
+
+          // If the mouse is moving towards the currently active tooltip, don't set a hide timer.
+          // The tooltip's own mouseleave listener will handle its removal.
+          if (
+            activeTooltip &&
+            relatedTarget &&
+            (activeTooltip === relatedTarget ||
+              activeTooltip.contains(relatedTarget))
+          ) {
+            // If a hide timer was somehow already set (e.g., rapid flicker), clear it.
+            if (tooltipTimeoutId) {
+              clearTimeout(tooltipTimeoutId);
+              setTooltipTimeoutId(null);
+            }
+            return;
+          }
+
+          // If mouse is moving elsewhere, set a cancellable timer to hide the tooltip.
+          // This gives a brief window for the mouse to enter the tooltip.
+          const newTimeoutId = setTimeout(() => {
+            if (activeTooltip && document.body.contains(activeTooltip)) {
+              // If this timeout executes, it means the mouse didn't enter the tooltip in time.
+              document.body.removeChild(activeTooltip);
+              setActiveTooltip(null);
+            }
+            setTooltipTimeoutId(null); // Clear the ID as the timeout has executed
+          }, 3000); // Adjust delay as needed (e.g., 150ms)
+          setTooltipTimeoutId(newTimeoutId);
+        }}
+        eventDidMount={(info) => {
+          // Set event color based on event type
+          const eventType =
+            info.event.extendedProps?.eventType ||
+            (info.event.getResources().length > 0
+              ? info.event.getResources()[0].id
+              : "");
+
+          if (eventType) {
+            info.el.style.backgroundColor = getEventColor(eventType);
+          }
         }}
       />
     </div>

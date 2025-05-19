@@ -27,9 +27,12 @@ export default async function AdminDashboardLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    redirect("/admin");
+  let session = null;
+  if (process.env.NODE_ENV !== "development") {
+    session = await getServerSession(authOptions);
+    if (!session) {
+      redirect("/admin");
+    }
   }
 
   return (

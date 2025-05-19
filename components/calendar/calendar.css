@@ -4,11 +4,30 @@
   max-width: 1200px;
   height: calc(100vh - 180px);
   min-height: 500px;
+  /* Ensure proper stacking context */
+  position: relative;
+  z-index: 1;
 }
 
 /* Make sure the calendar takes up full container height */
 .calendar-container .fc {
   height: 100%;
+}
+
+/* Ensure tooltips appear on top of all FullCalendar elements */
+.fc-popover,
+.fc-event-mirror {
+  z-index: 999 !important; /* Lower than our custom tooltip */
+}
+
+/* Fix for any FullCalendar elements that might overlap tooltips */
+.fc-view-harness,
+.fc-scrollgrid,
+.fc-daygrid-body,
+.fc-timegrid-body,
+.fc-scroller {
+  z-index: 0 !important;
+  position: relative !important;
 }
 
 /* Make all calendar lines black */
@@ -49,6 +68,7 @@
   border-radius: 4px;
   font-size: 0.85em;
   overflow: visible !important; /* Allow tooltip to overflow */
+  position: relative; /* Create stacking context */
 }
 
 /* Style event titles to ensure they're visible */
@@ -66,70 +86,60 @@
   border-radius: 2px;
 }
 
-/* Hover effect for events */
-.fc-event:hover {
-  opacity: 0.9;
-  z-index: 100 !important; /* Make sure hovered events are above others */
-}
-
 /* Event tooltip styling */
 .event-tooltip {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
+  position: fixed;
   background: white;
-  border: 1px solid #ddd;
+  border: 1px solid #ccc;
   border-radius: 4px;
-  padding: 8px 12px;
-  width: 220px;
+  padding: 10px 14px;
+  width: 250px;
   max-width: 90vw;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  font-size: 0.8em;
-  z-index: 10;
-  display: none;
-  pointer-events: auto; /* Allow interaction with tooltip */
-  white-space: normal; /* Allow text to wrap */
-  color: #333;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  font-size: 0.9em;
+  z-index: 99999 !important;
+  pointer-events: auto;
+  white-space: normal;
+  color: #111;
   text-align: left;
-}
-
-/* Show tooltip on hover */
-.fc-event:hover .event-tooltip {
-  display: block;
+  line-height: 1.4;
 }
 
 /* Tooltip content styling */
 .tooltip-title {
   font-weight: bold;
-  font-size: 1.1em;
-  margin-bottom: 4px;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 4px;
+  font-size: 1.2em;
+  margin-bottom: 6px;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 6px;
+  color: #000;
 }
 
 .tooltip-time {
-  margin-bottom: 4px;
-  color: #555;
+  margin-bottom: 6px;
+  color: #222;
+  font-weight: 500;
+  font-size: 1.05em;
 }
 
 .tooltip-type,
 .tooltip-price,
 .tooltip-recurring {
-  margin-bottom: 3px;
-  color: #666;
+  margin-bottom: 5px;
+  color: #222;
+  font-weight: 500;
 }
 
 .tooltip-description {
-  margin-top: 6px;
-  font-style: italic;
-  color: #777;
-  margin-bottom: 8px;
+  margin-top: 8px;
+  margin-bottom: 10px;
+  color: #333;
+  line-height: 1.5;
 }
 
 /* Signup button styling */
 .tooltip-signup {
-  margin-top: 8px;
+  margin-top: 10px;
   text-align: center;
 }
 
@@ -137,15 +147,18 @@
   background-color: #4caf50;
   color: white;
   border: none;
-  padding: 6px 12px;
+  padding: 8px 14px;
   border-radius: 4px;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
   transition: background-color 0.2s;
+  font-size: 0.95em;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .tooltip-signup button:hover {
   background-color: #45a049;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
 }
 
 /* Event type specific colors */
