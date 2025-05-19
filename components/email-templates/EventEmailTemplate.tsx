@@ -1,15 +1,14 @@
 import * as React from "react";
 import {
   Html,
-  Body,
-  Container,
   Section,
   Row,
   Column,
   Heading,
   Text,
   Link,
-  Button,
+  Head,
+  Font,
 } from "@react-email/components";
 
 // Define types for our template based on the structure we need
@@ -85,12 +84,6 @@ export const EventEmailTemplate = ({
   event,
 }: EventEmailTemplateProps) => {
   // Format currency
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
-  };
 
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -110,9 +103,47 @@ export const EventEmailTemplate = ({
     if (typeof timeObj === "string") return timeObj;
 
     let displayTime = "";
-    if (timeObj.startTime) displayTime += timeObj.startTime;
-    if (timeObj.endTime) displayTime += ` - ${timeObj.endTime}`;
-    return displayTime;
+    const options: Intl.DateTimeFormatOptions = {
+      hour: "numeric",
+      minute: "numeric",
+      hour12: true,
+    };
+
+    if (timeObj.startTime) {
+      try {
+        // Create a Date object for formatting. Use a dummy date part.
+        const startTime = new Date(`2000-01-01T${timeObj.startTime}:00`);
+        if (!isNaN(startTime.getTime())) {
+          displayTime += startTime.toLocaleTimeString("en-US", options);
+        } else {
+          // Fallback if parsing fails
+          displayTime += timeObj.startTime;
+        }
+      } catch {
+        // Fallback in case of any error during formatting
+        displayTime += timeObj.startTime;
+      }
+    }
+
+    if (timeObj.endTime) {
+      try {
+        const endTime = new Date(`2000-01-01T${timeObj.endTime}:00`);
+        if (!isNaN(endTime.getTime())) {
+          if (displayTime) displayTime += " - ";
+          displayTime += endTime.toLocaleTimeString("en-US", options);
+        } else {
+          // Fallback if parsing fails
+          if (displayTime) displayTime += " - ";
+          displayTime += timeObj.endTime;
+        }
+      } catch {
+        // Fallback in case of any error during formatting
+        if (displayTime) displayTime += " - ";
+        displayTime += timeObj.endTime;
+      }
+    }
+
+    return displayTime ? `${displayTime} ET` : "";
   };
 
   // Get event name (handles different schema possibilities)
@@ -148,275 +179,131 @@ export const EventEmailTemplate = ({
   };
 
   return (
-    <Html>
-      <Body style={styles.body}>
-        <Container style={styles.container}>
-          {/* Header */}
-          <Section style={styles.header}>
-            <Heading style={styles.headerTitle}>
-              Coastal Creations Studio
-            </Heading>
-            <Text style={styles.headerSubtitle}>Event Confirmation</Text>
-          </Section>
+    <Html lang="en" dir="ltr">
+      <Section style={styles.header}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <img
+            src="https://coastalcreationsstudio.com/assets/logos/coastalLogoFull.png"
+            alt="Coastal Creations Studio Logo"
+            style={{
+              maxWidth: "350px",
+              width: "100%",
+              height: "auto",
+              display: "block",
+              margin: "0 auto",
+            }}
+          />
+        </div>
+      </Section>
 
-          {/* Main Content */}
-          <Section style={styles.mainContent}>
-            <Heading as="h2" style={styles.sectionTitle}>
-              Thank you for your registration!
-            </Heading>
-
-            <Text style={styles.paragraph}>
-              Hi {customer.billingInfo.firstName},
-            </Text>
-
-            <Text style={styles.paragraph}>
-              We&apos;re excited to confirm your registration for{" "}
-              <strong>{getEventName()}</strong>. Your payment has been processed
-              successfully, and your spot is now secured.
-            </Text>
-
-            {/* Event Details */}
-            <Section style={styles.detailsBox}>
-              <Heading as="h3" style={styles.boxTitle}>
-                Event Details
-              </Heading>
+      {/* Main Content */}
+      <Section style={styles.mainContent}>
+        <div style={{ textAlign: "center", marginBottom: 24 }}>
+          <Heading as="h2" style={styles.sectionTitle}>
+            EVENT CONFIRMATION
+          </Heading>
+        </div>
+        <div style={{ textAlign: "left", ...styles.mainContentText }}>
+          <Text style={styles.paragraph}>Thank you for your registration!</Text>
+          <Text style={styles.paragraph}>
+            Hi {customer.billingInfo.firstName},
+          </Text>
+          <Text style={styles.paragraph}>
+            We&apos;re excited to confirm your registration for{" "}
+            <strong>{getEventName()}</strong>. Your payment has been processed
+            successfully, and your spot is now secured.
+          </Text>
+        </div>
+      </Section>
+      {/* Event Details */}
+      <Section style={styles.detailsBoxOuter}>
+        <div style={styles.detailsBoxInner}>
+          <Heading as="h3" style={styles.boxTitle}>
+            EVENT DETAILS
+          </Heading>
+          <div style={{ marginTop: 18 }}>
+            <Row>
+              <Column style={{ width: "120px" }}>
+                <Text style={styles.detailLabel}>EVENT :</Text>
+              </Column>
+              <Column>
+                <Text style={styles.detailValue}>{getEventName()}</Text>
+              </Column>
+            </Row>
+            <Row>
+              <Column style={{ width: "120px" }}>
+                <Text style={styles.detailLabel}>DATE :</Text>
+              </Column>
+              <Column>
+                <Text style={styles.detailValue}>{getEventDate()}</Text>
+              </Column>
+            </Row>
+            {getEventTime() && (
               <Row>
-                <Column>
-                  <Text style={styles.detailLabel}>Event:</Text>
+                <Column style={{ width: "120px" }}>
+                  <Text style={styles.detailLabel}>TIME :</Text>
                 </Column>
                 <Column>
-                  <Text style={styles.detailValue}>{getEventName()}</Text>
+                  <Text style={styles.detailValue}>{getEventTime()}</Text>
                 </Column>
               </Row>
-              <Row>
-                <Column>
-                  <Text style={styles.detailLabel}>Date:</Text>
-                </Column>
-                <Column>
-                  <Text style={styles.detailValue}>{getEventDate()}</Text>
-                </Column>
-              </Row>
-              {getEventTime() && (
-                <Row>
-                  <Column>
-                    <Text style={styles.detailLabel}>Time:</Text>
-                  </Column>
-                  <Column>
-                    <Text style={styles.detailValue}>{getEventTime()}</Text>
-                  </Column>
-                </Row>
-              )}
-              <Row>
-                <Column>
-                  <Text style={styles.detailLabel}>Location:</Text>
-                </Column>
-                <Column>
-                  <Text style={styles.detailValue}>
-                    Coastal Creations Studio
-                    <br />
-                    411 E 8th Street
-                    <br />
-                    Ocean City, NJ 08226
-                  </Text>
-                </Column>
-              </Row>
-              {event.description && (
-                <Row>
-                  <Column>
-                    <Text style={styles.detailLabel}>Description:</Text>
-                  </Column>
-                  <Column>
-                    <Text style={styles.detailValue}>{event.description}</Text>
-                  </Column>
-                </Row>
-              )}
-            </Section>
-
-            {/* Registration Details */}
-            <Section style={styles.detailsBox}>
-              <Heading as="h3" style={styles.boxTitle}>
-                Registration Details
-              </Heading>
-              <Row>
-                <Column>
-                  <Text style={styles.detailLabel}>
-                    Number of Participants:
-                  </Text>
-                </Column>
-                <Column>
-                  <Text style={styles.detailValue}>{customer.quantity}</Text>
-                </Column>
-              </Row>
-              <Row>
-                <Column>
-                  <Text style={styles.detailLabel}>Total Paid:</Text>
-                </Column>
-                <Column>
-                  <Text style={styles.detailValue}>
-                    {formatCurrency(customer.total)}
-                  </Text>
-                </Column>
-              </Row>
-
-              {/* Participant Information */}
-              {customer.participants && customer.participants.length > 0 && (
-                <>
-                  <Heading as="h4" style={styles.subSectionTitle}>
-                    Participant Information
-                  </Heading>
-                  {customer.participants.map(
-                    (participant: Participant, index: number) => (
-                      <div key={index} style={styles.participantBlock}>
-                        <Text style={styles.participantName}>
-                          {index + 1}. {participant.firstName}{" "}
-                          {participant.lastName}
-                        </Text>
-                        {participant.selectedOptions &&
-                          participant.selectedOptions.length > 0 && (
-                            <Text style={styles.optionsText}>
-                              Options:{" "}
-                              {participant.selectedOptions
-                                .map(
-                                  (opt: ParticipantOption) =>
-                                    `${opt.categoryName}: ${opt.choiceName}`
-                                )
-                                .join(", ")}
-                            </Text>
-                          )}
-                      </div>
-                    )
-                  )}
-                </>
-              )}
-
-              {/* Selected Options (if not participant-specific) */}
-              {customer.selectedOptions &&
-                customer.selectedOptions.length > 0 && (
-                  <>
-                    <Heading as="h4" style={styles.subSectionTitle}>
-                      Selected Options
-                    </Heading>
-                    {customer.selectedOptions.map(
-                      (option: ParticipantOption, index: number) => (
-                        <Text key={index} style={styles.optionsText}>
-                          • {option.categoryName}: {option.choiceName}
-                        </Text>
-                      )
-                    )}
-                  </>
-                )}
-            </Section>
-
-            {/* Contact Information */}
-            <Section style={styles.detailsBox}>
-              <Heading as="h3" style={styles.boxTitle}>
-                Your Information
-              </Heading>
-              <Row>
-                <Column>
-                  <Text style={styles.detailLabel}>Name:</Text>
-                </Column>
-                <Column>
-                  <Text style={styles.detailValue}>
-                    {customer.billingInfo.firstName}{" "}
-                    {customer.billingInfo.lastName}
-                  </Text>
-                </Column>
-              </Row>
-              <Row>
-                <Column>
-                  <Text style={styles.detailLabel}>Email:</Text>
-                </Column>
-                <Column>
-                  <Text style={styles.detailValue}>
-                    {customer.billingInfo.emailAddress}
-                  </Text>
-                </Column>
-              </Row>
-              {customer.billingInfo.phoneNumber && (
-                <Row>
-                  <Column>
-                    <Text style={styles.detailLabel}>Phone:</Text>
-                  </Column>
-                  <Column>
-                    <Text style={styles.detailValue}>
-                      {customer.billingInfo.phoneNumber}
-                    </Text>
-                  </Column>
-                </Row>
-              )}
-            </Section>
-
-            {/* Additional Information */}
-            {(event.notes || event.whatToBring) && (
-              <Section style={styles.detailsBox}>
-                <Heading as="h3" style={styles.boxTitle}>
-                  What to Bring
-                </Heading>
-                <Text style={styles.paragraph}>
-                  {event.notes || event.whatToBring}
-                </Text>
-              </Section>
             )}
+            <Row>
+              <Column style={{ width: "120px" }}>
+                <Text style={styles.detailLabel}>LOCATION :</Text>
+              </Column>
+              <Column>
+                <Text style={styles.detailValue}>
+                  Coastal Creations Studio
+                  <br />
+                  411 E 8th Street
+                  <br />
+                  Ocean City, NJ 08226
+                </Text>
+              </Column>
+            </Row>
+            {event.description && (
+              <Row>
+                <Column style={{ width: "120px" }}>
+                  <Text style={styles.detailLabel}>DESCRIPTION :</Text>
+                </Column>
+                <Column>
+                  <Text style={styles.detailValue}>{event.description}</Text>
+                </Column>
+              </Row>
+            )}
+          </div>
+        </div>
+      </Section>
 
-            {/* Instructions */}
-            <Text style={styles.paragraph}>
-              Please arrive 10-15 minutes before the event starts. If you need
-              to make any changes to your registration or have any questions,
-              please contact us at{" "}
-              <Link href="mailto:info@coastalcreationsstudio.com">
-                info@coastalcreationsstudio.com
-              </Link>{" "}
-              or call us at (609) 545-8648.
-            </Text>
-
-            <Button
-              href="https://coastalcreationsstudio.com/calendar"
-              style={styles.button}
-            >
-              View All Events
-            </Button>
-          </Section>
-
-          {/* Footer */}
-          <Section style={styles.footer}>
-            <Text style={styles.footerText}>
-              © {new Date().getFullYear()} Coastal Creations Studio
-            </Text>
-            <Text style={styles.footerText}>
-              411 E 8th Street, Ocean City, NJ 08226
-            </Text>
-            <Text style={styles.footerText}>
-              <Link
-                href="https://coastalcreationsstudio.com"
-                style={styles.footerLink}
-              >
-                coastalcreationsstudio.com
-              </Link>
-            </Text>
-            <Text style={styles.footerText}>
-              <Link
-                href="mailto:info@coastalcreationsstudio.com"
-                style={styles.footerLink}
-              >
-                info@coastalcreationsstudio.com
-              </Link>
-              {" • "}
-              <Link href="tel:+16095458648" style={styles.footerLink}>
-                (609) 545-8648
-              </Link>
-            </Text>
-          </Section>
-        </Container>
-      </Body>
+      <Section style={styles.footer}>
+        <Text style={styles.footerText}>
+          Coastal Creations Studio
+          <br />
+          411 E 8th Street, Ocean City, NJ 08226
+        </Text>
+        <Text style={styles.footerText}>
+          <Link
+            href="mailto:info@coastalcreationsstudio.com"
+            style={styles.footerLink}
+          >
+            info@coastalcreationsstudio.com
+          </Link>
+        </Text>
+      </Section>
     </Html>
   );
 };
-
 // Styles
 const styles = {
   body: {
-    backgroundColor: "#f6f9fc",
+    backgroundColor: "#ffffff",
     fontFamily:
       "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
     margin: 0,
@@ -427,10 +314,9 @@ const styles = {
     maxWidth: "600px",
   },
   header: {
-    backgroundColor: "#5A87B0", // Ocean blue
-    padding: "30px 0",
+    backgroundColor: "#E5EAEB",
+    padding: "40px 0",
     textAlign: "center" as const,
-    borderRadius: "8px 8px 0 0",
   },
   headerTitle: {
     color: "#ffffff",
@@ -446,22 +332,37 @@ const styles = {
   },
   mainContent: {
     backgroundColor: "#ffffff",
-    padding: "40px 30px",
+    color: "#2E6F89",
+    padding: "40px 0 40px 0",
     borderRadius: "0 0 8px 8px",
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
   },
-  sectionTitle: {
-    color: "#32325d",
-    fontSize: "20px",
-    fontWeight: "bold",
-    margin: "0 0 20px",
+  mainContentText: {
+    padding: "0 24px",
+    fontFamily: "Comic Sans MS, Comic Sans",
   },
-  detailsBox: {
-    backgroundColor: "#f8fafc",
-    padding: "20px",
-    borderRadius: "8px",
-    marginBottom: "30px",
-    borderLeft: "3px solid #5A87B0",
+  sectionTitle: {
+    color: "#2E6F89",
+    fontSize: "30px",
+    fontWeight: "700",
+    margin: "0 0 20px",
+    fontFamily: "Impact, fantasy",
+  },
+  detailsBoxOuter: {
+    backgroundColor: "#ffffff",
+    padding: "0 0 30px 0",
+    display: "flex",
+    justifyContent: "center",
+  },
+  detailsBoxInner: {
+    backgroundColor: "#E5F2F3",
+    borderRadius: "28px",
+    padding: "28px 24px 28px 24px",
+    maxWidth: "95%",
+    width: "100%",
+    margin: "0 auto",
+    border: "none",
+    boxSizing: "border-box" as const,
   },
   boxTitle: {
     color: "#32325d",
@@ -470,27 +371,32 @@ const styles = {
     margin: "0 0 15px",
   },
   subSectionTitle: {
-    color: "#32325d",
-    fontSize: "16px",
-    fontWeight: "bold",
     margin: "15px 0 10px",
+    color: "#2E6F89",
+    fontSize: "22px",
+    fontWeight: "400",
+
+    fontFamily: "Impact, fantasy",
   },
   paragraph: {
     color: "#32325d",
     fontSize: "16px",
     lineHeight: "24px",
     margin: "0 0 20px",
+    fontFamily: "Comic Sans MS, Comic Sans",
   },
   detailLabel: {
-    color: "#6b7280",
-    fontSize: "14px",
-    fontWeight: "bold",
+    color: "#2E6F89",
+    fontSize: "16px",
+    fontWeight: "400",
     margin: "8px 0",
+    fontFamily: "Impact, fantasy",
   },
   detailValue: {
     color: "#32325d",
     fontSize: "15px",
     margin: "8px 0",
+    fontFamily: "Comic Sans MS, Comic Sans",
   },
   participantBlock: {
     marginBottom: "10px",
@@ -520,6 +426,7 @@ const styles = {
     marginTop: "30px",
   },
   footer: {
+    backgroundColor: "#ffffff",
     textAlign: "center" as const,
     padding: "20px 0",
   },
