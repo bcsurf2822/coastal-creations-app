@@ -17,7 +17,7 @@ export default function Offerings() {
             </div>
             <p className="text-neutral-900 max-w-md mx-auto text-center  font-semibold">
               We provide a variety of classes, workshops, and creative
-              opportunities for artists of all ages and skill levels.
+              opportunities for artists of all ages and skill levels!
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -46,7 +46,7 @@ export default function Offerings() {
               </p>
               <div className="mt-auto flex justify-end">
                 <Link
-                  href={"/classes"}
+                  href={"/classes/summer-camps"}
                   className="inline-flex items-center px-4 py-2 bg-light text-dark font-medium rounded-lg shadow-md hover:bg-primary hover:text-blue-900 hover:shadow-lg transition duration-300"
                 >
                   <span className="mr-2">Learn more</span>
@@ -71,7 +71,7 @@ export default function Offerings() {
                 ></i>
               </div>
               <h4 className="text-xl font-semibold text-primary mb-4">
-                Workshops
+                Classes & Workshops
               </h4>
               <p className="text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300">
                 Weekly workshops offering focused, guided art sessions for kids
