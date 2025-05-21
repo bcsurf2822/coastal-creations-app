@@ -74,6 +74,7 @@ export async function POST(request: Request) {
       const customerEmailResult = await resend.emails.send({
         from: "Coastal Creations Studio <no-reply@resend.coastalcreationsstudio.com>",
         to: [customer.billingInfo.emailAddress],
+        // to: ["crystaledgedev22@gmail.com"],
         subject: `You've signed up for ${eventTitle}`,
         html: customerEmailHtml,
       });
@@ -97,6 +98,7 @@ export async function POST(request: Request) {
     const adminEmailResult = await resend.emails.send({
       from: "Coastal Creations Studio <no-reply@resend.coastalcreationsstudio.com>",
       to: ["ashley@coastalcreationsstudio.com"],
+      // to: ["crystaledgedev22@gmail.com"],
       subject: `New Registration: ${eventTitle}`,
       html: adminEmailHtml,
     });
