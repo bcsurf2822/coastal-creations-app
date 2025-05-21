@@ -7,8 +7,7 @@ import {
   Heading,
   Text,
   Link,
-  Head,
-  Font,
+
 } from "@react-email/components";
 
 // Define types for our template based on the structure we need
