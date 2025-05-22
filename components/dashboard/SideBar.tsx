@@ -9,8 +9,6 @@ import {
   RiCalendarEventFill,
   RiSettings4Line,
   RiSettings4Fill,
-  RiFileList3Line,
-  RiFileList3Fill,
   RiPieChartLine,
   RiPieChartFill,
 } from "react-icons/ri";
@@ -18,8 +16,8 @@ import {
 interface NavItem {
   path: string;
   label: string;
-  icon: JSX.Element;
-  activeIcon: JSX.Element;
+  icon: React.ReactNode;
+  activeIcon: React.ReactNode;
 }
 
 export default function Sidebar() {

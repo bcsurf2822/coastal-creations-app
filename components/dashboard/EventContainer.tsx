@@ -12,6 +12,9 @@ import {
   RiArrowRightLine,
 } from "react-icons/ri";
 import Link from "next/link";
+import DialogTitle from "@mui/material/DialogTitle";
+import Dialog from "@mui/material/Dialog";
+import Typography from "@mui/material/Typography";
 
 interface Event {
   id: string;
@@ -34,11 +37,98 @@ interface Event {
   }>;
 }
 
+// Define types for SimpleDialog props
+interface SimpleDialogProps {
+  open: boolean;
+  onClose: () => void;
+  eventDetails: {
+    id: string;
+    name: string;
+    description?: string;
+    startDate?: Date;
+  };
+}
+
+// Define types for EventDetailsDialog props
+interface EventDetailsDialogProps {
+  eventDetails: {
+    id: string;
+    name: string;
+    description?: string;
+    startDate?: Date;
+  };
+  onClose: () => void;
+}
+
+// Update EventDetailsDialog component with types
+function EventDetailsDialog({
+  eventDetails,
+  onClose,
+}: EventDetailsDialogProps) {
+  if (!eventDetails) return null;
+
+  return (
+    <div className="p-4">
+      <Typography variant="h6">{eventDetails.name}</Typography>
+      <Typography variant="body1">{eventDetails.description}</Typography>
+      <Typography variant="body2" color="textSecondary">
+        Date:{" "}
+        {eventDetails.startDate
+          ? new Date(eventDetails.startDate).toLocaleDateString()
+          : "N/A"}
+      </Typography>
+      <div className="flex space-x-2 mt-4">
+        <Link
+          href={`/admin/dashboard/edit-event?id=${eventDetails.id}`}
+          className="p-2 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-colors"
+        >
+          <RiEdit2Line className="w-5 h-5" />
+        </Link>
+        <button
+          className="p-2 rounded-lg text-gray-600 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-900/20 transition-colors"
+          onClick={async () => {
+            if (confirm("Are you sure you want to delete this event?")) {
+              try {
+                const response = await fetch(
+                  `/api/events?id=${eventDetails.id}`,
+                  { method: "DELETE" }
+                );
+
+                if (response.ok) {
+                  onClose();
+                } else {
+                  alert("Failed to delete event");
+                }
+              } catch (error) {
+                console.error("Error deleting event:", error);
+                alert("Error deleting event");
+              }
+            }
+          }}
+        >
+          <RiDeleteBinLine className="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Update SimpleDialog to use EventDetailsDialog
+function SimpleDialog({ open, onClose, eventDetails }: SimpleDialogProps) {
+  return (
+    <Dialog onClose={onClose} open={open}>
+      <DialogTitle>{eventDetails.name}</DialogTitle>
+      <EventDetailsDialog eventDetails={eventDetails} onClose={onClose} />
+    </Dialog>
+  );
+}
+
 export default function EventContainer() {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<string | null>(null);
 
@@ -103,7 +193,12 @@ export default function EventContainer() {
   }, []);
 
   const handleEventClick = (event: Event) => {
-    setSelectedEvent(selectedEvent?.id === event.id ? null : event);
+    setSelectedEvent(event);
+    setIsDialogOpen(true);
+  };
+
+  const closeDialog = () => {
+    setIsDialogOpen(false);
   };
 
   // Format date function
@@ -226,8 +321,7 @@ export default function EventContainer() {
                     selectedEvent?.id === event.id
                       ? "border-blue-500 dark:border-blue-400"
                       : "border-gray-200 dark:border-gray-700"
-                  } p-4 cursor-pointer transition-all hover:shadow-md`}
-                  onClick={() => handleEventClick(event)}
+                  } p-4 transition-all hover:shadow-md`}
                 >
                   <div className="flex justify-between items-start">
                     <div>
@@ -264,6 +358,14 @@ export default function EventContainer() {
                       ${event.price}
                     </div>
                   )}
+                  <div className="mt-4">
+                    <button
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+                      onClick={() => handleEventClick(event)}
+                    >
+                      View Event
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -453,6 +555,19 @@ export default function EventContainer() {
           </div>
         )}
       </div>
+
+      <SimpleDialog
+        open={isDialogOpen}
+        onClose={closeDialog}
+        eventDetails={
+          selectedEvent || {
+            id: "",
+            name: "",
+            description: "",
+            startDate: undefined,
+          }
+        }
+      />
     </div>
   );
 }

@@ -3,6 +3,12 @@
 import { useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
 import { useRouter } from "next/navigation";
+import React from "react";
+import OutlinedInput from "@mui/material/OutlinedInput";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import FormControl from "@mui/material/FormControl";
+import Select, { SelectChangeEvent } from "@mui/material/Select";
 
 interface EventFormData {
   eventName: string;
@@ -13,7 +19,7 @@ interface EventFormData {
   startTime: Dayjs | null;
   endTime: Dayjs | null;
   isRecurring: boolean;
-  recurringPattern: "daily" | "weekly" | "monthly" | "yearly";
+  recurringPattern: "daily" | "weekly";
   recurringEndDate: string;
   hasOptions: boolean;
   optionCategories: Array<{
@@ -37,6 +43,17 @@ interface FormErrors {
   recurringEndDate?: string;
   image?: string;
 }
+
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
 
 const EventForm: React.FC = () => {
   const router = useRouter();
@@ -96,8 +113,8 @@ const EventForm: React.FC = () => {
     }
   };
 
-  const handleTimeSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { name, value } = e.target;
+  const handleTimeChange = (event: SelectChangeEvent<string>) => {
+    const { name, value } = event.target;
     const [hours, minutes] = value.split(":").map(Number);
     if (!isNaN(hours) && !isNaN(minutes)) {
       setFormData({
@@ -124,7 +141,7 @@ const EventForm: React.FC = () => {
       isNaN(parseFloat(data.price)) ||
       parseFloat(data.price) < 0
     ) {
-      newErrors.price = "Valid positive price is required";
+      newErrors.price = "Price is required";
     }
     if (!data.startDate) {
       newErrors.startDate = "Start date is required";
@@ -238,16 +255,11 @@ const EventForm: React.FC = () => {
 
   const generateTimeOptions = () => {
     const options = [];
-    // Start at 9 AM (hour 9) and end at 7 PM (hour 19)
     for (let hour = 9; hour <= 19; hour++) {
       for (const minute of [0, 30]) {
         const time = dayjs().hour(hour).minute(minute).second(0);
         const timeStr = time.format("HH:mm");
-        options.push(
-          <option key={timeStr} value={timeStr}>
-            {time.format("h:mm A")}
-          </option>
-        );
+        options.push(timeStr);
       }
     }
     return options;
@@ -415,14 +427,18 @@ const EventForm: React.FC = () => {
             Price ($)
           </label>
           <input
-            type="number"
+            type="text"
             id="price"
             name="price"
             value={formData.price}
-            onChange={handleChange}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (/^\d*\.?\d*$/.test(value)) {
+                handleChange(e);
+              }
+            }}
             className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.price ? "border-red-500" : "border-gray-300"}`}
             placeholder="Enter Price"
-            min="0"
           />
           {errors.price && (
             <p className="mt-1 text-sm text-red-600">{errors.price}</p>
@@ -451,49 +467,52 @@ const EventForm: React.FC = () => {
 
         <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label
-              htmlFor="startTime"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Start Time
-            </label>
-            <select
-              id="startTime"
-              name="startTime"
-              value={
-                formData.startTime ? formData.startTime.format("HH:mm") : ""
-              }
-              onChange={handleTimeSelectChange}
-              className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.startTime ? "border-red-500" : "border-gray-300"}`}
-            >
-              <option value="">Select start time</option>
-              {generateTimeOptions()}
-            </select>
-            {errors.startTime && (
-              <p className="mt-1 text-sm text-red-600">{errors.startTime}</p>
-            )}
+            <FormControl fullWidth>
+              <InputLabel id="start-time-label">Start Time</InputLabel>
+              <Select
+                labelId="start-time-label"
+                id="startTime"
+                name="startTime"
+                value={
+                  formData.startTime ? formData.startTime.format("HH:mm") : ""
+                }
+                onChange={handleTimeChange}
+                input={<OutlinedInput label="Start Time" />}
+                MenuProps={MenuProps}
+              >
+                {generateTimeOptions().map((time) => (
+                  <MenuItem key={time} value={time}>
+                    {dayjs()
+                      .hour(Number(time.split(":")[0]))
+                      .minute(Number(time.split(":")[1]))
+                      .format("h:mm A")}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </div>
-
           <div>
-            <label
-              htmlFor="endTime"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              End Time
-            </label>
-            <select
-              id="endTime"
-              name="endTime"
-              value={formData.endTime ? formData.endTime.format("HH:mm") : ""}
-              onChange={handleTimeSelectChange}
-              className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.endTime ? "border-red-500" : "border-gray-300"}`}
-            >
-              <option value="">Select end time</option>
-              {generateTimeOptions()}
-            </select>
-            {errors.endTime && (
-              <p className="mt-1 text-sm text-red-600">{errors.endTime}</p>
-            )}
+            <FormControl fullWidth>
+              <InputLabel id="end-time-label">End Time</InputLabel>
+              <Select
+                labelId="end-time-label"
+                id="endTime"
+                name="endTime"
+                value={formData.endTime ? formData.endTime.format("HH:mm") : ""}
+                onChange={handleTimeChange}
+                input={<OutlinedInput label="End Time" />}
+                MenuProps={MenuProps}
+              >
+                {generateTimeOptions().map((time) => (
+                  <MenuItem key={time} value={time}>
+                    {dayjs()
+                      .hour(Number(time.split(":")[0]))
+                      .minute(Number(time.split(":")[1]))
+                      .format("h:mm A")}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </div>
         </div>
 
@@ -532,8 +551,6 @@ const EventForm: React.FC = () => {
               >
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-                <option value="yearly">Yearly</option>
               </select>
             </div>
 
@@ -622,7 +639,7 @@ const EventForm: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => removeOptionCategory(categoryIndex)}
-                    className="text-red-600 hover:text-red-800"
+                    className="text-red-600 hover:text-red-800 cursor-pointer"
                   >
                     Remove
                   </button>
@@ -740,47 +757,29 @@ const EventForm: React.FC = () => {
           </div>
         )}
 
-        {/* <div className="col-span-1 md:col-span-2">
-          <label
-            htmlFor="image"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Event Image (Optional)
-          </label>
-          <input
-            type="file"
-            id="image"
-            name="image"
-            onChange={handleChange}
-            accept="image/*"
-            className={`w-full text-sm text-gray-700
-                           file:mr-4 file:py-2 file:px-4
-                           file:rounded-full file:border-0
-                           file:text-sm file:font-semibold
-                           file:bg-gray-50 file:text-gray-700
-                           hover:file:bg-gray-100
-                           ${errors.image ? "border-red-500" : "border-gray-300"}`}
-          />
-          {formData.image && (
-            <p className="mt-2 text-sm text-gray-600">
-              Selected file: {formData.image.name}
-            </p>
-          )}
-          {errors.image && (
-            <p className="mt-1 text-sm text-red-600">{errors.image}</p>
-          )}
-        </div> */}
-
         <div className="col-span-1 md:col-span-2 text-center">
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`w-full md:w-auto px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
+            className={`w-full md:w-auto px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             {isSubmitting ? "Creating Event..." : "Create Event"}
           </button>
         </div>
       </form>
+
+      <style jsx global>{`
+        /* Hide the spinner for number inputs */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+
+        input[type="number"] {
+          -moz-appearance: textfield;
+        }
+      `}</style>
     </div>
   );
 };
