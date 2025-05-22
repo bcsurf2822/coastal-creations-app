@@ -1,15 +1,5 @@
-import EventContainer from "@/components/dashboard/EventContainer";
+import Dashboard from "@/components/dashboard/Dashboard";
 
-
-export default async function DashboardPage() {
-
-
-  return (
-
-    <div className="flex min-h-screen bg-gray-100">
-      <div className="flex-grow p-5">
-        <EventContainer />
-      </div>
-    </div>
-  );
+export default function DashboardPage() {
+  return <Dashboard />;
 }

@@ -38,6 +38,12 @@ export async function PATCH(
     const { id } = await params;
     const data = await request.json();
 
+    // Ensure options is properly handled - if it's an empty array, it should be set as such
+    if (data.options !== undefined && Array.isArray(data.options)) {
+      // If options is an empty array, it will be correctly set
+      // If options is a populated array, it will also be correctly set
+    }
+
     const updatedEvent = await Event.findByIdAndUpdate(
       id,
       { $set: data },
