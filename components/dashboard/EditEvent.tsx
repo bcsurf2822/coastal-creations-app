@@ -620,9 +620,6 @@ export default function EditEvent() {
                           onClick={() => removeOptionCategory(categoryIndex)}
                           className="text-red-600 hover:text-red-800 flex items-center"
                         >
-                          <span className="material-symbols-outlined mr-1">
-                            delete
-                          </span>
                           Remove
                         </button>
                       </div>
@@ -710,9 +707,6 @@ export default function EditEvent() {
                                 }
                                 className="px-2 py-1 text-xs text-red-600 hover:text-red-800 flex items-center"
                               >
-                                <span className="material-symbols-outlined text-sm mr-1">
-                                  close
-                                </span>
                                 Remove
                               </button>
                             </div>
