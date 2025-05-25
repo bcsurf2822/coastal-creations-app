@@ -89,76 +89,169 @@
 /* Event tooltip styling */
 .event-tooltip {
   position: fixed;
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 10px 14px;
-  width: 250px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 18px;
+  width: 280px;
   max-width: 90vw;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.15),
+    0 4px 10px rgba(0, 0, 0, 0.1);
   font-size: 0.9em;
   z-index: 99999 !important;
   pointer-events: auto;
   white-space: normal;
-  color: #111;
+  color: #1e293b;
   text-align: left;
-  line-height: 1.4;
+  line-height: 1.5;
+  backdrop-filter: blur(10px);
+  border-top: 3px solid #3b82f6;
 }
 
 /* Tooltip content styling */
 .tooltip-title {
-  font-weight: bold;
-  font-size: 1.2em;
-  margin-bottom: 6px;
-  border-bottom: 1px solid #e0e0e0;
-  padding-bottom: 6px;
-  color: #000;
+  font-weight: 700;
+  font-size: 1.25em;
+  margin-bottom: 10px;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 8px;
+  color: #0f172a;
+  letter-spacing: -0.025em;
 }
 
 .tooltip-time {
-  margin-bottom: 6px;
-  color: #222;
-  font-weight: 500;
+  margin-bottom: 8px;
+  color: #475569;
+  font-weight: 600;
   font-size: 1.05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.tooltip-type,
-.tooltip-price,
-.tooltip-recurring {
-  margin-bottom: 5px;
-  color: #222;
+.tooltip-time::before {
+  content: "🕐";
+  font-size: 0.9em;
+}
+
+.tooltip-type {
+  margin-bottom: 6px;
+  color: #64748b;
   font-weight: 500;
+  text-transform: capitalize;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tooltip-type::before {
+  content: "📋";
+  font-size: 0.9em;
+}
+
+.tooltip-price {
+  margin-bottom: 8px;
+  color: #059669;
+  font-weight: 700;
+  font-size: 1.1em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
+  padding: 6px 10px;
+  border-radius: 6px;
+  border-left: 3px solid #10b981;
+}
+
+.tooltip-price::before {
+  content: "💰";
+  font-size: 0.9em;
+}
+
+.tooltip-recurring {
+  margin-bottom: 8px;
+  color: #7c3aed;
+  font-weight: 600;
+  font-size: 0.95em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+  padding: 6px 10px;
+  border-radius: 6px;
+  border-left: 3px solid #8b5cf6;
+}
+
+.tooltip-recurring::before {
+  content: "🔄";
+  font-size: 0.9em;
 }
 
 .tooltip-description {
-  margin-top: 8px;
-  margin-bottom: 10px;
-  color: #333;
-  line-height: 1.5;
+  margin-top: 12px;
+  margin-bottom: 12px;
+  color: #475569;
+  line-height: 1.6;
+  font-size: 0.95em;
+  background: #f8fafc;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border-left: 3px solid #cbd5e1;
 }
 
 /* Signup button styling */
 .tooltip-signup {
-  margin-top: 10px;
+  margin-top: 14px;
   text-align: center;
 }
 
 .tooltip-signup button {
-  background-color: #4caf50;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   border: none;
-  padding: 8px 14px;
-  border-radius: 4px;
+  padding: 10px 20px;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
   font-size: 0.95em;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.tooltip-signup button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.tooltip-signup button:hover::before {
+  left: 100%;
 }
 
 .tooltip-signup button:hover {
-  background-color: #45a049;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+.tooltip-signup button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 /* Event type specific colors */
