@@ -87,6 +87,66 @@ interface PaymentProcessorProps {
   router: ReturnType<typeof useRouter>;
 }
 
+// Helper function to convert Square error codes to user-friendly messages
+const getErrorMessage = (code: string, detail?: string): string => {
+  // If we have a detailed message, use it
+  if (detail && detail.trim() !== "") {
+    return detail;
+  }
+
+  // Common Square error code mappings to user-friendly messages
+  const errorMessages: Record<string, string> = {
+    INVALID_PHONE_NUMBER: "Please enter a valid phone number.",
+    INVALID_EMAIL_ADDRESS: "Please enter a valid email address.",
+    CARD_DECLINED:
+      "Your card was declined. Please try a different payment method.",
+    INSUFFICIENT_FUNDS:
+      "Your card has insufficient funds. Please try a different payment method.",
+    CVV_FAILURE: "The CVV code is incorrect. Please check your card details.",
+    INVALID_EXPIRATION:
+      "The card expiration date is invalid. Please check your card details.",
+    CARD_EXPIRED:
+      "Your card has expired. Please use a different payment method.",
+    INVALID_CARD:
+      "The card information is invalid. Please check your card details.",
+    GENERIC_DECLINE:
+      "Your payment was declined. Please contact your bank or try a different payment method.",
+    PAYMENT_LIMIT_EXCEEDED:
+      "The payment amount exceeds your card limit. Please try a different payment method.",
+    CARD_TOKEN_EXPIRED:
+      "Your payment session has expired. Please refresh the page and try again.",
+    CARD_TOKEN_USED:
+      "This payment method has already been used. Please refresh the page and try again.",
+    INVALID_POSTAL_CODE: "Please enter a valid postal code.",
+    ADDRESS_VERIFICATION_FAILURE:
+      "The billing address could not be verified. Please check your address details.",
+    TRANSACTION_LIMIT: "The transaction amount is outside the allowed limits.",
+    VOICE_FAILURE: "Please contact your bank to authorize this payment.",
+    CARD_DECLINED_CALL_ISSUER:
+      "Please contact your bank to authorize this payment.",
+    CARD_DECLINED_VERIFICATION_REQUIRED:
+      "Additional verification is required. Please contact your bank.",
+    INVALID_VALUE:
+      "Some of the payment information is invalid. Please check your details.",
+    BAD_REQUEST:
+      "There was an issue with your payment information. Please check your details.",
+    UNAUTHORIZED: "Payment authorization failed. Please try again.",
+    FORBIDDEN:
+      "This payment method is not allowed. Please try a different payment method.",
+    INTERNAL_SERVER_ERROR:
+      "A temporary error occurred. Please try again in a few moments.",
+    SERVICE_UNAVAILABLE:
+      "Payment services are temporarily unavailable. Please try again later.",
+    RATE_LIMITED:
+      "Too many payment attempts. Please wait a moment and try again.",
+  };
+
+  return (
+    errorMessages[code] ||
+    `Payment failed: ${code.replace(/_/g, " ").toLowerCase()}. Please try again.`
+  );
+};
+
 const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
   error,
   setError,
@@ -270,17 +330,98 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
 
                     // Customer data is now handled in the main component via submitCustomerDetails
                   } else {
-                    // Handle payment not completed
-                    console.error("Payment not completed");
-                    setError(
-                      "Payment could not be completed. Please try again."
-                    );
+                    // Handle payment not completed - check for specific error details
+                    console.error("Payment not completed:", result);
+
+                    // Try to extract error information from the result
+                    let errorMessage =
+                      "Payment could not be completed. Please try again.";
+
+                    // Check if there are specific errors in the result
+                    if (
+                      result &&
+                      typeof result === "object" &&
+                      "result" in result
+                    ) {
+                      const resultObj = result as {
+                        result?: {
+                          errors?: Array<{ detail?: string; code?: string }>;
+                        };
+                      };
+                      if (
+                        resultObj.result?.errors &&
+                        Array.isArray(resultObj.result.errors)
+                      ) {
+                        const firstError = resultObj.result.errors[0];
+                        if (firstError?.code || firstError?.detail) {
+                          errorMessage = getErrorMessage(
+                            firstError.code || "",
+                            firstError.detail
+                          );
+                        }
+                      }
+                    }
+
+                    setError(errorMessage);
                   }
                 } catch (error) {
-                  console.error("Error:", error);
-                  setError(
-                    "Payment failed: Error: request failed with status 404. Please check your payment details and try again."
-                  );
+                  console.error("Payment processing error:", error);
+
+                  // Extract meaningful error message from the caught error
+                  let errorMessage =
+                    "Payment could not be processed. Please try again.";
+
+                  if (error && typeof error === "object") {
+                    // Check for Square API error structure
+                    if ("result" in error) {
+                      const errorObj = error as {
+                        result?: {
+                          errors?: Array<{ detail?: string; code?: string }>;
+                        };
+                      };
+                      if (
+                        errorObj.result?.errors &&
+                        Array.isArray(errorObj.result.errors)
+                      ) {
+                        const firstError = errorObj.result.errors[0];
+                        if (firstError?.code || firstError?.detail) {
+                          errorMessage = getErrorMessage(
+                            firstError.code || "",
+                            firstError.detail
+                          );
+                        }
+                      }
+                    }
+                    // Check for direct errors array
+                    else if ("errors" in error) {
+                      const errorObj = error as {
+                        errors?: Array<{ detail?: string; code?: string }>;
+                      };
+                      if (errorObj.errors && Array.isArray(errorObj.errors)) {
+                        const firstError = errorObj.errors[0];
+                        if (firstError?.code || firstError?.detail) {
+                          errorMessage = getErrorMessage(
+                            firstError.code || "",
+                            firstError.detail
+                          );
+                        }
+                      }
+                    }
+                    // Check for standard Error object
+                    else if ("message" in error) {
+                      const errorObj = error as Error;
+                      // Only use the error message if it's not a generic network error
+                      if (
+                        errorObj.message &&
+                        !errorObj.message.includes("status 404") &&
+                        !errorObj.message.includes("request failed")
+                      ) {
+                        errorMessage = errorObj.message;
+                      }
+                    }
+                  }
+
+                  setError(errorMessage);
                 }
               } else {
                 console.error("Payment token is undefined");
