@@ -12,9 +12,7 @@ import { client } from "@/sanity/client";
 import {
   Card,
   CardContent,
-  Chip,
   Typography,
-  Box,
   Divider,
   Button,
   Paper,
