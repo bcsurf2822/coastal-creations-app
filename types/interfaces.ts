@@ -16,6 +16,7 @@ export interface CalendarEvent {
     recurringPattern?: string;
     recurringEndDate?: string | Date;
     originalStartDate?: string;
+    isMultiDay?: boolean;
   };
 }
 
