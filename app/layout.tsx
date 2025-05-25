@@ -22,8 +22,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Coastal Creation Studios, OC",
-  description: "Coastal Creation Studio, Ocean City, NJ",
+  title: "Coastal Creations Studios",
+  description: "Coastal Creations Studio, Ocean City, NJ",
 };
 
 export default function RootLayout({

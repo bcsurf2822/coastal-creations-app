@@ -7,9 +7,6 @@ import Image from "next/image";
 import { client } from "@/sanity/client";
 
 const POST_QUERY = `*[_type == "post" && slug.current == $slug][0]`;
-const HOURS_QUERY = `*[_type == "hoursOfOperation"][0]`;
-// const EVENT_PICTURE_QUERY = `*[_type == "eventPictureS"][0]`;
-// // const GALLERY_QUERY = `*[_type == "gallery"][0]`;
 
 const { projectId, dataset } = client.config();
 const urlFor = (source: SanityImageSource) =>
@@ -30,9 +27,9 @@ export default async function PostPage({
     : [resolvedParams.slug];
 
   // Use the second segment to determine if we should show the hours page
-  if (slugSegments.length > 1 && slugSegments[1] === "hours") {
-    return HoursPage();
-  }
+  // if (slugSegments.length > 1 && slugSegments[1] === "hours") {
+  //   return HoursPage();
+  // }
 
   // Continue with regular post page
   const post = await client.fetch<SanityDocument>(
@@ -62,125 +59,87 @@ export default async function PostPage({
     : null;
 
   return (
-    <main className="container mx-auto min-h-screen max-w-3xl p-8 flex flex-col gap-4">
-      <Link href="/blog" className="hover:underline">
-        ← Back to posts
-      </Link>
-      {postImageUrl && (
-        <Image
-          src={postImageUrl}
-          alt={post.title}
-          className="aspect-video rounded-xl"
-          width={550}
-          height={310}
-          priority
-        />
-      )}
-      <h1 className="text-4xl font-bold mb-8">{post.title}</h1>
-      <div className="prose">
-        <p>Published: {new Date(post.publishedAt).toLocaleDateString()}</p>
-        {Array.isArray(post.body) && <PortableText value={post.body} />}
-      </div>
-    </main>
-  );
-}
-
-async function HoursPage() {
-  const hoursData = await client.fetch<SanityDocument>(
-    HOURS_QUERY,
-    {},
-    options
-  );
-
-  // Define type for day data to match new schema
-  type DayHours = {
-    isClosed?: boolean;
-    hours?: {
-      open?: string;
-      close?: string;
-    };
-  };
-
-  // Helper function to format day's hours
-  const formatDayHours = (day: DayHours | undefined) => {
-    if (!day || day.isClosed) {
-      return "Closed";
-    }
-    if (day.hours?.open && day.hours.close) {
-      return `${day.hours.open} - ${day.hours.close}`;
-    }
-    return "Not specified";
-  };
-
-  const days = [
-    { name: "Monday", data: hoursData?.monday as DayHours },
-    { name: "Tuesday", data: hoursData?.tuesday as DayHours },
-    { name: "Wednesday", data: hoursData?.wednesday as DayHours },
-    { name: "Thursday", data: hoursData?.thursday as DayHours },
-    { name: "Friday", data: hoursData?.friday as DayHours },
-    { name: "Saturday", data: hoursData?.saturday as DayHours },
-    { name: "Sunday", data: hoursData?.sunday as DayHours },
-  ];
-
-  return (
-    <main className="container mx-auto min-h-screen max-w-3xl p-8 flex flex-col gap-4">
-      <h1 className="text-4xl font-bold mb-8">Hours of Operation</h1>
-
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="w-full">
-          <div className="border-b-2 border-gray-200 flex">
-            <div className="text-left py-2 font-bold w-1/2">Day</div>
-            <div className="text-left py-2 font-bold w-1/2">Hours</div>
-          </div>
-          <div>
-            {days.map((day) => (
-              <div key={day.name} className="border-b border-gray-100 flex">
-                <div className="py-3 font-medium w-1/2">{day.name}</div>
-                <div className="py-3 w-1/2">{formatDayHours(day.data)}</div>
-              </div>
-            ))}
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+      <main className="container mx-auto max-w-4xl px-6 py-12">
+        {/* Back Navigation */}
+        <div className="mb-8">
+          <Link
+            href="/blog"
+            className="inline-flex items-center gap-3 px-6 py-3 bg-white border-2 border-gray-300 text-black hover:bg-gray-100 hover:border-gray-400 transition-all duration-300 font-semibold rounded-full shadow-lg hover:shadow-xl group"
+          >
+            <svg
+              className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            Back to Blog
+          </Link>
         </div>
-      </div>
-    </main>
+
+        {/* Main Content Card */}
+        <article className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+          {/* Hero Image */}
+          {postImageUrl && (
+            <div className="relative h-64 md:h-80 bg-gradient-to-br from-primary/10 to-teal-500/10">
+              <Image
+                src={postImageUrl}
+                alt={post.title}
+                fill
+                className="object-contain"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
+                priority
+              />
+            </div>
+          )}
+
+          {/* Content Section */}
+          <div className="p-8 md:p-12">
+            {/* Title */}
+            <h1 className="font-serif text-2xl md:text-3xl font-bold text-slate-800 mb-6 leading-tight">
+              {post.title}
+            </h1>
+
+            {/* Meta Information */}
+            <div className="flex items-center gap-4 mb-8 pb-6 border-b border-gray-200">
+              <div className="flex items-center gap-2 text-gray-600">
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+                <time className="font-medium">
+                  {new Date(post.publishedAt).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </time>
+              </div>
+            </div>
+
+            {/* Article Body */}
+            <div className="prose prose-lg prose-slate max-w-none prose-headings:font-serif prose-headings:text-slate-800 prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-strong:text-slate-800 prose-blockquote:border-l-primary prose-blockquote:bg-primary/5 prose-blockquote:rounded-r-lg">
+              {Array.isArray(post.body) && <PortableText value={post.body} />}
+            </div>
+          </div>
+        </article>
+      </main>
+    </div>
   );
 }
-
-// export async function EventPicturePage() {
-//   const eventPictureData = await client.fetch<SanityDocument>(
-//     EVENT_PICTURE_QUERY,
-//     {},
-//     options
-//   );
-
-//   const imageUrl = eventPictureData?.image
-//     ? urlFor(eventPictureData.image)?.width(800).height(500).url()
-//     : null;
-
-//   return (
-//     <main className="container mx-auto min-h-screen max-w-3xl p-8 flex flex-col gap-4">
-//       <h1 className="text-4xl font-bold mb-8">
-//         {eventPictureData?.title || "Event Pictures"}
-//       </h1>
-
-//       {imageUrl && (
-//         <Image
-//           src={imageUrl}
-//           alt={eventPictureData?.title || "Event Pictures"}
-//           className="rounded-xl w-full h-auto"
-//           width={800}
-//           height={500}
-//           priority
-//         />
-//       )}
-
-//       {eventPictureData?.description && (
-//         <div className="prose mt-4">
-//           {Array.isArray(eventPictureData.description) && (
-//             <PortableText value={eventPictureData.description} />
-//           )}
-//         </div>
-//       )}
-//     </main>
-//   );
-// }

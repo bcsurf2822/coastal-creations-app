@@ -106,7 +106,6 @@
   text-align: left;
   line-height: 1.5;
   backdrop-filter: blur(10px);
-  border-top: 3px solid #3b82f6;
 }
 
 /* Tooltip content styling */
@@ -161,12 +160,6 @@
   background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
   padding: 6px 10px;
   border-radius: 6px;
-  border-left: 3px solid #10b981;
-}
-
-.tooltip-price::before {
-  content: "💰";
-  font-size: 0.9em;
 }
 
 .tooltip-recurring {
@@ -180,7 +173,7 @@
   background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
   padding: 6px 10px;
   border-radius: 6px;
-  border-left: 3px solid #8b5cf6;
+  /* border-left: 3px solid #8b5cf6; */
 }
 
 .tooltip-recurring::before {
@@ -197,7 +190,6 @@
   background: #f8fafc;
   padding: 10px 12px;
   border-radius: 8px;
-  border-left: 3px solid #cbd5e1;
 }
 
 /* Signup button styling */

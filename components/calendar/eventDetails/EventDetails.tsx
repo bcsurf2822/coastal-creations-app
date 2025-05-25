@@ -20,7 +20,6 @@ import {
 import {
   CalendarToday,
   AccessTime,
-  AttachMoney,
   Description,
   Settings,
 } from "@mui/icons-material";
@@ -243,7 +242,7 @@ export default function EventDetails({
                       {eventData.dates?.isRecurring && (
                         <div className="ml-8 pl-4 border-l-2 border-blue-200">
                           <Typography variant="body2" className="text-gray-600">
-                            <span className="font-medium">Recurring:</span>{" "}
+                            <span className="font-medium">Recurring </span>{" "}
                             {eventData.dates.recurringPattern || "Weekly"}
                             {eventData.dates.recurringEndDate &&
                               ` until ${formattedEndDate}`}
@@ -288,14 +287,7 @@ export default function EventDetails({
                   {eventData.price !== undefined && (
                     <Paper elevation={2} className="p-4 rounded-xl bg-green-50">
                       <div className="flex items-center gap-3">
-                        <AttachMoney className="text-green-600" />
                         <div>
-                          <Typography
-                            variant="subtitle2"
-                            className="text-gray-600 font-medium"
-                          >
-                            Price
-                          </Typography>
                           <Typography
                             variant="h5"
                             className="font-bold text-green-700"

@@ -396,9 +396,9 @@ export default function NewCalendar() {
             tooltipContent += `<div class="tooltip-time">${info.event.extendedProps.timeDisplay}</div>`;
           }
 
-          if (info.event.extendedProps?.eventType) {
-            tooltipContent += `<div class="tooltip-type">Type: ${info.event.extendedProps.eventType}</div>`;
-          }
+          // if (info.event.extendedProps?.eventType) {
+          //   tooltipContent += `<div class="tooltip-type">Type: ${info.event.extendedProps.eventType}</div>`;
+          // }
 
           if (info.event.extendedProps?.price) {
             tooltipContent += `<div class="tooltip-price">Price: $${info.event.extendedProps.price}</div>`;
@@ -406,7 +406,7 @@ export default function NewCalendar() {
 
           if (info.event.extendedProps?.isRecurring) {
             tooltipContent += `<div class="tooltip-recurring">
-              Recurring: ${info.event.extendedProps.recurringPattern} 
+              Recurring ${info.event.extendedProps.recurringPattern} 
               ${info.event.extendedProps.recurringEndDate ? `until ${new Date(info.event.extendedProps.recurringEndDate).toLocaleDateString()}` : ""}
             </div>`;
           }
@@ -487,15 +487,14 @@ export default function NewCalendar() {
         eventMouseLeave={(leaveInfo) => {
           const relatedTarget = leaveInfo.jsEvent.relatedTarget as Node | null;
 
-          // If the mouse is moving towards the currently active tooltip, don't set a hide timer.
-          // The tooltip's own mouseleave listener will handle its removal.
+      
           if (
             activeTooltip &&
             relatedTarget &&
             (activeTooltip === relatedTarget ||
               activeTooltip.contains(relatedTarget))
           ) {
-            // If a hide timer was somehow already set (e.g., rapid flicker), clear it.
+
             if (tooltipTimeoutId) {
               clearTimeout(tooltipTimeoutId);
               setTooltipTimeoutId(null);
@@ -503,11 +502,10 @@ export default function NewCalendar() {
             return;
           }
 
-          // If mouse is moving elsewhere, set a cancellable timer to hide the tooltip.
-          // This gives a brief window for the mouse to enter the tooltip.
+
           const newTimeoutId = setTimeout(() => {
             if (activeTooltip && document.body.contains(activeTooltip)) {
-              // If this timeout executes, it means the mouse didn't enter the tooltip in time.
+      
               document.body.removeChild(activeTooltip);
               setActiveTooltip(null);
             }

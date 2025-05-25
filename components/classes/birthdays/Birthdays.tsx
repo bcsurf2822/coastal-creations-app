@@ -150,7 +150,7 @@ const MinimumNote = styled("div")({
   marginBottom: "1rem",
   padding: "0.25rem 0.5rem",
   fontSize: "0.875rem",
-  borderLeft: "2px solid #1976d2",
+
   background: "rgba(25, 118, 210, 0.05)",
   borderRadius: "0 4px 4px 0",
 });
@@ -168,12 +168,34 @@ const GridItem = styled("div")({
   width: "100%",
 });
 
+const ContactMessage = styled("div")({
+  textAlign: "center",
+  marginTop: "3rem",
+  padding: "2rem",
+  background:
+    "linear-gradient(135deg, rgba(25, 118, 210, 0.05), rgba(66, 165, 245, 0.05))",
+  borderRadius: "12px",
+  border: "1px solid rgba(25, 118, 210, 0.1)",
+  fontSize: "1.125rem",
+  color: "#424242",
+  "& a": {
+    color: "#1976d2",
+    textDecoration: "none",
+    fontWeight: "bold",
+    transition: "color 0.3s ease",
+    "&:hover": {
+      color: "#42a5f5",
+      textDecoration: "underline",
+    },
+  },
+});
+
 const Birthdays = () => {
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
 
   return (
     <StyledContainer>
-      <Title>Birthday Party Packages</Title>
+      <Title>Birthday Partys</Title>
 
       <GridContainer>
         {/* Canvas Easel Party */}
@@ -246,6 +268,14 @@ const Birthdays = () => {
           </PartyCard>
         </GridItem>
       </GridContainer>
+
+      <ContactMessage>
+        To sign up please contact the studio at{" "}
+        <a href="mailto:info@coastalcreationsstudio.com">
+          info@coastalcreationsstudio.com
+        </a>
+        !
+      </ContactMessage>
     </StyledContainer>
   );
 };
