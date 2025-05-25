@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "motion/react";
 
 export default function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isClassesDropdownOpen, setIsClassesDropdownOpen] = useState(false);
   const [hideNavbar, setHideNavbar] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
   const navRef = useRef<HTMLElement>(null);
@@ -115,6 +116,26 @@ export default function NavBar() {
     },
   };
 
+  const dropdownVariants = {
+    hidden: {
+      opacity: 0,
+      height: 0,
+      transition: {
+        duration: 0.2,
+        when: "afterChildren",
+      },
+    },
+    visible: {
+      opacity: 1,
+      height: "auto",
+      transition: {
+        duration: 0.2,
+        when: "beforeChildren",
+        staggerChildren: 0.05,
+      },
+    },
+  };
+
   return (
     <motion.header
       ref={navRef}
@@ -144,13 +165,55 @@ export default function NavBar() {
               </Link>
             </motion.div>
 
-            <motion.div variants={itemVariants} whileHover="hover">
+            <motion.div
+              variants={itemVariants}
+              whileHover="hover"
+              className="relative group"
+            >
               <Link
                 href="/classes"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold"
+                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold flex items-center gap-1"
               >
                 Classes
+                <motion.svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="transition-transform duration-200 group-hover:rotate-180"
+                >
+                  <polyline points="6,9 12,15 18,9"></polyline>
+                </motion.svg>
               </Link>
+
+              {/* Desktop Dropdown */}
+              <div className="absolute top-full left-0 mt-2 w-56 bg-white/95 backdrop-blur-sm border border-gray-100 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+                <div className="py-2">
+                  <Link
+                    href="/classes/summer-camps"
+                    className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
+                  >
+                    Summer Camps
+                  </Link>
+                  <Link
+                    href="/classes"
+                    className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
+                  >
+                    Classes & Workshops
+                  </Link>
+                  <Link
+                    href="/classes/birthday-parties"
+                    className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
+                  >
+                    Birthdays
+                  </Link>
+                </div>
+              </div>
             </motion.div>
 
             <motion.div variants={itemVariants} whileHover="hover">
@@ -300,13 +363,77 @@ export default function NavBar() {
                   whileHover="hover"
                   className="border-b border-gray-100 pb-2"
                 >
-                  <Link
-                    href="/classes"
-                    className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block"
-                    onClick={() => setIsMenuOpen(false)}
+                  <button
+                    className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block w-full text-left flex items-center justify-between"
+                    onClick={() =>
+                      setIsClassesDropdownOpen(!isClassesDropdownOpen)
+                    }
                   >
                     Classes
-                  </Link>
+                    <motion.svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      animate={{ rotate: isClassesDropdownOpen ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <polyline points="6,9 12,15 18,9"></polyline>
+                    </motion.svg>
+                  </button>
+                  <AnimatePresence>
+                    {isClassesDropdownOpen && (
+                      <motion.div
+                        className="ml-4 mt-2 overflow-hidden"
+                        variants={dropdownVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="hidden"
+                      >
+                        <motion.div variants={itemVariants} className="py-1">
+                          <Link
+                            href="/classes/summer-camps"
+                            className="text-[#0f172a] hover:text-[#0369a1] font-normal py-1 block text-sm"
+                            onClick={() => {
+                              setIsMenuOpen(false);
+                              setIsClassesDropdownOpen(false);
+                            }}
+                          >
+                            Summer Camps
+                          </Link>
+                        </motion.div>
+                        <motion.div variants={itemVariants} className="py-1">
+                          <Link
+                            href="/classes"
+                            className="text-[#0f172a] hover:text-[#0369a1] font-normal py-1 block text-sm"
+                            onClick={() => {
+                              setIsMenuOpen(false);
+                              setIsClassesDropdownOpen(false);
+                            }}
+                          >
+                            Classes & Workshops
+                          </Link>
+                        </motion.div>
+                        <motion.div variants={itemVariants} className="py-1">
+                          <Link
+                            href="/classes/birthday-parties"
+                            className="text-[#0f172a] hover:text-[#0369a1] font-normal py-1 block text-sm"
+                            onClick={() => {
+                              setIsMenuOpen(false);
+                              setIsClassesDropdownOpen(false);
+                            }}
+                          >
+                            Birthdays
+                          </Link>
+                        </motion.div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
                 <motion.div
                   variants={itemVariants}
