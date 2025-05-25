@@ -52,50 +52,95 @@ export default function NewCalendar() {
 
       // Handle non-recurring events
       if (!event.dates.isRecurring) {
-        // Create a date object for the start date
         const startDate = new Date(event.dates.startDate);
-        const startTime = event.time.startTime;
+        const endDate = event.dates.endDate
+          ? new Date(event.dates.endDate)
+          : null;
 
-        // Create start datetime by combining date and time
-        let start = startDate;
-        if (startTime) {
-          const [hours, minutes] = startTime.split(":").map(Number);
-          start = new Date(startDate);
-          start.setHours(hours || 0, minutes || 0);
-        }
+        // If event spans multiple days, create individual instances for each day
+        // Compare only the date parts, not time
+        const startDateOnly = new Date(
+          startDate.getFullYear(),
+          startDate.getMonth(),
+          startDate.getDate()
+        );
+        const endDateOnly = endDate
+          ? new Date(
+              endDate.getFullYear(),
+              endDate.getMonth(),
+              endDate.getDate()
+            )
+          : null;
 
-        // Create end datetime if endDate or endTime exists
-        let end = undefined;
-        if (event.dates.endDate) {
-          end = new Date(event.dates.endDate);
+        if (
+          endDate &&
+          endDateOnly &&
+          endDateOnly.getTime() !== startDateOnly.getTime()
+        ) {
+          // Generate individual instances for each day in the range
+          const instances = generateRecurringEvents(
+            event._id,
+            event.eventName,
+            startDateOnly,
+            endDateOnly!, // We know endDateOnly is not null here due to the if condition
+            "daily", // Treat as daily to create individual instances
+            event.time.startTime,
+            event.time.endTime,
+            []
+          );
 
-          // Add end time if it exists
+          // Add extended props to each instance
+          instances.forEach((instance) => {
+            instance.resourceId = event.eventType;
+            instance.extendedProps = {
+              ...instance.extendedProps,
+              _id: event._id,
+              description: event.description,
+              eventType: event.eventType,
+              price: event.price,
+              timeDisplay,
+              isRecurring: false,
+              isMultiDay: true,
+            };
+          });
+
+          calendarEvents = [...calendarEvents, ...instances];
+        } else {
+          // Single day event - handle normally
+          const startTime = event.time.startTime;
+
+          // Create start datetime by combining date and time
+          let start = startDate;
+          if (startTime) {
+            const [hours, minutes] = startTime.split(":").map(Number);
+            start = new Date(startDate);
+            start.setHours(hours || 0, minutes || 0);
+          }
+
+          // Create end datetime if endTime exists
+          let end = undefined;
           if (event.time.endTime) {
             const [hours, minutes] = event.time.endTime.split(":").map(Number);
+            end = new Date(startDate);
             end.setHours(hours || 0, minutes || 0);
           }
-        } else if (event.time.endTime && !event.dates.endDate) {
-          // If no end date but end time exists, use start date with end time
-          const [hours, minutes] = event.time.endTime.split(":").map(Number);
-          end = new Date(startDate);
-          end.setHours(hours || 0, minutes || 0);
-        }
 
-        calendarEvents.push({
-          id: event._id,
-          title: event.eventName,
-          start,
-          end,
-          resourceId: event.eventType,
-          extendedProps: {
-            _id: event._id,
-            description: event.description,
-            eventType: event.eventType,
-            price: event.price,
-            timeDisplay,
-            isRecurring: false,
-          },
-        });
+          calendarEvents.push({
+            id: event._id,
+            title: event.eventName,
+            start,
+            end,
+            resourceId: event.eventType,
+            extendedProps: {
+              _id: event._id,
+              description: event.description,
+              eventType: event.eventType,
+              price: event.price,
+              timeDisplay,
+              isRecurring: false,
+            },
+          });
+        }
       }
       // Handle recurring events
       else if (event.dates.isRecurring && event.dates.recurringPattern) {
@@ -201,9 +246,16 @@ export default function NewCalendar() {
           eventEnd = new Date(currentDate);
           eventEnd.setHours(endHours, endMinutes, 0, 0);
 
-          // If end time is earlier than start time, assume it's the next day
+          // If end time is earlier than start time, this might be a data error
+          // For daily recurring events, we should keep them on the same day
           if (eventEnd < currentDate) {
-            eventEnd.setDate(eventEnd.getDate() + 1);
+            // For daily recurring events, don't span to next day as it creates visual issues
+            // Instead, log a warning and keep the end time on the same day
+            console.warn(
+              `Event "${title}" has end time before start time. This may be a data entry error.`
+            );
+            // Set end time to null to make it a point-in-time event
+            eventEnd = undefined;
           }
         }
 
@@ -238,21 +290,8 @@ export default function NewCalendar() {
             const calendarEvents = transformEvents(data.events);
             setEvents(calendarEvents);
           } else {
-            // Fallback for testing if no events exist
-            setEvents([
-              { title: "Test Class", start: new Date(), resourceId: "class" },
-              {
-                title: "Test Camp",
-                start: new Date(Date.now() + 86400000),
-                end: new Date(Date.now() + 172800000),
-                resourceId: "camp",
-              },
-              {
-                title: "Test Workshop",
-                start: new Date(Date.now() + 345600000),
-                resourceId: "workshop",
-              },
-            ]);
+            // No events found, set empty array
+            setEvents([]);
           }
         } else {
           console.error("Failed to fetch events:", data.error);

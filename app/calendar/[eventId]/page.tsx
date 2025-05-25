@@ -1,6 +1,6 @@
 "use client";
 
-import EventDetails from "@/components/eventDetails/EventDetails";
+import EventDetails from "@/components/calendar/eventDetails/EventDetails";
 
 
 
