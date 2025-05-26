@@ -1,6 +1,6 @@
 "use client";
 import { JSX } from "react";
-import EventContainer from "@/components/dashboard/EventContainer";
+import EventContainer from "@/components/dashboard/home/EventContainer";
 import { RiCalendarEventFill, RiMoneyDollarCircleFill } from "react-icons/ri";
 import * as React from "react";
 import Button from "@mui/material/Button";

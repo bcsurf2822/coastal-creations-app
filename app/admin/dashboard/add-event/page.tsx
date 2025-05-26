@@ -1,4 +1,4 @@
-import EventForm from "@/components/dashboard/EventForm";
+import EventForm from "@/components/dashboard/add-event/EventForm";
 import Link from "next/link";
 
 export default async function AddEvent() {

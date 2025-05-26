@@ -43,8 +43,8 @@ export default function Sidebar() {
       activeIcon: <RiSettings4Fill className="w-5 h-5" />,
     },
     {
-      path: "/admin/dashboard/reports",
-      label: "Reports",
+      path: "/admin/dashboard/error-logs",
+      label: "Error Logs",
       icon: <RiPieChartLine className="w-5 h-5" />,
       activeIcon: <RiPieChartFill className="w-5 h-5" />,
     },
