@@ -7,8 +7,6 @@ import {
   RiHome4Fill,
   RiCalendarEventLine,
   RiCalendarEventFill,
-  RiSettings4Line,
-  RiSettings4Fill,
   RiPieChartLine,
   RiPieChartFill,
 } from "react-icons/ri";
@@ -36,12 +34,7 @@ export default function Sidebar() {
       icon: <RiCalendarEventLine className="w-5 h-5" />,
       activeIcon: <RiCalendarEventFill className="w-5 h-5" />,
     },
-    {
-      path: "/admin/dashboard/edit-event",
-      label: "Class Details",
-      icon: <RiSettings4Line className="w-5 h-5" />,
-      activeIcon: <RiSettings4Fill className="w-5 h-5" />,
-    },
+
     {
       path: "/admin/dashboard/error-logs",
       label: "Error Logs",
@@ -90,14 +83,6 @@ export default function Sidebar() {
           })}
         </ul>
       </nav>
-
-      <div className="absolute bottom-0 w-full p-4 border-t border-gray-200 dark:border-gray-800 hidden md:block">
-        <div className="flex items-center justify-center">
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            © 2024 Coastal Creations
-          </span>
-        </div>
-      </div>
     </div>
   );
 }

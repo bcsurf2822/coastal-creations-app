@@ -151,22 +151,9 @@ export default function Dashboard() {
         <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
           Event Management
         </h3>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => handleEventClick(exampleEvent)}
-        >
-          View Event
-        </Button>
+
         <EventContainer />
       </div>
-
-      {/* Event Dialog */}
-      <SimpleDialog
-        open={isDialogOpen}
-        onClose={closeDialog}
-        eventDetails={selectedEvent}
-      />
     </div>
   );
 }
