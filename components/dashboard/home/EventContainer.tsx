@@ -12,9 +12,10 @@ import {
   RiArrowRightLine,
 } from "react-icons/ri";
 import Link from "next/link";
-import DialogTitle from "@mui/material/DialogTitle";
 import Dialog from "@mui/material/Dialog";
 import Typography from "@mui/material/Typography";
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
 
 interface Event {
   id: string;
@@ -113,15 +114,40 @@ function EventDetailsDialog({
   );
 }
 
-// Update SimpleDialog to use EventDetailsDialog
 function SimpleDialog({ open, onClose, eventDetails }: SimpleDialogProps) {
   return (
     <Dialog onClose={onClose} open={open}>
-      <DialogTitle>{eventDetails.name}</DialogTitle>
+      <div className="flex justify-between items-center">
+        <IconButton
+          aria-label="close"
+          onClick={onClose}
+          sx={{ position: "absolute", right: 8, top: 8 }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </div>
       <EventDetailsDialog eventDetails={eventDetails} onClose={onClose} />
     </Dialog>
   );
 }
+
+// Function to determine recurrence pattern
+const getRecurrencePattern = (event: Event) => {
+  if (!event.isRecurring) return "";
+
+  // Example logic to determine if the event is daily or weekly
+  // This can be adjusted based on actual data structure or requirements
+  const startDate = new Date(event.startDate!);
+  const recurringEndDate = new Date(event.recurringEndDate!);
+  const diffInDays =
+    (recurringEndDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24);
+
+  if (diffInDays <= 7) {
+    return "Daily";
+  } else {
+    return "Weekly";
+  }
+};
 
 export default function EventContainer() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -181,6 +207,9 @@ export default function EventContainer() {
         }));
 
         setEvents(transformedEvents);
+
+        // Log all events
+        console.log("Fetched Events:", transformedEvents);
       } catch (error) {
         console.error("Error fetching events:", error);
         setError(typeof error === "string" ? error : (error as Error).message);
@@ -193,11 +222,13 @@ export default function EventContainer() {
   }, []);
 
   const handleEventClick = (event: Event) => {
+    console.log("Viewing Event:", event);
     setSelectedEvent(event);
     setIsDialogOpen(true);
   };
 
   const closeDialog = () => {
+    console.log("Dialog closed");
     setIsDialogOpen(false);
   };
 
@@ -360,7 +391,7 @@ export default function EventContainer() {
                   )}
                   <div className="mt-4">
                     <button
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg cursor-pointer"
                       onClick={() => handleEventClick(event)}
                     >
                       View Event
@@ -550,6 +581,28 @@ export default function EventContainer() {
                     </div>
                   </div>
                 </div>
+
+                {selectedEvent.isRecurring && (
+                  <div className="mt-6">
+                    <h4 className="font-medium text-gray-700 dark:text-gray-300 text-sm uppercase tracking-wider mb-3">
+                      Recurrence
+                    </h4>
+                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Pattern
+                      </p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {getRecurrencePattern(selectedEvent)}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                        Recurring Until
+                      </p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {formatDate(selectedEvent.recurringEndDate)}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

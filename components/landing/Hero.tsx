@@ -31,7 +31,7 @@ export default function Hero() {
   const words = ["Welcome", "to", "Coastal", "Creations", "Studio"];
 
   return (
-    <section className="relative py-16 md:py-20">
+    <section className="relative -mt-4 md:-mt-6 pb-16 md:pb-20">
       <div className="absolute inset-0 z-0">
         <Image
           src="/assets/backgrounds/seaAndBrushSolidBG.png"
@@ -43,7 +43,7 @@ export default function Hero() {
         <div className="absolute inset-0 bg-white/60" />
       </div>
 
-      <div className="container mx-auto px-6 md:px-12 relative z-10">
+      <div className="container mx-auto px-6 md:px-12 relative z-10 pt-8 md:pt-12">
         <div className="max-w-4xl mx-auto text-center">
           {isClient ? (
             <div className="mb-20 sm:mb-24 h-[320px] md:h-[280px] flex items-center justify-center relative text-slate-800">

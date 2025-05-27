@@ -1,12 +1,7 @@
 "use client";
-import { JSX } from "react";
-import EventContainer from "@/components/dashboard/EventContainer";
+
 import { RiCalendarEventFill, RiMoneyDollarCircleFill } from "react-icons/ri";
-import * as React from "react";
-import Button from "@mui/material/Button";
-import DialogTitle from "@mui/material/DialogTitle";
-import Dialog from "@mui/material/Dialog";
-import Typography from "@mui/material/Typography";
+import EventContainer from "@/components/dashboard/home/EventContainer";
 
 // Stat card component
 function StatCard({
@@ -18,7 +13,7 @@ function StatCard({
 }: {
   title: string;
   value: string | number;
-  icon: JSX.Element;
+  icon: React.ReactElement;
   change?: string;
   changeType?: "positive" | "negative" | "neutral";
 }) {
@@ -52,65 +47,11 @@ function StatCard({
   );
 }
 
-// Define types for SimpleDialog props
-interface SimpleDialogProps {
-  open: boolean;
-  onClose: () => void;
-  eventDetails: {
-    title: string;
-    description: string;
-    date: string;
-  };
-}
-
-// Update SimpleDialog component with types
-function SimpleDialog({ open, onClose, eventDetails }: SimpleDialogProps) {
-  return (
-    <Dialog onClose={onClose} open={open}>
-      <DialogTitle>{eventDetails.title}</DialogTitle>
-      <div className="p-4">
-        <Typography variant="body1">{eventDetails.description}</Typography>
-        <Typography variant="body2" color="textSecondary">
-          Date: {eventDetails.date}
-        </Typography>
-      </div>
-    </Dialog>
-  );
-}
-
 export default function Dashboard() {
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
-  const [selectedEvent, setSelectedEvent] = React.useState({
-    title: "",
-    description: "",
-    date: "",
-  });
-
-  // Update handleEventClick function with types
-  const handleEventClick = (eventDetails: {
-    title: string;
-    description: string;
-    date: string;
-  }) => {
-    setSelectedEvent(eventDetails);
-    setIsDialogOpen(true);
-  };
-
-  const closeDialog = () => {
-    setIsDialogOpen(false);
-  };
-
   // These would typically come from API calls in a real implementation
   const stats = {
     totalEvents: "TBD",
     revenue: "TBD",
-  };
-
-  // Example event details
-  const exampleEvent = {
-    title: "Sample Event",
-    description: "This is a sample event description.",
-    date: "2023-10-15",
   };
 
   return (
@@ -121,9 +62,9 @@ export default function Dashboard() {
           Dashboard Overview
         </h2>
         <div className="inline-flex">
-          <Button variant="contained" color="primary">
+          <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
             Generate Report
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -151,22 +92,8 @@ export default function Dashboard() {
         <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
           Event Management
         </h3>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => handleEventClick(exampleEvent)}
-        >
-          View Event
-        </Button>
         <EventContainer />
       </div>
-
-      {/* Event Dialog */}
-      <SimpleDialog
-        open={isDialogOpen}
-        onClose={closeDialog}
-        eventDetails={selectedEvent}
-      />
     </div>
   );
 }

@@ -529,7 +529,7 @@ const EventForm: React.FC = () => {
             htmlFor="isRecurring"
             className="ml-2 block text-sm font-medium text-gray-700"
           >
-            Is this a recurring event?
+            Recurring Event
           </label>
         </div>
 
@@ -617,7 +617,7 @@ const EventForm: React.FC = () => {
             htmlFor="hasOptions"
             className="ml-2 block text-sm font-medium text-gray-700"
           >
-            Does this event have options? (Optional)
+            Add Options
           </label>
         </div>
 

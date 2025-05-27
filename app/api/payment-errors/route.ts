@@ -7,7 +7,8 @@ export async function GET(request: Request) {
     await connectMongo();
 
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get("limit") || "10");
+    const limitParam = searchParams.get("limit");
+    const all = searchParams.get("all") === "true";
     const eventId = searchParams.get("eventId");
     const customerEmail = searchParams.get("customerEmail");
 
@@ -16,10 +17,15 @@ export async function GET(request: Request) {
     if (eventId) filter.eventId = eventId;
     if (customerEmail) filter.customerEmail = customerEmail;
 
-    const paymentErrors = await PaymentError.find(filter)
-      .sort({ attemptedAt: -1 })
-      .limit(limit)
-      .lean();
+    let query = PaymentError.find(filter).sort({ attemptedAt: -1 });
+
+    // Apply limit only if not requesting all records
+    if (!all) {
+      const limit = parseInt(limitParam || "10");
+      query = query.limit(limit);
+    }
+
+    const paymentErrors = await query.lean();
 
     return NextResponse.json({
       success: true,

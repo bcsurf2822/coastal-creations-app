@@ -43,3 +43,15 @@ export interface ApiEvent {
   createdAt: string;
   updatedAt: string;
 }
+
+// Define the type for Birthday parties
+export interface Birthday {
+  _id: string;
+  title: string;
+  description: string;
+  price: number;
+  minimum: number;
+  unit: string;
+  createdAt: string;
+  updatedAt: string;
+}
