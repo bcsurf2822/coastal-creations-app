@@ -12,7 +12,6 @@ import {
   RiArrowRightLine,
 } from "react-icons/ri";
 import Link from "next/link";
-import DialogTitle from "@mui/material/DialogTitle";
 import Dialog from "@mui/material/Dialog";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
