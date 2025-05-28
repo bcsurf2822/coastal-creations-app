@@ -77,8 +77,6 @@ interface PaymentProcessorProps {
   billingDetails: BillingDetails;
   eventId: string;
   eventTitle: string;
-  eventPrice: string; // Kept for future use or API compatibility
-  formattedPrice: string;
   totalPrice: string;
   submitPayment: (
     token: string,
@@ -156,7 +154,6 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
   billingDetails,
   eventId,
   eventTitle,
-  formattedPrice,
   totalPrice,
   submitPayment,
   router,
@@ -270,7 +267,7 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
                     ...billingDetails,
                     eventId,
                     eventTitle,
-                    eventPrice: formattedPrice,
+                    eventPrice: totalPrice,
                   });
 
                   if (result?.result?.payment?.status === "COMPLETED") {
