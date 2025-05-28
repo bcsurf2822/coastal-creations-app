@@ -164,7 +164,6 @@ export default function Payment() {
                 eventId: paymentData.eventId,
               }),
             });
-     
           } catch (error) {
             console.error("Error sending confirmation email:", error);
           }
@@ -298,7 +297,6 @@ export default function Payment() {
           }>,
         }));
       setParticipants(newParticipants);
-
     } else {
       // If signing up for others, we need numberOfPeople participants
       const newParticipants = Array(billingDetails.numberOfPeople)
@@ -312,7 +310,6 @@ export default function Payment() {
           }>,
         }));
       setParticipants(newParticipants);
-
     }
   }, [billingDetails.numberOfPeople, isSigningUpForSelf]);
 
@@ -405,7 +402,6 @@ export default function Payment() {
       const result = await response.json();
 
       if (response.ok) {
- 
         return result; // Return the result with customer data
       } else {
         console.error(`Customer details submission failed: ${result.error}`);
@@ -457,8 +453,6 @@ export default function Payment() {
               billingDetails={billingDetails}
               eventId={eventId}
               eventTitle={eventTitle}
-              eventPrice={eventPrice}
-              formattedPrice={formattedPrice}
               totalPrice={totalPrice}
               submitPayment={handleSubmitPayment}
               router={router}
