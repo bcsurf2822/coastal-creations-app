@@ -189,7 +189,7 @@ const CardContent = styled(Box)({
 const TitleRow = styled("div")({
   display: "flex",
   gap: "1rem",
-  marginBottom: "1rem",
+  marginBottom: "1.5rem",
   alignItems: "flex-start",
   "@media (max-width: 600px)": {
     gap: "0.75rem",
@@ -208,7 +208,7 @@ const ContentSection = styled("div")({
 
 const ImageSection = styled("div")({
   flexShrink: 0,
-  marginTop: "45px", // Add space to avoid overlap with price tag
+  marginTop: "0", // Remove top margin since we're now next to the date/time
   "@media (max-width: 600px)": {
     width: "120px",
   },
@@ -223,7 +223,7 @@ const ImageSection = styled("div")({
 const EventTitle = styled("h3")({
   fontSize: "1.5rem",
   fontWeight: "bold",
-  marginBottom: "1rem",
+  marginBottom: "0.75rem",
   color: "#326C85",
   position: "relative",
   display: "flex",
@@ -264,17 +264,13 @@ const EventIcon = styled("span")({
 });
 
 const InfoGrid = styled("div")({
-  display: "grid",
-  gridTemplateColumns: "repeat(1, 1fr)",
+  display: "flex",
+  flexDirection: "column",
   gap: "0.75rem",
-  marginBottom: "1rem",
-  "@media (min-width: 600px)": {
-    gridTemplateColumns: "repeat(2, 1fr)",
-  },
 });
 
 const InfoItem = styled("div")({
-  display: "flex",
+  display: "inline-flex",
   alignItems: "center",
   gap: "0.5rem",
   padding: "0.5rem 0.75rem",
@@ -285,6 +281,8 @@ const InfoItem = styled("div")({
   fontSize: "0.875rem",
   color: "#424242",
   fontWeight: "700",
+  marginBottom: "0.5rem",
+  width: "fit-content",
 });
 
 const InfoIcon = styled("span")({
@@ -293,6 +291,7 @@ const InfoIcon = styled("span")({
 });
 
 const Description = styled("p")({
+  marginTop: "0.5rem",
   marginBottom: "1rem",
   color: "#616161",
   lineHeight: 1.6,
@@ -657,35 +656,44 @@ export default function Classes() {
                           {event.eventName}
                         </EventTitle>
                       </TitleSection>
-
-                      {imageUrl && (
-                        <ImageSection>
-                          <StyledImage
-                            src={imageUrl}
-                            alt={event.eventName}
-                            width={150}
-                            height={100}
-                          />
-                        </ImageSection>
-                      )}
                     </TitleRow>
 
                     <ContentSection>
-                      <InfoGrid>
-                        <InfoItem>
-                          <InfoIcon>
-                            <FaCalendarAlt />
-                          </InfoIcon>
-                          {getDateInfo(event)}
-                        </InfoItem>
-                        <InfoItem>
-                          <InfoIcon>
-                            <FaClock />
-                          </InfoIcon>
-                          {formatTime(event.time.startTime)} -{" "}
-                          {formatTime(event.time.endTime)}
-                        </InfoItem>
-                      </InfoGrid>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                          marginBottom: "1rem",
+                        }}
+                      >
+                        <InfoGrid>
+                          <InfoItem>
+                            <InfoIcon>
+                              <FaCalendarAlt />
+                            </InfoIcon>
+                            {getDateInfo(event)}
+                          </InfoItem>
+                          <InfoItem>
+                            <InfoIcon>
+                              <FaClock />
+                            </InfoIcon>
+                            {formatTime(event.time.startTime)} -{" "}
+                            {formatTime(event.time.endTime)}
+                          </InfoItem>
+                        </InfoGrid>
+
+                        {imageUrl && (
+                          <ImageSection>
+                            <StyledImage
+                              src={imageUrl}
+                              alt={event.eventName}
+                              width={150}
+                              height={100}
+                            />
+                          </ImageSection>
+                        )}
+                      </div>
 
                       <Description>{event.description}</Description>
 
