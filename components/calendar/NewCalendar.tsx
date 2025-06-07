@@ -344,9 +344,9 @@ export default function NewCalendar() {
           timeGridPlugin,
         ]}
         headerToolbar={{
-          left: "prev,next today",
-          center: "title",
-          right: "resourceTimelineWeek,dayGridMonth,timeGridWeek",
+          left: "",
+          center: "prev title next",
+          right: "",
         }}
         initialView="dayGridMonth"
         nowIndicator={true}
@@ -412,7 +412,7 @@ export default function NewCalendar() {
           }
 
           if (info.event.extendedProps?.description) {
-            tooltipContent += `<div class="tooltip-description">${info.event.extendedProps.description.substring(0, 100)}${info.event.extendedProps.description.length > 100 ? "..." : ""}</div>`;
+            tooltipContent += `<div class="tooltip-description">${info.event.extendedProps.description}</div>`;
           }
 
           const isRecurring = info.event.extendedProps?.isRecurring;
@@ -433,17 +433,73 @@ export default function NewCalendar() {
 
           tooltip.innerHTML = tooltipContent;
 
-          // Position the tooltip relative to the event element
+          // Add to body first to get accurate dimensions
+          document.body.appendChild(tooltip);
+
+          // Position the tooltip with smart boundary checking
           const rect = info.el.getBoundingClientRect();
+          const tooltipRect = tooltip.getBoundingClientRect();
+          const viewportWidth = window.innerWidth;
+          const viewportHeight = window.innerHeight;
+
+          // Calculate initial centered position
+          let left = rect.left + rect.width / 2;
+          let top = rect.top - 10;
+          let transformX = "-50%";
+          let transformY = "-100%";
+
+          // Check horizontal boundaries
+          const tooltipHalfWidth = tooltipRect.width / 2;
+          const margin = 16; // Minimum margin from screen edge
+
+          if (left - tooltipHalfWidth < margin) {
+            // Too far left - align to left edge with margin
+            left = margin;
+            transformX = "0%";
+          } else if (left + tooltipHalfWidth > viewportWidth - margin) {
+            // Too far right - align to right edge with margin
+            left = viewportWidth - margin;
+            transformX = "-100%";
+          }
+
+          // Check vertical boundaries
+          const tooltipHeight = tooltipRect.height;
+          const spaceAbove = rect.top;
+          const spaceBelow = viewportHeight - rect.bottom;
+
+          if (
+            spaceAbove < tooltipHeight + margin &&
+            spaceBelow > tooltipHeight + margin
+          ) {
+            // Not enough space above, position below
+            top = rect.bottom + 10;
+            transformY = "0%";
+          } else if (
+            spaceAbove < tooltipHeight + margin &&
+            spaceBelow < tooltipHeight + margin
+          ) {
+            // Not enough space above or below, center vertically
+            top = viewportHeight / 2;
+            transformY = "-50%";
+
+            // If centering vertically, also ensure we're not too close to edges horizontally
+            if (left < viewportWidth / 2) {
+              left = Math.max(margin, rect.right + 10);
+              transformX = "0%";
+            } else {
+              left = Math.min(viewportWidth - margin, rect.left - 10);
+              transformX = "-100%";
+            }
+          }
+
+          // Apply positioning
           tooltip.style.position = "fixed";
-          tooltip.style.left = rect.left + rect.width / 2 + "px";
-          tooltip.style.top = rect.top - 10 + "px";
-          tooltip.style.transform = "translate(-50%, -100%)";
+          tooltip.style.left = left + "px";
+          tooltip.style.top = top + "px";
+          tooltip.style.transform = `translate(${transformX}, ${transformY})`;
           tooltip.style.zIndex = "99999";
           tooltip.style.display = "block";
 
-          // Add to body
-          document.body.appendChild(tooltip);
           setActiveTooltip(tooltip);
 
           // Add event listeners to the tooltip itself
@@ -487,14 +543,12 @@ export default function NewCalendar() {
         eventMouseLeave={(leaveInfo) => {
           const relatedTarget = leaveInfo.jsEvent.relatedTarget as Node | null;
 
-      
           if (
             activeTooltip &&
             relatedTarget &&
             (activeTooltip === relatedTarget ||
               activeTooltip.contains(relatedTarget))
           ) {
-
             if (tooltipTimeoutId) {
               clearTimeout(tooltipTimeoutId);
               setTooltipTimeoutId(null);
@@ -502,10 +556,8 @@ export default function NewCalendar() {
             return;
           }
 
-
           const newTimeoutId = setTimeout(() => {
             if (activeTooltip && document.body.contains(activeTooltip)) {
-      
               document.body.removeChild(activeTooltip);
               setActiveTooltip(null);
             }

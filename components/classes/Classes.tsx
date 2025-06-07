@@ -23,7 +23,6 @@ import {
   FaDollarSign,
   FaPalette,
   FaUsers,
-
   FaGraduationCap,
 } from "react-icons/fa";
 import { GiPaintBrush, GiPaintRoller, GiMagicHat } from "react-icons/gi";
@@ -185,32 +184,39 @@ const CardContent = styled(Box)({
   zIndex: 2,
   display: "flex",
   flexDirection: "column",
-  "@media (min-width: 768px)": {
-    flexDirection: "row",
-    gap: "1.5rem",
+});
+
+const TitleRow = styled("div")({
+  display: "flex",
+  gap: "1rem",
+  marginBottom: "1rem",
+  alignItems: "flex-start",
+  "@media (max-width: 600px)": {
+    gap: "0.75rem",
   },
 });
 
-const ContentSection = styled("div")<{ hasImage?: boolean }>(
-  ({ hasImage }) => ({
-    flex: 1,
-    display: "flex",
-    flexDirection: "column",
-    order: hasImage ? 1 : 0,
-    "@media (min-width: 768px)": {
-      flex: hasImage ? "2" : "1",
-    },
-  })
-);
+const TitleSection = styled("div")({
+  flex: 1,
+  minWidth: 0, // Allows text to wrap properly
+});
+
+const ContentSection = styled("div")({
+  display: "flex",
+  flexDirection: "column",
+});
 
 const ImageSection = styled("div")({
-  order: 2,
-  marginTop: "1rem",
+  flexShrink: 0,
+  marginTop: "45px", // Add space to avoid overlap with price tag
+  "@media (max-width: 600px)": {
+    width: "120px",
+  },
+  "@media (min-width: 601px)": {
+    width: "140px",
+  },
   "@media (min-width: 768px)": {
-    order: 2,
-    flex: "1",
-    marginTop: 0,
-    maxWidth: "300px",
+    width: "180px",
   },
 });
 
@@ -223,6 +229,7 @@ const EventTitle = styled("h3")({
   display: "flex",
   alignItems: "center",
   gap: "0.75rem",
+  paddingRight: "120px", // Add padding to prevent overlap with price tag
   "&:after": {
     content: '""',
     position: "absolute",
@@ -235,7 +242,13 @@ const EventTitle = styled("h3")({
     borderRadius: "2px",
   },
   "&:hover:after": {
-    width: "100%",
+    width: "calc(100% - 120px)", // Adjust underline to account for padding
+  },
+  "@media (min-width: 768px)": {
+    paddingRight: "140px", // Slightly more padding on larger screens
+    "&:hover:after": {
+      width: "calc(100% - 140px)",
+    },
   },
 });
 
@@ -333,11 +346,21 @@ const OptionChips = styled("div")({
 });
 
 const StyledImage = styled(Image)({
-  borderRadius: "15px",
+  borderRadius: "12px",
   objectFit: "cover",
   width: "100%",
-  height: "200px",
+  height: "auto",
+  aspectRatio: "4/3",
   transition: "all 0.3s ease",
+  "@media (max-width: 600px)": {
+    maxHeight: "90px",
+  },
+  "@media (min-width: 601px)": {
+    maxHeight: "105px",
+  },
+  "@media (min-width: 768px)": {
+    maxHeight: "135px",
+  },
   "&:hover": {
     transform: "scale(1.02)",
     boxShadow: "0 8px 25px rgba(0,0,0,0.15)",
@@ -378,8 +401,6 @@ const SignUpButton = styled("div")({
     transform: "translateY(0)",
   },
 });
-
-
 
 const LoadingContainer = styled(Box)({
   display: "flex",
@@ -621,22 +642,35 @@ export default function Classes() {
                   onMouseEnter={() => setHoveredCard(index)}
                   onMouseLeave={() => setHoveredCard(null)}
                 >
-              
-
                   <PriceTag>
                     <FaDollarSign />
                     {event.price}
                   </PriceTag>
 
                   <CardContent>
-                    <ContentSection hasImage={!!imageUrl}>
-                      <EventTitle>
-                        <EventIcon>
-                          <IconComponent />
-                        </EventIcon>
-                        {event.eventName}
-                      </EventTitle>
+                    <TitleRow>
+                      <TitleSection>
+                        <EventTitle>
+                          <EventIcon>
+                            <IconComponent />
+                          </EventIcon>
+                          {event.eventName}
+                        </EventTitle>
+                      </TitleSection>
 
+                      {imageUrl && (
+                        <ImageSection>
+                          <StyledImage
+                            src={imageUrl}
+                            alt={event.eventName}
+                            width={150}
+                            height={100}
+                          />
+                        </ImageSection>
+                      )}
+                    </TitleRow>
+
+                    <ContentSection>
                       <InfoGrid>
                         <InfoItem>
                           <InfoIcon>
@@ -689,17 +723,6 @@ export default function Classes() {
                         <SignUpButton>Sign Up for Class</SignUpButton>
                       </Link>
                     </ContentSection>
-
-                    {imageUrl && (
-                      <ImageSection>
-                        <StyledImage
-                          src={imageUrl}
-                          alt={event.eventName}
-                          width={300}
-                          height={200}
-                        />
-                      </ImageSection>
-                    )}
                   </CardContent>
                 </ClassCard>
               </motion.div>

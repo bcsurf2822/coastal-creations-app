@@ -135,7 +135,7 @@ export default function Calendar() {
               <h3 className="serif text-4xl font-bold text-primary mb-4">
                 Upcoming Workshops
               </h3>
-              <p className="text-gray-600 max-w-2xl mx-auto">
+              <p className="text-gray-600 max-w-2xl mx-auto font-bold">
                 Loading calendar...
               </p>
             </div>
@@ -156,7 +156,7 @@ export default function Calendar() {
             <h3 className="serif text-4xl font-bold text-primary mb-4">
               Upcoming Workshops
             </h3>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <p className="text-gray-600 max-w-2xl mx-auto font-bold">
               Browse our calendar to find the perfect class or workshop for your
               creative journey.
             </p>
@@ -164,11 +164,13 @@ export default function Calendar() {
 
           {isLoading ? (
             <div className="text-center py-10">
-              <p>Loading calendar events...</p>
+              <p className="font-bold">Loading calendar events...</p>
             </div>
           ) : error ? (
             <div className="text-center py-10">
-              <p className="text-red-500">Error loading events: {error}</p>
+              <p className="text-red-500 font-bold">
+                Error loading events: {error}
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -213,10 +215,10 @@ export default function Calendar() {
                               }`}
                             >
                               <div className="flex flex-col items-start mb-2">
-                                <p className="font-medium text-primary text-left">
+                                <p className="font-bold text-primary text-left">
                                   {event.eventName}
                                 </p>
-                                <p className="text-xs bg-blue-100 text-secondary px-2 py-1 rounded-full mt-1 font-medium">
+                                <p className="text-xs bg-blue-100 text-secondary px-2 py-1 rounded-full mt-1 font-bold">
                                   {event.time.startTime
                                     ? formatEventTime(event.time.startTime)
                                     : "All Day"}
@@ -248,7 +250,7 @@ export default function Calendar() {
                                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                               />
                             </svg>
-                            <p>No events scheduled</p>
+                            <p className="font-bold">No events scheduled</p>
                           </div>
                         )}
                       </div>

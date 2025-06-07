@@ -15,7 +15,7 @@ export default function Offerings() {
                 Creative Experiences
               </h3>
             </div>
-            <p className="text-neutral-900 max-w-md mx-auto text-center  font-semibold">
+            <p className="text-neutral-900 max-w-md mx-auto text-justify font-bold">
               We provide a variety of classes, workshops, and creative
               opportunities for artists of all ages and skill levels!
             </p>
@@ -40,7 +40,7 @@ export default function Offerings() {
               <h4 className="text-xl font-semibold text-primary mb-4">
                 Art Camps
               </h4>
-              <p className="text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300">
+              <p className="text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300 text-justify font-bold">
                 Hands-on art camps where kids explore creativity, build skills,
                 and have fun together.
               </p>
@@ -73,7 +73,7 @@ export default function Offerings() {
               <h4 className="text-xl font-semibold text-primary mb-4">
                 Classes & Workshops
               </h4>
-              <p className="text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300">
+              <p className="text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300 text-justify font-bold">
                 Weekly workshops offering focused, guided art sessions for kids
                 and adults of all skill levels.
               </p>
@@ -106,7 +106,7 @@ export default function Offerings() {
               <h4 className="text-xl font-semibold text-primary mb-4">
                 Birthday Parties
               </h4>
-              <p className="text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300">
+              <p className="text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300 text-justify font-bold">
                 Our art-themed celebrations include guided projects, materials,
                 and colorful memories!
               </p>

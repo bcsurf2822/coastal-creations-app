@@ -4,6 +4,7 @@ import { FaFacebook, FaInstagram } from "react-icons/fa";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, FormEvent, useEffect } from "react";
+import { motion } from "motion/react";
 
 // Define type for hours data to match new schema
 type DayHours = {
@@ -30,6 +31,24 @@ export default function Footer() {
   const [message, setMessage] = useState("");
   const [hoursData, setHoursData] = useState<HoursData | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const logoVariants = {
+    initial: { scale: 0.9 },
+    animate: {
+      scale: 1,
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 20,
+        duration: 0.5,
+      },
+    },
+    hover: {
+      scale: 1.05,
+      rotate: 2,
+      transition: { duration: 0.3 },
+    },
+  };
 
   useEffect(() => {
     const fetchHours = async () => {
@@ -95,8 +114,14 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row gap-8">
           {/* Logo Container */}
           <div className="md:w-1/4 flex flex-col items-center justify-center">
-            <Link href="/">
-              <div className="relative w-80 h-80 flex items-center justify-center">
+            <motion.div
+              className="relative w-80 h-80 flex items-center justify-center"
+              variants={logoVariants}
+              initial="initial"
+              animate="animate"
+              whileHover="hover"
+            >
+              <Link href="/" className="cursor-pointer">
                 <Image
                   src="/assets/logos/coastalLogoFull.png"
                   alt="Coastal Creations Logo"
@@ -104,8 +129,8 @@ export default function Footer() {
                   className="object-contain"
                   priority
                 />
-              </div>
-            </Link>
+              </Link>
+            </motion.div>
 
             {/* Social icons moved under logo */}
             <div className="mt-4 flex space-x-6 justify-center">

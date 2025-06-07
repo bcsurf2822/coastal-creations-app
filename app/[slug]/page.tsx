@@ -66,6 +66,7 @@ export default async function PostPage({
           <Link
             href="/blog"
             className="inline-flex items-center gap-3 px-6 py-3 bg-white border-2 border-gray-300 text-black hover:bg-gray-100 hover:border-gray-400 transition-all duration-300 font-semibold rounded-full shadow-lg hover:shadow-xl group"
+            style={{ fontFamily: "Comic Neue", fontWeight: 700 }}
           >
             <svg
               className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-300"
@@ -103,7 +104,10 @@ export default async function PostPage({
           {/* Content Section */}
           <div className="p-8 md:p-12">
             {/* Title */}
-            <h1 className="font-serif text-2xl md:text-3xl font-bold text-slate-800 mb-6 leading-tight">
+            <h1
+              className="text-2xl md:text-3xl font-bold text-slate-800 mb-6 leading-tight"
+              style={{ fontFamily: "Comic Neue", fontWeight: 700 }}
+            >
               {post.title}
             </h1>
 
@@ -123,7 +127,10 @@ export default async function PostPage({
                     d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                   />
                 </svg>
-                <time className="font-medium">
+                <time
+                  className="font-medium"
+                  style={{ fontFamily: "Comic Neue", fontWeight: 700 }}
+                >
                   {new Date(post.publishedAt).toLocaleDateString("en-US", {
                     year: "numeric",
                     month: "long",
@@ -134,7 +141,10 @@ export default async function PostPage({
             </div>
 
             {/* Article Body */}
-            <div className="prose prose-lg prose-slate max-w-none prose-headings:font-serif prose-headings:text-slate-800 prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-strong:text-slate-800 prose-blockquote:border-l-primary prose-blockquote:bg-primary/5 prose-blockquote:rounded-r-lg">
+            <div
+              className="prose prose-lg prose-slate max-w-none prose-headings:text-slate-800 prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-strong:text-slate-800 prose-blockquote:border-l-primary prose-blockquote:bg-primary/5 prose-blockquote:rounded-r-lg text-justify"
+              style={{ fontFamily: "Comic Neue", fontWeight: 700 }}
+            >
               {Array.isArray(post.body) && <PortableText value={post.body} />}
             </div>
           </div>
