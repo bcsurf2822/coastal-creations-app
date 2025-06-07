@@ -47,7 +47,7 @@ export default function Offerings() {
               <div className="mt-auto flex justify-end">
                 <Link
                   href={"/classes/summer-camps"}
-                  className="inline-flex items-center px-4 py-2 bg-light text-dark font-medium rounded-lg shadow-md hover:bg-primary hover:text-blue-900 hover:shadow-lg transition duration-300"
+                  className="inline-flex items-center justify-center px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg border-2 border-gray-200 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:bg-gray-300 hover:border-gray-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.25)] transform hover:scale-105 transition-all duration-300"
                 >
                   <span className="mr-2">Learn more</span>
                   <i data-lucide="arrow-right" className="w-4 h-4"></i>
@@ -80,7 +80,7 @@ export default function Offerings() {
               <div className="mt-auto flex justify-end">
                 <Link
                   href={"/classes"}
-                  className="inline-flex items-center px-4 py-2 bg-light text-dark font-medium rounded-lg shadow-md hover:bg-primary hover:text-blue-900 hover:shadow-lg transition duration-300"
+                  className="inline-flex items-center justify-center px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg border-2 border-gray-200 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:bg-gray-300 hover:border-gray-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.25)] transform hover:scale-105 transition-all duration-300"
                 >
                   <span className="mr-2">Learn more</span>
                   <i data-lucide="arrow-right" className="w-4 h-4"></i>
@@ -113,7 +113,7 @@ export default function Offerings() {
               <div className="mt-auto flex justify-end">
                 <Link
                   href={"/classes/birthday-parties"}
-                  className="inline-flex items-center px-4 py-2 bg-light text-dark font-medium rounded-lg shadow-md hover:bg-primary hover:text-blue-900 hover:shadow-lg transition duration-300"
+                  className="inline-flex items-center justify-center px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg border-2 border-gray-200 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:bg-gray-300 hover:border-gray-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.25)] transform hover:scale-105 transition-all duration-300"
                 >
                   <span className="mr-2">Learn more</span>
                   <i data-lucide="arrow-right" className="w-4 h-4"></i>

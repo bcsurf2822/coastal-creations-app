@@ -2,7 +2,7 @@ import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import Script from "next/script";
 import { Suspense } from "react";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Anton, Comic_Neue } from "next/font/google";
 import NavBar from "@/components/layout/nav/NavBar";
 import Footer from "@/components/layout/footer/Footer";
 import AnalyticsEvents from "@/components/AnalyticsEvents";
@@ -21,6 +21,18 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const anton = Anton({
+  variable: "--font-anton",
+  subsets: ["latin"],
+  weight: "400", // Anton only has one weight (400)
+});
+
+const comicNeue = Comic_Neue({
+  variable: "--font-comic-neue",
+  subsets: ["latin"],
+  weight: "400", // Using regular 400 weight
+});
+
 export const metadata: Metadata = {
   title: "Coastal Creations Studios",
   description: "Coastal Creations Studio, Ocean City, NJ",
@@ -34,7 +46,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${anton.variable} ${comicNeue.variable} antialiased`}
       >
         <Suspense fallback={null}>
           <AnalyticsEvents />
