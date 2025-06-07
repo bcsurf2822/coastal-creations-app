@@ -15,17 +15,26 @@ export default function About() {
             />
           </div>
           <div className="bg-white p-8 rounded-2xl shadow-sm">
-            <h2 className="font-serif text-5xl md:text-6xl font-bold text-primary mb-8 leading-tight">
+            <h2
+              className="font-bold text-5xl md:text-6xl text-primary mb-8 leading-tight"
+              style={{ fontFamily: "Comic Neue", fontWeight: 700 }}
+            >
               Our Studio
             </h2>
             <div className="space-y-6">
-              <p className="text-gray-700 text-lg md:text-xl leading-relaxed">
+              <p
+                className="text-gray-700 text-lg md:text-xl leading-relaxed text-justify"
+                style={{ fontFamily: "Comic Neue", fontWeight: 700 }}
+              >
                 Coastal Creations is a community-focused art studio located in
                 the heart of Ocean City, New Jersey. Born from a lifelong dream
                 and a love for creativity, our studio is a space where
                 imagination thrives and artistic connections grow.
               </p>
-              <p className="text-gray-700 text-lg md:text-xl leading-relaxed italic px-6">
+              <p
+                className="text-gray-700 text-lg md:text-xl leading-relaxed italic px-6 text-justify"
+                style={{ fontFamily: "Comic Neue", fontWeight: 700 }}
+              >
                 &ldquo; Since I was 16, I&apos;ve dreamed of creating a place
                 where people of all ages and backgrounds could come together to
                 express themselves through art — and now, that dream is a

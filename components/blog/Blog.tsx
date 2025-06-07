@@ -36,7 +36,10 @@ export default async function Blog() {
           <div className="max-w-7xl mx-auto">
             {/* Header Section */}
             <div className="text-center mb-16">
-              <h1 className="font-serif text-5xl md:text-7xl font-bold text-primary mb-6">
+              <h1
+                className="font-bold text-5xl md:text-7xl text-primary mb-6"
+                style={{ fontFamily: "Comic Neue", fontWeight: 700 }}
+              >
                 Blog
               </h1>
 
@@ -92,7 +95,13 @@ export default async function Blog() {
                       {/* Content Section */}
                       <div className="p-6 flex flex-col justify-between min-h-[200px]">
                         <div>
-                          <h2 className="text-xl font-bold text-slate-800 mb-3 line-clamp-2 group-hover:text-primary transition-colors duration-300">
+                          <h2
+                            className="text-xl font-bold text-slate-800 mb-3 line-clamp-2 group-hover:text-primary transition-colors duration-300 text-justify"
+                            style={{
+                              fontFamily: "Comic Neue",
+                              fontWeight: 700,
+                            }}
+                          >
                             {post.title}
                           </h2>
                         </div>
@@ -151,10 +160,16 @@ export default async function Blog() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                <h3
+                  className="text-2xl font-bold text-gray-800 mb-2"
+                  style={{ fontFamily: "Comic Neue", fontWeight: 700 }}
+                >
                   No Posts Yet
                 </h3>
-                <p className="text-gray-600 text-lg max-w-md mx-auto">
+                <p
+                  className="text-gray-600 text-lg max-w-md mx-auto text-justify"
+                  style={{ fontFamily: "Comic Neue", fontWeight: 700 }}
+                >
                   We&apos;re working on some amazing content. Check back soon !
                 </p>
               </div>

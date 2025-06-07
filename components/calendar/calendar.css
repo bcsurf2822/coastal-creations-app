@@ -7,6 +7,21 @@
   /* Ensure proper stacking context */
   position: relative;
   z-index: 1;
+  /* Make all calendar text bold */
+  font-family: "Comic Sans MS", cursive, sans-serif;
+  font-weight: 700;
+}
+
+/* Apply bold weight to all calendar text elements */
+.calendar-container .fc,
+.calendar-container .fc-toolbar,
+.calendar-container .fc-toolbar-title,
+.calendar-container .fc-button,
+.calendar-container .fc-daygrid-day-number,
+.calendar-container .fc-col-header-cell,
+.calendar-container .fc-event,
+.calendar-container .fc-event-title {
+  font-weight: 700 !important;
 }
 
 /* Make sure the calendar takes up full container height */
@@ -49,6 +64,45 @@
   border-color: black !important;
 }
 
+/* Header toolbar styling - ensure everything is on one line */
+.fc .fc-toolbar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-wrap: nowrap !important;
+}
+
+.fc .fc-toolbar-chunk {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+}
+
+/* Make sure the center chunk stays centered and items are aligned */
+.fc .fc-toolbar-chunk:nth-child(2) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1.5rem !important;
+  flex-wrap: nowrap !important;
+}
+
+/* Style the navigation buttons */
+.fc .fc-button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Fix the title width to prevent arrows from moving */
+.fc .fc-toolbar-title {
+  width: 200px !important;
+  text-align: center !important;
+  font-size: 1.75em !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+  flex-shrink: 0 !important;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .calendar-container {
@@ -56,10 +110,20 @@
     height: calc(100vh - 150px);
   }
 
-  /* Handle smaller toolbar on mobile */
+  /* Keep header elements on same line even on mobile */
   .fc .fc-toolbar {
-    flex-direction: column;
-    gap: 0.5rem;
+    flex-direction: row !important;
+    gap: 0.5rem !important;
+  }
+
+  .fc .fc-toolbar-chunk:nth-child(2) {
+    gap: 0.75rem !important;
+  }
+
+  /* Adjust title width for mobile */
+  .fc .fc-toolbar-title {
+    width: 160px !important;
+    font-size: 1.5em !important;
   }
 }
 
@@ -106,6 +170,107 @@
   text-align: left;
   line-height: 1.5;
   backdrop-filter: blur(10px);
+}
+
+/* Responsive tooltip sizing */
+@media (max-width: 1024px) {
+  .event-tooltip {
+    width: 260px;
+    max-width: 85vw;
+    padding: 14px 16px;
+    font-size: 0.85em;
+  }
+
+  .tooltip-title {
+    font-size: 1.15em;
+    margin-bottom: 8px;
+  }
+
+  .tooltip-description {
+    padding: 8px 10px;
+    font-size: 0.9em;
+  }
+}
+
+@media (max-width: 768px) {
+  .event-tooltip {
+    width: 240px;
+    max-width: 80vw;
+    padding: 12px 14px;
+    font-size: 0.8em;
+    border-radius: 10px;
+  }
+
+  .tooltip-title {
+    font-size: 1.1em;
+    margin-bottom: 6px;
+    padding-bottom: 6px;
+  }
+
+  .tooltip-time,
+  .tooltip-price,
+  .tooltip-recurring {
+    font-size: 0.95em;
+    margin-bottom: 6px;
+    padding: 4px 8px;
+  }
+
+  .tooltip-description {
+    padding: 6px 8px;
+    font-size: 0.85em;
+    margin-top: 8px;
+    margin-bottom: 8px;
+  }
+
+  .tooltip-signup {
+    margin-top: 10px;
+  }
+
+  .tooltip-signup button {
+    padding: 8px 16px;
+    font-size: 0.85em;
+  }
+}
+
+@media (max-width: 480px) {
+  .event-tooltip {
+    width: 220px;
+    max-width: 75vw;
+    padding: 10px 12px;
+    font-size: 0.75em;
+    border-radius: 8px;
+  }
+
+  .tooltip-title {
+    font-size: 1.05em;
+    margin-bottom: 5px;
+    padding-bottom: 4px;
+  }
+
+  .tooltip-time,
+  .tooltip-price,
+  .tooltip-recurring {
+    font-size: 0.9em;
+    margin-bottom: 4px;
+    padding: 3px 6px;
+  }
+
+  .tooltip-description {
+    padding: 5px 6px;
+    font-size: 0.8em;
+    margin-top: 6px;
+    margin-bottom: 6px;
+  }
+
+  .tooltip-signup {
+    margin-top: 8px;
+  }
+
+  .tooltip-signup button {
+    padding: 6px 12px;
+    font-size: 0.8em;
+    border-radius: 6px;
+  }
 }
 
 /* Tooltip content styling */
@@ -190,6 +355,45 @@
   background: #f8fafc;
   padding: 10px 12px;
   border-radius: 8px;
+  max-height: 120px;
+  overflow-y: scroll;
+  word-wrap: break-word;
+  /* Force scrollbar to always be visible */
+  scrollbar-width: auto;
+  scrollbar-color: #64748b #e2e8f0;
+  scrollbar-gutter: stable;
+  /* Force webkit scrollbar to always show */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Webkit scrollbar styling - more visible and always shown */
+.tooltip-description::-webkit-scrollbar {
+  width: 10px;
+  -webkit-appearance: none;
+  /* Force always visible */
+  display: block !important;
+  visibility: visible !important;
+}
+
+.tooltip-description::-webkit-scrollbar-track {
+  background: #e2e8f0;
+  border-radius: 5px;
+  border: 1px solid #cbd5e1;
+}
+
+.tooltip-description::-webkit-scrollbar-thumb {
+  background: #64748b;
+  border-radius: 5px;
+  border: 1px solid #475569;
+  min-height: 20px;
+}
+
+.tooltip-description::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+.tooltip-description::-webkit-scrollbar-thumb:active {
+  background: #334155;
 }
 
 /* Signup button styling */

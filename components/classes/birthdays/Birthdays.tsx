@@ -22,6 +22,7 @@ import {
 const StyledContainer = styled(Container)({
   padding: "4rem 2rem",
   maxWidth: "1200px",
+  fontFamily: "var(--font-comic-neue)",
 });
 
 const Title = styled("h1")({
@@ -135,7 +136,7 @@ const CardContent = styled(Box)({
 
 const PartyTitle = styled("h2")({
   fontSize: "1.75rem",
-  fontWeight: "bold",
+  fontWeight: "700",
   marginBottom: "0.5rem",
   color: "#326C85",
   marginTop: "1.5rem",
@@ -183,7 +184,7 @@ const MinimumNote = styled("div")({
     "linear-gradient(135deg, rgba(25,118,210,0.1), rgba(66,165,245,0.1))",
   borderRadius: "20px",
   border: "2px solid rgba(25,118,210,0.2)",
-  fontWeight: "500",
+  fontWeight: "700",
 });
 
 const GridContainer = styled("div")({
@@ -212,6 +213,7 @@ const ContactMessage = styled("div")({
   color: "#424242",
   position: "relative",
   overflow: "hidden",
+  fontWeight: "700",
   "&:before": {
     content: '""',
     position: "absolute",
@@ -230,7 +232,7 @@ const ContactMessage = styled("div")({
   "& a": {
     color: "#1976D2",
     textDecoration: "none",
-    fontWeight: "bold",
+    fontWeight: "700",
     transition: "all 0.3s ease",
     position: "relative",
     "&:hover": {
@@ -264,7 +266,7 @@ const LoadingContainer = styled(Box)({
 const LoadingText = styled("div")({
   color: "#1976D2",
   fontSize: "1.25rem",
-  fontWeight: "bold",
+  fontWeight: "700",
   animation: "colorChange 2s ease-in-out infinite",
   "@keyframes colorChange": {
     "0%, 100%": { color: "#1976D2" },
@@ -278,6 +280,8 @@ const Description = styled("p")({
   lineHeight: 1.6,
   flex: "1 1 auto",
   position: "relative",
+  textAlign: "justify",
+  fontWeight: "700",
 });
 
 const Birthdays = () => {

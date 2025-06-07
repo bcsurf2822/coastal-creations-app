@@ -1,8 +1,6 @@
 import * as React from "react";
 import {
   Html,
-  Body,
-  Container,
   Section,
   Row,
   Column,
@@ -147,228 +145,260 @@ export const CustomerDetailsTemplate = ({
   };
 
   return (
-    <Html>
-      <Body style={styles.body}>
-        <Container style={styles.container}>
-          {/* Header */}
-          <Section style={styles.header}>
-            <Heading style={styles.headerTitle}>
-              Coastal Creations Studio
-            </Heading>
-            <Text style={styles.headerSubtitle}>New Customer Registration</Text>
-          </Section>
+    <Html lang="en" dir="ltr">
+      <Section style={styles.header}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <img
+            src="https://coastalcreationsstudio.com/assets/logos/coastalLogoFull.png"
+            alt="Coastal Creations Studio Logo"
+            style={{
+              maxWidth: "350px",
+              width: "100%",
+              height: "auto",
+              display: "block",
+              margin: "0 auto",
+            }}
+          />
+        </div>
+      </Section>
 
-          {/* Main Content */}
-          <Section style={styles.mainContent}>
-            <Heading as="h2" style={styles.sectionTitle}>
-              New Customer Registration Alert
-            </Heading>
+      {/* Main Content */}
+      <Section style={styles.mainContent}>
+        <div style={{ textAlign: "center", marginBottom: 24 }}>
+          <Heading as="h2" style={styles.sectionTitle}>
+            NEW CUSTOMER REGISTRATION
+          </Heading>
+        </div>
+        <div style={{ textAlign: "left", ...styles.mainContentText }}>
+          <Text style={styles.paragraph}>
+            A new customer has registered for an event at Coastal Creations
+            Studio.
+          </Text>
+        </div>
+      </Section>
 
-            <Text style={styles.paragraph}>
-              A new customer has registered for an event at Coastal Creations
-              Studio.
-            </Text>
-
-            {/* Event Details */}
-            <Section style={styles.detailsBox}>
-              <Heading as="h3" style={styles.boxTitle}>
-                Event Information
-              </Heading>
+      {/* Event Details */}
+      <Section style={styles.detailsBoxOuter}>
+        <div style={styles.detailsBoxInner}>
+          <Heading as="h3" style={styles.boxTitle}>
+            EVENT INFORMATION
+          </Heading>
+          <div style={{ marginTop: 18 }}>
+            <Row>
+              <Column style={{ width: "120px" }}>
+                <Text style={styles.detailLabel}>EVENT :</Text>
+              </Column>
+              <Column>
+                <Text style={styles.detailValue}>{getEventName()}</Text>
+              </Column>
+            </Row>
+            <Row>
+              <Column style={{ width: "120px" }}>
+                <Text style={styles.detailLabel}>DATE :</Text>
+              </Column>
+              <Column>
+                <Text style={styles.detailValue}>{getEventDate()}</Text>
+              </Column>
+            </Row>
+            {getEventTime() && (
               <Row>
-                <Column>
-                  <Text style={styles.detailLabel}>Event Name:</Text>
+                <Column style={{ width: "120px" }}>
+                  <Text style={styles.detailLabel}>TIME :</Text>
                 </Column>
                 <Column>
-                  <Text style={styles.detailValue}>{getEventName()}</Text>
+                  <Text style={styles.detailValue}>{getEventTime()}</Text>
                 </Column>
               </Row>
-              <Row>
-                <Column>
-                  <Text style={styles.detailLabel}>Date:</Text>
-                </Column>
-                <Column>
-                  <Text style={styles.detailValue}>{getEventDate()}</Text>
-                </Column>
-              </Row>
-              {getEventTime() && (
-                <Row>
-                  <Column>
-                    <Text style={styles.detailLabel}>Time:</Text>
-                  </Column>
-                  <Column>
-                    <Text style={styles.detailValue}>{getEventTime()}</Text>
-                  </Column>
-                </Row>
-              )}
-            </Section>
+            )}
+          </div>
+        </div>
+      </Section>
 
-            {/* Customer Details */}
-            <Section style={styles.detailsBox}>
-              <Heading as="h3" style={styles.boxTitle}>
-                Customer Information
-              </Heading>
+      {/* Customer Details */}
+      <Section style={styles.detailsBoxOuter}>
+        <div style={styles.detailsBoxInner}>
+          <Heading as="h3" style={styles.boxTitle}>
+            CUSTOMER INFORMATION
+          </Heading>
+          <div style={{ marginTop: 18 }}>
+            <Row>
+              <Column style={{ width: "120px" }}>
+                <Text style={styles.detailLabel}>NAME :</Text>
+              </Column>
+              <Column>
+                <Text style={styles.detailValue}>
+                  {customer.billingInfo.firstName}{" "}
+                  {customer.billingInfo.lastName}
+                </Text>
+              </Column>
+            </Row>
+            {customer.billingInfo.emailAddress && (
               <Row>
-                <Column>
-                  <Text style={styles.detailLabel}>Name:</Text>
+                <Column style={{ width: "120px" }}>
+                  <Text style={styles.detailLabel}>EMAIL :</Text>
                 </Column>
                 <Column>
                   <Text style={styles.detailValue}>
-                    {customer.billingInfo.firstName}{" "}
-                    {customer.billingInfo.lastName}
+                    {customer.billingInfo.emailAddress}
                   </Text>
                 </Column>
               </Row>
-              {customer.billingInfo.emailAddress && (
-                <Row>
-                  <Column>
-                    <Text style={styles.detailLabel}>Email:</Text>
-                  </Column>
-                  <Column>
-                    <Text style={styles.detailValue}>
-                      {customer.billingInfo.emailAddress}
-                    </Text>
-                  </Column>
-                </Row>
-              )}
-              {customer.billingInfo.phoneNumber && (
-                <Row>
-                  <Column>
-                    <Text style={styles.detailLabel}>Phone:</Text>
-                  </Column>
-                  <Column>
-                    <Text style={styles.detailValue}>
-                      {customer.billingInfo.phoneNumber}
-                    </Text>
-                  </Column>
-                </Row>
-              )}
+            )}
+            {customer.billingInfo.phoneNumber && (
               <Row>
-                <Column>
-                  <Text style={styles.detailLabel}>Address:</Text>
+                <Column style={{ width: "120px" }}>
+                  <Text style={styles.detailLabel}>PHONE :</Text>
                 </Column>
                 <Column>
                   <Text style={styles.detailValue}>
-                    {customer.billingInfo.addressLine1}
-                    {customer.billingInfo.addressLine2 && (
-                      <>
-                        <br />
-                        {customer.billingInfo.addressLine2}
-                      </>
-                    )}
-                    <br />
-                    {customer.billingInfo.city},{" "}
-                    {customer.billingInfo.stateProvince}{" "}
-                    {customer.billingInfo.postalCode}
-                    <br />
-                    {customer.billingInfo.country}
+                    {customer.billingInfo.phoneNumber}
                   </Text>
                 </Column>
               </Row>
-            </Section>
+            )}
+            <Row>
+              <Column style={{ width: "120px" }}>
+                <Text style={styles.detailLabel}>ADDRESS :</Text>
+              </Column>
+              <Column>
+                <Text style={styles.detailValue}>
+                  {customer.billingInfo.addressLine1}
+                  {customer.billingInfo.addressLine2 && (
+                    <>
+                      <br />
+                      {customer.billingInfo.addressLine2}
+                    </>
+                  )}
+                  <br />
+                  {customer.billingInfo.city},{" "}
+                  {customer.billingInfo.stateProvince}{" "}
+                  {customer.billingInfo.postalCode}
+                  <br />
+                  {customer.billingInfo.country}
+                </Text>
+              </Column>
+            </Row>
+          </div>
+        </div>
+      </Section>
 
-            {/* Registration Details */}
-            <Section style={styles.detailsBox}>
-              <Heading as="h3" style={styles.boxTitle}>
-                Registration Details
-              </Heading>
-              <Row>
-                <Column>
-                  <Text style={styles.detailLabel}>
-                    Number of Participants:
-                  </Text>
-                </Column>
-                <Column>
-                  <Text style={styles.detailValue}>{customer.quantity}</Text>
-                </Column>
-              </Row>
-              <Row>
-                <Column>
-                  <Text style={styles.detailLabel}>Total Paid:</Text>
-                </Column>
-                <Column>
-                  <Text style={styles.detailValue}>
-                    {formatCurrency(customer.total)}
-                  </Text>
-                </Column>
-              </Row>
+      {/* Registration Details */}
+      <Section style={styles.detailsBoxOuter}>
+        <div style={styles.detailsBoxInner}>
+          <Heading as="h3" style={styles.boxTitle}>
+            REGISTRATION DETAILS
+          </Heading>
+          <div style={{ marginTop: 18 }}>
+            <Row>
+              <Column style={{ width: "120px" }}>
+                <Text style={styles.detailLabel}>PARTICIPANTS :</Text>
+              </Column>
+              <Column>
+                <Text style={styles.detailValue}>{customer.quantity}</Text>
+              </Column>
+            </Row>
+            <Row>
+              <Column style={{ width: "120px" }}>
+                <Text style={styles.detailLabel}>TOTAL PAID :</Text>
+              </Column>
+              <Column>
+                <Text style={styles.detailValue}>
+                  {formatCurrency(customer.total)}
+                </Text>
+              </Column>
+            </Row>
 
-              {/* Participant Information */}
-              {customer.participants && customer.participants.length > 0 && (
+            {/* Participant Information */}
+            {customer.participants && customer.participants.length > 0 && (
+              <>
+                <Row>
+                  <Column colSpan={2}>
+                    <Heading as="h4" style={styles.subSectionTitle}>
+                      PARTICIPANT INFORMATION
+                    </Heading>
+                  </Column>
+                </Row>
+                {customer.participants.map(
+                  (participant: Participant, index: number) => (
+                    <div key={index} style={styles.participantBlock}>
+                      <Text style={styles.participantName}>
+                        {index + 1}. {participant.firstName}{" "}
+                        {participant.lastName}
+                      </Text>
+                      {participant.selectedOptions &&
+                        participant.selectedOptions.length > 0 && (
+                          <Text style={styles.optionsText}>
+                            Options:{" "}
+                            {participant.selectedOptions
+                              .map(
+                                (opt: ParticipantOption) =>
+                                  `${opt.categoryName}: ${opt.choiceName}`
+                              )
+                              .join(", ")}
+                          </Text>
+                        )}
+                    </div>
+                  )
+                )}
+              </>
+            )}
+
+            {/* Selected Options (if not participant-specific) */}
+            {customer.selectedOptions &&
+              customer.selectedOptions.length > 0 && (
                 <>
-                  <Heading as="h4" style={styles.subSectionTitle}>
-                    Participant Information
-                  </Heading>
-                  {customer.participants.map(
-                    (participant: Participant, index: number) => (
-                      <div key={index} style={styles.participantBlock}>
-                        <Text style={styles.participantName}>
-                          {index + 1}. {participant.firstName}{" "}
-                          {participant.lastName}
-                        </Text>
-                        {participant.selectedOptions &&
-                          participant.selectedOptions.length > 0 && (
-                            <Text style={styles.optionsText}>
-                              Options:{" "}
-                              {participant.selectedOptions
-                                .map(
-                                  (opt: ParticipantOption) =>
-                                    `${opt.categoryName}: ${opt.choiceName}`
-                                )
-                                .join(", ")}
-                            </Text>
-                          )}
-                      </div>
+                  <Row>
+                    <Column colSpan={2}>
+                      <Heading as="h4" style={styles.subSectionTitle}>
+                        SELECTED OPTIONS
+                      </Heading>
+                    </Column>
+                  </Row>
+                  {customer.selectedOptions.map(
+                    (option: ParticipantOption, index: number) => (
+                      <Text key={index} style={styles.optionsText}>
+                        • {option.categoryName}: {option.choiceName}
+                      </Text>
                     )
                   )}
                 </>
               )}
+          </div>
+        </div>
+      </Section>
 
-              {/* Selected Options (if not participant-specific) */}
-              {customer.selectedOptions &&
-                customer.selectedOptions.length > 0 && (
-                  <>
-                    <Heading as="h4" style={styles.subSectionTitle}>
-                      Selected Options
-                    </Heading>
-                    {customer.selectedOptions.map(
-                      (option: ParticipantOption, index: number) => (
-                        <Text key={index} style={styles.optionsText}>
-                          • {option.categoryName}: {option.choiceName}
-                        </Text>
-                      )
-                    )}
-                  </>
-                )}
-            </Section>
+      {/* Admin Note */}
+      <Section style={styles.mainContent}>
+        <div style={{ textAlign: "left", ...styles.mainContentText }}>
+          <Text style={styles.paragraph}>
+            This registration was completed on {new Date().toLocaleDateString()}{" "}
+            at {new Date().toLocaleTimeString()}. You can view all registrations
+            in your admin dashboard.
+          </Text>
+        </div>
+      </Section>
 
-            {/* Admin Note */}
-            <Text style={styles.paragraph}>
-              This registration was completed on{" "}
-              {new Date().toLocaleDateString()} at{" "}
-              {new Date().toLocaleTimeString()}. You can view all registrations
-              in your admin dashboard.
-            </Text>
-          </Section>
-
-          {/* Footer */}
-          <Section style={styles.footer}>
-            <Text style={styles.footerText}>
-              © {new Date().getFullYear()} Coastal Creations Studio
-            </Text>
-            <Text style={styles.footerText}>
-              411 E 8th Street, Ocean City, NJ 08226
-            </Text>
-            <Text style={styles.footerText}>
-              <Link
-                href="https://coastalcreationsstudio.com"
-                style={styles.footerLink}
-              >
-                coastalcreationsstudio.com
-              </Link>
-            </Text>
-          </Section>
-        </Container>
-      </Body>
+      <Section style={styles.footer}>
+        <Text style={styles.footerText}>
+          Coastal Creations Studio
+          <br />
+          411 E 8th Street, Ocean City, NJ 08226
+        </Text>
+        <Text style={styles.footerText}>
+          <Link
+            href="mailto:info@coastalcreationsstudio.com"
+            style={styles.footerLink}
+          >
+            info@coastalcreationsstudio.com
+          </Link>
+        </Text>
+      </Section>
     </Html>
   );
 };
@@ -376,7 +406,7 @@ export const CustomerDetailsTemplate = ({
 // Styles
 const styles = {
   body: {
-    backgroundColor: "#f6f9fc",
+    backgroundColor: "#ffffff",
     fontFamily:
       "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
     margin: 0,
@@ -387,10 +417,9 @@ const styles = {
     maxWidth: "600px",
   },
   header: {
-    backgroundColor: "#5A87B0", // Ocean blue
-    padding: "30px 0",
+    backgroundColor: "#E5EAEB",
+    padding: "40px 0",
     textAlign: "center" as const,
-    borderRadius: "8px 8px 0 0",
   },
   headerTitle: {
     color: "#ffffff",
@@ -406,22 +435,37 @@ const styles = {
   },
   mainContent: {
     backgroundColor: "#ffffff",
-    padding: "40px 30px",
+    color: "#2E6F89",
+    padding: "40px 0 40px 0",
     borderRadius: "0 0 8px 8px",
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
   },
-  sectionTitle: {
-    color: "#32325d",
-    fontSize: "20px",
-    fontWeight: "bold",
-    margin: "0 0 20px",
+  mainContentText: {
+    padding: "0 24px",
+    fontFamily: "Comic Sans MS, Comic Sans",
   },
-  detailsBox: {
-    backgroundColor: "#f8fafc",
-    padding: "20px",
-    borderRadius: "8px",
-    marginBottom: "30px",
-    borderLeft: "3px solid #5A87B0",
+  sectionTitle: {
+    color: "#2E6F89",
+    fontSize: "30px",
+    fontWeight: "700",
+    margin: "0 0 20px",
+    fontFamily: "Impact, fantasy",
+  },
+  detailsBoxOuter: {
+    backgroundColor: "#ffffff",
+    padding: "0 0 30px 0",
+    display: "flex",
+    justifyContent: "center",
+  },
+  detailsBoxInner: {
+    backgroundColor: "#E5F2F3",
+    borderRadius: "28px",
+    padding: "28px 24px 28px 24px",
+    maxWidth: "95%",
+    width: "100%",
+    margin: "0 auto",
+    border: "none",
+    boxSizing: "border-box" as const,
   },
   boxTitle: {
     color: "#32325d",
@@ -430,27 +474,31 @@ const styles = {
     margin: "0 0 15px",
   },
   subSectionTitle: {
-    color: "#32325d",
-    fontSize: "16px",
-    fontWeight: "bold",
     margin: "15px 0 10px",
+    color: "#2E6F89",
+    fontSize: "22px",
+    fontWeight: "400",
+    fontFamily: "Impact, fantasy",
   },
   paragraph: {
     color: "#32325d",
     fontSize: "16px",
     lineHeight: "24px",
     margin: "0 0 20px",
+    fontFamily: "Comic Sans MS, Comic Sans",
   },
   detailLabel: {
-    color: "#6b7280",
-    fontSize: "14px",
-    fontWeight: "bold",
+    color: "#2E6F89",
+    fontSize: "16px",
+    fontWeight: "400",
     margin: "8px 0",
+    fontFamily: "Impact, fantasy",
   },
   detailValue: {
     color: "#32325d",
     fontSize: "15px",
     margin: "8px 0",
+    fontFamily: "Comic Sans MS, Comic Sans",
   },
   participantBlock: {
     marginBottom: "10px",
@@ -460,13 +508,29 @@ const styles = {
     fontSize: "15px",
     fontWeight: "500",
     margin: "5px 0",
+    fontFamily: "Comic Sans MS, Comic Sans",
   },
   optionsText: {
     color: "#6b7280",
     fontSize: "14px",
     margin: "3px 0 3px 10px",
+    fontFamily: "Comic Sans MS, Comic Sans",
+  },
+  button: {
+    backgroundColor: "#5A87B0",
+    borderRadius: "4px",
+    color: "#ffffff",
+    fontSize: "16px",
+    fontWeight: "bold",
+    textDecoration: "none",
+    textAlign: "center" as const,
+    display: "block",
+    width: "100%",
+    padding: "12px 0",
+    marginTop: "30px",
   },
   footer: {
+    backgroundColor: "#ffffff",
     textAlign: "center" as const,
     padding: "20px 0",
   },

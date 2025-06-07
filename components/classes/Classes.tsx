@@ -1,6 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import styled from "@emotion/styled";
+import {
+  Box,
+  Container,
+  Paper,
+  CircularProgress,
+  Alert,
+  Chip,
+} from "@mui/material";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { type SanityDocument } from "next-sanity";
@@ -8,6 +17,15 @@ import imageUrlBuilder from "@sanity/image-url";
 import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import Image from "next/image";
 import { client } from "@/sanity/client";
+import {
+  FaCalendarAlt,
+  FaClock,
+  FaDollarSign,
+  FaPalette,
+  FaUsers,
+  FaGraduationCap,
+} from "react-icons/fa";
+import { GiPaintBrush, GiPaintRoller, GiMagicHat } from "react-icons/gi";
 
 // Setup Sanity image URL builder
 const { projectId, dataset } = client.config();
@@ -59,11 +77,369 @@ interface Event {
   __v: number;
 }
 
+// Styled Components
+const StyledContainer = styled(Container)({
+  padding: "4rem 2rem",
+  maxWidth: "1200px",
+  fontFamily: "var(--font-comic-neue)",
+});
+
+const Title = styled("h1")({
+  fontSize: "2.75rem",
+  fontWeight: "bold",
+  textAlign: "center",
+  marginBottom: "1.5rem",
+  color: "#326C85",
+  position: "relative",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "1rem",
+  "@media (max-width: 600px)": {
+    fontSize: "2rem",
+    flexDirection: "column",
+    gap: "0.5rem",
+  },
+});
+
+const TitleIcon = styled("div")({
+  fontSize: "3rem",
+  color: "#326C85",
+  animation: "bounce 2s ease-in-out infinite",
+  "@keyframes bounce": {
+    "0%, 20%, 50%, 80%, 100%": { transform: "translateY(0)" },
+    "40%": { transform: "translateY(-10px)" },
+    "60%": { transform: "translateY(-5px)" },
+  },
+});
+
+const Subtitle = styled("p")({
+  textAlign: "center",
+  maxWidth: "600px",
+  margin: "0 auto 3rem",
+  fontSize: "1.125rem",
+  color: "#616161",
+  lineHeight: 1.6,
+  fontWeight: "700",
+});
+
+const SectionTitle = styled("h2")({
+  fontSize: "2rem",
+  fontWeight: "700",
+  marginBottom: "2rem",
+  color: "#326C85",
+  position: "relative",
+  paddingLeft: "1rem",
+  "&:before": {
+    content: '""',
+    position: "absolute",
+    left: "0",
+    top: "50%",
+    transform: "translateY(-50%)",
+    width: "4px",
+    height: "100%",
+    background: "linear-gradient(180deg, #326C85, #42A5F5)",
+    borderRadius: "2px",
+  },
+});
+
+interface ClassCardProps {
+  isHovered: boolean;
+}
+
+const ClassCard = styled(Paper)<ClassCardProps>(({ isHovered }) => ({
+  borderRadius: "20px",
+  overflow: "hidden",
+  position: "relative",
+  transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+  boxShadow: isHovered
+    ? "0 20px 40px rgba(50, 108, 133, 0.25)"
+    : "0 8px 24px rgba(66, 165, 245, 0.15)",
+  transform: isHovered
+    ? "translateY(-8px) scale(1.02)"
+    : "translateY(0) scale(1)",
+  border: "2px solid transparent",
+  background: isHovered
+    ? "linear-gradient(white, white) padding-box, linear-gradient(135deg, #326C85, #42A5F5, #64B5F6) border-box"
+    : "white",
+  "&:before": {
+    content: '""',
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    background: isHovered
+      ? "linear-gradient(135deg, rgba(50,108,133,0.03), rgba(66,165,245,0.03))"
+      : "transparent",
+    opacity: 1,
+    transition: "all 0.4s ease",
+    zIndex: 0,
+  },
+}));
+
+const CardContent = styled(Box)({
+  padding: "2rem",
+  position: "relative",
+  zIndex: 2,
+  display: "flex",
+  flexDirection: "column",
+});
+
+const TitleRow = styled("div")({
+  display: "flex",
+  gap: "1rem",
+  marginBottom: "1rem",
+  alignItems: "flex-start",
+  "@media (max-width: 600px)": {
+    gap: "0.75rem",
+  },
+});
+
+const TitleSection = styled("div")({
+  flex: 1,
+  minWidth: 0, // Allows text to wrap properly
+});
+
+const ContentSection = styled("div")({
+  display: "flex",
+  flexDirection: "column",
+});
+
+const ImageSection = styled("div")({
+  flexShrink: 0,
+  marginTop: "45px", // Add space to avoid overlap with price tag
+  "@media (max-width: 600px)": {
+    width: "120px",
+  },
+  "@media (min-width: 601px)": {
+    width: "140px",
+  },
+  "@media (min-width: 768px)": {
+    width: "180px",
+  },
+});
+
+const EventTitle = styled("h3")({
+  fontSize: "1.5rem",
+  fontWeight: "bold",
+  marginBottom: "1rem",
+  color: "#326C85",
+  position: "relative",
+  display: "flex",
+  alignItems: "center",
+  gap: "0.75rem",
+  paddingRight: "120px", // Add padding to prevent overlap with price tag
+  "&:after": {
+    content: '""',
+    position: "absolute",
+    bottom: "-4px",
+    left: "0",
+    width: "0",
+    height: "3px",
+    background: "linear-gradient(90deg, #326C85, #42A5F5)",
+    transition: "width 0.3s ease",
+    borderRadius: "2px",
+  },
+  "&:hover:after": {
+    width: "calc(100% - 120px)", // Adjust underline to account for padding
+  },
+  "@media (min-width: 768px)": {
+    paddingRight: "140px", // Slightly more padding on larger screens
+    "&:hover:after": {
+      width: "calc(100% - 140px)",
+    },
+  },
+});
+
+const EventIcon = styled("span")({
+  fontSize: "1.25rem",
+  color: "#42A5F5",
+  animation: "wiggle 2s ease-in-out infinite",
+  "@keyframes wiggle": {
+    "0%, 100%": { transform: "rotate(0deg)" },
+    "25%": { transform: "rotate(5deg)" },
+    "75%": { transform: "rotate(-5deg)" },
+  },
+});
+
+const InfoGrid = styled("div")({
+  display: "grid",
+  gridTemplateColumns: "repeat(1, 1fr)",
+  gap: "0.75rem",
+  marginBottom: "1rem",
+  "@media (min-width: 600px)": {
+    gridTemplateColumns: "repeat(2, 1fr)",
+  },
+});
+
+const InfoItem = styled("div")({
+  display: "flex",
+  alignItems: "center",
+  gap: "0.5rem",
+  padding: "0.5rem 0.75rem",
+  background:
+    "linear-gradient(135deg, rgba(50,108,133,0.08), rgba(66,165,245,0.08))",
+  borderRadius: "12px",
+  border: "1px solid rgba(50,108,133,0.15)",
+  fontSize: "0.875rem",
+  color: "#424242",
+  fontWeight: "700",
+});
+
+const InfoIcon = styled("span")({
+  color: "#42A5F5",
+  fontSize: "1rem",
+});
+
+const Description = styled("p")({
+  marginBottom: "1rem",
+  color: "#616161",
+  lineHeight: 1.6,
+  flex: "1",
+  textAlign: "justify",
+  fontWeight: "700",
+});
+
+const PriceTag = styled("div")({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "0.5rem",
+  fontSize: "1.125rem",
+  fontWeight: "bold",
+  color: "white",
+  background: "linear-gradient(135deg, #326C85, #4A90A4)",
+  padding: "0.5rem 1rem",
+  borderRadius: "20px",
+  position: "absolute",
+  top: "15px",
+  right: "15px",
+  boxShadow: "0 4px 15px rgba(50, 108, 133, 0.3)",
+  zIndex: 3,
+  transform: "rotate(-2deg)",
+  transition: "all 0.3s ease",
+  "&:hover": {
+    transform: "rotate(0deg) scale(1.05)",
+    boxShadow: "0 6px 20px rgba(50, 108, 133, 0.4)",
+  },
+});
+
+const OptionsContainer = styled("div")({
+  marginBottom: "1rem",
+});
+
+const OptionCategory = styled("div")({
+  marginBottom: "0.5rem",
+});
+
+const OptionLabel = styled("span")({
+  fontWeight: "700",
+  color: "#326C85",
+  fontSize: "0.875rem",
+});
+
+const OptionChips = styled("div")({
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "0.25rem",
+  marginTop: "0.25rem",
+});
+
+const StyledImage = styled(Image)({
+  borderRadius: "12px",
+  objectFit: "cover",
+  width: "100%",
+  height: "auto",
+  aspectRatio: "4/3",
+  transition: "all 0.3s ease",
+  "@media (max-width: 600px)": {
+    maxHeight: "90px",
+  },
+  "@media (min-width: 601px)": {
+    maxHeight: "105px",
+  },
+  "@media (min-width: 768px)": {
+    maxHeight: "135px",
+  },
+  "&:hover": {
+    transform: "scale(1.02)",
+    boxShadow: "0 8px 25px rgba(0,0,0,0.15)",
+  },
+});
+
+const SignUpButton = styled("div")({
+  display: "inline-block",
+  padding: "0.75rem 1.5rem",
+  background: "linear-gradient(135deg, #326C85, #42A5F5)",
+  color: "white",
+  borderRadius: "25px",
+  textDecoration: "none",
+  fontWeight: "700",
+  transition: "all 0.3s ease",
+  border: "2px solid transparent",
+  position: "relative",
+  overflow: "hidden",
+  "&:before": {
+    content: '""',
+    position: "absolute",
+    top: 0,
+    left: "-100%",
+    width: "100%",
+    height: "100%",
+    background:
+      "linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)",
+    transition: "left 0.5s ease",
+  },
+  "&:hover": {
+    transform: "translateY(-2px)",
+    boxShadow: "0 8px 25px rgba(50, 108, 133, 0.3)",
+    "&:before": {
+      left: "100%",
+    },
+  },
+  "&:active": {
+    transform: "translateY(0)",
+  },
+});
+
+const LoadingContainer = styled(Box)({
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "center",
+  alignItems: "center",
+  minHeight: "400px",
+  gap: "1rem",
+});
+
+const LoadingText = styled("div")({
+  color: "#326C85",
+  fontSize: "1.25rem",
+  fontWeight: "bold",
+  animation: "colorChange 2s ease-in-out infinite",
+  "@keyframes colorChange": {
+    "0%, 100%": { color: "#326C85" },
+    "50%": { color: "#42A5F5" },
+  },
+});
+
+const EmptyState = styled("div")({
+  textAlign: "center",
+  padding: "3rem 2rem",
+  background:
+    "linear-gradient(135deg, rgba(50,108,133,0.05), rgba(66,165,245,0.05))",
+  borderRadius: "20px",
+  border: "2px solid rgba(50,108,133,0.1)",
+  color: "#616161",
+  fontSize: "1.125rem",
+  fontWeight: "700",
+});
+
 export default function Classes() {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [eventPictures, setEventPictures] = useState<SanityDocument[]>([]);
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -163,146 +539,197 @@ export default function Classes() {
     }
   };
 
+  const getRandomIcon = (index: number) => {
+    const icons = [
+      FaPalette,
+      GiPaintBrush,
+      GiPaintRoller,
+      FaGraduationCap,
+      GiMagicHat,
+    ];
+    return icons[index % icons.length];
+  };
+
+  if (isLoading) {
+    return (
+      <StyledContainer>
+        <LoadingContainer>
+          <CircularProgress
+            size={60}
+            sx={{
+              color: "#326C85",
+              "& .MuiCircularProgress-circle": {
+                strokeLinecap: "round",
+              },
+            }}
+          />
+          <LoadingText>Loading creative classes... 🎨</LoadingText>
+        </LoadingContainer>
+      </StyledContainer>
+    );
+  }
+
+  if (error) {
+    return (
+      <StyledContainer>
+        <Alert
+          severity="error"
+          sx={{
+            mb: 4,
+            borderRadius: "15px",
+            "& .MuiAlert-icon": {
+              fontSize: "1.5rem",
+            },
+          }}
+        >
+          Error loading events: {error}
+        </Alert>
+      </StyledContainer>
+    );
+  }
+
   return (
-    <>
-      <h1 className="text-3xl font-bold text-center mb-8">
+    <StyledContainer>
+      <Title>
+        <TitleIcon>
+          <FaPalette />
+        </TitleIcon>
         Our Classes & Workshops
-      </h1>
+        <TitleIcon>
+          <GiPaintBrush />
+        </TitleIcon>
+      </Title>
 
-      <div className="text-center max-w-3xl mx-auto mb-12">
-        <p className="text-lg mb-6">
-          We offer a variety of classes and workshops for all ages and skill
-          levels. From beginner-friendly sessions to advanced techniques,
-          there&apos;s something for everyone to explore their creativity.
-        </p>
-      </div>
+      <Subtitle>
+        We offer a variety of classes and workshops for all ages and skill
+        levels. From beginner-friendly sessions to advanced techniques,
+        there&apos;s something for everyone to explore their creativity.
+      </Subtitle>
 
-      <div className="w-full">
-        <h2 className="text-2xl font-semibold mb-6">
-          Upcoming Classes & Workshops
-        </h2>
+      <SectionTitle>Upcoming Classes & Workshops</SectionTitle>
 
-        {isLoading ? (
-          <div className="text-center py-8">
-            <motion.div
-              className="h-12 w-12 border-b-2 border-blue-500 mx-auto rounded-full"
-              animate={{
-                rotate: 360,
-              }}
-              transition={{
-                duration: 1,
-                ease: "linear",
-                repeat: Infinity,
-              }}
-            ></motion.div>
-            <p className="mt-4">Loading events...</p>
+      {filteredEvents.length === 0 ? (
+        <EmptyState>
+          <FaUsers
+            style={{ fontSize: "3rem", marginBottom: "1rem", color: "#42A5F5" }}
+          />
+          <div>No classes or workshops currently scheduled.</div>
+          <div style={{ marginTop: "0.5rem", fontSize: "1rem" }}>
+            Check back soon for new creative opportunities!
           </div>
-        ) : error ? (
-          <div className="bg-red-100 border border-red-300 text-red-700 p-4 rounded-lg">
-            <p>Error loading events: {error}</p>
-          </div>
-        ) : filteredEvents.length === 0 ? (
-          <div className="bg-gray-100 p-6 rounded-lg text-center">
-            <p>No classes or workshops currently scheduled.</p>
-          </div>
-        ) : (
-          <div className="grid gap-4">
-            {filteredEvents.map((event) => {
-              // Find a matching picture for this event
-              const matchingPicture = findMatchingEventPicture(event.eventName);
-              const imageUrl = matchingPicture?.image
-                ? urlFor(matchingPicture.image)?.width(800).height(600).url()
-                : null;
+        </EmptyState>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+          {filteredEvents.map((event, index) => {
+            // Find a matching picture for this event
+            const matchingPicture = findMatchingEventPicture(event.eventName);
+            const imageUrl = matchingPicture?.image
+              ? urlFor(matchingPicture.image)?.width(800).height(600).url()
+              : null;
 
-              return (
-                <motion.div
-                  key={event._id}
-                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  whileHover={{
-                    boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
-                    y: -2,
-                  }}
+            const IconComponent = getRandomIcon(index);
+
+            return (
+              <motion.div
+                key={event._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+              >
+                <ClassCard
+                  elevation={3}
+                  isHovered={hoveredCard === index}
+                  onMouseEnter={() => setHoveredCard(index)}
+                  onMouseLeave={() => setHoveredCard(null)}
                 >
-                  <div className="flex flex-col md:flex-row">
-                    <div className={imageUrl ? "md:w-2/3" : "w-full"}>
-                      <h3 className="text-xl font-medium">{event.eventName}</h3>
+                  <PriceTag>
+                    <FaDollarSign />
+                    {event.price}
+                  </PriceTag>
 
-                      <div className="flex flex-col sm:flex-row sm:justify-between mt-2">
-                        <div className="text-gray-600">
-                          <span className="font-medium">Date: </span>
+                  <CardContent>
+                    <TitleRow>
+                      <TitleSection>
+                        <EventTitle>
+                          <EventIcon>
+                            <IconComponent />
+                          </EventIcon>
+                          {event.eventName}
+                        </EventTitle>
+                      </TitleSection>
+
+                      {imageUrl && (
+                        <ImageSection>
+                          <StyledImage
+                            src={imageUrl}
+                            alt={event.eventName}
+                            width={150}
+                            height={100}
+                          />
+                        </ImageSection>
+                      )}
+                    </TitleRow>
+
+                    <ContentSection>
+                      <InfoGrid>
+                        <InfoItem>
+                          <InfoIcon>
+                            <FaCalendarAlt />
+                          </InfoIcon>
                           {getDateInfo(event)}
-                        </div>
-                        <div className="text-gray-600">
-                          <span className="font-medium">Time: </span>
+                        </InfoItem>
+                        <InfoItem>
+                          <InfoIcon>
+                            <FaClock />
+                          </InfoIcon>
                           {formatTime(event.time.startTime)} -{" "}
                           {formatTime(event.time.endTime)}
-                        </div>
-                      </div>
+                        </InfoItem>
+                      </InfoGrid>
 
-                      <div className="mt-2">
-                        <span className="font-medium">Description: </span>
-                        <span className="text-gray-700">
-                          {event.description}
-                        </span>
-                      </div>
-                      <div className="mt-1">
-                        <span className="font-medium">Price: </span>
-                        <span className="text-gray-700">${event.price}</span>
-                      </div>
+                      <Description>{event.description}</Description>
 
                       {event.options.length > 0 && (
-                        <div className="mt-2">
-                          <span className="font-medium">Options: </span>
+                        <OptionsContainer>
                           {event.options.map((option) => (
-                            <div key={option._id} className="ml-2 mt-1">
-                              <span className="text-gray-700">
-                                {option.categoryName}:{" "}
-                              </span>
-                              <span className="text-gray-600">
-                                {option.choices
-                                  .map((choice) => choice.name)
-                                  .join(", ")}
-                              </span>
-                            </div>
+                            <OptionCategory key={option._id}>
+                              <OptionLabel>{option.categoryName}:</OptionLabel>
+                              <OptionChips>
+                                {option.choices.map((choice) => (
+                                  <Chip
+                                    key={choice._id}
+                                    label={choice.name}
+                                    size="small"
+                                    sx={{
+                                      backgroundColor: "rgba(50,108,133,0.1)",
+                                      color: "#326C85",
+                                      fontWeight: "500",
+                                      "&:hover": {
+                                        backgroundColor: "rgba(50,108,133,0.2)",
+                                      },
+                                    }}
+                                  />
+                                ))}
+                              </OptionChips>
+                            </OptionCategory>
                           ))}
-                        </div>
+                        </OptionsContainer>
                       )}
 
-                      <div className="mt-4">
-                        <motion.div
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <Link
-                            href={`/calendar/${event._id}`}
-                            className="inline-block px-4 py-2 bg-primary text-black font-medium rounded-md hover:bg-blue-400 hover:text-white transition-colors border-2 border-black"
-                          >
-                            Sign Up
-                          </Link>
-                        </motion.div>
-                      </div>
-                    </div>
-                    {imageUrl && (
-                      <div className="md:w-1/3 mb-4 md:mb-0 md:ml-4 mt-4 md:mt-0">
-                        <Image
-                          src={imageUrl}
-                          alt={event.eventName}
-                          className="rounded-lg object-cover w-full h-48"
-                          width={300}
-                          height={200}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </>
+                      <Link
+                        href={`/calendar/${event._id}`}
+                        style={{ textDecoration: "none" }}
+                      >
+                        <SignUpButton>Sign Up for Class</SignUpButton>
+                      </Link>
+                    </ContentSection>
+                  </CardContent>
+                </ClassCard>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+    </StyledContainer>
   );
 }

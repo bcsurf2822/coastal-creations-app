@@ -15,7 +15,7 @@ export default function Offerings() {
                 Creative Experiences
               </h3>
             </div>
-            <p className="text-neutral-900 max-w-md mx-auto text-center  font-semibold">
+            <p className="text-neutral-900 max-w-md mx-auto text-justify font-bold">
               We provide a variety of classes, workshops, and creative
               opportunities for artists of all ages and skill levels!
             </p>
@@ -40,14 +40,14 @@ export default function Offerings() {
               <h4 className="text-xl font-semibold text-primary mb-4">
                 Art Camps
               </h4>
-              <p className="text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300">
+              <p className="text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300 text-justify font-bold">
                 Hands-on art camps where kids explore creativity, build skills,
                 and have fun together.
               </p>
               <div className="mt-auto flex justify-end">
                 <Link
                   href={"/classes/summer-camps"}
-                  className="inline-flex items-center px-4 py-2 bg-light text-dark font-medium rounded-lg shadow-md hover:bg-primary hover:text-blue-900 hover:shadow-lg transition duration-300"
+                  className="inline-flex items-center justify-center px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg border-2 border-gray-200 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:bg-gray-300 hover:border-gray-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.25)] transform hover:scale-105 transition-all duration-300"
                 >
                   <span className="mr-2">Learn more</span>
                   <i data-lucide="arrow-right" className="w-4 h-4"></i>
@@ -73,14 +73,14 @@ export default function Offerings() {
               <h4 className="text-xl font-semibold text-primary mb-4">
                 Classes & Workshops
               </h4>
-              <p className="text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300">
+              <p className="text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300 text-justify font-bold">
                 Weekly workshops offering focused, guided art sessions for kids
                 and adults of all skill levels.
               </p>
               <div className="mt-auto flex justify-end">
                 <Link
                   href={"/classes"}
-                  className="inline-flex items-center px-4 py-2 bg-light text-dark font-medium rounded-lg shadow-md hover:bg-primary hover:text-blue-900 hover:shadow-lg transition duration-300"
+                  className="inline-flex items-center justify-center px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg border-2 border-gray-200 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:bg-gray-300 hover:border-gray-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.25)] transform hover:scale-105 transition-all duration-300"
                 >
                   <span className="mr-2">Learn more</span>
                   <i data-lucide="arrow-right" className="w-4 h-4"></i>
@@ -106,14 +106,14 @@ export default function Offerings() {
               <h4 className="text-xl font-semibold text-primary mb-4">
                 Birthday Parties
               </h4>
-              <p className="text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300">
+              <p className="text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300 text-justify font-bold">
                 Our art-themed celebrations include guided projects, materials,
                 and colorful memories!
               </p>
               <div className="mt-auto flex justify-end">
                 <Link
                   href={"/classes/birthday-parties"}
-                  className="inline-flex items-center px-4 py-2 bg-light text-dark font-medium rounded-lg shadow-md hover:bg-primary hover:text-blue-900 hover:shadow-lg transition duration-300"
+                  className="inline-flex items-center justify-center px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg border-2 border-gray-200 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:bg-gray-300 hover:border-gray-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.25)] transform hover:scale-105 transition-all duration-300"
                 >
                   <span className="mr-2">Learn more</span>
                   <i data-lucide="arrow-right" className="w-4 h-4"></i>

@@ -55,8 +55,8 @@ export default function Hero() {
                     return [
                       { x: 0, y: -100 }, // Welcome
                       { x: 0, y: -40 }, // to
-                      { x: -150, y: 20 }, // Coastal - reduced spacing
-                      { x: 150, y: 20 }, // Creations - reduced spacing
+                      { x: -110, y: 20 }, // Coastal - closer spacing
+                      { x: 130, y: 20 }, // Creations - closer spacing
                       { x: 0, y: 110 }, // Studio
                     ][index];
                   }
@@ -83,7 +83,7 @@ export default function Hero() {
                 return (
                   <motion.span
                     key={index}
-                    className={`font-serif ${sizes[index]} font-bold text-primary inline-block absolute`}
+                    className={`font-comic-neue ${sizes[index]} font-bold text-primary inline-block absolute`}
                     initial={{
                       opacity: 0,
                       x: Math.sin((index / words.length) * Math.PI * 2) * 300,
@@ -117,7 +117,7 @@ export default function Hero() {
               })}
             </div>
           ) : (
-            <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-primary leading-tight mb-20 sm:mb-24 h-[280px] flex items-center justify-center">
+            <h2 className="font-comic-neue text-4xl sm:text-5xl md:text-6xl font-bold text-primary leading-tight mb-20 sm:mb-24 h-[280px] flex items-center justify-center">
               Welcome to Coastal Creations Studio
             </h2>
           )}

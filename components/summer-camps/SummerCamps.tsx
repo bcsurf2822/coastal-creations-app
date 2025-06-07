@@ -1,14 +1,26 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Card, CardContent, CardMedia, Typography } from "@mui/material";
+import styled from "@emotion/styled";
+import { Box, Container, Paper, CircularProgress, Alert } from "@mui/material";
+import Link from "next/link";
+import { motion } from "motion/react";
+import Image from "next/image";
 import {
   FaCampground,
   FaCalendarAlt,
   FaClock,
   FaDollarSign,
+  FaSun,
+  FaTree,
+  FaMountain,
 } from "react-icons/fa";
-import Link from "next/link";
+import {
+  GiCampfire,
+  GiForest,
+  // GiTent,
+  GiButterfly,
+} from "react-icons/gi";
 
 interface Event {
   _id: string;
@@ -32,10 +44,309 @@ interface Event {
   image?: string;
 }
 
+// Styled Components
+const StyledContainer = styled(Container)({
+  padding: "4rem 2rem",
+  maxWidth: "1200px",
+  fontFamily: "var(--font-comic-neue)",
+});
+
+const Title = styled("h1")({
+  fontSize: "2.75rem",
+  fontWeight: "bold",
+  textAlign: "center",
+  marginBottom: "1rem",
+  color: "#326C85",
+  position: "relative",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "1rem",
+  "@media (max-width: 600px)": {
+    fontSize: "2rem",
+    flexDirection: "column",
+    gap: "0.5rem",
+  },
+});
+
+const TitleIcon = styled("div")({
+  fontSize: "3rem",
+  color: "#326C85",
+  animation: "bounce 2s ease-in-out infinite",
+  "@keyframes bounce": {
+    "0%, 20%, 50%, 80%, 100%": { transform: "translateY(0)" },
+    "40%": { transform: "translateY(-10px)" },
+    "60%": { transform: "translateY(-5px)" },
+  },
+});
+
+const Subtitle = styled("p")({
+  textAlign: "center",
+  maxWidth: "600px",
+  margin: "0 auto 3rem",
+  fontSize: "1.25rem",
+  color: "#616161",
+  lineHeight: 1.6,
+  fontWeight: "500",
+});
+
+const GridContainer = styled("div")({
+  display: "grid",
+  gridTemplateColumns: "repeat(1, 1fr)",
+  gap: "2rem",
+  "@media (min-width: 768px)": {
+    gridTemplateColumns: "repeat(2, 1fr)",
+  },
+  "@media (min-width: 1024px)": {
+    gridTemplateColumns: "repeat(3, 1fr)",
+  },
+});
+
+interface CampCardProps {
+  isHovered: boolean;
+}
+
+const CampCard = styled(Paper)<CampCardProps>(({ isHovered }) => ({
+  borderRadius: "20px",
+  overflow: "hidden",
+  height: "100%",
+  position: "relative",
+  display: "flex",
+  flexDirection: "column",
+  transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+  boxShadow: isHovered
+    ? "0 20px 40px rgba(50, 108, 133, 0.25)"
+    : "0 8px 24px rgba(66, 165, 245, 0.15)",
+  transform: isHovered
+    ? "translateY(-12px) scale(1.03) rotate(1deg)"
+    : "translateY(0) scale(1) rotate(0deg)",
+  border: "2px solid transparent",
+  background: isHovered
+    ? "linear-gradient(white, white) padding-box, linear-gradient(135deg, #326C85, #42A5F5, #64B5F6) border-box"
+    : "white",
+  "&:before": {
+    content: '""',
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    background: isHovered
+      ? "linear-gradient(135deg, rgba(50,108,133,0.03), rgba(66,165,245,0.03))"
+      : "transparent",
+    opacity: 1,
+    transition: "all 0.4s ease",
+    zIndex: 1,
+  },
+}));
+
+const ImageContainer = styled("div")({
+  position: "relative",
+  height: "200px",
+  overflow: "hidden",
+  flex: "0 0 auto", // Don't grow or shrink, fixed height
+});
+
+const StyledImage = styled(Image)({
+  objectFit: "cover",
+  transition: "all 0.3s ease",
+  "&:hover": {
+    transform: "scale(1.05)",
+  },
+});
+
+const CardContent = styled(Box)({
+  padding: "2rem",
+  display: "flex",
+  flexDirection: "column",
+  flex: "1 1 auto", // Take up remaining space
+  position: "relative",
+  zIndex: 2,
+});
+
+const ContentContainer = styled("div")({
+  display: "flex",
+  flexDirection: "column",
+  height: "100%",
+  justifyContent: "space-between",
+});
+
+const CampTitle = styled("h3")({
+  fontSize: "1.5rem",
+  fontWeight: "bold",
+  margin: 0,
+  color: "#326C85",
+  position: "relative",
+  display: "flex",
+  alignItems: "center",
+  gap: "0.75rem",
+  paddingRight: "6rem", // Add space for price tag
+  "&:after": {
+    content: '""',
+    position: "absolute",
+    bottom: "-4px",
+    left: "0",
+    width: "0",
+    height: "3px",
+    background: "linear-gradient(90deg, #326C85, #42A5F5)",
+    transition: "width 0.3s ease",
+    borderRadius: "2px",
+  },
+  "&:hover:after": {
+    width: "calc(100% - 6rem)", // Adjust underline to not go under price tag
+  },
+});
+
+const CampIcon = styled("span")({
+  fontSize: "1.25rem",
+  color: "#42A5F5",
+  animation: "wiggle 2s ease-in-out infinite",
+  "@keyframes wiggle": {
+    "0%, 100%": { transform: "rotate(0deg)" },
+    "25%": { transform: "rotate(5deg)" },
+    "75%": { transform: "rotate(-5deg)" },
+  },
+});
+
+const Description = styled("p")({
+  margin: "1rem 0 0 0", // Add top margin to separate from title
+  color: "#616161",
+  lineHeight: 1.6,
+  textAlign: "justify",
+  fontWeight: "700",
+});
+
+const InfoItem = styled("div")({
+  display: "flex",
+  alignItems: "center",
+  gap: "0.75rem",
+  padding: "0.75rem 1rem",
+  background:
+    "linear-gradient(135deg, rgba(50,108,133,0.08), rgba(66,165,245,0.08))",
+  borderRadius: "15px",
+  border: "1px solid rgba(50,108,133,0.15)",
+  fontSize: "0.875rem",
+  color: "#424242",
+  fontWeight: "700",
+});
+
+const InfoIcon = styled("span")({
+  color: "#42A5F5",
+  fontSize: "1.1rem",
+  minWidth: "1.1rem",
+});
+
+const PriceTag = styled("div")({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "0.5rem",
+  fontSize: "1.125rem",
+  fontWeight: "bold",
+  color: "white",
+  background: "linear-gradient(135deg, #326C85, #42A5F5)",
+  padding: "0.75rem 1.25rem",
+  borderRadius: "25px 0 25px 0",
+  position: "absolute",
+  top: "15px",
+  right: "15px",
+  boxShadow: "0 4px 15px rgba(50, 108, 133, 0.3)",
+  zIndex: 3,
+  transform: "rotate(-2deg)",
+  transition: "all 0.3s ease",
+  "&:hover": {
+    transform: "rotate(0deg) scale(1.05)",
+    boxShadow: "0 6px 20px rgba(50, 108, 133, 0.4)",
+  },
+});
+
+const RegisterButton = styled("div")({
+  display: "inline-block",
+  padding: "0.75rem 1.5rem",
+  background: "linear-gradient(135deg, #326C85, #42A5F5)",
+  color: "white",
+  borderRadius: "8px",
+  textDecoration: "none",
+  fontWeight: "700",
+  transition: "all 0.3s ease",
+  border: "2px solid transparent",
+  position: "relative",
+  overflow: "hidden",
+  textAlign: "center",
+  cursor: "pointer",
+  alignSelf: "flex-start", // Align to left side of container
+  "&:before": {
+    content: '""',
+    position: "absolute",
+    top: 0,
+    left: "-100%",
+    width: "100%",
+    height: "100%",
+    background:
+      "linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)",
+    transition: "left 0.5s ease",
+  },
+  "&:hover": {
+    transform: "translateY(-2px)",
+    boxShadow: "0 8px 25px rgba(50, 108, 133, 0.3)",
+    "&:before": {
+      left: "100%",
+    },
+  },
+  "&:active": {
+    transform: "translateY(0)",
+  },
+});
+
+const LoadingContainer = styled(Box)({
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "center",
+  alignItems: "center",
+  minHeight: "400px",
+  gap: "1rem",
+});
+
+const LoadingText = styled("div")({
+  color: "#326C85",
+  fontSize: "1.25rem",
+  fontWeight: "bold",
+  animation: "colorChange 2s ease-in-out infinite",
+  "@keyframes colorChange": {
+    "0%, 100%": { color: "#326C85" },
+    "50%": { color: "#42A5F5" },
+  },
+});
+
+const EmptyState = styled("div")({
+  textAlign: "center",
+  padding: "3rem 2rem",
+  background:
+    "linear-gradient(135deg, rgba(50,108,133,0.05), rgba(66,165,245,0.05))",
+  borderRadius: "20px",
+  border: "2px solid rgba(50,108,133,0.1)",
+  color: "#616161",
+  fontSize: "1.125rem",
+});
+
+const TopSection = styled("div")({
+  display: "flex",
+  flexDirection: "column",
+  flex: "1 1 auto", // Grow to take available space
+});
+
+const BottomSection = styled("div")({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "flex-start",
+  gap: "1rem",
+  flex: "0 0 auto", // Fixed size, don't grow
+});
+
 const SummerCamps = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -45,6 +356,7 @@ const SummerCamps = () => {
         const response = await fetch("/api/events");
         if (!response.ok) throw new Error("Failed to fetch events");
         const data = await response.json();
+        console.log(data);
         setEvents(data.events || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
@@ -62,7 +374,6 @@ const SummerCamps = () => {
   const formatDate = (dateString?: string) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString("en-US", {
-      weekday: "short",
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -79,97 +390,157 @@ const SummerCamps = () => {
     return `${hour12}:${minutes} ${ampm}`;
   };
 
+  const getRandomIcon = (index: number) => {
+    const icons = [GiCampfire, GiForest, GiButterfly, FaTree];
+    return icons[index % icons.length];
+  };
+
+  if (isLoading) {
+    return (
+      <StyledContainer>
+        <LoadingContainer>
+          <CircularProgress
+            size={60}
+            sx={{
+              color: "#326C85",
+              "& .MuiCircularProgress-circle": {
+                strokeLinecap: "round",
+              },
+            }}
+          />
+          <LoadingText>Loading summer adventures... 🏕️</LoadingText>
+        </LoadingContainer>
+      </StyledContainer>
+    );
+  }
+
+  if (error) {
+    return (
+      <StyledContainer>
+        <Alert
+          severity="error"
+          sx={{
+            mb: 4,
+            borderRadius: "15px",
+            "& .MuiAlert-icon": {
+              fontSize: "1.5rem",
+            },
+          }}
+        >
+          {error}
+        </Alert>
+      </StyledContainer>
+    );
+  }
+
   return (
-    <div className="py-10 px-4 max-w-5xl mx-auto">
-      <h1 className="text-4xl font-bold text-center mb-2 flex items-center justify-center gap-2 text-blue-700">
-        <FaCampground className="inline-block text-green-600" /> Summer Camps
-      </h1>
-      <p className="text-center text-lg text-gray-600 mb-8">
-        Spend your Summer Creating at Coastal Creations!
-      </p>
-      {isLoading ? (
-        <div className="flex justify-center items-center h-40">
-          <span className="animate-spin text-3xl text-blue-400 mr-2">
-            <FaCampground />
-          </span>
-          <span className="text-lg text-gray-500">Loading camps...</span>
-        </div>
-      ) : error ? (
-        <div className="text-center text-red-500 font-semibold">{error}</div>
-      ) : campEvents.length === 0 ? (
-        <div className="text-center text-gray-500">No summer camps found.</div>
+    <StyledContainer>
+      <Title>
+        <TitleIcon>
+          <FaCampground />
+        </TitleIcon>
+        Summer Camps
+        <TitleIcon>
+          <FaSun />
+        </TitleIcon>
+      </Title>
+
+      <Subtitle>Spend your Summer Creating at Coastal Creations!</Subtitle>
+
+      {campEvents.length === 0 ? (
+        <EmptyState>
+          <FaMountain
+            style={{ fontSize: "3rem", marginBottom: "1rem", color: "#42A5F5" }}
+          />
+          <div>No summer camps found.</div>
+          <div style={{ marginTop: "0.5rem", fontSize: "1rem" }}>
+            Check back soon for exciting summer adventures!
+          </div>
+        </EmptyState>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {campEvents.map((event) => (
-            <Card
-              key={event._id}
-              className="shadow-xl border border-blue-100 hover:shadow-2xl transition-shadow duration-300 bg-gradient-to-br from-blue-50 to-green-50"
-            >
-              {event.image && (
-                <CardMedia
-                  component="img"
-                  height="180"
-                  image={event.image}
-                  alt={event.eventName}
-                  className="object-cover"
-                />
-              )}
-              <CardContent>
-                <div className="flex items-center gap-2 mb-2">
-                  <Typography
-                    gutterBottom
-                    variant="h5"
-                    component="div"
-                    className="font-bold"
-                  >
-                    {event.eventName}
-                  </Typography>
-                </div>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  className="mb-3"
+        <GridContainer>
+          {campEvents.map((event, index) => {
+            const IconComponent = getRandomIcon(index);
+
+            return (
+              <motion.div
+                key={event._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+              >
+                <CampCard
+                  elevation={3}
+                  isHovered={hoveredCard === index}
+                  onMouseEnter={() => setHoveredCard(index)}
+                  onMouseLeave={() => setHoveredCard(null)}
                 >
-                  {event.description}
-                </Typography>
-                <div className="flex flex-col gap-2 mt-2">
-                  <div className="flex items-center gap-2 text-blue-700">
-                    <FaCalendarAlt />
-                    <span>
-                      {formatDate(event.dates.startDate)}
-                      {event.dates.endDate &&
-                        ` - ${formatDate(event.dates.endDate)}`}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-blue-700">
-                    <FaClock />
-                    <span>
-                      {formatTime(event.time.startTime)}
-                      {event.time.endTime &&
-                        ` - ${formatTime(event.time.endTime)}`}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-green-700">
+                  <PriceTag>
                     <FaDollarSign />
-                    <span className="font-semibold">
-                      {event.price ? `${event.price}` : "Free"}
-                    </span>
-                  </div>
-                  <div className="flex justify-end mt-4">
-                    <Link
-                      href={`/calendar/${event._id}`}
-                      className="inline-block px-5 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition-colors font-semibold text-sm"
-                    >
-                      Register
-                    </Link>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                    {event.price ? event.price : "Free"}
+                  </PriceTag>
+
+                  {event.image && (
+                    <ImageContainer>
+                      <StyledImage
+                        src={event.image}
+                        alt={event.eventName}
+                        fill
+                      />
+                    </ImageContainer>
+                  )}
+
+                  <CardContent>
+                    <ContentContainer>
+                      <TopSection>
+                        <CampTitle>
+                          <CampIcon>
+                            <IconComponent />
+                          </CampIcon>
+                          {event.eventName}
+                        </CampTitle>
+                        <Description>{event.description}</Description>
+                      </TopSection>
+
+                      <BottomSection>
+                        <InfoItem>
+                          <InfoIcon>
+                            <FaCalendarAlt />
+                          </InfoIcon>
+                          <span>
+                            {formatDate(event.dates.startDate)}
+                            {(event.dates.isRecurring
+                              ? event.dates.recurringEndDate
+                              : event.dates.endDate) &&
+                              ` - ${formatDate(event.dates.isRecurring ? event.dates.recurringEndDate : event.dates.endDate)}`}
+                          </span>
+                        </InfoItem>
+                        <InfoItem>
+                          <InfoIcon>
+                            <FaClock />
+                          </InfoIcon>
+                          <span>
+                            {formatTime(event.time.startTime)}
+                            {event.time.endTime &&
+                              ` - ${formatTime(event.time.endTime)}`}
+                          </span>
+                        </InfoItem>
+                        <Link
+                          href={`/calendar/${event._id}`}
+                          style={{ textDecoration: "none" }}
+                        >
+                          <RegisterButton>Register</RegisterButton>
+                        </Link>
+                      </BottomSection>
+                    </ContentContainer>
+                  </CardContent>
+                </CampCard>
+              </motion.div>
+            );
+          })}
+        </GridContainer>
       )}
-    </div>
+    </StyledContainer>
   );
 };
 

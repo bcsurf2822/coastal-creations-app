@@ -73,8 +73,7 @@ export default function NavBar() {
       },
     },
     hover: {
-      scale: 1.05,
-      x: 5,
+      scale: 1.007,
       transition: { duration: 0.2 },
     },
   };
