@@ -451,7 +451,7 @@ export default function Classes() {
         }
 
         const data = await response.json();
-        console.log("Fetched events data:", data);
+
 
         setEvents(data.events || []);
       } catch (err: unknown) {
@@ -476,7 +476,7 @@ export default function Classes() {
         }
 
         const data = await response.json();
-        console.log("Fetched event pictures data:", data);
+
         setEventPictures(data);
       } catch (err) {
         console.error("Error fetching event pictures:", err);
