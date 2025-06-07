@@ -22,12 +22,6 @@ const urlFor = (source: SanityImageSource) =>
 export default async function Blog() {
   const posts = await client.fetch<SanityDocument[]>(POSTS_QUERY, {}, options);
 
-  // Debug logging
-  console.log("Blog posts data:", posts);
-  console.log("Number of posts:", posts.length);
-  if (posts.length > 0) {
-    console.log("First post structure:", posts[0]);
-  }
 
   return (
     <div className="min-h-screen ">

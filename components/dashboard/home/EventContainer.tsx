@@ -208,8 +208,7 @@ export default function EventContainer() {
 
         setEvents(transformedEvents);
 
-        // Log all events
-        console.log("Fetched Events:", transformedEvents);
+  
       } catch (error) {
         console.error("Error fetching events:", error);
         setError(typeof error === "string" ? error : (error as Error).message);
@@ -222,13 +221,13 @@ export default function EventContainer() {
   }, []);
 
   const handleEventClick = (event: Event) => {
-    console.log("Viewing Event:", event);
+
     setSelectedEvent(event);
     setIsDialogOpen(true);
   };
 
   const closeDialog = () => {
-    console.log("Dialog closed");
+
     setIsDialogOpen(false);
   };
 

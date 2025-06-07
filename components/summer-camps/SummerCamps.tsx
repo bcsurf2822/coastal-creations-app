@@ -356,7 +356,7 @@ const SummerCamps = () => {
         const response = await fetch("/api/events");
         if (!response.ok) throw new Error("Failed to fetch events");
         const data = await response.json();
-        console.log(data);
+     
         setEvents(data.events || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
