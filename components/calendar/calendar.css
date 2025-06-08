@@ -1,5 +1,6 @@
 .calendar-container {
   margin: 2rem auto;
+  margin-bottom: 5rem; /* Add bottom margin to create space between calendar and footer */
   padding: 0 1.5rem;
   max-width: 1200px;
   height: calc(100vh - 180px);
