@@ -30,7 +30,7 @@ const anton = Anton({
 const comicNeue = Comic_Neue({
   variable: "--font-comic-neue",
   subsets: ["latin"],
-  weight: "400", // Using regular 400 weight
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
