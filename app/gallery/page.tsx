@@ -1,4 +1,5 @@
 import React from "react";
+import ImageGallery from "@/components/gallery/ImageGallery";
 
 export default function GalleryPage() {
   return (
@@ -6,9 +7,10 @@ export default function GalleryPage() {
       <section className="py-20 md:py-28">
         <div className="container mx-auto px-6 md:px-12">
           <div className="max-w-6xl mx-auto">
-            <h1 className="font-serif text-5xl md:text-6xl font-bold text-primary mb-12">
+            <h1 className="font-comic-neue text-5xl md:text-6xl font-bold text-primary mb-12 text-center ">
               Gallery
             </h1>
+            <ImageGallery />
           </div>
         </div>
       </section>
