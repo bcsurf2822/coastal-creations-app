@@ -183,14 +183,18 @@ const CustomerSchema = new Schema<ICustomer>(
 CustomerSchema.pre("save", async function (next) {
   if (this.isModified("quantity") || this.isNew) {
     if (typeof this.event !== "string") {
-      this.total = this.quantity * (this.event as IEvent).price;
+      // Handle case where price might be undefined (for artist events)
+      const eventPrice = (this.event as IEvent).price || 0;
+      this.total = this.quantity * eventPrice;
     } else {
       // If we only have the event ID, we need to fetch the event to get its price
       try {
         const Event = mongoose.model("Event");
         const event = await Event.findById(this.event);
         if (event) {
-          this.total = this.quantity * event.price;
+          // Handle case where price might be undefined (for artist events)
+          const eventPrice = event.price || 0;
+          this.total = this.quantity * eventPrice;
         }
       } catch (error) {
         next(error as Error);
