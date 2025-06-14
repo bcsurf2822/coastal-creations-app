@@ -4,9 +4,9 @@ import mongoose, { Document, Model, Schema } from "mongoose";
 export interface IEvent extends Document {
   _id: string;
   eventName: string;
-  eventType: "class" | "camp" | "workshop";
+  eventType: "class" | "camp" | "workshop" | "artist";
   description: string;
-  price: number;
+  price?: number;
   dates: {
     startDate: Date;
     endDate?: Date;
@@ -106,7 +106,7 @@ const EventSchema = new Schema<IEvent>(
     eventType: {
       type: String,
       required: true,
-      enum: ["class", "camp", "workshop"],
+      enum: ["class", "camp", "workshop", "artist"],
     },
     description: {
       type: String,
@@ -114,7 +114,7 @@ const EventSchema = new Schema<IEvent>(
     },
     price: {
       type: Number,
-      required: true,
+      required: false,
       min: 0,
     },
     dates: {
@@ -147,7 +147,11 @@ EventSchema.statics.testConnection = function () {
 };
 
 // Prevent duplicate models in development
-const Event: Model<IEvent> =
-  mongoose.models.Event || mongoose.model<IEvent>("Event", EventSchema);
+// Clear the model if it exists to ensure we get the updated schema
+if (mongoose.models.Event) {
+  delete mongoose.models.Event;
+}
+
+const Event: Model<IEvent> = mongoose.model<IEvent>("Event", EventSchema);
 
 export default Event;

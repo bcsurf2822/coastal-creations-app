@@ -12,7 +12,7 @@ import Select, { SelectChangeEvent } from "@mui/material/Select";
 
 interface EventFormData {
   eventName: string;
-  eventType: "class" | "workshop" | "camp";
+  eventType: "class" | "workshop" | "camp" | "artist";
   description: string;
   price: string;
   startDate: string;
@@ -136,11 +136,11 @@ const EventForm: React.FC = () => {
     if (!data.description.trim()) {
       newErrors.description = "Description is required";
     }
-    if (
+    if (data.eventType !== "artist" && (
       !data.price ||
       isNaN(parseFloat(data.price)) ||
       parseFloat(data.price) < 0
-    ) {
+    )) {
       newErrors.price = "Price is required";
     }
     if (!data.startDate) {
@@ -158,7 +158,7 @@ const EventForm: React.FC = () => {
       newErrors.startTime = "Invalid start time format";
     }
 
-    if (data.isRecurring) {
+    if (data.eventType !== "artist" && data.isRecurring) {
       if (!data.recurringEndDate) {
         newErrors.recurringEndDate =
           "Recurring end date is required for recurring events";
@@ -193,15 +193,15 @@ const EventForm: React.FC = () => {
           eventName: formData.eventName,
           eventType: formData.eventType, // Already restricted to valid enum values in the interface
           description: formData.description,
-          price: parseFloat(formData.price),
+          price: formData.eventType !== "artist" ? parseFloat(formData.price) : undefined,
           // Match dates structure from Event.ts model
           dates: {
             startDate: formData.startDate, // Send the date string
-            isRecurring: formData.isRecurring,
-            recurringPattern: formData.isRecurring
+            isRecurring: formData.eventType !== "artist" ? formData.isRecurring : false,
+            recurringPattern: formData.eventType !== "artist" && formData.isRecurring
               ? formData.recurringPattern
               : undefined,
-            recurringEndDate: formData.isRecurring
+            recurringEndDate: formData.eventType !== "artist" && formData.isRecurring
               ? formData.recurringEndDate
               : undefined,
           },
@@ -213,7 +213,7 @@ const EventForm: React.FC = () => {
             endTime: formData.endTime ? formData.endTime.format("HH:mm") : "",
           },
           // Add options if they exist
-          options: formData.hasOptions
+          options: formData.eventType !== "artist" && formData.hasOptions
             ? formData.optionCategories.filter(
                 (cat) => cat.categoryName.trim() !== ""
               )
@@ -413,37 +413,40 @@ const EventForm: React.FC = () => {
             <option value="class">Class</option>
             <option value="workshop">Workshop</option>
             <option value="camp">Camp</option>
+            <option value="artist">Artist</option>
           </select>
           {errors.eventType && (
             <p className="mt-1 text-sm text-red-600">{errors.eventType}</p>
           )}
         </div>
 
-        <div>
-          <label
-            htmlFor="price"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Price ($)
-          </label>
-          <input
-            type="text"
-            id="price"
-            name="price"
-            value={formData.price}
-            onChange={(e) => {
-              const value = e.target.value;
-              if (/^\d*\.?\d*$/.test(value)) {
-                handleChange(e);
-              }
-            }}
-            className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.price ? "border-red-500" : "border-gray-300"}`}
-            placeholder="Enter Price"
-          />
-          {errors.price && (
-            <p className="mt-1 text-sm text-red-600">{errors.price}</p>
-          )}
-        </div>
+        {formData.eventType !== "artist" && (
+          <div>
+            <label
+              htmlFor="price"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Price ($)
+            </label>
+            <input
+              type="text"
+              id="price"
+              name="price"
+              value={formData.price}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (/^\d*\.?\d*$/.test(value)) {
+                  handleChange(e);
+                }
+              }}
+              className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.price ? "border-red-500" : "border-gray-300"}`}
+              placeholder="Enter Price"
+            />
+            {errors.price && (
+              <p className="mt-1 text-sm text-red-600">{errors.price}</p>
+            )}
+          </div>
+        )}
 
         <div>
           <label
@@ -516,24 +519,26 @@ const EventForm: React.FC = () => {
           </div>
         </div>
 
-        <div className="col-span-1 md:col-span-2 flex items-center">
-          <input
-            type="checkbox"
-            id="isRecurring"
-            name="isRecurring"
-            checked={formData.isRecurring}
-            onChange={handleChange}
-            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-          />
-          <label
-            htmlFor="isRecurring"
-            className="ml-2 block text-sm font-medium text-gray-700"
-          >
-            Recurring Event
-          </label>
-        </div>
+        {formData.eventType !== "artist" && (
+          <div className="col-span-1 md:col-span-2 flex items-center">
+            <input
+              type="checkbox"
+              id="isRecurring"
+              name="isRecurring"
+              checked={formData.isRecurring}
+              onChange={handleChange}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label
+              htmlFor="isRecurring"
+              className="ml-2 block text-sm font-medium text-gray-700"
+            >
+              Recurring Event
+            </label>
+          </div>
+        )}
 
-        {formData.isRecurring && (
+        {formData.eventType !== "artist" && formData.isRecurring && (
           <>
             <div>
               <label
@@ -599,29 +604,31 @@ const EventForm: React.FC = () => {
           )}
         </div>
 
-        <div className="col-span-1 md:col-span-2 flex items-center mt-4">
-          <input
-            type="checkbox"
-            id="hasOptions"
-            name="hasOptions"
-            checked={formData.hasOptions}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                hasOptions: e.target.checked,
-              })
-            }
-            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-          />
-          <label
-            htmlFor="hasOptions"
-            className="ml-2 block text-sm font-medium text-gray-700"
-          >
-            Add Options
-          </label>
-        </div>
+        {formData.eventType !== "artist" && (
+          <div className="col-span-1 md:col-span-2 flex items-center mt-4">
+            <input
+              type="checkbox"
+              id="hasOptions"
+              name="hasOptions"
+              checked={formData.hasOptions}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  hasOptions: e.target.checked,
+                })
+              }
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label
+              htmlFor="hasOptions"
+              className="ml-2 block text-sm font-medium text-gray-700"
+            >
+              Add Options
+            </label>
+          </div>
+        )}
 
-        {formData.hasOptions && (
+        {formData.eventType !== "artist" && formData.hasOptions && (
           <div className="col-span-1 md:col-span-2 bg-gray-50 p-4 rounded-md border border-gray-200">
             <h3 className="text-lg font-medium text-gray-800 mb-3">
               Event Options
