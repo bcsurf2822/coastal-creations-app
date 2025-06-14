@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate total based on event price and quantity
-    const total = event.price * quantity;
+    const total = (event.price || 0) * quantity;
 
     // Create a new customer record
     const customer = new Customer({
