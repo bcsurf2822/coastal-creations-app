@@ -452,7 +452,6 @@ export default function Classes() {
 
         const data = await response.json();
 
-
         setEvents(data.events || []);
       } catch (err: unknown) {
         console.error("Error fetching events:", err);
@@ -493,11 +492,11 @@ export default function Classes() {
     // Convert event name to lowercase for case-insensitive matching
     const eventNameLower = eventName.toLowerCase();
 
-    // Find a picture where the title is included in the event name
+    // Find a picture where the title exactly matches the event name
     return eventPictures.find((picture) => {
       if (!picture.title) return false;
       const titleLower = picture.title.toLowerCase();
-      return eventNameLower.includes(titleLower);
+      return titleLower === eventNameLower;
     });
   };
 

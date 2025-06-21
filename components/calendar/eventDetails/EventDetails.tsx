@@ -483,7 +483,7 @@ export default function EventDetails({
     return eventPictures.find((picture) => {
       if (!picture.title) return false;
       const titleLower = picture.title.toLowerCase();
-      return eventNameLower.includes(titleLower);
+      return titleLower === eventNameLower;
     });
   };
 

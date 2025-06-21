@@ -1,4 +1,16 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+// Extend dayjs with timezone plugins
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+// Set your local timezone - adjust this to your actual timezone
+// Common US timezones: "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles"
+// For other timezones, see: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+const LOCAL_TIMEZONE = "America/New_York"; // Change this to your timezone
 
 // TypeScript interface for Event document
 export interface IEvent extends Document {
@@ -7,6 +19,7 @@ export interface IEvent extends Document {
   eventType: "class" | "camp" | "workshop" | "artist";
   description: string;
   price?: number;
+  numberOfParticipants?: number;
   dates: {
     startDate: Date;
     endDate?: Date;
@@ -32,14 +45,40 @@ export interface IEvent extends Document {
   updatedAt: Date;
 }
 
+// Helper function to convert date strings to proper Date objects in local timezone
+const convertToLocalDate = (
+  value: string | Date | null | undefined
+): Date | null | undefined => {
+  if (!value) return value as null | undefined;
+
+  // If it's already a Date object, return as-is
+  if (value instanceof Date) return value;
+
+  // If it's a string in YYYY-MM-DD format (from HTML date input)
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    // Create date at start of day in local timezone
+    return dayjs.tz(value, LOCAL_TIMEZONE).startOf("day").toDate();
+  }
+
+  // For other string formats, try to parse normally
+  if (typeof value === "string") {
+    return dayjs(value).toDate();
+  }
+
+  // This should never happen given our input types, but TypeScript needs it
+  return null;
+};
+
 // Define subdocument schemas
 const EventDatesSchema = new Schema({
   startDate: {
     type: Date,
     required: true,
+    set: convertToLocalDate,
   },
   endDate: {
     type: Date,
+    set: convertToLocalDate,
   },
   isRecurring: {
     type: Boolean,
@@ -51,15 +90,18 @@ const EventDatesSchema = new Schema({
   },
   recurringEndDate: {
     type: Date,
+    set: convertToLocalDate,
   },
   excludeDates: [
     {
       type: Date,
+      set: convertToLocalDate,
     },
   ],
   specificDates: [
     {
       type: Date,
+      set: convertToLocalDate,
     },
   ],
 });
@@ -116,6 +158,9 @@ const EventSchema = new Schema<IEvent>(
       type: Number,
       required: false,
       min: 0,
+    },
+    numberOfParticipants: {
+      type: Number,
     },
     dates: {
       type: EventDatesSchema,

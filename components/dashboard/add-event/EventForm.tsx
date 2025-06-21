@@ -15,6 +15,7 @@ interface EventFormData {
   eventType: "class" | "workshop" | "camp" | "artist";
   description: string;
   price: string;
+  numberOfParticipants: string;
   startDate: string;
   startTime: Dayjs | null;
   endTime: Dayjs | null;
@@ -30,6 +31,7 @@ interface EventFormData {
     }>;
   }>;
   image: File | null;
+  imageUrl?: string;
 }
 
 interface FormErrors {
@@ -37,6 +39,7 @@ interface FormErrors {
   eventType?: string;
   description?: string;
   price?: string;
+  numberOfParticipants?: string;
   startDate?: string;
   startTime?: string;
   endTime?: string;
@@ -62,6 +65,7 @@ const EventForm: React.FC = () => {
     eventType: "class",
     description: "",
     price: "",
+    numberOfParticipants: "",
     startDate: "",
     startTime: dayjs(),
     endTime: dayjs().add(1, "hour"),
@@ -83,6 +87,10 @@ const EventForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [imageUploadStatus, setImageUploadStatus] = useState<string | null>(
+    null
+  );
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -101,15 +109,56 @@ const EventForm: React.FC = () => {
       e.target instanceof HTMLInputElement &&
       e.target.files
     ) {
+      const file = e.target.files[0];
       setFormData({
         ...formData,
-        [name]: e.target.files[0],
+        [name]: file,
       });
+      // Auto-upload image when selected
+      if (file && formData.eventName) {
+        handleImageUpload(file);
+      }
     } else {
       setFormData({
         ...formData,
         [name]: value,
       });
+    }
+  };
+
+  const handleImageUpload = async (file: File) => {
+    if (!formData.eventName) {
+      setErrors({ ...errors, image: "Please enter an event name first" });
+      return;
+    }
+
+    setImageUploadStatus("Uploading image...");
+    const formDataUpload = new FormData();
+    formDataUpload.append("file", file);
+    formDataUpload.append("title", formData.eventName);
+
+    try {
+      const response = await fetch("/api/upload-image", {
+        method: "POST",
+        body: formDataUpload,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to upload image");
+      }
+
+      const result = await response.json();
+      setUploadedImageUrl(result.imageUrl);
+      setImageUploadStatus("Image uploaded successfully!");
+
+      // Clear the success message after 3 seconds
+      setTimeout(() => {
+        setImageUploadStatus(null);
+      }, 3000);
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      setImageUploadStatus("Failed to upload image. Please try again.");
+      setErrors({ ...errors, image: "Failed to upload image" });
     }
   };
 
@@ -136,12 +185,21 @@ const EventForm: React.FC = () => {
     if (!data.description.trim()) {
       newErrors.description = "Description is required";
     }
-    if (data.eventType !== "artist" && (
-      !data.price ||
-      isNaN(parseFloat(data.price)) ||
-      parseFloat(data.price) < 0
-    )) {
+    if (
+      data.eventType !== "artist" &&
+      (!data.price ||
+        isNaN(parseFloat(data.price)) ||
+        parseFloat(data.price) < 0)
+    ) {
       newErrors.price = "Price is required";
+    }
+    if (
+      data.numberOfParticipants &&
+      (isNaN(parseInt(data.numberOfParticipants)) ||
+        parseInt(data.numberOfParticipants) < 1)
+    ) {
+      newErrors.numberOfParticipants =
+        "Number of participants must be a positive number";
     }
     if (!data.startDate) {
       newErrors.startDate = "Start date is required";
@@ -193,17 +251,26 @@ const EventForm: React.FC = () => {
           eventName: formData.eventName,
           eventType: formData.eventType, // Already restricted to valid enum values in the interface
           description: formData.description,
-          price: formData.eventType !== "artist" ? parseFloat(formData.price) : undefined,
+          price:
+            formData.eventType !== "artist"
+              ? parseFloat(formData.price)
+              : undefined,
+          numberOfParticipants: formData.numberOfParticipants
+            ? parseInt(formData.numberOfParticipants)
+            : undefined,
           // Match dates structure from Event.ts model
           dates: {
-            startDate: formData.startDate, // Send the date string
-            isRecurring: formData.eventType !== "artist" ? formData.isRecurring : false,
-            recurringPattern: formData.eventType !== "artist" && formData.isRecurring
-              ? formData.recurringPattern
-              : undefined,
-            recurringEndDate: formData.eventType !== "artist" && formData.isRecurring
-              ? formData.recurringEndDate
-              : undefined,
+            startDate: formData.startDate, // Send the date string as-is, let schema handle timezone
+            isRecurring:
+              formData.eventType !== "artist" ? formData.isRecurring : false,
+            recurringPattern:
+              formData.eventType !== "artist" && formData.isRecurring
+                ? formData.recurringPattern
+                : undefined,
+            recurringEndDate:
+              formData.eventType !== "artist" && formData.isRecurring
+                ? formData.recurringEndDate
+                : undefined,
           },
           // Match time structure from Event.ts model
           time: {
@@ -213,12 +280,14 @@ const EventForm: React.FC = () => {
             endTime: formData.endTime ? formData.endTime.format("HH:mm") : "",
           },
           // Add options if they exist
-          options: formData.eventType !== "artist" && formData.hasOptions
-            ? formData.optionCategories.filter(
-                (cat) => cat.categoryName.trim() !== ""
-              )
-            : undefined,
-          // Note: Image handling will need to be addressed separately
+          options:
+            formData.eventType !== "artist" && formData.hasOptions
+              ? formData.optionCategories.filter(
+                  (cat) => cat.categoryName.trim() !== ""
+                )
+              : undefined,
+          // Image is already uploaded to Sanity, include URL if available
+          image: uploadedImageUrl || undefined,
         };
 
         // Send data to API
@@ -448,6 +517,36 @@ const EventForm: React.FC = () => {
           </div>
         )}
 
+        {formData.eventType !== "artist" && (
+          <div>
+            <label
+              htmlFor="numberOfParticipants"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Number of Participants (Optional)
+            </label>
+            <select
+              id="numberOfParticipants"
+              name="numberOfParticipants"
+              value={formData.numberOfParticipants}
+              onChange={handleChange}
+              className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.numberOfParticipants ? "border-red-500" : "border-gray-300"}`}
+            >
+              <option value="">Select number of participants</option>
+              {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
+                <option key={num} value={num.toString()}>
+                  {num} participant{num > 1 ? "s" : ""}
+                </option>
+              ))}
+            </select>
+            {errors.numberOfParticipants && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.numberOfParticipants}
+              </p>
+            )}
+          </div>
+        )}
+
         <div>
           <label
             htmlFor="startDate"
@@ -601,6 +700,49 @@ const EventForm: React.FC = () => {
           ></textarea>
           {errors.description && (
             <p className="mt-1 text-sm text-red-600">{errors.description}</p>
+          )}
+        </div>
+
+        <div className="col-span-1 md:col-span-2">
+          <label
+            htmlFor="image"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Event Image (Optional)
+          </label>
+          {!formData.eventName && (
+            <p className="text-sm text-gray-500 mb-2">
+              Please enter an event name before uploading an image
+            </p>
+          )}
+          <input
+            type="file"
+            id="image"
+            name="image"
+            accept="image/*"
+            onChange={handleChange}
+            disabled={!formData.eventName}
+            className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.image ? "border-red-500" : "border-gray-300"} ${!formData.eventName ? "opacity-50 cursor-not-allowed" : ""}`}
+          />
+          {imageUploadStatus && (
+            <p
+              className={`mt-1 text-sm ${imageUploadStatus.includes("successfully") ? "text-green-600" : imageUploadStatus.includes("Failed") ? "text-red-600" : "text-blue-600"}`}
+            >
+              {imageUploadStatus}
+            </p>
+          )}
+          {uploadedImageUrl && (
+            <div className="mt-2">
+              <p className="text-sm text-gray-600">Preview:</p>
+              <img
+                src={uploadedImageUrl}
+                alt="Uploaded event image"
+                className="mt-1 h-32 w-auto object-cover rounded-md"
+              />
+            </div>
+          )}
+          {errors.image && (
+            <p className="mt-1 text-sm text-red-600">{errors.image}</p>
           )}
         </div>
 
