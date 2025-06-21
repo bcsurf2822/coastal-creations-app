@@ -85,3 +85,35 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export async function GET() {
+  try {
+    // Connect to MongoDB
+    await connectMongo();
+
+    // Retrieve all customers from the database
+    const customers = await Customer.find({}).populate("event");
+
+    // Return success response with all customers
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Customers retrieved successfully",
+        data: customers,
+        count: customers.length,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error retrieving customers:", error);
+
+    // Generic error response
+    return NextResponse.json(
+      {
+        error: "Error retrieving customers",
+        message: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
+  }
+}

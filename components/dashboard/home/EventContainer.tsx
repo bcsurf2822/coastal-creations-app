@@ -168,6 +168,9 @@ export default function EventContainer() {
   const [deletingEventIds, setDeletingEventIds] = useState<Set<string>>(
     new Set()
   );
+  const [eventParticipantCounts, setEventParticipantCounts] = useState<
+    Record<string, number>
+  >({});
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -226,7 +229,59 @@ export default function EventContainer() {
       }
     };
 
+    const fetchCustomers = async () => {
+      try {
+        const response = await fetch("/api/customer", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const responseText = await response.text();
+
+        let result;
+        try {
+          result = responseText ? JSON.parse(responseText) : {};
+        } catch (parseError) {
+          console.error(
+            "Failed to parse customer response as JSON:",
+            parseError
+          );
+          return;
+        }
+
+        if (!response.ok) {
+          console.error(
+            "Failed to fetch customers:",
+            result.error || "Unknown error"
+          );
+          return;
+        }
+
+        // Calculate participant counts per event
+        const participantCounts: Record<string, number> = {};
+
+        if (result.data && Array.isArray(result.data)) {
+          result.data.forEach(
+            (customer: { event?: { _id: string }; quantity: number }) => {
+              const eventId = customer.event?._id;
+              if (eventId) {
+                // Add the quantity (number of participants) for this registration
+                participantCounts[eventId] =
+                  (participantCounts[eventId] || 0) + customer.quantity;
+              }
+            }
+          );
+        }
+        setEventParticipantCounts(participantCounts);
+      } catch (error) {
+        console.error("Error fetching customers:", error);
+      }
+    };
+
     fetchEvents();
+    fetchCustomers();
   }, []);
 
   const handleEventClick = (event: Event) => {
@@ -444,11 +499,18 @@ export default function EventContainer() {
                       </span>
                     </div>
                   </div>
-                  {event.price !== undefined && (
-                    <div className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
-                      ${event.price}
-                    </div>
-                  )}
+                  <div className="mt-2 flex justify-between items-center">
+                    {event.price !== undefined && (
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        ${event.price}
+                      </div>
+                    )}
+                    {event.eventType !== "artist" && (
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        {eventParticipantCounts[event.id] || 0} participants
+                      </div>
+                    )}
+                  </div>
                   <div className="mt-4">
                     <button
                       className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg cursor-pointer"
