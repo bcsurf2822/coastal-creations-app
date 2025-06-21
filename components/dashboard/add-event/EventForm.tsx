@@ -87,7 +87,9 @@ const EventForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [imageUploadStatus, setImageUploadStatus] = useState<string | null>(null);
+  const [imageUploadStatus, setImageUploadStatus] = useState<string | null>(
+    null
+  );
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
 
   const handleChange = (
@@ -148,7 +150,7 @@ const EventForm: React.FC = () => {
       const result = await response.json();
       setUploadedImageUrl(result.imageUrl);
       setImageUploadStatus("Image uploaded successfully!");
-      
+
       // Clear the success message after 3 seconds
       setTimeout(() => {
         setImageUploadStatus(null);
@@ -285,7 +287,7 @@ const EventForm: React.FC = () => {
                 )
               : undefined,
           // Image is already uploaded to Sanity, include URL if available
-          image: uploadedImageUrl || undefined
+          image: uploadedImageUrl || undefined,
         };
 
         // Send data to API
@@ -723,7 +725,9 @@ const EventForm: React.FC = () => {
             className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.image ? "border-red-500" : "border-gray-300"} ${!formData.eventName ? "opacity-50 cursor-not-allowed" : ""}`}
           />
           {imageUploadStatus && (
-            <p className={`mt-1 text-sm ${imageUploadStatus.includes("successfully") ? "text-green-600" : imageUploadStatus.includes("Failed") ? "text-red-600" : "text-blue-600"}`}>
+            <p
+              className={`mt-1 text-sm ${imageUploadStatus.includes("successfully") ? "text-green-600" : imageUploadStatus.includes("Failed") ? "text-red-600" : "text-blue-600"}`}
+            >
               {imageUploadStatus}
             </p>
           )}
