@@ -15,6 +15,7 @@ interface EventFormData {
   eventType: "class" | "workshop" | "camp" | "artist";
   description: string;
   price: string;
+  numberOfParticipants: string;
   startDate: string;
   startTime: Dayjs | null;
   endTime: Dayjs | null;
@@ -37,6 +38,7 @@ interface FormErrors {
   eventType?: string;
   description?: string;
   price?: string;
+  numberOfParticipants?: string;
   startDate?: string;
   startTime?: string;
   endTime?: string;
@@ -62,6 +64,7 @@ const EventForm: React.FC = () => {
     eventType: "class",
     description: "",
     price: "",
+    numberOfParticipants: "",
     startDate: "",
     startTime: dayjs(),
     endTime: dayjs().add(1, "hour"),
@@ -136,12 +139,21 @@ const EventForm: React.FC = () => {
     if (!data.description.trim()) {
       newErrors.description = "Description is required";
     }
-    if (data.eventType !== "artist" && (
-      !data.price ||
-      isNaN(parseFloat(data.price)) ||
-      parseFloat(data.price) < 0
-    )) {
+    if (
+      data.eventType !== "artist" &&
+      (!data.price ||
+        isNaN(parseFloat(data.price)) ||
+        parseFloat(data.price) < 0)
+    ) {
       newErrors.price = "Price is required";
+    }
+    if (
+      data.numberOfParticipants &&
+      (isNaN(parseInt(data.numberOfParticipants)) ||
+        parseInt(data.numberOfParticipants) < 1)
+    ) {
+      newErrors.numberOfParticipants =
+        "Number of participants must be a positive number";
     }
     if (!data.startDate) {
       newErrors.startDate = "Start date is required";
@@ -193,17 +205,26 @@ const EventForm: React.FC = () => {
           eventName: formData.eventName,
           eventType: formData.eventType, // Already restricted to valid enum values in the interface
           description: formData.description,
-          price: formData.eventType !== "artist" ? parseFloat(formData.price) : undefined,
+          price:
+            formData.eventType !== "artist"
+              ? parseFloat(formData.price)
+              : undefined,
+          numberOfParticipants: formData.numberOfParticipants
+            ? parseInt(formData.numberOfParticipants)
+            : undefined,
           // Match dates structure from Event.ts model
           dates: {
-            startDate: formData.startDate, // Send the date string
-            isRecurring: formData.eventType !== "artist" ? formData.isRecurring : false,
-            recurringPattern: formData.eventType !== "artist" && formData.isRecurring
-              ? formData.recurringPattern
-              : undefined,
-            recurringEndDate: formData.eventType !== "artist" && formData.isRecurring
-              ? formData.recurringEndDate
-              : undefined,
+            startDate: formData.startDate, // Send the date string as-is, let schema handle timezone
+            isRecurring:
+              formData.eventType !== "artist" ? formData.isRecurring : false,
+            recurringPattern:
+              formData.eventType !== "artist" && formData.isRecurring
+                ? formData.recurringPattern
+                : undefined,
+            recurringEndDate:
+              formData.eventType !== "artist" && formData.isRecurring
+                ? formData.recurringEndDate
+                : undefined,
           },
           // Match time structure from Event.ts model
           time: {
@@ -213,11 +234,12 @@ const EventForm: React.FC = () => {
             endTime: formData.endTime ? formData.endTime.format("HH:mm") : "",
           },
           // Add options if they exist
-          options: formData.eventType !== "artist" && formData.hasOptions
-            ? formData.optionCategories.filter(
-                (cat) => cat.categoryName.trim() !== ""
-              )
-            : undefined,
+          options:
+            formData.eventType !== "artist" && formData.hasOptions
+              ? formData.optionCategories.filter(
+                  (cat) => cat.categoryName.trim() !== ""
+                )
+              : undefined,
           // Note: Image handling will need to be addressed separately
         };
 
@@ -447,6 +469,34 @@ const EventForm: React.FC = () => {
             )}
           </div>
         )}
+
+        <div>
+          <label
+            htmlFor="numberOfParticipants"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Number of Participants (Optional)
+          </label>
+          <select
+            id="numberOfParticipants"
+            name="numberOfParticipants"
+            value={formData.numberOfParticipants}
+            onChange={handleChange}
+            className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.numberOfParticipants ? "border-red-500" : "border-gray-300"}`}
+          >
+            <option value="">Select number of participants</option>
+            {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
+              <option key={num} value={num.toString()}>
+                {num} participant{num > 1 ? "s" : ""}
+              </option>
+            ))}
+          </select>
+          {errors.numberOfParticipants && (
+            <p className="mt-1 text-sm text-red-600">
+              {errors.numberOfParticipants}
+            </p>
+          )}
+        </div>
 
         <div>
           <label

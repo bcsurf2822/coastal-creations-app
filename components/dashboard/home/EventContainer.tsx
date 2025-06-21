@@ -48,6 +48,8 @@ interface SimpleDialogProps {
     description?: string;
     startDate?: Date;
   };
+  onDelete: (eventId: string, onSuccess?: () => void) => void;
+  isDeleting: boolean;
 }
 
 // Define types for EventDetailsDialog props
@@ -59,12 +61,16 @@ interface EventDetailsDialogProps {
     startDate?: Date;
   };
   onClose: () => void;
+  onDelete: (eventId: string, onSuccess?: () => void) => void;
+  isDeleting: boolean;
 }
 
 // Update EventDetailsDialog component with types
 function EventDetailsDialog({
   eventDetails,
   onClose,
+  onDelete,
+  isDeleting,
 }: EventDetailsDialogProps) {
   if (!eventDetails) return null;
 
@@ -86,35 +92,32 @@ function EventDetailsDialog({
           <RiEdit2Line className="w-5 h-5" />
         </Link>
         <button
-          className="p-2 rounded-lg text-gray-600 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-900/20 transition-colors"
-          onClick={async () => {
-            if (confirm("Are you sure you want to delete this event?")) {
-              try {
-                const response = await fetch(
-                  `/api/events?id=${eventDetails.id}`,
-                  { method: "DELETE" }
-                );
-
-                if (response.ok) {
-                  onClose();
-                } else {
-                  alert("Failed to delete event");
-                }
-              } catch (error) {
-                console.error("Error deleting event:", error);
-                alert("Error deleting event");
-              }
-            }
-          }}
+          className={`p-2 rounded-lg transition-colors relative ${
+            isDeleting
+              ? "opacity-50 cursor-not-allowed text-gray-400"
+              : "text-gray-600 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-900/20 cursor-pointer"
+          }`}
+          onClick={() => onDelete(eventDetails.id, onClose)}
+          disabled={isDeleting}
         >
-          <RiDeleteBinLine className="w-5 h-5" />
+          {isDeleting ? (
+            <div className="w-5 h-5 border-2 border-gray-300 cursor-not-allowed border-t-red-600 rounded-full animate-spin"></div>
+          ) : (
+            <RiDeleteBinLine className="w-5 h-5" />
+          )}
         </button>
       </div>
     </div>
   );
 }
 
-function SimpleDialog({ open, onClose, eventDetails }: SimpleDialogProps) {
+function SimpleDialog({
+  open,
+  onClose,
+  eventDetails,
+  onDelete,
+  isDeleting,
+}: SimpleDialogProps) {
   return (
     <Dialog onClose={onClose} open={open}>
       <div className="flex justify-between items-center">
@@ -126,7 +129,12 @@ function SimpleDialog({ open, onClose, eventDetails }: SimpleDialogProps) {
           <CloseIcon />
         </IconButton>
       </div>
-      <EventDetailsDialog eventDetails={eventDetails} onClose={onClose} />
+      <EventDetailsDialog
+        eventDetails={eventDetails}
+        onClose={onClose}
+        onDelete={onDelete}
+        isDeleting={isDeleting}
+      />
     </Dialog>
   );
 }
@@ -157,6 +165,9 @@ export default function EventContainer() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<string | null>(null);
+  const [deletingEventIds, setDeletingEventIds] = useState<Set<string>>(
+    new Set()
+  );
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -207,8 +218,6 @@ export default function EventContainer() {
         }));
 
         setEvents(transformedEvents);
-
-  
       } catch (error) {
         console.error("Error fetching events:", error);
         setError(typeof error === "string" ? error : (error as Error).message);
@@ -221,14 +230,54 @@ export default function EventContainer() {
   }, []);
 
   const handleEventClick = (event: Event) => {
-
     setSelectedEvent(event);
     setIsDialogOpen(true);
   };
 
   const closeDialog = () => {
-
     setIsDialogOpen(false);
+  };
+
+  const handleDeleteEvent = async (eventId: string, onSuccess?: () => void) => {
+    if (!confirm("Are you sure you want to delete this event?")) {
+      return;
+    }
+
+    // Add event ID to deleting set
+    setDeletingEventIds((prev) => new Set(prev).add(eventId));
+
+    try {
+      const response = await fetch(`/api/events?id=${eventId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete event");
+      }
+
+      // Remove event from local state immediately for real-time update
+      setEvents((prevEvents) => prevEvents.filter((e) => e.id !== eventId));
+
+      // Clear selected event if it was the one being deleted
+      if (selectedEvent?.id === eventId) {
+        setSelectedEvent(null);
+      }
+
+      // Call success callback if provided (for dialog close)
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      alert("Failed to delete event. Please try again.");
+    } finally {
+      // Remove event ID from deleting set
+      setDeletingEventIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(eventId);
+        return newSet;
+      });
+    }
   };
 
   // Format date function
@@ -351,8 +400,20 @@ export default function EventContainer() {
                     selectedEvent?.id === event.id
                       ? "border-blue-500 dark:border-blue-400"
                       : "border-gray-200 dark:border-gray-700"
-                  } p-4 transition-all hover:shadow-md`}
+                  } p-4 transition-all hover:shadow-md ${
+                    deletingEventIds.has(event.id)
+                      ? "opacity-50 pointer-events-none relative"
+                      : ""
+                  }`}
                 >
+                  {deletingEventIds.has(event.id) && (
+                    <div className="absolute inset-0 bg-white/75 dark:bg-gray-800/75 rounded-lg flex items-center justify-center z-10">
+                      <div className="flex items-center space-x-2 text-red-600">
+                        <div className="w-5 h-5 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin"></div>
+                        <span className="text-sm font-medium">Deleting...</span>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex justify-between items-start">
                     <div>
                       <h4 className="font-semibold text-gray-900 dark:text-white text-lg">
@@ -402,7 +463,21 @@ export default function EventContainer() {
 
             {/* Selected event details */}
             {selectedEvent && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 animate-fadeIn shadow-sm">
+              <div
+                className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 animate-fadeIn shadow-sm relative ${
+                  deletingEventIds.has(selectedEvent.id) ? "opacity-75" : ""
+                }`}
+              >
+                {deletingEventIds.has(selectedEvent.id) && (
+                  <div className="absolute inset-0 bg-white/75 dark:bg-gray-800/75 rounded-lg flex items-center justify-center z-10">
+                    <div className="flex items-center space-x-2 text-red-600">
+                      <div className="w-6 h-6 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin"></div>
+                      <span className="text-lg font-medium">
+                        Deleting Event...
+                      </span>
+                    </div>
+                  </div>
+                )}
                 <div className="flex justify-between items-start mb-4">
                   <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400">
                     {selectedEvent.name}
@@ -415,33 +490,19 @@ export default function EventContainer() {
                       <RiEdit2Line className="w-5 h-5" />
                     </Link>
                     <button
-                      className="p-2 rounded-lg text-gray-600 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-900/20 transition-colors"
-                      onClick={async () => {
-                        if (
-                          confirm("Are you sure you want to delete this event?")
-                        ) {
-                          try {
-                            const response = await fetch(
-                              `/api/events?id=${selectedEvent.id}`,
-                              { method: "DELETE" }
-                            );
-
-                            if (response.ok) {
-                              setEvents(
-                                events.filter((e) => e.id !== selectedEvent.id)
-                              );
-                              setSelectedEvent(null);
-                            } else {
-                              alert("Failed to delete event");
-                            }
-                          } catch (error) {
-                            console.error("Error deleting event:", error);
-                            alert("Error deleting event");
-                          }
-                        }
-                      }}
+                      className={`p-2 rounded-lg transition-colors relative ${
+                        deletingEventIds.has(selectedEvent.id)
+                          ? "opacity-50 cursor-not-allowed text-gray-400"
+                          : "text-gray-600 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-900/20 cursor-pointer"
+                      }`}
+                      onClick={() => handleDeleteEvent(selectedEvent.id)}
+                      disabled={deletingEventIds.has(selectedEvent.id)}
                     >
-                      <RiDeleteBinLine className="w-5 h-5" />
+                      {deletingEventIds.has(selectedEvent.id) ? (
+                        <div className="w-5 h-5 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin"></div>
+                      ) : (
+                        <RiDeleteBinLine className="w-5 h-5" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -618,6 +679,10 @@ export default function EventContainer() {
             description: "",
             startDate: undefined,
           }
+        }
+        onDelete={handleDeleteEvent}
+        isDeleting={
+          selectedEvent ? deletingEventIds.has(selectedEvent.id) : false
         }
       />
     </div>
