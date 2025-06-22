@@ -285,7 +285,8 @@ export default function NewCalendar() {
         const data = await response.json();
 
         if (data.success) {
-   
+          console.log("API data coming in:", data);
+
           if (Array.isArray(data.events) && data.events.length > 0) {
             const calendarEvents = transformEvents(data.events);
             setEvents(calendarEvents);
@@ -425,7 +426,9 @@ export default function NewCalendar() {
                 ).toDateString()
             : true;
 
-          if (!isRecurring || isFirstOccurrence) {
+          // Don't show sign up button for artist events
+          const eventType = info.event.extendedProps?.eventType;
+          if ((!isRecurring || isFirstOccurrence) && eventType !== "artist") {
             tooltipContent += `<div class="tooltip-signup">
               <button id="signup-${info.event.extendedProps?._id || "event"}" type="button">Sign Up</button>
             </div>`;
