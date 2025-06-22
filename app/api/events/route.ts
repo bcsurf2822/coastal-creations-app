@@ -6,9 +6,7 @@ export async function POST(request: Request) {
   try {
     await connectMongo();
     const data = await request.json();
-    
-    console.log("Received data:", data);
-    
+
     // For artist events, ensure optional fields are handled properly
     if (data.eventType === "artist") {
       // Remove price if undefined or null for artist events
@@ -24,9 +22,7 @@ export async function POST(request: Request) {
       // Remove options for artist events
       delete data.options;
     }
-    
-    console.log("Processed data for DB:", data);
-    
+
     const event = await Event.create(data);
     return NextResponse.json({ success: true, event }, { status: 201 });
   } catch (error) {
