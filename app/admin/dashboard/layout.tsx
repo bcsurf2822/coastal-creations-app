@@ -44,7 +44,7 @@ export default async function AdminDashboardLayout({
         <div className="px-4 sm:px-6 lg:px-8 mx-auto">
           <div className="flex justify-between h-16 items-center">
             <h1 className="text-2xl font-semibold bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-400 dark:to-blue-600 text-transparent bg-clip-text">
-              Coastal Creations Dashboard
+              Coastal Creations Studio Admin Dashboard
             </h1>
             <div className="flex items-center space-x-4">
               <LogoutButton />

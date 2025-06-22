@@ -4,11 +4,6 @@ import { useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
 import { useRouter } from "next/navigation";
 import React from "react";
-import OutlinedInput from "@mui/material/OutlinedInput";
-import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import FormControl from "@mui/material/FormControl";
-import Select, { SelectChangeEvent } from "@mui/material/Select";
 
 interface EventFormData {
   eventName: string;
@@ -47,17 +42,6 @@ interface FormErrors {
   image?: string;
 }
 
-const ITEM_HEIGHT = 48;
-const ITEM_PADDING_TOP = 8;
-const MenuProps = {
-  PaperProps: {
-    style: {
-      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-      width: 250,
-    },
-  },
-};
-
 const EventForm: React.FC = () => {
   const router = useRouter();
   const [formData, setFormData] = useState<EventFormData>({
@@ -67,8 +51,8 @@ const EventForm: React.FC = () => {
     price: "",
     numberOfParticipants: "",
     startDate: "",
-    startTime: dayjs(),
-    endTime: dayjs().add(1, "hour"),
+    startTime: null,
+    endTime: null,
     isRecurring: false,
     recurringPattern: "weekly",
     recurringEndDate: "",
@@ -162,14 +146,21 @@ const EventForm: React.FC = () => {
     }
   };
 
-  const handleTimeChange = (event: SelectChangeEvent<string>) => {
+  const handleTimeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = event.target;
-    const [hours, minutes] = value.split(":").map(Number);
-    if (!isNaN(hours) && !isNaN(minutes)) {
+    if (value === "") {
       setFormData({
         ...formData,
-        [name]: dayjs().hour(hours).minute(minutes).second(0),
+        [name]: null,
       });
+    } else {
+      const [hours, minutes] = value.split(":").map(Number);
+      if (!isNaN(hours) && !isNaN(minutes)) {
+        setFormData({
+          ...formData,
+          [name]: dayjs().hour(hours).minute(minutes).second(0),
+        });
+      }
     }
   };
 
@@ -193,13 +184,16 @@ const EventForm: React.FC = () => {
     ) {
       newErrors.price = "Price is required";
     }
-    if (
-      data.numberOfParticipants &&
-      (isNaN(parseInt(data.numberOfParticipants)) ||
-        parseInt(data.numberOfParticipants) < 1)
-    ) {
-      newErrors.numberOfParticipants =
-        "Number of participants must be a positive number";
+    if (data.eventType !== "artist") {
+      if (!data.numberOfParticipants) {
+        newErrors.numberOfParticipants = "Number of participants is required";
+      } else if (
+        isNaN(parseInt(data.numberOfParticipants)) ||
+        parseInt(data.numberOfParticipants) < 1
+      ) {
+        newErrors.numberOfParticipants =
+          "Number of participants must be a positive number";
+      }
     }
     if (!data.startDate) {
       newErrors.startDate = "Start date is required";
@@ -212,8 +206,9 @@ const EventForm: React.FC = () => {
     }
     if (!data.startTime) {
       newErrors.startTime = "Start time is required";
-    } else if (!dayjs(data.startTime).isValid()) {
-      newErrors.startTime = "Invalid start time format";
+    }
+    if (!data.endTime) {
+      newErrors.endTime = "End time is required";
     }
 
     if (data.eventType !== "artist" && data.isRecurring) {
@@ -255,9 +250,10 @@ const EventForm: React.FC = () => {
             formData.eventType !== "artist"
               ? parseFloat(formData.price)
               : undefined,
-          numberOfParticipants: formData.numberOfParticipants
-            ? parseInt(formData.numberOfParticipants)
-            : undefined,
+          numberOfParticipants:
+            formData.eventType !== "artist"
+              ? parseInt(formData.numberOfParticipants)
+              : undefined,
           // Match dates structure from Event.ts model
           dates: {
             startDate: formData.startDate, // Send the date string as-is, let schema handle timezone
@@ -523,7 +519,7 @@ const EventForm: React.FC = () => {
               htmlFor="numberOfParticipants"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Number of Participants (Optional)
+              Number of Participants
             </label>
             <select
               id="numberOfParticipants"
@@ -569,52 +565,62 @@ const EventForm: React.FC = () => {
 
         <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <FormControl fullWidth>
-              <InputLabel id="start-time-label">Start Time</InputLabel>
-              <Select
-                labelId="start-time-label"
-                id="startTime"
-                name="startTime"
-                value={
-                  formData.startTime ? formData.startTime.format("HH:mm") : ""
-                }
-                onChange={handleTimeChange}
-                input={<OutlinedInput label="Start Time" />}
-                MenuProps={MenuProps}
-              >
-                {generateTimeOptions().map((time) => (
-                  <MenuItem key={time} value={time}>
-                    {dayjs()
-                      .hour(Number(time.split(":")[0]))
-                      .minute(Number(time.split(":")[1]))
-                      .format("h:mm A")}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <label
+              htmlFor="startTime"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Start Time
+            </label>
+            <select
+              id="startTime"
+              name="startTime"
+              value={
+                formData.startTime ? formData.startTime.format("HH:mm") : ""
+              }
+              onChange={handleTimeChange}
+              className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.startTime ? "border-red-500" : "border-gray-300"}`}
+            >
+              <option value="">Select start time</option>
+              {generateTimeOptions().map((time) => (
+                <option key={time} value={time}>
+                  {dayjs()
+                    .hour(Number(time.split(":")[0]))
+                    .minute(Number(time.split(":")[1]))
+                    .format("h:mm A")}
+                </option>
+              ))}
+            </select>
+            {errors.startTime && (
+              <p className="mt-1 text-sm text-red-600">{errors.startTime}</p>
+            )}
           </div>
           <div>
-            <FormControl fullWidth>
-              <InputLabel id="end-time-label">End Time</InputLabel>
-              <Select
-                labelId="end-time-label"
-                id="endTime"
-                name="endTime"
-                value={formData.endTime ? formData.endTime.format("HH:mm") : ""}
-                onChange={handleTimeChange}
-                input={<OutlinedInput label="End Time" />}
-                MenuProps={MenuProps}
-              >
-                {generateTimeOptions().map((time) => (
-                  <MenuItem key={time} value={time}>
-                    {dayjs()
-                      .hour(Number(time.split(":")[0]))
-                      .minute(Number(time.split(":")[1]))
-                      .format("h:mm A")}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <label
+              htmlFor="endTime"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              End Time
+            </label>
+            <select
+              id="endTime"
+              name="endTime"
+              value={formData.endTime ? formData.endTime.format("HH:mm") : ""}
+              onChange={handleTimeChange}
+              className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.endTime ? "border-red-500" : "border-gray-300"}`}
+            >
+              <option value="">Select end time</option>
+              {generateTimeOptions().map((time) => (
+                <option key={time} value={time}>
+                  {dayjs()
+                    .hour(Number(time.split(":")[0]))
+                    .minute(Number(time.split(":")[1]))
+                    .format("h:mm A")}
+                </option>
+              ))}
+            </select>
+            {errors.endTime && (
+              <p className="mt-1 text-sm text-red-600">{errors.endTime}</p>
+            )}
           </div>
         </div>
 
