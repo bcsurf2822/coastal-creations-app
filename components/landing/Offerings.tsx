@@ -150,24 +150,60 @@ export default function Offerings() {
                         className="w-6 h-6 text-primary group-hover:text-white transition duration-300"
                       ></i>
                     </div>
-                    <h4 className="text-2xl font-semibold text-primary">
-                      Next Live Artist Event
-                    </h4>
+                    <div className="flex-1">
+                      {nextArtistEvent ? (
+                        <div>
+                          <h4 className="text-2xl font-semibold text-primary mb-1">
+                            {nextArtistEvent.eventName}
+                          </h4>
+                          <div className="flex items-center space-x-4 text-sm">
+                            <div className="flex items-center text-gray-600">
+                              <i
+                                data-lucide="calendar"
+                                className="w-4 h-4 mr-1"
+                              ></i>
+                              <span className="font-medium">
+                                {formatEventDate(
+                                  nextArtistEvent.dates.startDate
+                                )}
+                              </span>
+                            </div>
+                            <div className="flex items-center text-gray-600">
+                              <i
+                                data-lucide="clock"
+                                className="w-4 h-4 mr-1"
+                              ></i>
+                              <span className="font-medium">
+                                {formatEventTime(
+                                  nextArtistEvent.time.startTime
+                                )}
+                              </span>
+                            </div>
+                            {nextArtistEvent.price && (
+                              <div className="flex items-center text-secondary">
+                                <i
+                                  data-lucide="dollar-sign"
+                                  className="w-4 h-4 mr-1"
+                                ></i>
+                                <span className="font-bold">
+                                  ${nextArtistEvent.price}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <h4 className="text-2xl font-semibold text-primary">
+                          Next Live Artist Event
+                        </h4>
+                      )}
+                    </div>
                   </div>
                   {nextArtistEvent ? (
                     <div className="mb-6 flex-1">
-                      <p className="text-gray-600 group-hover:text-gray-800 transition duration-300 text-justify font-bold mb-4 text-lg">
+                      <p className="text-gray-600 group-hover:text-gray-800 transition duration-300 text-justify font-bold text-lg">
                         {nextArtistEvent.description}
                       </p>
-                      <div className="bg-blue-50 p-4 rounded-lg">
-                        <p className="font-bold text-primary text-lg mb-2">
-                          {nextArtistEvent.eventName}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {formatEventDate(nextArtistEvent.dates.startDate)} at{" "}
-                          {formatEventTime(nextArtistEvent.time.startTime)}
-                        </p>
-                      </div>
                     </div>
                   ) : (
                     <p className="text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300 text-justify font-bold text-lg flex-1">

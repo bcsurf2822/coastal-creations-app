@@ -27,6 +27,7 @@ export interface ApiEvent {
   eventType: string;
   description: string;
   price: number;
+  numberOfParticipants?: number;
   dates: {
     startDate: string;
     endDate?: string;

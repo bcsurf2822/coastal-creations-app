@@ -69,6 +69,7 @@ interface Event {
   eventType: string;
   description: string;
   price: number;
+  numberOfParticipants?: number;
   dates: EventDates;
   time: EventTime;
   options: EventOption[];
@@ -439,6 +440,9 @@ export default function Classes() {
   const [error, setError] = useState<string | null>(null);
   const [eventPictures, setEventPictures] = useState<SanityDocument[]>([]);
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+  const [eventParticipantCounts, setEventParticipantCounts] = useState<
+    Record<string, number>
+  >({});
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -461,7 +465,59 @@ export default function Classes() {
       }
     };
 
+    const fetchCustomers = async () => {
+      try {
+        const response = await fetch("/api/customer", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const responseText = await response.text();
+
+        let result;
+        try {
+          result = responseText ? JSON.parse(responseText) : {};
+        } catch (parseError) {
+          console.error(
+            "Failed to parse customer response as JSON:",
+            parseError
+          );
+          return;
+        }
+
+        if (!response.ok) {
+          console.error(
+            "Failed to fetch customers:",
+            result.error || "Unknown error"
+          );
+          return;
+        }
+
+        // Calculate participant counts per event
+        const participantCounts: Record<string, number> = {};
+
+        if (result.data && Array.isArray(result.data)) {
+          result.data.forEach(
+            (customer: { event?: { _id: string }; quantity: number }) => {
+              const eventId = customer.event?._id;
+              if (eventId) {
+                // Add the quantity (number of participants) for this registration
+                participantCounts[eventId] =
+                  (participantCounts[eventId] || 0) + customer.quantity;
+              }
+            }
+          );
+        }
+        setEventParticipantCounts(participantCounts);
+      } catch (error) {
+        console.error("Error fetching customers:", error);
+      }
+    };
+
     fetchEvents();
+    fetchCustomers();
   }, []);
 
   // Fetch event pictures
@@ -696,6 +752,17 @@ export default function Classes() {
 
                       <Description>{event.description}</Description>
 
+                      {/* Show participant count only if signups > 5 */}
+                      {(eventParticipantCounts[event._id] || 0) > 5 && (
+                        <InfoItem style={{ marginBottom: "1rem" }}>
+                          <InfoIcon>
+                            <FaUsers />
+                          </InfoIcon>
+                          {eventParticipantCounts[event._id] || 0} /{" "}
+                          {event.numberOfParticipants || 20} signed up
+                        </InfoItem>
+                      )}
+
                       {event.options.length > 0 && (
                         <OptionsContainer>
                           {event.options.map((option) => (
@@ -723,12 +790,32 @@ export default function Classes() {
                         </OptionsContainer>
                       )}
 
-                      <Link
-                        href={`/calendar/${event._id}`}
-                        style={{ textDecoration: "none" }}
-                      >
-                        <SignUpButton>Sign Up for Class</SignUpButton>
-                      </Link>
+                      {/* Check if event is sold out */}
+                      {(eventParticipantCounts[event._id] || 0) >=
+                      (event.numberOfParticipants || 20) ? (
+                        <div
+                          style={{
+                            display: "inline-block",
+                            padding: "0.75rem 1.5rem",
+                            background:
+                              "linear-gradient(135deg, #d32f2f, #f44336)",
+                            color: "white",
+                            borderRadius: "25px",
+                            fontWeight: "700",
+                            textAlign: "center",
+                            cursor: "not-allowed",
+                          }}
+                        >
+                          Sold Out
+                        </div>
+                      ) : (
+                        <Link
+                          href={`/calendar/${event._id}`}
+                          style={{ textDecoration: "none" }}
+                        >
+                          <SignUpButton>Sign Up for Class</SignUpButton>
+                        </Link>
+                      )}
                     </ContentSection>
                   </CardContent>
                 </ClassCard>
