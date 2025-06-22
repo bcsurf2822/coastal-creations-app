@@ -728,11 +728,6 @@ export default function LiveArtist() {
                           ))}
                         </OptionsContainer>
                       )}
-
-                      <StatusBadge>
-                        <FaEye />
-                        {eventPast ? "Event Completed" : "Upcoming Live Demo"}
-                      </StatusBadge>
                     </ContentSection>
                   </CardContent>
                 </ClassCard>

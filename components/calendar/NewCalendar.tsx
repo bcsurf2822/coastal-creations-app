@@ -288,8 +288,6 @@ export default function NewCalendar() {
         const data = await response.json();
 
         if (data.success) {
-          console.log("API data coming in:", data);
-
           if (Array.isArray(data.events) && data.events.length > 0) {
             const calendarEvents = transformEvents(data.events);
             setEvents(calendarEvents);

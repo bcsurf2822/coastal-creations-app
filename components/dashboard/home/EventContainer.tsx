@@ -189,7 +189,7 @@ export default function EventContainer() {
         let result;
         try {
           result = responseText ? JSON.parse(responseText) : {};
-          console.log(result);
+
         } catch (parseError) {
           console.error("Failed to parse response as JSON:", parseError);
           throw new Error("API returned invalid JSON response");
