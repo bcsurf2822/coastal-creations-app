@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 export default function Hero() {
   const [isClient, setIsClient] = useState(false);
   const [windowWidth, setWindowWidth] = useState(0);
+  const [showLiveEventPopup, setShowLiveEventPopup] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -20,10 +21,22 @@ export default function Hero() {
       window.addEventListener("resize", handleResize);
     }
 
+    // Show the live event popup after 1 second
+    const popupTimer = setTimeout(() => {
+      setShowLiveEventPopup(true);
+    }, 1000); // Show after 1 second
+
+    // Auto-hide the popup after 8 seconds
+    const hideTimer = setTimeout(() => {
+      setShowLiveEventPopup(false);
+    }, 9000); // Hide after 9 seconds (1s delay + 8s display)
+
     return () => {
       if (typeof window !== "undefined") {
         window.removeEventListener("resize", handleResize);
       }
+      clearTimeout(popupTimer);
+      clearTimeout(hideTimer);
     };
   }, []);
 
@@ -42,6 +55,97 @@ export default function Hero() {
         />
         <div className="absolute inset-0 bg-white/60" />
       </div>
+
+      {/* Live Artist Event Popup */}
+      <motion.div
+        initial={{ x: "100%", opacity: 0 }}
+        animate={
+          showLiveEventPopup ? { x: 0, opacity: 1 } : { x: "100%", opacity: 0 }
+        }
+        transition={{
+          type: "spring",
+          stiffness: 100,
+          damping: 20,
+          duration: 0.8,
+        }}
+        className="fixed top-1/2 right-4 md:right-8 z-50 bg-gradient-to-r from-blue-700 via-blue-800 to-slate-800 text-white px-6 py-4 rounded-xl shadow-2xl border-2 border-white/20 backdrop-blur-sm max-w-xs"
+      >
+        <motion.div
+          animate={
+            showLiveEventPopup
+              ? {
+                  scale: [1, 1.05, 1],
+                  rotate: [0, 2, -2, 0],
+                }
+              : {}
+          }
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            repeatType: "reverse",
+          }}
+          className="relative"
+        >
+          {/* Sparkle effects */}
+          <motion.div
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.7, 1, 0.7],
+            }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              repeatType: "reverse",
+            }}
+            className="absolute -top-2 -right-2 text-yellow-300 text-xl"
+          >
+            ✨
+          </motion.div>
+          <motion.div
+            animate={{
+              scale: [1, 1.3, 1],
+              opacity: [0.5, 1, 0.5],
+            }}
+            transition={{
+              duration: 1.8,
+              repeat: Infinity,
+              repeatType: "reverse",
+              delay: 0.5,
+            }}
+            className="absolute -bottom-1 -left-1 text-yellow-300 text-lg"
+          >
+            ⭐
+          </motion.div>
+
+          <div className="text-center">
+            <motion.div
+              animate={{
+                textShadow: [
+                  "0 0 5px rgba(255,255,255,0.5)",
+                  "0 0 20px rgba(255,255,255,0.8)",
+                  "0 0 5px rgba(255,255,255,0.5)",
+                ],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+              }}
+              className="font-bold text-lg mb-1"
+            >
+              🎨 Live Artist Event! 🎨
+            </motion.div>
+            <p className="text-sm opacity-90 mb-3 font-bold">
+              Watch creativity unfold in real-time!
+            </p>
+            <Link
+              href="/classes/live-artist"
+              className="inline-block bg-white/20 hover:bg-white/30 backdrop-blur-sm px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 hover:scale-105 border border-white/30"
+            >
+              Learn More →
+            </Link>
+          </div>
+        </motion.div>
+      </motion.div>
 
       <div className="container mx-auto px-6 md:px-12 relative z-10 pt-8 md:pt-12">
         <div className="max-w-4xl mx-auto text-center">

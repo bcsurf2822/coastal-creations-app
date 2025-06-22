@@ -14,6 +14,7 @@ import {
   FaSun,
   FaTree,
   FaMountain,
+  FaUsers,
 } from "react-icons/fa";
 import {
   GiCampfire,
@@ -28,6 +29,7 @@ interface Event {
   eventType: string;
   description: string;
   price: number;
+  numberOfParticipants?: number;
   dates: {
     startDate: string;
     endDate?: string;
@@ -347,6 +349,9 @@ const SummerCamps = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+  const [eventParticipantCounts, setEventParticipantCounts] = useState<
+    Record<string, number>
+  >({});
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -356,7 +361,7 @@ const SummerCamps = () => {
         const response = await fetch("/api/events");
         if (!response.ok) throw new Error("Failed to fetch events");
         const data = await response.json();
-     
+
         setEvents(data.events || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
@@ -364,7 +369,60 @@ const SummerCamps = () => {
         setIsLoading(false);
       }
     };
+
+    const fetchCustomers = async () => {
+      try {
+        const response = await fetch("/api/customer", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const responseText = await response.text();
+
+        let result;
+        try {
+          result = responseText ? JSON.parse(responseText) : {};
+        } catch (parseError) {
+          console.error(
+            "Failed to parse customer response as JSON:",
+            parseError
+          );
+          return;
+        }
+
+        if (!response.ok) {
+          console.error(
+            "Failed to fetch customers:",
+            result.error || "Unknown error"
+          );
+          return;
+        }
+
+        // Calculate participant counts per event
+        const participantCounts: Record<string, number> = {};
+
+        if (result.data && Array.isArray(result.data)) {
+          result.data.forEach(
+            (customer: { event?: { _id: string }; quantity: number }) => {
+              const eventId = customer.event?._id;
+              if (eventId) {
+                // Add the quantity (number of participants) for this registration
+                participantCounts[eventId] =
+                  (participantCounts[eventId] || 0) + customer.quantity;
+              }
+            }
+          );
+        }
+        setEventParticipantCounts(participantCounts);
+      } catch (error) {
+        console.error("Error fetching customers:", error);
+      }
+    };
+
     fetchEvents();
+    fetchCustomers();
   }, []);
 
   // Filter for camps
@@ -525,12 +583,46 @@ const SummerCamps = () => {
                               ` - ${formatTime(event.time.endTime)}`}
                           </span>
                         </InfoItem>
-                        <Link
-                          href={`/calendar/${event._id}`}
-                          style={{ textDecoration: "none" }}
-                        >
-                          <RegisterButton>Register</RegisterButton>
-                        </Link>
+                        {/* Show participant count only if signups > 5 */}
+                        {(eventParticipantCounts[event._id] || 0) > 5 && (
+                          <InfoItem>
+                            <InfoIcon>
+                              <FaUsers />
+                            </InfoIcon>
+                            <span>
+                              {eventParticipantCounts[event._id] || 0} /{" "}
+                              {event.numberOfParticipants || 20} signed up
+                            </span>
+                          </InfoItem>
+                        )}
+                        {/* Check if event is sold out */}
+                        {(eventParticipantCounts[event._id] || 0) >=
+                        (event.numberOfParticipants || 20) ? (
+                          <div
+                            style={{
+                              display: "inline-block",
+                              padding: "0.75rem 1.5rem",
+                              background:
+                                "linear-gradient(135deg, #d32f2f, #f44336)",
+                              color: "white",
+                              borderRadius: "8px",
+                              textDecoration: "none",
+                              fontWeight: "700",
+                              textAlign: "center",
+                              cursor: "not-allowed",
+                              alignSelf: "flex-start",
+                            }}
+                          >
+                            Sold Out
+                          </div>
+                        ) : (
+                          <Link
+                            href={`/calendar/${event._id}`}
+                            style={{ textDecoration: "none" }}
+                          >
+                            <RegisterButton>Register</RegisterButton>
+                          </Link>
+                        )}
                       </BottomSection>
                     </ContentContainer>
                   </CardContent>

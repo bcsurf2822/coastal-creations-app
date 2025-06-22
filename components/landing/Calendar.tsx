@@ -6,9 +6,10 @@ import Link from "next/link";
 interface CalendarEvent {
   _id: string;
   eventName: string;
-  eventType: "class" | "camp" | "workshop";
+  eventType: "class" | "camp" | "workshop" | "artist";
   description: string;
   price: number;
+  numberOfParticipants?: number;
   dates: {
     startDate: string;
     endDate?: string;
@@ -31,6 +32,9 @@ export default function Calendar() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [today, setToday] = useState<string | null>(null);
+  const [eventParticipantCounts, setEventParticipantCounts] = useState<
+    Record<string, number>
+  >({});
 
   useEffect(() => {
     // Set today's date string for comparison
@@ -72,7 +76,59 @@ export default function Calendar() {
       }
     };
 
+    const fetchCustomers = async () => {
+      try {
+        const response = await fetch("/api/customer", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const responseText = await response.text();
+
+        let result;
+        try {
+          result = responseText ? JSON.parse(responseText) : {};
+        } catch (parseError) {
+          console.error(
+            "Failed to parse customer response as JSON:",
+            parseError
+          );
+          return;
+        }
+
+        if (!response.ok) {
+          console.error(
+            "Failed to fetch customers:",
+            result.error || "Unknown error"
+          );
+          return;
+        }
+
+        // Calculate participant counts per event
+        const participantCounts: Record<string, number> = {};
+
+        if (result.data && Array.isArray(result.data)) {
+          result.data.forEach(
+            (customer: { event?: { _id: string }; quantity: number }) => {
+              const eventId = customer.event?._id;
+              if (eventId) {
+                // Add the quantity (number of participants) for this registration
+                participantCounts[eventId] =
+                  (participantCounts[eventId] || 0) + customer.quantity;
+              }
+            }
+          );
+        }
+        setEventParticipantCounts(participantCounts);
+      } catch (error) {
+        console.error("Error fetching customers:", error);
+      }
+    };
+
     fetchEvents();
+    fetchCustomers();
   }, []);
 
   const formatDay = (date: Date) => {
@@ -223,15 +279,40 @@ export default function Calendar() {
                                     ? formatEventTime(event.time.startTime)
                                     : "All Day"}
                                 </p>
+                                {/* Show participant count only if signups > 5 */}
+                                {(eventParticipantCounts[event._id] || 0) >
+                                  5 && (
+                                  <p className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full mt-1 font-bold">
+                                    {eventParticipantCounts[event._id] || 0} /{" "}
+                                    {event.numberOfParticipants || 20} signed up
+                                  </p>
+                                )}
                               </div>
-                              <div className="mt-3 flex justify-end">
-                                <Link
-                                  href={`/calendar/${event._id}`}
-                                  className="text-xs font-bold px-3 py-1.5 bg-blue-500 text-white rounded-md shadow-sm hover:bg-blue-600 transition-all duration-300 transform hover:-translate-y-0.5"
-                                >
-                                  Sign Up
-                                </Link>
-                              </div>
+                              {event.eventType !== "artist" && (
+                                <div className="mt-3 flex justify-end">
+                                  {/* Check if event is sold out */}
+                                  {(eventParticipantCounts[event._id] || 0) >=
+                                  (event.numberOfParticipants || 20) ? (
+                                    <div className="text-xs font-bold px-3 py-1.5 bg-red-500 text-white rounded-md cursor-not-allowed">
+                                      Sold Out
+                                    </div>
+                                  ) : (
+                                    <Link
+                                      href={`/calendar/${event._id}`}
+                                      className="text-xs font-bold px-3 py-1.5 bg-blue-500 text-white rounded-md shadow-sm hover:bg-blue-600 transition-all duration-300 transform hover:-translate-y-0.5"
+                                    >
+                                      Sign Up
+                                    </Link>
+                                  )}
+                                </div>
+                              )}
+                              {event.eventType === "artist" && (
+                                <div className="mt-3 flex justify-end">
+                                  <span className="text-xs font-bold px-3 py-1.5 bg-orange-100 text-orange-700 rounded-md">
+                                    Live Demo
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           ))
                         ) : (

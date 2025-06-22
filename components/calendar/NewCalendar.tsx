@@ -13,6 +13,9 @@ import { CalendarEvent, ApiEvent } from "@/types/interfaces";
 export default function NewCalendar() {
   const [calendarView, setCalendarView] = useState("dayGridMonth");
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [eventParticipantCounts, setEventParticipantCounts] = useState<
+    Record<string, number>
+  >({});
 
   const router = useRouter();
 
@@ -285,7 +288,8 @@ export default function NewCalendar() {
         const data = await response.json();
 
         if (data.success) {
-   
+          console.log("API data coming in:", data);
+
           if (Array.isArray(data.events) && data.events.length > 0) {
             const calendarEvents = transformEvents(data.events);
             setEvents(calendarEvents);
@@ -301,7 +305,59 @@ export default function NewCalendar() {
       }
     }
 
+    const fetchCustomers = async () => {
+      try {
+        const response = await fetch("/api/customer", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const responseText = await response.text();
+
+        let result;
+        try {
+          result = responseText ? JSON.parse(responseText) : {};
+        } catch (parseError) {
+          console.error(
+            "Failed to parse customer response as JSON:",
+            parseError
+          );
+          return;
+        }
+
+        if (!response.ok) {
+          console.error(
+            "Failed to fetch customers:",
+            result.error || "Unknown error"
+          );
+          return;
+        }
+
+        // Calculate participant counts per event
+        const participantCounts: Record<string, number> = {};
+
+        if (result.data && Array.isArray(result.data)) {
+          result.data.forEach(
+            (customer: { event?: { _id: string }; quantity: number }) => {
+              const eventId = customer.event?._id;
+              if (eventId) {
+                // Add the quantity (number of participants) for this registration
+                participantCounts[eventId] =
+                  (participantCounts[eventId] || 0) + customer.quantity;
+              }
+            }
+          );
+        }
+        setEventParticipantCounts(participantCounts);
+      } catch (error) {
+        console.error("Error fetching customers:", error);
+      }
+    };
+
     fetchEvents();
+    fetchCustomers();
   }, []);
 
   // Define a function to get event colors based on type
@@ -392,6 +448,9 @@ export default function NewCalendar() {
           // Build tooltip content
           let tooltipContent = `<div class="tooltip-title">${info.event.title}</div>`;
 
+          // Get event type early for use in multiple places
+          const eventType = info.event.extendedProps?.eventType;
+
           if (info.event.extendedProps?.timeDisplay) {
             tooltipContent += `<div class="tooltip-time">${info.event.extendedProps.timeDisplay}</div>`;
           }
@@ -402,6 +461,17 @@ export default function NewCalendar() {
 
           if (info.event.extendedProps?.price) {
             tooltipContent += `<div class="tooltip-price">Price: $${info.event.extendedProps.price}</div>`;
+          }
+
+          // Show participant count only if signups > 5 and not artist event
+          const eventId = info.event.extendedProps?._id;
+          const currentSignups = eventId
+            ? eventParticipantCounts[eventId] || 0
+            : 0;
+          if (currentSignups > 5 && eventType !== "artist") {
+            // We need to get the numberOfParticipants from the event data
+            // For now, we'll use the default of 20 if not available
+            tooltipContent += `<div class="tooltip-participants">${currentSignups} / 20 signed up</div>`;
           }
 
           if (info.event.extendedProps?.isRecurring) {
@@ -425,10 +495,20 @@ export default function NewCalendar() {
                 ).toDateString()
             : true;
 
-          if (!isRecurring || isFirstOccurrence) {
-            tooltipContent += `<div class="tooltip-signup">
-              <button id="signup-${info.event.extendedProps?._id || "event"}" type="button">Sign Up</button>
-            </div>`;
+          // Don't show sign up button for artist events or if sold out
+          const maxParticipants = 20; // Default capacity
+          const isSoldOut = currentSignups >= maxParticipants;
+
+          if ((!isRecurring || isFirstOccurrence) && eventType !== "artist") {
+            if (isSoldOut) {
+              tooltipContent += `<div class="tooltip-soldout">
+                <div style="padding: 8px 16px; background: linear-gradient(135deg, #d32f2f, #f44336); color: white; border-radius: 4px; font-weight: bold; text-align: center; cursor: not-allowed;">Sold Out</div>
+              </div>`;
+            } else {
+              tooltipContent += `<div class="tooltip-signup">
+                <button id="signup-${info.event.extendedProps?._id || "event"}" type="button">Sign Up</button>
+              </div>`;
+            }
           }
 
           tooltip.innerHTML = tooltipContent;

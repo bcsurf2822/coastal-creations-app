@@ -23,6 +23,7 @@ interface Event {
   description?: string;
   eventType?: string;
   price?: number;
+  numberOfParticipants?: number;
   startDate?: Date;
   endDate?: Date;
   isRecurring?: boolean;
@@ -188,6 +189,7 @@ export default function EventContainer() {
         let result;
         try {
           result = responseText ? JSON.parse(responseText) : {};
+          console.log(result);
         } catch (parseError) {
           console.error("Failed to parse response as JSON:", parseError);
           throw new Error("API returned invalid JSON response");
@@ -211,6 +213,7 @@ export default function EventContainer() {
           description: event.description,
           eventType: event.eventType,
           price: event.price,
+          numberOfParticipants: event.numberOfParticipants,
           startDate: event.dates?.startDate,
           endDate: event.dates?.endDate,
           isRecurring: event.dates?.isRecurring,
@@ -507,7 +510,8 @@ export default function EventContainer() {
                     )}
                     {event.eventType !== "artist" && (
                       <div className="text-sm text-gray-600 dark:text-gray-400">
-                        {eventParticipantCounts[event.id] || 0} participants
+                        {eventParticipantCounts[event.id] || 0} /{" "}
+                        {event.numberOfParticipants || 20} participants
                       </div>
                     )}
                   </div>

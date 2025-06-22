@@ -10,7 +10,6 @@ import {
   Alert,
   Chip,
 } from "@mui/material";
-import Link from "next/link";
 import { motion } from "motion/react";
 import { type SanityDocument } from "next-sanity";
 import imageUrlBuilder from "@sanity/image-url";
@@ -20,12 +19,16 @@ import { client } from "@/sanity/client";
 import {
   FaCalendarAlt,
   FaClock,
-  FaDollarSign,
   FaPalette,
   FaUsers,
-  FaGraduationCap,
+  FaEye,
 } from "react-icons/fa";
-import { GiPaintBrush, GiPaintRoller, GiMagicHat } from "react-icons/gi";
+import {
+  GiPaintBrush,
+  GiPaintRoller,
+  GiMagicHat,
+  GiPalette,
+} from "react-icons/gi";
 
 // Setup Sanity image URL builder
 const { projectId, dataset } = client.config();
@@ -68,8 +71,7 @@ interface Event {
   eventName: string;
   eventType: string;
   description: string;
-  price: number;
-  numberOfParticipants?: number;
+  price?: number;
   dates: EventDates;
   time: EventTime;
   options: EventOption[];
@@ -209,7 +211,7 @@ const ContentSection = styled("div")({
 
 const ImageSection = styled("div")({
   flexShrink: 0,
-  marginTop: "0", // Remove top margin since we're now next to the date/time
+  marginTop: "0",
   "@media (max-width: 600px)": {
     width: "120px",
   },
@@ -230,7 +232,6 @@ const EventTitle = styled("h3")({
   display: "flex",
   alignItems: "center",
   gap: "0.75rem",
-  paddingRight: "120px", // Add padding to prevent overlap with price tag
   "&:after": {
     content: '""',
     position: "absolute",
@@ -243,13 +244,7 @@ const EventTitle = styled("h3")({
     borderRadius: "2px",
   },
   "&:hover:after": {
-    width: "calc(100% - 120px)", // Adjust underline to account for padding
-  },
-  "@media (min-width: 768px)": {
-    paddingRight: "140px", // Slightly more padding on larger screens
-    "&:hover:after": {
-      width: "calc(100% - 140px)",
-    },
+    width: "100%",
   },
 });
 
@@ -301,26 +296,26 @@ const Description = styled("p")({
   fontWeight: "700",
 });
 
-const PriceTag = styled("div")({
+const EventBadge = styled("div")({
   display: "inline-flex",
   alignItems: "center",
   gap: "0.5rem",
-  fontSize: "1.125rem",
+  fontSize: "1rem",
   fontWeight: "bold",
   color: "white",
-  background: "linear-gradient(135deg, #326C85, #4A90A4)",
+  background: "linear-gradient(135deg, #FF6B6B, #FF8E53)",
   padding: "0.5rem 1rem",
   borderRadius: "20px",
   position: "absolute",
   top: "15px",
   right: "15px",
-  boxShadow: "0 4px 15px rgba(50, 108, 133, 0.3)",
+  boxShadow: "0 4px 15px rgba(255, 107, 107, 0.3)",
   zIndex: 3,
   transform: "rotate(-2deg)",
   transition: "all 0.3s ease",
   "&:hover": {
     transform: "rotate(0deg) scale(1.05)",
-    boxShadow: "0 6px 20px rgba(50, 108, 133, 0.4)",
+    boxShadow: "0 6px 20px rgba(255, 107, 107, 0.4)",
   },
 });
 
@@ -367,39 +362,19 @@ const StyledImage = styled(Image)({
   },
 });
 
-const SignUpButton = styled("div")({
-  display: "inline-block",
-  padding: "0.75rem 1.5rem",
-  background: "linear-gradient(135deg, #326C85, #42A5F5)",
+const StatusBadge = styled("div")({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "0.5rem",
+  padding: "0.5rem 1rem",
+  background: "linear-gradient(135deg, #4CAF50, #66BB6A)",
   color: "white",
   borderRadius: "25px",
-  textDecoration: "none",
+  fontSize: "0.875rem",
   fontWeight: "700",
-  transition: "all 0.3s ease",
-  border: "2px solid transparent",
-  position: "relative",
-  overflow: "hidden",
-  "&:before": {
-    content: '""',
-    position: "absolute",
-    top: 0,
-    left: "-100%",
-    width: "100%",
-    height: "100%",
-    background:
-      "linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)",
-    transition: "left 0.5s ease",
-  },
-  "&:hover": {
-    transform: "translateY(-2px)",
-    boxShadow: "0 8px 25px rgba(50, 108, 133, 0.3)",
-    "&:before": {
-      left: "100%",
-    },
-  },
-  "&:active": {
-    transform: "translateY(0)",
-  },
+  boxShadow: "0 4px 15px rgba(76, 175, 80, 0.3)",
+  marginTop: "1rem",
+  width: "fit-content",
 });
 
 const LoadingContainer = styled(Box)({
@@ -434,15 +409,12 @@ const EmptyState = styled("div")({
   fontWeight: "700",
 });
 
-export default function Classes() {
+export default function LiveArtist() {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [eventPictures, setEventPictures] = useState<SanityDocument[]>([]);
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
-  const [eventParticipantCounts, setEventParticipantCounts] = useState<
-    Record<string, number>
-  >({});
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -465,59 +437,7 @@ export default function Classes() {
       }
     };
 
-    const fetchCustomers = async () => {
-      try {
-        const response = await fetch("/api/customer", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        const responseText = await response.text();
-
-        let result;
-        try {
-          result = responseText ? JSON.parse(responseText) : {};
-        } catch (parseError) {
-          console.error(
-            "Failed to parse customer response as JSON:",
-            parseError
-          );
-          return;
-        }
-
-        if (!response.ok) {
-          console.error(
-            "Failed to fetch customers:",
-            result.error || "Unknown error"
-          );
-          return;
-        }
-
-        // Calculate participant counts per event
-        const participantCounts: Record<string, number> = {};
-
-        if (result.data && Array.isArray(result.data)) {
-          result.data.forEach(
-            (customer: { event?: { _id: string }; quantity: number }) => {
-              const eventId = customer.event?._id;
-              if (eventId) {
-                // Add the quantity (number of participants) for this registration
-                participantCounts[eventId] =
-                  (participantCounts[eventId] || 0) + customer.quantity;
-              }
-            }
-          );
-        }
-        setEventParticipantCounts(participantCounts);
-      } catch (error) {
-        console.error("Error fetching customers:", error);
-      }
-    };
-
     fetchEvents();
-    fetchCustomers();
   }, []);
 
   // Fetch event pictures
@@ -556,11 +476,33 @@ export default function Classes() {
     });
   };
 
-  // Filter events to only show classes and workshops (exclude camps)
-  const filteredEvents = events.filter((event) => {
-    const eventType = event.eventType.toLowerCase();
-    return eventType.includes("class") || eventType.includes("workshop");
-  });
+  // Filter events to only show artist events and sort by date (upcoming first)
+  const filteredEvents = events
+    .filter((event) => {
+      const eventType = event.eventType.toLowerCase();
+      return eventType === "artist";
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.dates.startDate);
+      const dateB = new Date(b.dates.startDate);
+      const now = new Date();
+
+      // Separate upcoming and past events
+      const aIsUpcoming = dateA >= now;
+      const bIsUpcoming = dateB >= now;
+
+      // If one is upcoming and one is past, upcoming comes first
+      if (aIsUpcoming && !bIsUpcoming) return -1;
+      if (!aIsUpcoming && bIsUpcoming) return 1;
+
+      // If both are upcoming, sort by earliest date first
+      if (aIsUpcoming && bIsUpcoming) {
+        return dateA.getTime() - dateB.getTime();
+      }
+
+      // If both are past, sort by most recent first
+      return dateB.getTime() - dateA.getTime();
+    });
 
   // Format dates in a readable way
   const formatDate = (dateString: string): string => {
@@ -593,12 +535,19 @@ export default function Classes() {
     }
   };
 
+  // Check if event is in the past
+  const isEventPast = (event: Event): boolean => {
+    const eventDate = new Date(event.dates.startDate);
+    const now = new Date();
+    return eventDate < now;
+  };
+
   const getRandomIcon = (index: number) => {
     const icons = [
       FaPalette,
       GiPaintBrush,
       GiPaintRoller,
-      FaGraduationCap,
+      GiPalette,
       GiMagicHat,
     ];
     return icons[index % icons.length];
@@ -617,7 +566,7 @@ export default function Classes() {
               },
             }}
           />
-          <LoadingText>Loading creative classes... 🎨</LoadingText>
+          <LoadingText>Loading live artist events... 🎨</LoadingText>
         </LoadingContainer>
       </StyledContainer>
     );
@@ -648,28 +597,28 @@ export default function Classes() {
         <TitleIcon>
           <FaPalette />
         </TitleIcon>
-        Our Classes & Workshops
+        Live Artist Painting
         <TitleIcon>
           <GiPaintBrush />
         </TitleIcon>
       </Title>
 
       <Subtitle>
-        We offer a variety of classes and workshops for all ages and skill
-        levels. From beginner-friendly sessions to advanced techniques,
-        there&apos;s something for everyone to explore their creativity.
+        Watch talented artists create beautiful works live! Observe the creative
+        process, learn new techniques, and be inspired by artistic mastery in
+        action.
       </Subtitle>
 
-      <SectionTitle>Upcoming Classes & Workshops</SectionTitle>
+      <SectionTitle>Live Artist Events</SectionTitle>
 
       {filteredEvents.length === 0 ? (
         <EmptyState>
           <FaUsers
             style={{ fontSize: "3rem", marginBottom: "1rem", color: "#42A5F5" }}
           />
-          <div>No classes or workshops currently scheduled.</div>
+          <div>No live artist events currently scheduled.</div>
           <div style={{ marginTop: "0.5rem", fontSize: "1rem" }}>
-            Check back soon for new creative opportunities!
+            Check back soon for upcoming artist demonstrations!
           </div>
         </EmptyState>
       ) : (
@@ -682,6 +631,7 @@ export default function Classes() {
               : null;
 
             const IconComponent = getRandomIcon(index);
+            const eventPast = isEventPast(event);
 
             return (
               <motion.div
@@ -696,10 +646,10 @@ export default function Classes() {
                   onMouseEnter={() => setHoveredCard(index)}
                   onMouseLeave={() => setHoveredCard(null)}
                 >
-                  <PriceTag>
-                    <FaDollarSign />
-                    {event.price}
-                  </PriceTag>
+                  <EventBadge>
+                    <FaEye />
+                    Live Demo
+                  </EventBadge>
 
                   <CardContent>
                     <TitleRow>
@@ -752,17 +702,6 @@ export default function Classes() {
 
                       <Description>{event.description}</Description>
 
-                      {/* Show participant count only if signups > 5 */}
-                      {(eventParticipantCounts[event._id] || 0) > 5 && (
-                        <InfoItem style={{ marginBottom: "1rem" }}>
-                          <InfoIcon>
-                            <FaUsers />
-                          </InfoIcon>
-                          {eventParticipantCounts[event._id] || 0} /{" "}
-                          {event.numberOfParticipants || 20} signed up
-                        </InfoItem>
-                      )}
-
                       {event.options.length > 0 && (
                         <OptionsContainer>
                           {event.options.map((option) => (
@@ -790,32 +729,10 @@ export default function Classes() {
                         </OptionsContainer>
                       )}
 
-                      {/* Check if event is sold out */}
-                      {(eventParticipantCounts[event._id] || 0) >=
-                      (event.numberOfParticipants || 20) ? (
-                        <div
-                          style={{
-                            display: "inline-block",
-                            padding: "0.75rem 1.5rem",
-                            background:
-                              "linear-gradient(135deg, #d32f2f, #f44336)",
-                            color: "white",
-                            borderRadius: "25px",
-                            fontWeight: "700",
-                            textAlign: "center",
-                            cursor: "not-allowed",
-                          }}
-                        >
-                          Sold Out
-                        </div>
-                      ) : (
-                        <Link
-                          href={`/calendar/${event._id}`}
-                          style={{ textDecoration: "none" }}
-                        >
-                          <SignUpButton>Sign Up for Class</SignUpButton>
-                        </Link>
-                      )}
+                      <StatusBadge>
+                        <FaEye />
+                        {eventPast ? "Event Completed" : "Upcoming Live Demo"}
+                      </StatusBadge>
                     </ContentSection>
                   </CardContent>
                 </ClassCard>
