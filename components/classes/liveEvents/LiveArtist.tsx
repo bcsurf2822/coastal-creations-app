@@ -362,21 +362,6 @@ const StyledImage = styled(Image)({
   },
 });
 
-const StatusBadge = styled("div")({
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "0.5rem",
-  padding: "0.5rem 1rem",
-  background: "linear-gradient(135deg, #4CAF50, #66BB6A)",
-  color: "white",
-  borderRadius: "25px",
-  fontSize: "0.875rem",
-  fontWeight: "700",
-  boxShadow: "0 4px 15px rgba(76, 175, 80, 0.3)",
-  marginTop: "1rem",
-  width: "fit-content",
-});
-
 const LoadingContainer = styled(Box)({
   display: "flex",
   flexDirection: "column",
@@ -536,11 +521,6 @@ export default function LiveArtist() {
   };
 
   // Check if event is in the past
-  const isEventPast = (event: Event): boolean => {
-    const eventDate = new Date(event.dates.startDate);
-    const now = new Date();
-    return eventDate < now;
-  };
 
   const getRandomIcon = (index: number) => {
     const icons = [
@@ -631,7 +611,7 @@ export default function LiveArtist() {
               : null;
 
             const IconComponent = getRandomIcon(index);
-            const eventPast = isEventPast(event);
+            // const eventPast = isEventPast(event);
 
             return (
               <motion.div
