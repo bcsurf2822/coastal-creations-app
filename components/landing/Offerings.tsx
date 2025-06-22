@@ -151,7 +151,7 @@ export default function Offerings() {
                       ></i>
                     </div>
                     <h4 className="text-2xl font-semibold text-primary">
-                      Live Artist Painting
+                      Next Live Artist Event
                     </h4>
                   </div>
                   {nextArtistEvent ? (

@@ -211,6 +211,12 @@ export default function NavBar() {
                   >
                     Birthdays
                   </Link>
+                  <Link
+                    href="/classes/live-artist"
+                    className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
+                  >
+                    Live Artist Events
+                  </Link>
                 </div>
               </div>
             </motion.div>
@@ -427,10 +433,23 @@ export default function NavBar() {
                               setIsClassesDropdownOpen(false);
                             }}
                           >
-                            Birthdays
-                          </Link>
+                              Birthdays
+                            </Link>
+                        </motion.div>
+                        <motion.div variants={itemVariants} className="py-1">
+                          <Link
+                            href="/classes/live-artist"
+                            className="text-[#0f172a] hover:text-[#0369a1] font-normal py-1 block text-sm"
+                            onClick={() => {
+                              setIsMenuOpen(false);
+                              setIsClassesDropdownOpen(false);
+                            }}
+                          >
+                              Live Artist Events
+                            </Link>
                         </motion.div>
                       </motion.div>
+                      
                     )}
                   </AnimatePresence>
                 </motion.div>

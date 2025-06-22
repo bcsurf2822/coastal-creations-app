@@ -6,7 +6,7 @@ import Link from "next/link";
 interface CalendarEvent {
   _id: string;
   eventName: string;
-  eventType: "class" | "camp" | "workshop";
+  eventType: "class" | "camp" | "workshop" | "artist";
   description: string;
   price: number;
   dates: {
@@ -224,14 +224,23 @@ export default function Calendar() {
                                     : "All Day"}
                                 </p>
                               </div>
-                              <div className="mt-3 flex justify-end">
-                                <Link
-                                  href={`/calendar/${event._id}`}
-                                  className="text-xs font-bold px-3 py-1.5 bg-blue-500 text-white rounded-md shadow-sm hover:bg-blue-600 transition-all duration-300 transform hover:-translate-y-0.5"
-                                >
-                                  Sign Up
-                                </Link>
-                              </div>
+                              {event.eventType !== "artist" && (
+                                <div className="mt-3 flex justify-end">
+                                  <Link
+                                    href={`/calendar/${event._id}`}
+                                    className="text-xs font-bold px-3 py-1.5 bg-blue-500 text-white rounded-md shadow-sm hover:bg-blue-600 transition-all duration-300 transform hover:-translate-y-0.5"
+                                  >
+                                    Sign Up
+                                  </Link>
+                                </div>
+                              )}
+                              {event.eventType === "artist" && (
+                                <div className="mt-3 flex justify-end">
+                                  <span className="text-xs font-bold px-3 py-1.5 bg-orange-100 text-orange-700 rounded-md">
+                                    Live Demo
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           ))
                         ) : (

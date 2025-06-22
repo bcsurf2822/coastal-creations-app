@@ -1,9 +1,6 @@
-import React from 'react'
+import React from "react";
+import LiveArtist from "@/components/classes/liveEvents/LiveArtist";
 
-export default function LiveArtist() {
-  return (
-    <div>
-      <h1>Live Artist</h1>
-    </div>
-  )
+export default function LiveArtistPage() {
+  return <LiveArtist />;
 }
