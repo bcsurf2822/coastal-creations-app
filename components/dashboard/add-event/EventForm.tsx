@@ -320,8 +320,10 @@ const EventForm: React.FC = () => {
 
   const generateTimeOptions = () => {
     const options = [];
-    for (let hour = 9; hour <= 19; hour++) {
+    for (let hour = 9; hour <= 21; hour++) {
       for (const minute of [0, 30]) {
+        // Skip 9:30 PM (21:30) since we only want up to 9:00 PM
+        if (hour === 21 && minute > 0) continue;
         const time = dayjs().hour(hour).minute(minute).second(0);
         const timeStr = time.format("HH:mm");
         options.push(timeStr);

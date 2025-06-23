@@ -557,10 +557,17 @@ export default function Classes() {
   };
 
   // Filter events to only show classes and workshops (exclude camps)
-  const filteredEvents = events.filter((event) => {
-    const eventType = event.eventType.toLowerCase();
-    return eventType.includes("class") || eventType.includes("workshop");
-  });
+  const filteredEvents = events
+    .filter((event) => {
+      const eventType = event.eventType.toLowerCase();
+      return eventType.includes("class") || eventType.includes("workshop");
+    })
+    .sort((a, b) => {
+      // Sort by start date - closest events first
+      const dateA = new Date(a.dates.startDate);
+      const dateB = new Date(b.dates.startDate);
+      return dateA.getTime() - dateB.getTime();
+    });
 
   // Format dates in a readable way
   const formatDate = (dateString: string): string => {

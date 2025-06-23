@@ -231,14 +231,14 @@ export default function EditEvent() {
     }
   };
 
-  // Generate time options from 9:00 AM to 8:30 PM
+  // Generate time options from 9:00 AM to 9:00 PM
   const generateTimeOptions = () => {
     const options = [];
-    // Start at 9 AM (hour 9) and end at 20:30 (8:30 PM)
-    for (let hour = 9; hour <= 20; hour++) {
+    // Start at 9 AM (hour 9) and end at 21:00 (9:00 PM)
+    for (let hour = 9; hour <= 21; hour++) {
       for (const minute of [0, 30]) {
-        // Skip 9:00 PM (21:00) since we only want up to 8:30 PM
-        if (hour === 20 && minute > 30) continue;
+        // Skip 9:30 PM (21:30) since we only want up to 9:00 PM
+        if (hour === 21 && minute > 0) continue;
 
         const time = new Date();
         time.setHours(hour, minute, 0);

@@ -2,6 +2,53 @@ import { NextResponse } from "next/server";
 import { connectMongo } from "@/lib/mongoose";
 import Event from "@/lib/models/Event";
 
+// Helper function to check if an event has passed
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isEventPast(event: any): boolean {
+  const now = new Date();
+
+  // For recurring events, check if the recurring end date has passed
+  if (event.dates.isRecurring && event.dates.recurringEndDate) {
+    const recurringEndDate = new Date(event.dates.recurringEndDate);
+    // Add the end time to get the full end datetime
+    const [hours, minutes] = event.time.endTime.split(":");
+    recurringEndDate.setHours(parseInt(hours), parseInt(minutes));
+    return now > recurringEndDate;
+  }
+
+  // For single events, check if the event date + end time has passed
+  const eventDate = new Date(event.dates.startDate);
+  const [hours, minutes] = event.time.endTime.split(":");
+  eventDate.setHours(parseInt(hours), parseInt(minutes));
+
+  return now > eventDate;
+}
+
+// Function to clean up past events
+async function cleanupPastEvents() {
+  try {
+    const events = await Event.find({});
+    const pastEventIds: string[] = [];
+
+    events.forEach((event) => {
+      if (isEventPast(event)) {
+        pastEventIds.push(event._id.toString());
+      }
+    });
+
+    if (pastEventIds.length > 0) {
+      const result = await Event.deleteMany({ _id: { $in: pastEventIds } });
+  
+      return result.deletedCount;
+    }
+
+    return 0;
+  } catch (error) {
+    console.error("Error cleaning up past events:", error);
+    return 0;
+  }
+}
+
 export async function POST(request: Request) {
   try {
     await connectMongo();
@@ -38,6 +85,10 @@ export async function POST(request: Request) {
 export async function GET() {
   try {
     await connectMongo();
+
+    // Clean up past events before fetching current ones
+    await cleanupPastEvents();
+
     const events = await Event.find({}).sort({ createdAt: -1 });
     return NextResponse.json({ success: true, events });
   } catch (error) {
