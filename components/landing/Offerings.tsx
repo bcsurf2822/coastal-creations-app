@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 
-// Define the event interface to match the Calendar component
+
 interface CalendarEvent {
   _id: string;
   eventName: string;
