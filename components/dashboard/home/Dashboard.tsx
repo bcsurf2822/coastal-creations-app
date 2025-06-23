@@ -51,7 +51,6 @@ export default function Dashboard() {
   // These would typically come from API calls in a real implementation
   const stats = {
     totalEvents: "TBD",
-    revenue: "TBD",
   };
 
   return (
@@ -69,23 +68,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Total Events"
-          value={stats.totalEvents}
-          icon={<RiCalendarEventFill className="w-6 h-6" />}
-          change="TBD"
-          changeType="positive"
-        />
-
-        <StatCard
-          title="Revenue"
-          value={stats.revenue}
-          icon={<RiMoneyDollarCircleFill className="w-6 h-6" />}
-          change="TBD"
-          changeType="positive"
-        />
-      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
 
       {/* Events section */}
       <div className="mt-8">

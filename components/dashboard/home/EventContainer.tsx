@@ -189,7 +189,6 @@ export default function EventContainer() {
         let result;
         try {
           result = responseText ? JSON.parse(responseText) : {};
-
         } catch (parseError) {
           console.error("Failed to parse response as JSON:", parseError);
           throw new Error("API returned invalid JSON response");
@@ -223,7 +222,14 @@ export default function EventContainer() {
           options: event.options,
         }));
 
-        setEvents(transformedEvents);
+        // Sort events by start date - closest events first, furthest events last
+        const sortedEvents = transformedEvents.sort((a, b) => {
+          const dateA = new Date(a.startDate || 0);
+          const dateB = new Date(b.startDate || 0);
+          return dateA.getTime() - dateB.getTime();
+        });
+
+        setEvents(sortedEvents);
       } catch (error) {
         console.error("Error fetching events:", error);
         setError(typeof error === "string" ? error : (error as Error).message);

@@ -425,8 +425,15 @@ const SummerCamps = () => {
     fetchCustomers();
   }, []);
 
-  // Filter for camps
-  const campEvents = events.filter((event) => event.eventType === "camp");
+  // Filter for camps and sort by closest date first
+  const campEvents = events
+    .filter((event) => event.eventType === "camp")
+    .sort((a, b) => {
+      // Sort by start date - closest events first
+      const dateA = new Date(a.dates.startDate);
+      const dateB = new Date(b.dates.startDate);
+      return dateA.getTime() - dateB.getTime();
+    });
 
   // Format date
   const formatDate = (dateString?: string) => {
