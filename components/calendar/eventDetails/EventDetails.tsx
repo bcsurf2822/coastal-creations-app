@@ -74,7 +74,7 @@ const StyledContainer = styled(Container)({
   padding: "1rem",
   maxWidth: "800px",
   minHeight: "auto",
-  fontFamily: "var(--font-comic-neue)",
+  fontFamily: "var(--font-eb-garamond)",
 });
 
 const EventCard = styled(Paper)({

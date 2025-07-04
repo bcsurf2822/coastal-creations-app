@@ -2,7 +2,13 @@ import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import Script from "next/script";
 import { Suspense } from "react";
-import { Geist, Geist_Mono, Anton, Comic_Neue } from "next/font/google";
+import {
+  Geist,
+  Geist_Mono,
+  Anton,
+  Abril_Fatface,
+  EB_Garamond,
+} from "next/font/google";
 import NavBar from "@/components/layout/nav/NavBar";
 import Footer from "@/components/layout/footer/Footer";
 import AnalyticsEvents from "@/components/AnalyticsEvents";
@@ -27,10 +33,16 @@ const anton = Anton({
   weight: "400", // Anton only has one weight (400)
 });
 
-const comicNeue = Comic_Neue({
-  variable: "--font-comic-neue",
+const abrilFatface = Abril_Fatface({
+  variable: "--font-abril-fatface",
   subsets: ["latin"],
-  weight: ["400", "700"],
+  weight: "400",
+});
+
+const ebGaramond = EB_Garamond({
+  variable: "--font-eb-garamond",
+  subsets: ["latin"],
+  weight: "400",
 });
 
 export const metadata: Metadata = {
@@ -46,7 +58,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${anton.variable} ${comicNeue.variable} antialiased`}
+        className={`${ebGaramond.variable} ${geistSans.variable} ${geistMono.variable} ${anton.variable} ${abrilFatface.variable} antialiased`}
       >
         <Suspense fallback={null}>
           <AnalyticsEvents />
@@ -54,7 +66,7 @@ export default function RootLayout({
         {/* <AuthProvider> */}
         <NavBar />
         <div className="relative pt-32 md:pt-56">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#cfdde0] via-[#f0f0f0] to-[#ffffff]  z-10"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#b6dce6] via-[#BEDCDC] to-[#daebeb]  z-10"></div>
 
           <div className="relative z-20">{children}</div>
         </div>

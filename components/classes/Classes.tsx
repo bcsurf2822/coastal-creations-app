@@ -82,7 +82,7 @@ interface Event {
 const StyledContainer = styled(Container)({
   padding: "4rem 2rem",
   maxWidth: "1200px",
-  fontFamily: "var(--font-comic-neue)",
+  fontFamily: "var(--font-eb-garamond)",
 });
 
 const Title = styled("h1")({
@@ -119,7 +119,7 @@ const Subtitle = styled("p")({
   maxWidth: "600px",
   margin: "0 auto 3rem",
   fontSize: "1.125rem",
-  color: "#616161",
+  color: "black",
   lineHeight: 1.6,
   fontWeight: "700",
 });
@@ -662,9 +662,9 @@ export default function Classes() {
       </Title>
 
       <Subtitle>
-        We offer a variety of classes and workshops for all ages and skill
-        levels. From beginner-friendly sessions to advanced techniques,
-        there&apos;s something for everyone to explore their creativity.
+        No matter your skill level, we&apos;ve got a class for you.
+        <br />
+        Let&apos;s get creative — together!
       </Subtitle>
 
       <SectionTitle>Upcoming Classes & Workshops</SectionTitle>
@@ -672,7 +672,7 @@ export default function Classes() {
       {filteredEvents.length === 0 ? (
         <EmptyState>
           <FaUsers
-            style={{ fontSize: "3rem", marginBottom: "1rem", color: "#42A5F5" }}
+            style={{ fontSize: "3rem", marginBottom: "1rem", color: "black" }}
           />
           <div>No classes or workshops currently scheduled.</div>
           <div style={{ marginTop: "0.5rem", fontSize: "1rem" }}>

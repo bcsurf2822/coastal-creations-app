@@ -158,7 +158,7 @@ export default function NavBar() {
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold"
+                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold uppercase"
               >
                 Home
               </Link>
@@ -171,7 +171,7 @@ export default function NavBar() {
             >
               <Link
                 href="/classes"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold flex items-center gap-1"
+                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold uppercase flex items-center gap-1"
               >
                 Classes
                 <motion.svg
@@ -209,7 +209,7 @@ export default function NavBar() {
                     href="/classes/birthday-parties"
                     className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
                   >
-                    Birthdays
+                    Private Events
                   </Link>
                   <Link
                     href="/classes/live-artist"
@@ -224,7 +224,7 @@ export default function NavBar() {
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/calendar"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold"
+                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold uppercase"
               >
                 Calendar
               </Link>
@@ -262,7 +262,7 @@ export default function NavBar() {
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/gallery"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold"
+                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold uppercase"
               >
                 Gallery
               </Link>
@@ -271,7 +271,7 @@ export default function NavBar() {
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/blog"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold"
+                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold uppercase"
               >
                 Blog
               </Link>
@@ -280,7 +280,7 @@ export default function NavBar() {
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/about"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold"
+                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold uppercase"
               >
                 About
               </Link>
@@ -357,7 +357,7 @@ export default function NavBar() {
                 >
                   <Link
                     href="/"
-                    className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block"
+                    className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block uppercase"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Home
@@ -369,7 +369,7 @@ export default function NavBar() {
                   className="border-b border-gray-100 pb-2"
                 >
                   <button
-                    className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block w-full text-left flex items-center justify-between"
+                    className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block w-full text-left flex items-center justify-between uppercase"
                     onClick={() =>
                       setIsClassesDropdownOpen(!isClassesDropdownOpen)
                     }
@@ -433,8 +433,8 @@ export default function NavBar() {
                               setIsClassesDropdownOpen(false);
                             }}
                           >
-                              Birthdays
-                            </Link>
+                            Private Events
+                          </Link>
                         </motion.div>
                         <motion.div variants={itemVariants} className="py-1">
                           <Link
@@ -445,11 +445,10 @@ export default function NavBar() {
                               setIsClassesDropdownOpen(false);
                             }}
                           >
-                              Live Artist Events
-                            </Link>
+                            Live Artist Events
+                          </Link>
                         </motion.div>
                       </motion.div>
-                      
                     )}
                   </AnimatePresence>
                 </motion.div>
@@ -460,7 +459,7 @@ export default function NavBar() {
                 >
                   <Link
                     href="/calendar"
-                    className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block"
+                    className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block uppercase"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Calendar
@@ -473,7 +472,7 @@ export default function NavBar() {
                 >
                   <Link
                     href="/blog"
-                    className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block"
+                    className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block uppercase"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Blog
@@ -482,7 +481,7 @@ export default function NavBar() {
                 <motion.div variants={itemVariants} whileHover="hover">
                   <Link
                     href="/about"
-                    className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block"
+                    className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block uppercase"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     About

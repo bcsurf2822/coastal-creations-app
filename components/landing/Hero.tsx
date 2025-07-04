@@ -4,6 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
+import { Abril_Fatface } from "next/font/google";
+
+const abrilFatface = Abril_Fatface({
+  subsets: ["latin"],
+  weight: "400",
+});
 
 export default function Hero() {
   const [isClient, setIsClient] = useState(false);
@@ -154,14 +160,14 @@ export default function Hero() {
               {words.map((word, index) => {
                 // Define specific positioning for each word based on device size
                 const getPosition = () => {
-                  // Desktop layout (side by side for some words)
+                  // Desktop layout (two lines)
                   if (windowWidth >= 1024) {
                     return [
-                      { x: 0, y: -100 }, // Welcome
-                      { x: 0, y: -40 }, // to
-                      { x: -110, y: 20 }, // Coastal - closer spacing
-                      { x: 130, y: 20 }, // Creations - closer spacing
-                      { x: 0, y: 110 }, // Studio
+                      { x: -100, y: -50 }, // Welcome
+                      { x: 80, y: -50 }, // to
+                      { x: -280, y: 50 }, // Coastal
+                      { x: 0, y: 50 }, // Creations
+                      { x: 260, y: 50 }, // Studio
                     ][index];
                   }
 
@@ -187,7 +193,7 @@ export default function Hero() {
                 return (
                   <motion.span
                     key={index}
-                    className={`font-comic-neue ${sizes[index]} font-bold text-primary inline-block absolute`}
+                    className={`${abrilFatface.className} ${sizes[index]} font-bold inline-block absolute`}
                     initial={{
                       opacity: 0,
                       x: Math.sin((index / words.length) * Math.PI * 2) * 300,
@@ -213,6 +219,7 @@ export default function Hero() {
                       transformOrigin: "center center",
                       zIndex: 10 - index,
                       letterSpacing: "0.02em", // Consistent letter spacing
+                      color: "#326C85",
                     }}
                   >
                     {word}
@@ -221,7 +228,10 @@ export default function Hero() {
               })}
             </div>
           ) : (
-            <h2 className="font-comic-neue text-4xl sm:text-5xl md:text-6xl font-bold text-primary leading-tight mb-20 sm:mb-24 h-[280px] flex items-center justify-center">
+            <h2
+              className={`${abrilFatface.className} text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-20 sm:mb-24 h-[280px] flex items-center justify-center`}
+              style={{ color: "#326C85" }}
+            >
               Welcome to Coastal Creations Studio
             </h2>
           )}

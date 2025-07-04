@@ -7,7 +7,7 @@ export default function About() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div className="relative w-full h-[550px] md:h-[750px] rounded-3xl overflow-hidden shadow-xl ">
             <Image
-              src="/assets/images/ashleyInCC.png"
+              src="/assets/images/ashley_about.jpeg"
               alt="Laura Epsom"
               fill
               className="object-cover object-center"

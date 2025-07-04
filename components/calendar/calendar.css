@@ -9,7 +9,7 @@
   position: relative;
   z-index: 1;
   /* Make all calendar text bold */
-  font-family: var(--font-comic-neue);
+  font-family: var(--font-eb-garamond);
   font-weight: 700;
 }
 

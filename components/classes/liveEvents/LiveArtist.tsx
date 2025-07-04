@@ -84,7 +84,7 @@ interface Event {
 const StyledContainer = styled(Container)({
   padding: "4rem 2rem",
   maxWidth: "1200px",
-  fontFamily: "var(--font-comic-neue)",
+  fontFamily: "var(--font-eb-garamond)",
 });
 
 const Title = styled("h1")({

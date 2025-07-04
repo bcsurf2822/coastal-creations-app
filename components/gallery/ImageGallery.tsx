@@ -52,7 +52,7 @@ export default function ImageGallery() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[300px] font-comic-neue">
+      <div className="flex justify-center items-center min-h-[300px]">
         <p className="text-lg font-bold">Loading gallery...</p>
       </div>
     );
@@ -60,7 +60,7 @@ export default function ImageGallery() {
 
   if (error) {
     return (
-      <div className="flex justify-center items-center min-h-[300px] font-comic-neue">
+      <div className="flex justify-center items-center min-h-[300px]">
         <p className="text-red-500 font-bold">Error: {error}</p>
       </div>
     );
@@ -68,14 +68,14 @@ export default function ImageGallery() {
 
   if (images.length === 0) {
     return (
-      <div className="flex justify-center items-center min-h-[300px] font-comic-neue">
+      <div className="flex justify-center items-center min-h-[300px]">
         <p className="text-lg font-bold">No images found in the gallery.</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto font-comic-neue">
+    <div className="w-full max-w-6xl mx-auto">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
         {images.map((item) => {
           const imageUrl = item.image
