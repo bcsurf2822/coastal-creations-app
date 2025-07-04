@@ -1,6 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { EB_Garamond } from "next/font/google";
+
+const ebGaramond = EB_Garamond({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
 
 // Define the event interface
 interface CalendarEvent {
@@ -206,13 +212,19 @@ export default function Calendar() {
       <div className="container mx-auto px-6 md:px-12">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h4 className="text-secondary uppercase tracking-widest text-sm font-medium mb-3">
+            <h4
+              className={`${ebGaramond.className} text-secondary uppercase tracking-widest text-sm font-medium mb-3`}
+            >
               Plan Your Visit
             </h4>
-            <h3 className="serif text-4xl font-bold text-primary mb-4">
+            <h3
+              className={`${ebGaramond.className} text-4xl font-bold text-primary mb-4`}
+            >
               Upcoming Workshops
             </h3>
-            <p className="text-gray-600 max-w-2xl mx-auto font-bold">
+            <p
+              className={`${ebGaramond.className} text-gray-600 max-w-2xl mx-auto font-bold`}
+            >
               Browse our calendar to find the perfect class or workshop for your
               creative journey.
             </p>
@@ -220,11 +232,13 @@ export default function Calendar() {
 
           {isLoading ? (
             <div className="text-center py-10">
-              <p className="font-bold">Loading calendar events...</p>
+              <p className={`${ebGaramond.className} font-bold`}>
+                Loading calendar events...
+              </p>
             </div>
           ) : error ? (
             <div className="text-center py-10">
-              <p className="text-red-500 font-bold">
+              <p className={`${ebGaramond.className} text-red-500 font-bold`}>
                 Error loading events: {error}
               </p>
             </div>
@@ -238,85 +252,98 @@ export default function Calendar() {
                   return (
                     <div
                       key={index}
-                      className="workshop-day border border-gray-200 rounded-lg overflow-hidden min-w-[240px] shadow-md hover:shadow-lg transition-all duration-300"
+                      className="workshop-day border border-gray-200 rounded-lg overflow-hidden min-w-[240px] max-w-[240px] h-[380px] flex flex-col shadow-md hover:shadow-lg transition-all duration-300"
                     >
                       <div
                         className={`text-center py-4 ${isToday ? "bg-blue-300 text-white" : "bg-gray-200 text-black"}`}
                       >
                         <p
-                          className={`text-lg font-medium mt-2 ${isToday ? "text-white" : "text-black"}`}
+                          className={`${ebGaramond.className} text-lg font-medium mt-2 ${isToday ? "text-white" : "text-black"}`}
                         >
                           {formatDay(date)}
                         </p>
                         <p
-                          className={`text-sm uppercase tracking-wider ${isToday ? "text-white/90" : "text-black/80"}`}
+                          className={`${ebGaramond.className} text-sm uppercase tracking-wider ${isToday ? "text-white/90" : "text-black/80"}`}
                         >
                           {formatMonth(date)}
                         </p>
                         <p
-                          className={`text-3xl font-bold mt-1 ${isToday ? "text-white" : "text-black"}`}
+                          className={`${ebGaramond.className} text-3xl font-bold mt-1 ${isToday ? "text-white" : "text-black"}`}
                         >
                           {formatDate(date)}
                         </p>
                       </div>
-                      <div className="p-5 bg-white">
+                      <div className="p-5 bg-white flex-1 flex flex-col">
                         {dayEvents.length > 0 ? (
-                          dayEvents.map((event, idx) => (
-                            <div
-                              key={event._id || idx}
-                              className={`${
-                                idx !== 0
-                                  ? "border-t border-gray-100 pt-4 mt-4"
-                                  : ""
-                              }`}
-                            >
-                              <div className="flex flex-col items-start mb-2">
-                                <p className="font-bold text-primary text-left">
-                                  {event.eventName}
-                                </p>
-                                <p className="text-xs bg-blue-100 text-secondary px-2 py-1 rounded-full mt-1 font-bold">
-                                  {event.time.startTime
-                                    ? formatEventTime(event.time.startTime)
-                                    : "All Day"}
-                                </p>
-                                {/* Show participant count only if signups > 5 */}
-                                {(eventParticipantCounts[event._id] || 0) >
-                                  5 && (
-                                  <p className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full mt-1 font-bold">
-                                    {eventParticipantCounts[event._id] || 0} /{" "}
-                                    {event.numberOfParticipants || 20} signed up
+                          <div className="flex-1 flex flex-col">
+                            {dayEvents.map((event, idx) => (
+                              <div
+                                key={event._id || idx}
+                                className={`flex-1 flex flex-col ${
+                                  idx !== 0
+                                    ? "border-t border-gray-100 pt-4 mt-4"
+                                    : ""
+                                }`}
+                              >
+                                <div className="flex flex-col items-start mb-2 flex-1">
+                                  <p
+                                    className={`${ebGaramond.className} font-bold text-primary text-left`}
+                                  >
+                                    {event.eventName}
                                   </p>
-                                )}
-                              </div>
-                              {event.eventType !== "artist" && (
-                                <div className="mt-3 flex justify-end">
-                                  {/* Check if event is sold out */}
-                                  {(eventParticipantCounts[event._id] || 0) >=
-                                  (event.numberOfParticipants || 20) ? (
-                                    <div className="text-xs font-bold px-3 py-1.5 bg-red-500 text-white rounded-md cursor-not-allowed">
-                                      Sold Out
-                                    </div>
-                                  ) : (
-                                    <Link
-                                      href={`/calendar/${event._id}`}
-                                      className="text-xs font-bold px-3 py-1.5 bg-blue-500 text-white rounded-md shadow-sm hover:bg-blue-600 transition-all duration-300 transform hover:-translate-y-0.5"
+                                  <p
+                                    className={`${ebGaramond.className} text-xs bg-blue-100 text-secondary px-2 py-1 rounded-full mt-1 font-bold`}
+                                  >
+                                    {event.time.startTime
+                                      ? formatEventTime(event.time.startTime)
+                                      : "All Day"}
+                                  </p>
+                                  {/* Show participant count only if signups > 5 */}
+                                  {(eventParticipantCounts[event._id] || 0) >
+                                    5 && (
+                                    <p
+                                      className={`${ebGaramond.className} text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full mt-1 font-bold`}
                                     >
-                                      Sign Up
-                                    </Link>
+                                      {eventParticipantCounts[event._id] || 0} /{" "}
+                                      {event.numberOfParticipants || 20} signed
+                                      up
+                                    </p>
                                   )}
                                 </div>
-                              )}
-                              {event.eventType === "artist" && (
-                                <div className="mt-3 flex justify-end">
-                                  <span className="text-xs font-bold px-3 py-1.5 bg-orange-100 text-orange-700 rounded-md">
-                                    Live Demo
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          ))
+                                {event.eventType !== "artist" && (
+                                  <div className="mt-auto flex justify-end">
+                                    {/* Check if event is sold out */}
+                                    {(eventParticipantCounts[event._id] || 0) >=
+                                    (event.numberOfParticipants || 20) ? (
+                                      <div
+                                        className={`${ebGaramond.className} text-xs font-bold px-3 py-1.5 bg-red-500 text-white rounded-md cursor-not-allowed`}
+                                      >
+                                        Sold Out
+                                      </div>
+                                    ) : (
+                                      <Link
+                                        href={`/calendar/${event._id}`}
+                                        className={`${ebGaramond.className} text-xs font-bold px-3 py-1.5 bg-blue-500 text-white rounded-md shadow-sm hover:bg-blue-600 transition-all duration-300 transform hover:-translate-y-0.5`}
+                                      >
+                                        Sign Up
+                                      </Link>
+                                    )}
+                                  </div>
+                                )}
+                                {event.eventType === "artist" && (
+                                  <div className="mt-auto flex justify-end">
+                                    <span
+                                      className={`${ebGaramond.className} text-xs font-bold px-3 py-1.5 bg-orange-100 text-orange-700 rounded-md`}
+                                    >
+                                      Live Demo
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
                         ) : (
-                          <div className="py-8 text-center text-gray-500 min-h-[120px] flex flex-col items-center justify-center">
+                          <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-500">
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               className="h-6 w-6 text-gray-400 mb-2"
@@ -331,7 +358,9 @@ export default function Calendar() {
                                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                               />
                             </svg>
-                            <p className="font-bold">No events scheduled</p>
+                            <p className={`${ebGaramond.className} font-bold`}>
+                              No events scheduled
+                            </p>
                           </div>
                         )}
                       </div>
@@ -345,7 +374,7 @@ export default function Calendar() {
           <div className="text-center mt-10">
             <Link
               href="/calendar"
-              className="inline-block bg-blue-500 text-white hover:bg-blue-600 font-bold px-8 py-3 rounded-md transition duration-300 shadow-md hover:shadow-lg"
+              className={`${ebGaramond.className} inline-block bg-blue-500 text-white hover:bg-blue-600 font-bold px-8 py-3 rounded-md transition duration-300 shadow-md hover:shadow-lg`}
             >
               View Full Calendar
             </Link>

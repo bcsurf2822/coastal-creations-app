@@ -5,7 +5,7 @@ import Calendar from "@/components/landing/Calendar";
 
 export default function Home() {
   return (
-    <div className="min-h-screen m-0 p-0 font-comic-neue">
+    <div className="min-h-screen m-0 p-0">
       {/* Hero Section */}
       <Hero />
 
