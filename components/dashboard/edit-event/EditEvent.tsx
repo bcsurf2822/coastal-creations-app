@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 interface EventOption {
   categoryName: string;
@@ -248,16 +249,20 @@ export default function EditEvent() {
 
       // Create a copy of the event data to modify dates for submission
       const submissionData = {
-        ...eventData,
+        _id: eventData._id,
+        eventName: eventData.eventName,
+        description: eventData.description,
+        eventType: eventData.eventType,
+        price: eventData.price,
+        numberOfParticipants: eventData.numberOfParticipants,
         dates: {
           ...eventData.dates,
         },
-        // Include image URL if available
+        time: eventData.time,
+        options: eventData.options,
+        // Include image URL if available, exclude imageFile
         image: uploadedImageUrl || eventData.image || undefined,
       };
-
-      // Remove imageFile from submission data as it's not needed in the API
-      delete (submissionData as any).imageFile;
 
       // Prepare dates for submission
       if (submissionData.dates.startDate) {
@@ -717,9 +722,11 @@ export default function EditEvent() {
               {uploadedImageUrl && (
                 <div className="mt-2">
                   <p className="text-sm text-gray-600">Current image:</p>
-                  <img
+                  <Image
                     src={uploadedImageUrl}
                     alt="Event image"
+                    width={128}
+                    height={128}
                     className="mt-1 h-32 w-auto object-cover rounded-md"
                   />
                 </div>
