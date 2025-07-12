@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { EB_Garamond } from "next/font/google";
+import GallerySlideshow from "./GallerySlideshow";
 
 const ebGaramond = EB_Garamond({
   subsets: ["latin"],
@@ -129,6 +130,11 @@ export default function Offerings() {
               &quot;We provide a variety of classes, workshops, and creative
               opportunities for artists of all ages and skill levels!&quot;
             </p>
+          </div>
+          
+          {/* Gallery Slideshow */}
+          <div className="mb-16">
+            <GallerySlideshow />
           </div>
 
           {/* Live Artist Painting - Full Width Row */}
@@ -276,7 +282,7 @@ export default function Offerings() {
                 Art Camps
               </h4>
               <p
-                className={`${ebGaramond.className} text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300 text-justify font-bold text-lg`}
+                className={`${ebGaramond.className} text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300 text-justify font-bold text-md`}
               >
                 Hands-on art camps where kids explore creativity, build skills,
                 and have fun together.
@@ -284,7 +290,7 @@ export default function Offerings() {
               <div className="mt-auto flex justify-end">
                 <Link
                   href={"/classes/summer-camps"}
-                  className={`${ebGaramond.className} inline-flex items-center justify-center px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg border-2 border-gray-200 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:bg-gray-300 hover:border-gray-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.25)] text-lg transform hover:scale-105 transition-all duration-300`}
+                  className={`${ebGaramond.className} inline-flex items-center justify-center px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg border-2 border-gray-200 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:bg-gray-300 hover:border-gray-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.25)] text-md transform hover:scale-105 transition-all duration-300`}
                 >
                   <span className="mr-2">Upcoming Camps</span>
                   <i data-lucide="arrow-right" className="w-4 h-4"></i>
@@ -313,7 +319,7 @@ export default function Offerings() {
                 Classes & Workshops
               </h4>
               <p
-                className={`${ebGaramond.className} text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300 text-justify font-bold text-lg`}
+                className={`${ebGaramond.className} text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300 text-justify font-bold text-md`}
               >
                 Weekly workshops offering focused, guided art sessions for kids
                 and adults of all skill levels.
@@ -321,7 +327,7 @@ export default function Offerings() {
               <div className="mt-auto flex justify-end">
                 <Link
                   href={"/classes"}
-                  className={`${ebGaramond.className} inline-flex items-center justify-center px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg border-2 border-gray-200 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:bg-gray-300 hover:border-gray-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.25)] text-lg transform hover:scale-105 transition-all duration-300`}
+                  className={`${ebGaramond.className} inline-flex items-center justify-center px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg border-2 border-gray-200 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:bg-gray-300 hover:border-gray-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.25)] text-md transform hover:scale-105 transition-all duration-300`}
                 >
                   <span className="mr-2">Upcoming Classes</span>
                   <i data-lucide="arrow-right" className="w-4 h-4"></i>
@@ -350,7 +356,7 @@ export default function Offerings() {
                 Private Events
               </h4>
               <p
-                className={`${ebGaramond.className} text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300 text-justify font-bold text-lg`}
+                className={`${ebGaramond.className} text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300 text-justify font-bold text-md`}
               >
                 Our art-themed events include guided projects, materials, and
                 colorful memories!
@@ -358,7 +364,7 @@ export default function Offerings() {
               <div className="mt-auto flex justify-end">
                 <Link
                   href={"/classes/birthday-parties"}
-                  className={`${ebGaramond.className} inline-flex items-center justify-center px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg border-2 border-gray-200 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:bg-gray-300 hover:border-gray-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.25)] text-lg transform hover:scale-105 transition-all duration-300`}
+                  className={`${ebGaramond.className} inline-flex items-center justify-center px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg border-2 border-gray-200 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:bg-gray-300 hover:border-gray-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.25)] text-md transform hover:scale-105 transition-all duration-300`}
                 >
                   <span className="mr-2">Learn more</span>
                   <i data-lucide="arrow-right" className="w-4 h-4"></i>

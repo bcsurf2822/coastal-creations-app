@@ -45,13 +45,7 @@ export default function Sidebar() {
 
   return (
     <div className="w-full md:w-64 md:min-h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shadow-sm">
-      {/* <div className="p-4 mb-4 border-b border-gray-200 dark:border-gray-800">
-        <div className="flex items-center justify-center md:justify-start">
-          <span className="text-xl font-bold text-blue-600 dark:text-blue-400">
-            Admin Panel
-          </span>
-        </div>
-      </div> */}
+
 
       <nav className="px-2">
         <ul className="space-y-1">
