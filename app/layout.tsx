@@ -14,8 +14,6 @@ import Footer from "@/components/layout/footer/Footer";
 import AnalyticsEvents from "@/components/AnalyticsEvents";
 import { GA_TRACKING_ID } from "@/lib/gtag";
 import "./globals.css";
-// import Image from "next/image";
-// import AuthProvider from "../components/providers/AuthProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,7 +28,7 @@ const geistMono = Geist_Mono({
 const anton = Anton({
   variable: "--font-anton",
   subsets: ["latin"],
-  weight: "400", // Anton only has one weight (400)
+  weight: "400",
 });
 
 const abrilFatface = Abril_Fatface({

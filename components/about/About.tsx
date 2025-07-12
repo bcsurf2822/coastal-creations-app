@@ -14,7 +14,7 @@ export default function About() {
               priority
             />
           </div>
-          <div className="bg-white p-8 rounded-2xl shadow-sm">
+          <div className="bg-white/80 p-8 rounded-2xl shadow-sm">
             <h2
               className="font-bold text-5xl md:text-6xl text-primary mb-8 leading-tight"
               style={{ fontFamily: "Comic Neue", fontWeight: 700 }}

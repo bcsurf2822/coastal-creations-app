@@ -25,7 +25,7 @@ export default function MainSection() {
             </div>
             <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
               <h3
-                className={`${ebGaramond.className} text-3xl md:text-4xl font-bold mb-6 text-gray-900 text-center`}
+                className={`${ebGaramond.className} text-3xl md:text-5xl font-bold mb-6 text-gray-900 text-center`}
               >
                 Our Creative Space
               </h3>
