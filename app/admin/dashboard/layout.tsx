@@ -43,8 +43,9 @@ export default async function AdminDashboardLayout({
       <header className="sticky top-0 z-30 w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm">
         <div className="px-4 sm:px-6 lg:px-8 mx-auto">
           <div className="flex justify-between h-16 items-center">
-            <h1 className="text-2xl font-semibold bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-400 dark:to-blue-600 text-transparent bg-clip-text">
-              Coastal Creations Studio Admin Dashboard
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+              Coastal Creations Studio
+              <span className="block text-lg font-medium text-gray-600 dark:text-gray-300">Admin Dashboard</span>
             </h1>
             <div className="flex items-center space-x-4">
               <LogoutButton />

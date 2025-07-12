@@ -28,6 +28,8 @@ interface EventData {
     endTime?: string;
   };
   options?: EventOption[];
+  image?: string;
+  imageFile?: File | null;
 }
 
 export default function EditEvent() {
@@ -38,6 +40,8 @@ export default function EditEvent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [imageUploadStatus, setImageUploadStatus] = useState<string | null>(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
 
   const [eventData, setEventData] = useState<EventData>({
     eventName: "",
@@ -111,6 +115,11 @@ export default function EditEvent() {
         }
 
         setEventData(event);
+        
+        // Set existing image URL if available
+        if (event.image) {
+          setUploadedImageUrl(event.image);
+        }
       } catch (err) {
         console.error("Error fetching event:", err);
         setError(err instanceof Error ? err.message : "An error occurred");
@@ -122,12 +131,65 @@ export default function EditEvent() {
     fetchEvent();
   }, [eventId]);
 
+  const handleImageUpload = async (file: File) => {
+    if (!eventData.eventName) {
+      setError("Please make sure event has a name before uploading an image");
+      return;
+    }
+
+    setImageUploadStatus("Uploading image...");
+    const formDataUpload = new FormData();
+    formDataUpload.append("file", file);
+    formDataUpload.append("title", eventData.eventName);
+
+    try {
+      const response = await fetch("/api/upload-image", {
+        method: "POST",
+        body: formDataUpload,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to upload image");
+      }
+
+      const result = await response.json();
+      setUploadedImageUrl(result.imageUrl);
+      setImageUploadStatus("Image uploaded successfully!");
+
+      // Clear the success message after 3 seconds
+      setTimeout(() => {
+        setImageUploadStatus(null);
+      }, 3000);
+    } catch (error) {
+      console.error("[EditEvent-handleImageUpload] Error uploading image:", error);
+      setImageUploadStatus("Failed to upload image. Please try again.");
+      setError("Failed to upload image");
+    }
+  };
+
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >
   ) => {
     const { name, value, type } = e.target;
+
+    if (
+      type === "file" &&
+      e.target instanceof HTMLInputElement &&
+      e.target.files
+    ) {
+      const file = e.target.files[0];
+      setEventData((prev) => ({
+        ...prev,
+        imageFile: file,
+      }));
+      // Auto-upload image when selected
+      if (file && eventData.eventName) {
+        handleImageUpload(file);
+      }
+      return;
+    }
 
     // Handle nested properties
     if (name.includes(".")) {
@@ -190,7 +252,12 @@ export default function EditEvent() {
         dates: {
           ...eventData.dates,
         },
+        // Include image URL if available
+        image: uploadedImageUrl || eventData.image || undefined,
       };
+
+      // Remove imageFile from submission data as it's not needed in the API
+      delete (submissionData as any).imageFile;
 
       // Prepare dates for submission
       if (submissionData.dates.startDate) {
@@ -612,6 +679,51 @@ export default function EditEvent() {
                 <option value="">Select a time</option>
                 {generateTimeOptions()}
               </select>
+            </div>
+          </div>
+
+          {/* Image Upload */}
+          <div className="space-y-4">
+            <h2 className="text-xl text-gray-700 font-semibold">Event Image</h2>
+            
+            <div>
+              <label
+                htmlFor="imageFile"
+                className="block text-sm font-bold text-gray-700 mb-1"
+              >
+                Event Image (Optional)
+              </label>
+              {!eventData.eventName && (
+                <p className="text-sm text-gray-500 mb-2">
+                  Please make sure event has a name before uploading an image
+                </p>
+              )}
+              <input
+                type="file"
+                id="imageFile"
+                name="imageFile"
+                accept="image/*"
+                onChange={handleInputChange}
+                disabled={!eventData.eventName}
+                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300 ${!eventData.eventName ? "opacity-50 cursor-not-allowed" : ""}`}
+              />
+              {imageUploadStatus && (
+                <p
+                  className={`mt-1 text-sm ${imageUploadStatus.includes("successfully") ? "text-green-600" : imageUploadStatus.includes("Failed") ? "text-red-600" : "text-blue-600"}`}
+                >
+                  {imageUploadStatus}
+                </p>
+              )}
+              {uploadedImageUrl && (
+                <div className="mt-2">
+                  <p className="text-sm text-gray-600">Current image:</p>
+                  <img
+                    src={uploadedImageUrl}
+                    alt="Event image"
+                    className="mt-1 h-32 w-auto object-cover rounded-md"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
