@@ -746,9 +746,7 @@ export default function Classes() {
                         )}
                       </div>
 
-                      <Description className="text-lg">
-                        {event.description}
-                      </Description>
+                      <Description>{event.description}</Description>
 
                       {/* Show participant count only if signups > 5 */}
                       {(eventParticipantCounts[event._id] || 0) > 5 && (

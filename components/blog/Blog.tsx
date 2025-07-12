@@ -102,7 +102,7 @@ export default async function Blog() {
                         </div>
 
                         {/* Date and Read More - always at bottom */}
-                        <div className="flex items-center justify-between pt-4 border-t border-gray-200 bg-white/80 rounded-b-2xl text-lg">
+                        <div className="flex items-center justify-between pt-4   rounded-b-2xl text-lg">
                           <time className="text-md font-bold text-black z-10">
                             {new Date(post.publishedAt).toLocaleDateString(
                               "en-US",

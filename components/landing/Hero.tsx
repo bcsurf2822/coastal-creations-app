@@ -74,7 +74,7 @@ export default function Hero() {
           damping: 20,
           duration: 0.8,
         }}
-        className="fixed top-1/2 right-4 md:right-8 z-50 bg-gradient-to-r from-blue-700 via-blue-800 to-slate-800 text-white px-6 py-4 rounded-xl shadow-2xl border-2 border-white/20 backdrop-blur-sm max-w-xs"
+        className="fixed top-1/2 right-4 md:right-8 z-50 bg-gradient-to-r from-slate-500 via-blue-400 to-slate-400  px-6 py-4 rounded-xl shadow-2xl backdrop-blur-sm max-w-xs text-white"
       >
         <motion.div
           animate={
@@ -104,9 +104,7 @@ export default function Hero() {
               repeatType: "reverse",
             }}
             className="absolute -top-2 -right-2 text-yellow-300 text-xl"
-          >
-            ✨
-          </motion.div>
+          ></motion.div>
           <motion.div
             animate={{
               scale: [1, 1.3, 1],
@@ -119,9 +117,7 @@ export default function Hero() {
               delay: 0.5,
             }}
             className="absolute -bottom-1 -left-1 text-yellow-300 text-lg"
-          >
-            ⭐
-          </motion.div>
+          ></motion.div>
 
           <div className="text-center">
             <motion.div
@@ -138,7 +134,7 @@ export default function Hero() {
               }}
               className="font-bold text-lg mb-1"
             >
-              🎨 Live Artist Event! 🎨
+              Live Artist Event!
             </motion.div>
             <p className="text-sm opacity-90 mb-3 font-bold">
               Watch creativity unfold in real-time!

@@ -22,7 +22,7 @@ import {
 const StyledContainer = styled(Container)({
   padding: "4rem 2rem",
   maxWidth: "1200px",
-                  fontFamily: "var(--font-eb-garamond)",
+  fontFamily: "var(--font-eb-garamond)",
 });
 
 const Title = styled("h1")({
@@ -179,7 +179,7 @@ const MinimumNote = styled("div")({
   color: "#666",
   marginBottom: "1rem",
   padding: "0.5rem 1rem",
-  fontSize: "0.875rem",
+  fontSize: "1rem",
   background:
     "linear-gradient(135deg, rgba(25,118,210,0.1), rgba(66,165,245,0.1))",
   borderRadius: "20px",
@@ -209,7 +209,7 @@ const ContactMessage = styled("div")({
     "linear-gradient(135deg, rgba(25,118,210,0.1), rgba(66,165,245,0.1))",
   borderRadius: "25px",
   border: "3px solid rgba(25,118,210,0.2)",
-  fontSize: "1.125rem",
+  fontSize: "1.2rem",
   color: "#424242",
   position: "relative",
   overflow: "hidden",
@@ -421,7 +421,9 @@ const Birthdays = () => {
                     </div>
                   </MinimumNote>
 
-                  <Description>{birthday.description}</Description>
+                  <Description className="text-lg">
+                    {birthday.description}
+                  </Description>
                 </CardContent>
               </PartyCard>
             </GridItem>
