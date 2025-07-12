@@ -19,7 +19,7 @@ export default function MainSection() {
                   alt="Studio with Tables"
                   width={350}
                   height={420}
-                  className="object-contain rounded-[2.5rem] h-full"
+                  className="object-cover w-full h-full"
                   priority
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 536px"
                   quality={100}
