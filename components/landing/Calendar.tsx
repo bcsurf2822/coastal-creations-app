@@ -223,7 +223,7 @@ export default function Calendar() {
               Upcoming Workshops
             </h3>
             <p
-              className={`${ebGaramond.className} text-gray-600 max-w-2xl mx-auto font-bold`}
+              className={`${ebGaramond.className} text-gray-600 max-w-2xl mx-auto font-bold text-lg`}
             >
               Browse our calendar to find the perfect class or workshop for your
               creative journey.
@@ -285,7 +285,7 @@ export default function Calendar() {
                                     : ""
                                 }`}
                               >
-                                <div className="flex flex-col items-start mb-2 flex-1">
+                                <div className="flex flex-col items-start mb-2 flex-1 text-lg">
                                   <p
                                     className={`${ebGaramond.className} font-bold text-primary text-left`}
                                   >
@@ -374,7 +374,7 @@ export default function Calendar() {
           <div className="text-center mt-10">
             <Link
               href="/calendar"
-              className={`${ebGaramond.className} inline-block bg-blue-500 text-white hover:bg-blue-600 font-bold px-8 py-3 rounded-md transition duration-300 shadow-md hover:shadow-lg`}
+              className={`${ebGaramond.className} inline-block bg-blue-500 text-white hover:bg-blue-600 font-bold px-8 py-3 rounded-md transition duration-300 shadow-md hover:shadow-lg text-lg`}
             >
               View Full Calendar
             </Link>

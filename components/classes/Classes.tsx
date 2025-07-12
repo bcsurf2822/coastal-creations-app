@@ -130,18 +130,6 @@ const SectionTitle = styled("h2")({
   marginBottom: "2rem",
   color: "#326C85",
   position: "relative",
-  paddingLeft: "1rem",
-  "&:before": {
-    content: '""',
-    position: "absolute",
-    left: "0",
-    top: "50%",
-    transform: "translateY(-50%)",
-    width: "4px",
-    height: "100%",
-    background: "linear-gradient(180deg, #326C85, #42A5F5)",
-    borderRadius: "2px",
-  },
 });
 
 interface ClassCardProps {
@@ -727,6 +715,7 @@ export default function Classes() {
                           justifyContent: "space-between",
                           alignItems: "flex-start",
                           marginBottom: "1rem",
+                          fontSize: "1rem",
                         }}
                       >
                         <InfoGrid>
@@ -757,7 +746,9 @@ export default function Classes() {
                         )}
                       </div>
 
-                      <Description>{event.description}</Description>
+                      <Description className="text-lg">
+                        {event.description}
+                      </Description>
 
                       {/* Show participant count only if signups > 5 */}
                       {(eventParticipantCounts[event._id] || 0) > 5 && (

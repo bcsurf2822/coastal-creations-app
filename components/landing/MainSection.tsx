@@ -25,12 +25,12 @@ export default function MainSection() {
             </div>
             <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
               <h3
-                className={`${ebGaramond.className} text-3xl md:text-4xl font-bold mb-6 text-gray-900 text-center`}
+                className={`${ebGaramond.className} text-3xl md:text-5xl font-bold mb-6 text-gray-900 text-center`}
               >
                 Our Creative Space
               </h3>
               <p
-                className={`${ebGaramond.className} text-lg font-bold md:text-xl text-gray-600 leading-relaxed text-justify`}
+                className={`${ebGaramond.className} text-lg font-bold md:text-2xl text-gray-600 leading-relaxed text-justify`}
               >
                 &ldquo;Welcome to Coastal Creations, where creativity meets the
                 coast! Our art studio offers a vibrant space to walk in and

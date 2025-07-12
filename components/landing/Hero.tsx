@@ -163,8 +163,8 @@ export default function Hero() {
                   // Desktop layout (two lines)
                   if (windowWidth >= 1024) {
                     return [
-                      { x: -100, y: -50 }, // Welcome
-                      { x: 80, y: -50 }, // to
+                      { x: -80, y: -50 }, // Welcome
+                      { x: 130, y: -50 }, // to
                       { x: -280, y: 50 }, // Coastal
                       { x: 0, y: 50 }, // Creations
                       { x: 260, y: 50 }, // Studio
@@ -239,13 +239,13 @@ export default function Hero() {
           <div className="flex flex-wrap justify-center gap-6">
             <Link
               href="/classes"
-              className="bg-slate-800 hover:bg-slate-700 text-white font-semibold px-6 sm:px-8 py-3 sm:py-3.5 rounded-lg transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg text-base sm:text-lg tracking-wide"
+              className="bg-slate-800 hover:bg-slate-700 text-white font-semibold px-6 sm:px-8 py-3 sm:py-3.5 rounded-lg transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg text-base sm:text-xl tracking-wide"
             >
               Explore Classes
             </Link>
             <Link
               href="/about"
-              className="bg-white hover:bg-gray-50 border-2 border-slate-600 text-slate-700 font-semibold px-6 sm:px-8 py-3 sm:py-3.5 rounded-lg transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg text-base sm:text-lg tracking-wide"
+              className="bg-white hover:bg-gray-50 border-2 border-slate-600 text-slate-700 font-semibold px-6 sm:px-8 py-3 sm:py-3.5 rounded-lg transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg text-base sm:text-xl tracking-wide"
             >
               About Us
             </Link>
