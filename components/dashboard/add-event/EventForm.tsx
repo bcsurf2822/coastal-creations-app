@@ -75,6 +75,7 @@ const EventForm: React.FC = () => {
     null
   );
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [isImageUploading, setIsImageUploading] = useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -116,6 +117,7 @@ const EventForm: React.FC = () => {
       return;
     }
 
+    setIsImageUploading(true);
     setImageUploadStatus("Uploading image...");
     const formDataUpload = new FormData();
     formDataUpload.append("file", file);
@@ -143,6 +145,8 @@ const EventForm: React.FC = () => {
       console.error("Error uploading image:", error);
       setImageUploadStatus("Failed to upload image. Please try again.");
       setErrors({ ...errors, image: "Failed to upload image" });
+    } finally {
+      setIsImageUploading(false);
     }
   };
 
@@ -917,10 +921,14 @@ const EventForm: React.FC = () => {
         <div className="col-span-1 md:col-span-2 text-center">
           <button
             type="submit"
-            disabled={isSubmitting}
-            className={`w-full md:w-auto px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
+            disabled={isSubmitting || isImageUploading}
+            className={`w-full md:w-auto px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${isSubmitting || isImageUploading ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-700 cursor-pointer"}`}
           >
-            {isSubmitting ? "Creating Event..." : "Create Event"}
+            {isSubmitting
+              ? "Creating Event..."
+              : isImageUploading
+                ? "Uploading Image..."
+                : "Create Event"}
           </button>
         </div>
       </form>
