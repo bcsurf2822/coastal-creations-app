@@ -560,13 +560,13 @@ export default function EventContainer() {
                       <span className="text-sm">Edit</span>
                     </Link>
                     
-                    <button
+                    {/* <button
                       className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg cursor-pointer"
                       onClick={() => handleEventClick(event)}
                     >
                       View Event
                     </button>
-                    
+                     */}
                     <button
                       className={`p-2 rounded-lg transition-colors ${
                         deletingEventIds.has(event.id)
