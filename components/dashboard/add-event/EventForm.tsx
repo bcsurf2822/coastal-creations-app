@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import dayjs, { Dayjs } from "dayjs";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import React from "react";
 
 interface EventFormData {
@@ -44,6 +45,9 @@ interface FormErrors {
 
 const EventForm: React.FC = () => {
   const router = useRouter();
+  const isSubmittingRef = useRef(false);
+  const startDateInputRef = useRef<HTMLInputElement>(null);
+  const recurringEndDateInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<EventFormData>({
     eventName: "",
     eventType: "class",
@@ -69,13 +73,12 @@ const EventForm: React.FC = () => {
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
   const [imageUploadStatus, setImageUploadStatus] = useState<string | null>(
     null
   );
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
   const [isImageUploading, setIsImageUploading] = useState(false);
+  const [isImageLoading, setIsImageLoading] = useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -135,6 +138,7 @@ const EventForm: React.FC = () => {
 
       const result = await response.json();
       setUploadedImageUrl(result.imageUrl);
+      setIsImageLoading(true); // Start image loading for preview
       setImageUploadStatus("Image uploaded successfully!");
 
       // Clear the success message after 3 seconds
@@ -165,6 +169,20 @@ const EventForm: React.FC = () => {
           [name]: dayjs().hour(hours).minute(minutes).second(0),
         });
       }
+    }
+  };
+
+  const handleImageLoad = () => {
+    setIsImageLoading(false);
+  };
+
+  const handleImageLoadStart = () => {
+    setIsImageLoading(true);
+  };
+
+  const handleDateInputClick = (inputRef: React.RefObject<HTMLInputElement | null>) => {
+    if (inputRef.current) {
+      inputRef.current.showPicker();
     }
   };
 
@@ -234,70 +252,74 @@ const EventForm: React.FC = () => {
     return newErrors;
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
+    // Prevent double submission
+    if (isSubmittingRef.current) return;
+    
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
+    
     const validationErrors = validate(formData);
     setErrors(validationErrors);
-    setSubmitError(null);
 
     if (Object.keys(validationErrors).length === 0) {
+      // Show loading toast
+      const loadingToastId = toast.loading('Creating event...', {
+        duration: Infinity,
+      });
 
       try {
-        // Format the data for API to match Event.ts model structure exactly
-        const apiData = {
-          eventName: formData.eventName,
-          eventType: formData.eventType, // Already restricted to valid enum values in the interface
-          description: formData.description,
-          price:
-            formData.eventType !== "artist"
-              ? parseFloat(formData.price)
-              : undefined,
-          numberOfParticipants:
-            formData.eventType !== "artist"
-              ? parseInt(formData.numberOfParticipants)
-              : undefined,
-          // Match dates structure from Event.ts model
-          dates: {
-            startDate: formData.startDate, // Send the date string as-is, let schema handle timezone
-            isRecurring:
-              formData.eventType !== "artist" ? formData.isRecurring : false,
-            recurringPattern:
-              formData.eventType !== "artist" && formData.isRecurring
-                ? formData.recurringPattern
-                : undefined,
-            recurringEndDate:
-              formData.eventType !== "artist" && formData.isRecurring
-                ? formData.recurringEndDate
-                : undefined,
-          },
-          // Match time structure from Event.ts model
-          time: {
-            startTime: formData.startTime
-              ? formData.startTime.format("HH:mm")
-              : "",
-            endTime: formData.endTime ? formData.endTime.format("HH:mm") : "",
-          },
-          // Add options if they exist
-          options:
-            formData.eventType !== "artist" && formData.hasOptions
-              ? formData.optionCategories.filter(
-                  (cat) => cat.categoryName.trim() !== ""
-                )
-              : undefined,
-          // Image is already uploaded to Sanity, include URL if available
-          image: uploadedImageUrl || undefined,
-        };
-
-        // Send data to API
-        const response = await fetch("/api/events", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(apiData),
-        });
+        // Add minimum loading duration of 1 second for better UX
+        const [response] = await Promise.all([
+          fetch("/api/events", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              eventName: formData.eventName,
+              eventType: formData.eventType,
+              description: formData.description,
+              price:
+                formData.eventType !== "artist"
+                  ? parseFloat(formData.price)
+                  : undefined,
+              numberOfParticipants:
+                formData.eventType !== "artist"
+                  ? parseInt(formData.numberOfParticipants)
+                  : undefined,
+              dates: {
+                startDate: formData.startDate,
+                isRecurring:
+                  formData.eventType !== "artist" ? formData.isRecurring : false,
+                recurringPattern:
+                  formData.eventType !== "artist" && formData.isRecurring
+                    ? formData.recurringPattern
+                    : undefined,
+                recurringEndDate:
+                  formData.eventType !== "artist" && formData.isRecurring
+                    ? formData.recurringEndDate
+                    : undefined,
+              },
+              time: {
+                startTime: formData.startTime
+                  ? formData.startTime.format("HH:mm")
+                  : "",
+                endTime: formData.endTime ? formData.endTime.format("HH:mm") : "",
+              },
+              options:
+                formData.eventType !== "artist" && formData.hasOptions
+                  ? formData.optionCategories.filter(
+                      (cat) => cat.categoryName.trim() !== ""
+                    )
+                  : undefined,
+              image: uploadedImageUrl || undefined,
+            }),
+          }),
+          new Promise(resolve => setTimeout(resolve, 1000)) // Minimum 1 second loading
+        ]);
 
         const result = await response.json();
 
@@ -305,23 +327,34 @@ const EventForm: React.FC = () => {
           throw new Error(result.error || "Failed to create event");
         }
 
-        setSubmitSuccess(true);
+        // Dismiss loading toast and show success
+        toast.dismiss(loadingToastId);
+        toast.success('Event created successfully! Redirecting...', {
+          duration: 2000,
+        });
 
+        // Keep loading state active during redirect
         setTimeout(() => {
           router.push("/admin/dashboard/");
-        }, 2000);
+        }, 1000);
       } catch (error) {
-        console.error("Error submitting form:", error);
-        setSubmitError(
-          typeof error === "string" ? error : (error as Error).message
+        console.error("[EVENT-FORM-SUBMIT] Error submitting form:", error);
+        
+        // Dismiss loading toast and show error
+        toast.dismiss(loadingToastId);
+        toast.error(
+          typeof error === "string" ? error : (error as Error).message || "Failed to create event"
         );
-      } finally {
+        
+        // Only reset loading state on error
+        isSubmittingRef.current = false;
         setIsSubmitting(false);
       }
     } else {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
-  };
+  }, [formData, router, uploadedImageUrl]);
 
   const generateTimeOptions = () => {
     const options = [];
@@ -431,17 +464,6 @@ const EventForm: React.FC = () => {
         Create New Event
       </h2>
 
-      {submitSuccess && (
-        <div className="mb-6 p-4 bg-green-100 text-green-700 rounded-md">
-          Event created successfully! Redirecting to events dashboard...
-        </div>
-      )}
-
-      {submitError && (
-        <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-md">
-          Error: {submitError}
-        </div>
-      )}
 
       <form
         onSubmit={handleSubmit}
@@ -558,12 +580,14 @@ const EventForm: React.FC = () => {
             Start Date
           </label>
           <input
+            ref={startDateInputRef}
             type="date"
             id="startDate"
             name="startDate"
             value={formData.startDate}
             onChange={handleChange}
-            className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.startDate ? "border-red-500" : "border-gray-300"}`}
+            onClick={() => handleDateInputClick(startDateInputRef)}
+            className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer ${errors.startDate ? "border-red-500" : "border-gray-300"}`}
           />
           {errors.startDate && (
             <p className="mt-1 text-sm text-red-600">{errors.startDate}</p>
@@ -679,12 +703,14 @@ const EventForm: React.FC = () => {
                 Recurring End Date
               </label>
               <input
+                ref={recurringEndDateInputRef}
                 type="date"
                 id="recurringEndDate"
                 name="recurringEndDate"
                 value={formData.recurringEndDate}
                 onChange={handleChange}
-                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.recurringEndDate ? "border-red-500" : "border-gray-300"}`}
+                onClick={() => handleDateInputClick(recurringEndDateInputRef)}
+                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer ${errors.recurringEndDate ? "border-red-500" : "border-gray-300"}`}
               />
               {errors.recurringEndDate && (
                 <p className="mt-1 text-sm text-red-600">
@@ -747,11 +773,20 @@ const EventForm: React.FC = () => {
           {uploadedImageUrl && (
             <div className="mt-2">
               <p className="text-sm text-gray-600">Preview:</p>
-              <img
-                src={uploadedImageUrl}
-                alt="Uploaded event image"
-                className="mt-1 h-32 w-auto object-cover rounded-md"
-              />
+              <div className="relative">
+                <img
+                  src={uploadedImageUrl}
+                  alt="Uploaded event image"
+                  className="mt-1 h-32 w-auto object-cover rounded-md"
+                  onLoad={handleImageLoad}
+                  onLoadStart={handleImageLoadStart}
+                />
+                {isImageLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75 rounded-md">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
           {errors.image && (
@@ -922,11 +957,13 @@ const EventForm: React.FC = () => {
         <div className="col-span-1 md:col-span-2 text-center">
           <button
             type="submit"
-            disabled={isSubmitting || isImageUploading}
+            disabled={isSubmitting || isImageUploading || isImageLoading}
             className={`w-full md:w-auto px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center justify-center ${
               isSubmitting
                 ? "bg-blue-400 cursor-not-allowed"
                 : isImageUploading
+                ? "bg-gray-400 cursor-not-allowed"
+                : isImageLoading
                 ? "bg-gray-400 cursor-not-allowed"
                 : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
             }`}
@@ -938,6 +975,8 @@ const EventForm: React.FC = () => {
               ? "Creating Event..."
               : isImageUploading
                 ? "Image Uploading... Please Wait"
+                : isImageLoading
+                ? "Image Loading... Please Wait"
                 : "Create Event"}
           </button>
         </div>

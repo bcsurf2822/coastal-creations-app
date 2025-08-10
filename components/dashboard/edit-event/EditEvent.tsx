@@ -1,8 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import toast from "react-hot-toast";
 
 interface EventOption {
   categoryName: string;
@@ -41,8 +42,17 @@ export default function EditEvent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [imageUploadStatus, setImageUploadStatus] = useState<string | null>(null);
+  const [imageUploadStatus, setImageUploadStatus] = useState<string | null>(
+    null
+  );
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [isImageUploading, setIsImageUploading] = useState(false);
+  const [isImageLoading, setIsImageLoading] = useState(false);
+  const [isDeletingImage, setIsDeletingImage] = useState(false);
+
+  const isSavingRef = useRef(false);
+  const startDateInputRef = useRef<HTMLInputElement>(null);
+  const recurringEndDateInputRef = useRef<HTMLInputElement>(null);
 
   const [eventData, setEventData] = useState<EventData>({
     eventName: "",
@@ -116,7 +126,7 @@ export default function EditEvent() {
         }
 
         setEventData(event);
-        
+
         // Set existing image URL if available
         if (event.image) {
           setUploadedImageUrl(event.image);
@@ -134,10 +144,13 @@ export default function EditEvent() {
 
   const handleImageUpload = async (file: File) => {
     if (!eventData.eventName) {
-      setError("Please make sure event has a name before uploading an image");
+      toast.error(
+        "Please make sure event has a name before uploading an image"
+      );
       return;
     }
 
+    setIsImageUploading(true);
     setImageUploadStatus("Uploading image...");
     const formDataUpload = new FormData();
     formDataUpload.append("file", file);
@@ -155,6 +168,7 @@ export default function EditEvent() {
 
       const result = await response.json();
       setUploadedImageUrl(result.imageUrl);
+      setIsImageLoading(true); // Start image loading for preview
       setImageUploadStatus("Image uploaded successfully!");
 
       // Clear the success message after 3 seconds
@@ -162,9 +176,52 @@ export default function EditEvent() {
         setImageUploadStatus(null);
       }, 3000);
     } catch (error) {
-      console.error("[EditEvent-handleImageUpload] Error uploading image:", error);
+      console.error(
+        "[EditEvent-handleImageUpload] Error uploading image:",
+        error
+      );
       setImageUploadStatus("Failed to upload image. Please try again.");
-      setError("Failed to upload image");
+      toast.error("Failed to upload image");
+    } finally {
+      setIsImageUploading(false);
+    }
+  };
+
+  const handleImageDelete = async () => {
+    if (!uploadedImageUrl) return;
+
+    setIsDeletingImage(true);
+    const loadingToastId = toast.loading("Deleting image...");
+
+    try {
+      const response = await fetch(
+        `/api/delete-image?imageUrl=${encodeURIComponent(uploadedImageUrl)}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete image");
+      }
+
+      setUploadedImageUrl(null);
+      setEventData((prev) => ({
+        ...prev,
+        image: undefined,
+      }));
+
+      toast.dismiss(loadingToastId);
+      toast.success("Image deleted successfully!");
+    } catch (error) {
+      console.error(
+        "[EditEvent-handleImageDelete] Error deleting image:",
+        error
+      );
+      toast.dismiss(loadingToastId);
+      toast.error("Failed to delete image");
+    } finally {
+      setIsDeletingImage(false);
     }
   };
 
@@ -236,72 +293,122 @@ export default function EditEvent() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleImageLoad = () => {
+    setIsImageLoading(false);
+  };
 
-    if (!eventId) {
-      setError("No event ID provided");
-      return;
-    }
+  const handleImageLoadStart = () => {
+    setIsImageLoading(true);
+  };
 
-    try {
-      setIsSaving(true);
-
-      // Create a copy of the event data to modify dates for submission
-      const submissionData = {
-        _id: eventData._id,
-        eventName: eventData.eventName,
-        description: eventData.description,
-        eventType: eventData.eventType,
-        price: eventData.price,
-        numberOfParticipants: eventData.numberOfParticipants,
-        dates: {
-          ...eventData.dates,
-        },
-        time: eventData.time,
-        options: eventData.options,
-        // Include image URL if available, exclude imageFile
-        image: uploadedImageUrl || eventData.image || undefined,
-      };
-
-      // Prepare dates for submission
-      if (submissionData.dates.startDate) {
-        submissionData.dates.startDate = prepareDateForSubmit(
-          submissionData.dates.startDate
-        );
-      }
-      if (submissionData.dates.endDate) {
-        submissionData.dates.endDate = prepareDateForSubmit(
-          submissionData.dates.endDate
-        );
-      }
-      if (submissionData.dates.recurringEndDate) {
-        submissionData.dates.recurringEndDate = prepareDateForSubmit(
-          submissionData.dates.recurringEndDate
-        );
-      }
-
-      const response = await fetch(`/api/event/${eventId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(submissionData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to update event");
-      }
-
-      // Redirect to dashboard on success
-      router.push("/admin/dashboard");
-    } catch (err) {
-      console.error("Error updating event:", err);
-      setError(err instanceof Error ? err.message : "An error occurred");
-      setIsSaving(false);
+  const handleDateInputClick = (
+    inputRef: React.RefObject<HTMLInputElement | null>
+  ) => {
+    if (inputRef.current) {
+      inputRef.current.showPicker();
     }
   };
+
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+
+      if (!eventId) {
+        toast.error("No event ID provided");
+        return;
+      }
+
+      // Prevent double submission
+      if (isSavingRef.current) return;
+
+      isSavingRef.current = true;
+      setIsSaving(true);
+
+      // Show loading toast
+      const loadingToastId = toast.loading("Saving changes...", {
+        duration: Infinity,
+      });
+
+      try {
+        // Create a copy of the event data to modify dates for submission
+        const submissionData = {
+          _id: eventData._id,
+          eventName: eventData.eventName,
+          description: eventData.description,
+          eventType: eventData.eventType,
+          price: eventData.price,
+          numberOfParticipants: eventData.numberOfParticipants,
+          dates: {
+            ...eventData.dates,
+          },
+          time: eventData.time,
+          options: eventData.options,
+          // Include image URL if available, exclude imageFile
+          image: uploadedImageUrl || eventData.image || undefined,
+        };
+
+        // Prepare dates for submission
+        if (submissionData.dates.startDate) {
+          submissionData.dates.startDate = prepareDateForSubmit(
+            submissionData.dates.startDate
+          );
+        }
+        if (submissionData.dates.endDate) {
+          submissionData.dates.endDate = prepareDateForSubmit(
+            submissionData.dates.endDate
+          );
+        }
+        if (submissionData.dates.recurringEndDate) {
+          submissionData.dates.recurringEndDate = prepareDateForSubmit(
+            submissionData.dates.recurringEndDate
+          );
+        }
+
+        // Add minimum loading duration of 1 second for better UX
+        const [response] = await Promise.all([
+          fetch(`/api/event/${eventId}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(submissionData),
+          }),
+          new Promise((resolve) => setTimeout(resolve, 1000)), // Minimum 1 second loading
+        ]);
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to update event");
+        }
+
+        // Dismiss loading toast and show success
+        toast.dismiss(loadingToastId);
+        toast.success("Event updated successfully! Redirecting...", {
+          duration: 2000,
+        });
+
+        // Keep loading state active during redirect
+        setTimeout(() => {
+          router.push("/admin/dashboard");
+        }, 1000);
+      } catch (err) {
+        console.error("[EditEvent-handleSubmit] Error updating event:", err);
+
+        // Dismiss loading toast and show error
+        toast.dismiss(loadingToastId);
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : "An error occurred while updating the event"
+        );
+
+        // Only reset loading state on error
+        isSavingRef.current = false;
+        setIsSaving(false);
+      }
+    },
+    [eventData, eventId, router, uploadedImageUrl]
+  );
 
   // Generate time options from 9:00 AM to 9:00 PM
   const generateTimeOptions = () => {
@@ -571,13 +678,15 @@ export default function EditEvent() {
                 Start Date
               </label>
               <input
+                ref={startDateInputRef}
                 type="date"
                 id="dates.startDate"
                 name="dates.startDate"
                 value={eventData.dates?.startDate || ""}
                 onChange={handleInputChange}
+                onClick={() => handleDateInputClick(startDateInputRef)}
                 required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 cursor-pointer"
               />
             </div>
 
@@ -631,12 +740,16 @@ export default function EditEvent() {
                       Recurring End Date
                     </label>
                     <input
+                      ref={recurringEndDateInputRef}
                       type="date"
                       id="dates.recurringEndDate"
                       name="dates.recurringEndDate"
                       value={eventData.dates?.recurringEndDate || ""}
                       onChange={handleInputChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      onClick={() =>
+                        handleDateInputClick(recurringEndDateInputRef)
+                      }
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 cursor-pointer"
                     />
                   </div>
                 </>
@@ -690,7 +803,7 @@ export default function EditEvent() {
           {/* Image Upload */}
           <div className="space-y-4">
             <h2 className="text-xl text-gray-700 font-semibold">Event Image</h2>
-            
+
             <div>
               <label
                 htmlFor="imageFile"
@@ -722,13 +835,35 @@ export default function EditEvent() {
               {uploadedImageUrl && (
                 <div className="mt-2">
                   <p className="text-sm text-gray-600">Current image:</p>
-                  <Image
-                    src={uploadedImageUrl}
-                    alt="Event image"
-                    width={128}
-                    height={128}
-                    className="mt-1 h-32 w-auto object-cover rounded-md"
-                  />
+                  <div className="relative inline-block">
+                    <Image
+                      src={uploadedImageUrl}
+                      alt="Event image"
+                      width={128}
+                      height={128}
+                      className="mt-1 h-32 w-auto object-cover rounded-md"
+                      onLoad={handleImageLoad}
+                      onLoadStart={handleImageLoadStart}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleImageDelete}
+                      disabled={isDeletingImage}
+                      className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Delete image"
+                    >
+                      {isDeletingImage ? (
+                        <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
+                      ) : (
+                        "×"
+                      )}
+                    </button>
+                    {isImageLoading && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75 rounded-md">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -909,10 +1044,36 @@ export default function EditEvent() {
             </Link>
             <button
               type="submit"
-              disabled={isSaving}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:bg-blue-300 flex items-center"
+              disabled={
+                isSaving ||
+                isImageUploading ||
+                isImageLoading ||
+                isDeletingImage
+              }
+              className={`px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center justify-center ${
+                isSaving
+                  ? "bg-blue-400 cursor-not-allowed"
+                  : isImageUploading
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : isImageLoading
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : isDeletingImage
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+              }`}
             >
-              {isSaving ? "Saving..." : "Save Changes"}
+              {isSaving && (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+              )}
+              {isSaving
+                ? "Saving Changes..."
+                : isImageUploading
+                  ? "Image Uploading... Please Wait"
+                  : isImageLoading
+                    ? "Image Loading... Please Wait"
+                    : isDeletingImage
+                      ? "Deleting Image... Please Wait"
+                      : "Save Changes"}
             </button>
           </div>
         </form>
