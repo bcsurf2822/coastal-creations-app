@@ -236,13 +236,13 @@ const EventForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
+    
+    setIsSubmitting(true);
     const validationErrors = validate(formData);
     setErrors(validationErrors);
     setSubmitError(null);
 
     if (Object.keys(validationErrors).length === 0) {
-      setIsSubmitting(true);
 
       try {
         // Format the data for API to match Event.ts model structure exactly
@@ -319,6 +319,7 @@ const EventForm: React.FC = () => {
         setIsSubmitting(false);
       }
     } else {
+      setIsSubmitting(false);
     }
   };
 
@@ -922,12 +923,21 @@ const EventForm: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting || isImageUploading}
-            className={`w-full md:w-auto px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${isSubmitting || isImageUploading ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-700 cursor-pointer"}`}
+            className={`w-full md:w-auto px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center justify-center ${
+              isSubmitting
+                ? "bg-blue-400 cursor-not-allowed"
+                : isImageUploading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+            }`}
           >
+            {isSubmitting && (
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+            )}
             {isSubmitting
               ? "Creating Event..."
               : isImageUploading
-                ? "Uploading Image..."
+                ? "Image Uploading... Please Wait"
                 : "Create Event"}
           </button>
         </div>

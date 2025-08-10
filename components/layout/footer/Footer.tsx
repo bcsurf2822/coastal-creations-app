@@ -288,7 +288,29 @@ export default function Footer() {
             </div>
           </div>
         </div>
-        <div className="mt-6 pt-6 border-t border-orange-200 text-center text-black text-sm">
+        {/* Navigation Links */}
+        <nav className="mt-6 pt-4 border-t border-orange-200 flex flex-wrap justify-center gap-6 text-sm">
+          <Link href="/" className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase">
+            Home
+          </Link>
+          <Link href="/classes" className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase">
+            Classes
+          </Link>
+          <Link href="/calendar" className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase">
+            Calendar
+          </Link>
+          <Link href="/gallery" className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase">
+            Gallery
+          </Link>
+          <Link href="/blog" className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase">
+            Blog
+          </Link>
+          <Link href="/about" className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase">
+            About
+          </Link>
+        </nav>
+        
+        <div className="mt-4 pt-4 border-t border-orange-200 text-center text-black text-sm">
           <p>
             &copy; {new Date().getFullYear()} Coastal Creation Studios. All
             rights reserved.
