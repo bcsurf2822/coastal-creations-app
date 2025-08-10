@@ -507,6 +507,11 @@ export default function EventContainer() {
                         <h4 className="font-semibold text-gray-900 dark:text-white text-lg">
                           {event.name}
                         </h4>
+                        {event.description && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                            {event.description}
+                          </p>
+                        )}
                         <div className="flex items-center mt-2 text-sm text-gray-500 dark:text-gray-400">
                           <RiCalendarEventLine className="mr-1" />
                           <span>{formatDate(event.startDate)}</span>
@@ -546,12 +551,37 @@ export default function EventContainer() {
                       </div>
                     )}
                   </div>
-                  <div className="mt-4">
+                  <div className="mt-4 flex justify-between items-center">
+                    <Link
+                      href={`/admin/dashboard/edit-event?id=${event.id}`}
+                      className="flex items-center space-x-1 p-2 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-colors"
+                    >
+                      <RiEdit2Line className="w-4 h-4" />
+                      <span className="text-sm">Edit</span>
+                    </Link>
+                    
                     <button
                       className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg cursor-pointer"
                       onClick={() => handleEventClick(event)}
                     >
                       View Event
+                    </button>
+                    
+                    <button
+                      className={`p-2 rounded-lg transition-colors ${
+                        deletingEventIds.has(event.id)
+                          ? "opacity-50 cursor-not-allowed text-gray-400"
+                          : "text-gray-600 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-900/20 cursor-pointer"
+                      }`}
+                      onClick={() => handleDeleteEvent(event.id)}
+                      disabled={deletingEventIds.has(event.id)}
+                      title="Delete event"
+                    >
+                      {deletingEventIds.has(event.id) ? (
+                        <div className="w-4 h-4 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin"></div>
+                      ) : (
+                        <RiDeleteBinLine className="w-4 h-4" />
+                      )}
                     </button>
                   </div>
                 </div>
