@@ -305,10 +305,10 @@ export default function EventContainer() {
     fetchCustomers();
   }, []);
 
-  const handleEventClick = (event: Event) => {
-    setSelectedEvent(event);
-    setIsDialogOpen(true);
-  };
+  // const handleEventClick = (event: Event) => {
+  //   setSelectedEvent(event);
+  //   setIsDialogOpen(true);
+  // };
 
   const closeDialog = () => {
     setIsDialogOpen(false);
