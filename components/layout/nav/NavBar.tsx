@@ -268,14 +268,6 @@ export default function NavBar() {
               </Link>
             </motion.div>
 
-            <motion.div variants={itemVariants} whileHover="hover">
-              <Link
-                href="/blog"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold uppercase"
-              >
-                Blog
-              </Link>
-            </motion.div>
 
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
@@ -463,19 +455,6 @@ export default function NavBar() {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Calendar
-                  </Link>
-                </motion.div>
-                <motion.div
-                  variants={itemVariants}
-                  whileHover="hover"
-                  className="border-b border-gray-100 pb-2"
-                >
-                  <Link
-                    href="/blog"
-                    className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block uppercase"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Blog
                   </Link>
                 </motion.div>
                 <motion.div variants={itemVariants} whileHover="hover">

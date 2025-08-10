@@ -16,6 +16,10 @@ import Dialog from "@mui/material/Dialog";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
+import Image from "next/image";
+import imageUrlBuilder from "@sanity/image-url";
+import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
+import { client } from "@/sanity/client";
 
 interface Event {
   id: string;
@@ -30,6 +34,7 @@ interface Event {
   recurringEndDate?: Date;
   startTime?: string;
   endTime?: string;
+  image?: string;
   options?: Array<{
     categoryName: string;
     categoryDescription?: string;
@@ -158,6 +163,12 @@ const getRecurrencePattern = (event: Event) => {
   }
 };
 
+const { projectId, dataset } = client.config();
+const urlFor = (source: SanityImageSource) =>
+  projectId && dataset
+    ? imageUrlBuilder({ projectId, dataset }).image(source)
+    : null;
+
 export default function EventContainer() {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -219,6 +230,7 @@ export default function EventContainer() {
           recurringEndDate: event.dates?.recurringEndDate,
           startTime: event.time?.startTime,
           endTime: event.time?.endTime,
+          image: event.image,
           options: event.options,
         }));
 
@@ -479,19 +491,37 @@ export default function EventContainer() {
                     </div>
                   )}
                   <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-semibold text-gray-900 dark:text-white text-lg">
-                        {event.name}
-                      </h4>
-                      <div className="flex items-center mt-2 text-sm text-gray-500 dark:text-gray-400">
-                        <RiCalendarEventLine className="mr-1" />
-                        <span>{formatDate(event.startDate)}</span>
-                        {event.startTime && (
-                          <>
-                            <RiTimeLine className="ml-3 mr-1" />
-                            <span>{formatTime(event.startTime)}</span>
-                          </>
+                    <div className="flex items-start space-x-3 flex-1">
+                      {event.image && (
+                        <div className="flex-shrink-0">
+                          <Image
+                            src={urlFor(event.image)?.width(80).height(60).url() || ''}
+                            alt={event.name}
+                            width={80}
+                            height={60}
+                            className="rounded-lg object-cover"
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900 dark:text-white text-lg">
+                          {event.name}
+                        </h4>
+                        {event.description && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                            {event.description}
+                          </p>
                         )}
+                        <div className="flex items-center mt-2 text-sm text-gray-500 dark:text-gray-400">
+                          <RiCalendarEventLine className="mr-1" />
+                          <span>{formatDate(event.startDate)}</span>
+                          {event.startTime && (
+                            <>
+                              <RiTimeLine className="ml-3 mr-1" />
+                              <span>{formatTime(event.startTime)}</span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center">
@@ -521,12 +551,37 @@ export default function EventContainer() {
                       </div>
                     )}
                   </div>
-                  <div className="mt-4">
+                  <div className="mt-4 flex justify-between items-center">
+                    <Link
+                      href={`/admin/dashboard/edit-event?id=${event.id}`}
+                      className="flex items-center space-x-1 p-2 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-colors"
+                    >
+                      <RiEdit2Line className="w-4 h-4" />
+                      <span className="text-sm">Edit</span>
+                    </Link>
+                    
                     <button
                       className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg cursor-pointer"
                       onClick={() => handleEventClick(event)}
                     >
                       View Event
+                    </button>
+                    
+                    <button
+                      className={`p-2 rounded-lg transition-colors ${
+                        deletingEventIds.has(event.id)
+                          ? "opacity-50 cursor-not-allowed text-gray-400"
+                          : "text-gray-600 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-900/20 cursor-pointer"
+                      }`}
+                      onClick={() => handleDeleteEvent(event.id)}
+                      disabled={deletingEventIds.has(event.id)}
+                      title="Delete event"
+                    >
+                      {deletingEventIds.has(event.id) ? (
+                        <div className="w-4 h-4 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin"></div>
+                      ) : (
+                        <RiDeleteBinLine className="w-4 h-4" />
+                      )}
                     </button>
                   </div>
                 </div>
