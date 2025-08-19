@@ -137,9 +137,10 @@ export default function Offerings() {
             <GallerySlideshow />
           </div>
 
-          {/* Live Artist Painting - Full Width Row */}
-          <div className="mb-12">
-            <div className="group p-8 border border-neutral-100 bg-white/80 rounded-lg hover:border-primary shadow-[-8px_8px_15px_rgba(0,0,0,0.15)] hover:shadow-lg transition duration-300">
+          {/* Live Artist Painting - Full Width Row - Only show if there are upcoming events */}
+          {(nextArtistEvent || isLoading) && (
+            <div className="mb-12">
+              <div className="group p-8 border border-neutral-100 bg-white/80 rounded-lg hover:border-primary shadow-[-8px_8px_15px_rgba(0,0,0,0.15)] hover:shadow-lg transition duration-300">
               <div className="flex flex-col lg:flex-row gap-8 items-center">
                 <div className="relative w-full lg:w-1/3 h-64 rounded-lg overflow-hidden flex-shrink-0">
                   <Image
@@ -257,6 +258,7 @@ export default function Offerings() {
               </div>
             </div>
           </div>
+          )}
 
           {/* Original Three Offerings */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
