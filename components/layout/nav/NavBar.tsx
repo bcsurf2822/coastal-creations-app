@@ -277,6 +277,15 @@ export default function NavBar() {
                 About
               </Link>
             </motion.div>
+
+            <motion.div variants={itemVariants} whileHover="hover">
+              <Link
+                href="/contact-us"
+                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold uppercase"
+              >
+                Contact
+              </Link>
+            </motion.div>
           </motion.nav>
 
           {/* Mobile Menu Button */}
@@ -464,6 +473,15 @@ export default function NavBar() {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     About
+                  </Link>
+                </motion.div>
+                <motion.div variants={itemVariants} whileHover="hover">
+                  <Link
+                    href="/contact-us"
+                    className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block uppercase"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Contact
                   </Link>
                 </motion.div>
               </motion.nav>

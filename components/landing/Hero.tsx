@@ -6,6 +6,28 @@ import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { Abril_Fatface } from "next/font/google";
 
+interface CalendarEvent {
+  _id: string;
+  eventName: string;
+  eventType: "class" | "camp" | "workshop" | "artist";
+  description: string;
+  price?: number;
+  dates: {
+    startDate: string;
+    endDate?: string;
+    isRecurring: boolean;
+    recurringPattern?: "daily" | "weekly" | "monthly" | "yearly";
+    recurringEndDate?: string;
+    excludeDates?: string[];
+    specificDates?: string[];
+  };
+  time: {
+    startTime: string;
+    endTime?: string;
+  };
+  image?: string;
+}
+
 const abrilFatface = Abril_Fatface({
   subsets: ["latin"],
   weight: "400",
@@ -27,22 +49,57 @@ export default function Hero() {
       window.addEventListener("resize", handleResize);
     }
 
-    // Show the live event popup after 1 second
-    const popupTimer = setTimeout(() => {
-      setShowLiveEventPopup(true);
-    }, 1000); // Show after 1 second
+    // Check for live artist events
+    const checkLiveArtistEvents = async () => {
+      try {
+        const response = await fetch("/api/events");
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
 
-    // Auto-hide the popup after 8 seconds
-    const hideTimer = setTimeout(() => {
-      setShowLiveEventPopup(false);
-    }, 9000); // Hide after 9 seconds (1s delay + 8s display)
+        if (data.events) {
+          // Filter for artist events and check if any are upcoming
+          const artistEvents = data.events.filter(
+            (event: CalendarEvent) => event.eventType === "artist"
+          );
+
+          const now = new Date();
+          const upcomingArtistEvents = artistEvents.filter(
+            (event: CalendarEvent) => new Date(event.dates.startDate) >= now
+          );
+
+          const hasUpcomingEvents = upcomingArtistEvents.length > 0;
+
+          // Only show popup if there are live artist events
+          if (hasUpcomingEvents) {
+            // Show the live event popup after 1 second
+            const popupTimer = setTimeout(() => {
+              setShowLiveEventPopup(true);
+            }, 1000);
+
+            // Auto-hide the popup after 8 seconds
+            const hideTimer = setTimeout(() => {
+              setShowLiveEventPopup(false);
+            }, 9000);
+
+            return () => {
+              clearTimeout(popupTimer);
+              clearTimeout(hideTimer);
+            };
+          }
+        }
+      } catch (err) {
+        console.error("[Hero-checkLiveArtistEvents] Error fetching artist events:", err);
+      }
+    };
+
+    checkLiveArtistEvents();
 
     return () => {
       if (typeof window !== "undefined") {
         window.removeEventListener("resize", handleResize);
       }
-      clearTimeout(popupTimer);
-      clearTimeout(hideTimer);
     };
   }, []);
 

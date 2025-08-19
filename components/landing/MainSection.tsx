@@ -35,15 +35,7 @@ export default function MainSection() {
               <p
                 className={`${ebGaramond.className} text-lg font-bold md:text-xl text-gray-600 leading-relaxed text-justify`}
               >
-                &ldquo;Welcome to Coastal Creations, where creativity meets the
-                coast! Our art studio offers a vibrant space to walk in and
-                unleash your inner artist. From canvas painting and collage
-                making to mosaics and exciting workshops, there&apos;s something
-                for everyone. Whether you&apos;re celebrating a birthday or
-                simply seeking inspiration, we invite you to create with courage
-                and explore your artistic potential. Join us at Coastal
-                Creations – where every creation is a masterpiece in the
-                making!&rdquo;
+                Coastal Creations Studio is a walk-in art studio where creativity comes to life! We offer a fun, hands-on experience for all ages — no appointment needed. Choose from canvas painting, collage making, mosaics, and more. Looking for a guided experience? Sign up for one of our engaging workshops led by friendly, local artists. Whether you&apos;re a beginner or experienced creator, Coastal Creations is the perfect place to relax, get inspired, and make your own masterpiece!
               </p>
             </div>
           </div>
