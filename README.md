@@ -1,37 +1,132 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Coastal Creations Studio
 
-## Getting Started
+An art studio web application for class bookings, event management, and creative workshops in Ocean City, NJ.
 
-First, run the development server:
+## Studio Information
 
+**Coastal Creations Studio**  
+411 E 8th Street  
+Ocean City, NJ 08226  
+Owner: Ashley Mathers  
+
+**Website Development**  
+Developer: Benjamin Corbett  
+
+
+## About
+
+Coastal Creations Studio is a vibrant art studio maintained by Ashley Mathers, offering a variety of creative classes, workshops, camps, and birthday parties for all ages. Our mission is to inspire creativity and provide a welcoming space for artistic expression in the Ocean City community.
+
+## Features
+
+### For Customers
+- **Class Registration** - Browse and sign up for art classes online
+- **Event Booking** - Book workshops, camps, and birthday parties
+- **Online Payments** - Secure payment processing through Square
+- **Calendar View** - View upcoming classes and events
+- **Gallery** - Browse artwork and studio photos
+- **Automated Confirmations** - Receive email confirmations for bookings
+
+### For Administrators
+- **Admin Dashboard** - Comprehensive dashboard for managing all aspects of the studio
+- **Event Management** - Create, edit, and manage classes and events
+- **Customer Management** - View and manage customer registrations
+- **Payment Tracking** - Monitor payments and transaction history
+- **Email System** - Automated email notifications for customers and admins
+- **Content Management** - Update gallery, blog posts, and studio information
+- **Analytics** - Track registrations and studio performance
+
+## Screenshots
+
+### Home Page
+![Home Page](public/assets/readme.images/home.png)
+
+### Classes Page
+![Classes Page](public/assets/readme.images/classes.png)
+
+### Registration & Payment
+![Square Registration](public/assets/readme.images/square.register.png)
+
+### Admin Dashboard - Classes Management
+![Admin Classes](public/assets/readme.images/admin.classes.png)
+
+### Admin Dashboard - Add Event
+![Admin Add Event](public/assets/readme.images/admin.addevent.png)
+
+## Live Website
+
+Visit us at: [https://coastalcreationsstudio.com/](https://coastalcreationsstudio.com/)
+
+## 💻 Tech Stack
+
+- **Framework:** [Next.js 15](https://nextjs.org/) - React framework for production
+- **Database:** [MongoDB](https://www.mongodb.com/) with Mongoose ODM
+- **Styling:** [Tailwind CSS v4](https://tailwindcss.com/) & Material UI
+- **Authentication:** NextAuth with Google OAuth
+- **Payments:** [Square](https://squareup.com/) Web Payments SDK
+- **CMS:** [Sanity](https://www.sanity.io/) for content management
+- **Email:** [Resend](https://resend.com/) API for transactional emails
+- **Hosting:** [Vercel](https://vercel.com/)
+- **Language:** TypeScript
+
+## 🛠️ Installation
+
+1. Clone the repository
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/yourusername/coastal-creations-app.git
+cd coastal-creations-app
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Set up environment variables
+Create a `.env.local` file with the following variables:
+```env
+# Database
+MONGODB_URI=your_mongodb_uri
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Authentication
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+NEXTAUTH_SECRET=your_nextauth_secret
+NEXTAUTH_URL=http://localhost:3000
 
-## Learn More
+# Payment
+SQUARE_ACCESS_TOKEN=your_square_access_token
+SQUARE_LOCATION_ID=your_square_location_id
+SQUARE_APPLICATION_ID=your_square_application_id
 
-To learn more about Next.js, take a look at the following resources:
+# Email
+RESEND_API_KEY=your_resend_api_key
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# CMS
+NEXT_PUBLIC_SANITY_PROJECT_ID=your_sanity_project_id
+NEXT_PUBLIC_SANITY_DATASET=your_sanity_dataset
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+4. Run the development server
+```bash
+npm run dev
+```
 
-## Deploy on Vercel
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Available Scripts
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# coastal-creations-app
+```bash
+npm run dev       # Start development server
+npm run build     # Build for production
+npm run start     # Start production server
+npm run lint      # Run ESLint
+```
+
+This is a private project for Coastal Creations Studio. For any inquiries or issues, please contact Benjamin Corbett at crystaledgedev22@gmail.com.
+
+## License
+
+Copyright © 2025 Coastal Creations Studio. All rights reserved.
+
+---

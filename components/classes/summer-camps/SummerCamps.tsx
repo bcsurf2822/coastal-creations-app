@@ -44,6 +44,14 @@ interface Event {
     endTime?: string;
   };
   image?: string;
+  isDiscountAvailable?: boolean;
+  discount?: {
+    type: "percentage" | "fixed";
+    value: number;
+    minParticipants: number;
+    name: string;
+    description?: string;
+  };
 }
 
 // Styled Components
@@ -344,6 +352,27 @@ const BottomSection = styled("div")({
   flex: "0 0 auto", // Fixed size, don't grow
 });
 
+const DiscountBadge = styled("div")({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "0.5rem",
+  padding: "0.5rem 1rem",
+  background: "linear-gradient(135deg, #4caf50, #66bb6a)",
+  color: "white",
+  borderRadius: "15px",
+  fontSize: "0.875rem",
+  fontWeight: "700",
+  boxShadow: "0 2px 8px rgba(76, 175, 80, 0.3)",
+  marginBottom: "0.5rem",
+});
+
+const OriginalPrice = styled("span")({
+  textDecoration: "line-through",
+  color: "#888",
+  fontSize: "0.875rem",
+  marginRight: "0.5rem",
+});
+
 const SummerCamps = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -460,6 +489,27 @@ const SummerCamps = () => {
     return icons[index % icons.length];
   };
 
+  // Calculate discounted price
+  const calculateDiscountedPrice = (event: Event, currentParticipants: number): number => {
+    if (!event.isDiscountAvailable || !event.discount) return event.price;
+    
+    // Check if discount applies based on current participants
+    if (currentParticipants < event.discount.minParticipants) return event.price;
+    
+    if (event.discount.type === "percentage") {
+      return event.price - (event.price * event.discount.value / 100);
+    } else {
+      return event.price - event.discount.value;
+    }
+  };
+
+  // Check if discount is active
+  const isDiscountActive = (event: Event, currentParticipants: number): boolean => {
+    return !!(event.isDiscountAvailable && 
+             event.discount && 
+             currentParticipants >= event.discount.minParticipants);
+  };
+
   if (isLoading) {
     return (
       <StyledContainer>
@@ -526,6 +576,9 @@ const SummerCamps = () => {
         <GridContainer>
           {campEvents.map((event, index) => {
             const IconComponent = getRandomIcon(index);
+            const currentParticipants = eventParticipantCounts[event._id] || 0;
+            const discountActive = isDiscountActive(event, currentParticipants);
+            const displayPrice = calculateDiscountedPrice(event, currentParticipants);
 
             return (
               <motion.div
@@ -542,7 +595,14 @@ const SummerCamps = () => {
                 >
                   <PriceTag>
                     <FaDollarSign />
-                    {event.price ? event.price : "Free"}
+                    {discountActive ? (
+                      <>
+                        <OriginalPrice>${event.price}</OriginalPrice>
+                        ${displayPrice.toFixed(2)}
+                      </>
+                    ) : (
+                      event.price ? `$${event.price}` : "Free"
+                    )}
                   </PriceTag>
 
                   {event.image && (
@@ -568,6 +628,13 @@ const SummerCamps = () => {
                       </TopSection>
 
                       <BottomSection>
+                        {/* Show discount badge if available and active */}
+                        {discountActive && (event.discount?.name || event.discount?.description) && (
+                          <DiscountBadge>
+                            🎉 {event.discount.name || event.discount.description}
+                          </DiscountBadge>
+                        )}
+                        
                         <InfoItem>
                           <InfoIcon>
                             <FaCalendarAlt />

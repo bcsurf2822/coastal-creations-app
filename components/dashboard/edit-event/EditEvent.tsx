@@ -32,6 +32,14 @@ interface EventData {
   options?: EventOption[];
   image?: string;
   imageFile?: File | null;
+  isDiscountAvailable?: boolean;
+  discount?: {
+    type: "percentage" | "fixed";
+    value: number;
+    minParticipants: number;
+    name: string;
+    description?: string;
+  };
 }
 
 export default function EditEvent() {
@@ -345,6 +353,8 @@ export default function EditEvent() {
           options: eventData.options,
           // Include image URL if available, exclude imageFile
           image: uploadedImageUrl || eventData.image || undefined,
+          isDiscountAvailable: eventData.isDiscountAvailable,
+          discount: eventData.discount,
         };
 
         // Prepare dates for submission
@@ -525,6 +535,46 @@ export default function EditEvent() {
         options: updatedOptions,
       };
     });
+  };
+
+  const handleDiscountChange = (
+    field: keyof NonNullable<EventData["discount"]>,
+    value: string | number
+  ) => {
+    setEventData((prev) => ({
+      ...prev,
+      discount: {
+        type: prev.discount?.type || "percentage",
+        value: prev.discount?.value || 0,
+        minParticipants: prev.discount?.minParticipants || 2,
+        name: prev.discount?.name || "",
+        description: prev.discount?.description || "",
+        ...prev.discount,
+        [field]: value,
+      },
+    }));
+  };
+
+  const calculateDiscountedPrice = (): string => {
+    if (!eventData.price || !eventData.discount?.value || !eventData.isDiscountAvailable) {
+      return "";
+    }
+    
+    const price = eventData.price;
+    const discountValue = eventData.discount.value;
+    
+    if (isNaN(price) || isNaN(discountValue)) {
+      return "";
+    }
+    
+    let discountedPrice: number;
+    if (eventData.discount.type === "percentage") {
+      discountedPrice = price - (price * discountValue / 100);
+    } else {
+      discountedPrice = price - discountValue;
+    }
+    
+    return discountedPrice > 0 ? `$${discountedPrice.toFixed(2)}` : "$0.00";
   };
 
   if (isLoading) {
@@ -1031,6 +1081,163 @@ export default function EditEvent() {
                   </>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Discount */}
+          {eventData.eventType !== "artist" && (
+            <div className="space-y-4">
+              <h2 className="text-xl text-gray-700 font-semibold">Discount Settings</h2>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="isDiscountAvailable"
+                  name="isDiscountAvailable"
+                  checked={eventData.isDiscountAvailable || false}
+                  onChange={(e) =>
+                    setEventData((prev) => ({
+                      ...prev,
+                      isDiscountAvailable: e.target.checked,
+                    }))
+                  }
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label
+                  htmlFor="isDiscountAvailable"
+                  className="ml-2 block text-sm font-medium text-gray-700"
+                >
+                  Enable Discount
+                </label>
+              </div>
+
+              {eventData.isDiscountAvailable && (
+                <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="col-span-1 md:col-span-2">
+                      <label
+                        htmlFor="discountName"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Discount Name *
+                      </label>
+                      <input
+                        type="text"
+                        id="discountName"
+                        value={eventData.discount?.name || ""}
+                        onChange={(e) =>
+                          handleDiscountChange("name", e.target.value)
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g., Group Discount, Early Bird Special"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="discountType"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Discount Type
+                      </label>
+                      <select
+                        id="discountType"
+                        value={eventData.discount?.type || "percentage"}
+                        onChange={(e) =>
+                          handleDiscountChange("type", e.target.value as "percentage" | "fixed")
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="percentage">Percentage (%)</option>
+                        <option value="fixed">Fixed Amount ($)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="discountValue"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Discount Value {eventData.discount?.type === "percentage" ? "(%)" : "($)"}
+                      </label>
+                      <input
+                        type="number"
+                        id="discountValue"
+                        value={eventData.discount?.value || ""}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value);
+                          if (!isNaN(value) && value >= 0) {
+                            handleDiscountChange("value", value);
+                          } else if (e.target.value === "") {
+                            handleDiscountChange("value", 0);
+                          }
+                        }}
+                        min="0"
+                        step="0.01"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder={eventData.discount?.type === "percentage" ? "Enter percentage" : "Enter dollar amount"}
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="minParticipants"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Minimum Participants for Discount
+                      </label>
+                      <select
+                        id="minParticipants"
+                        value={eventData.discount?.minParticipants || 2}
+                        onChange={(e) =>
+                          handleDiscountChange("minParticipants", parseInt(e.target.value))
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        {Array.from({ length: 19 }, (_, i) => i + 2).map((num) => (
+                          <option key={num} value={num}>
+                            {num} participants
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="discountDescription"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Discount Description (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        id="discountDescription"
+                        value={eventData.discount?.description || ""}
+                        onChange={(e) =>
+                          handleDiscountChange("description", e.target.value)
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g., Group discount for 3+ participants"
+                      />
+                    </div>
+                  </div>
+
+                  {eventData.price && eventData.discount?.value && (
+                    <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                      <div className="text-sm text-blue-800">
+                        <span className="font-medium">Original Price:</span> ${eventData.price}
+                        <br />
+                        <span className="font-medium">Discounted Price:</span> {calculateDiscountedPrice()}
+                        <br />
+                        <span className="text-xs">
+                          (Applies when {eventData.discount?.minParticipants || 2} or more participants sign up)
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

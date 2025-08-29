@@ -41,6 +41,14 @@ export interface IEvent extends Document {
     }>;
   }>;
   image?: string;
+  isDiscountAvailable?: boolean;
+  discount?: {
+    type: "percentage" | "fixed";
+    value: number;
+    minParticipants: number;
+    name: string;
+    description?: string;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -137,6 +145,31 @@ const OptionSchema = new Schema({
   },
 });
 
+const DiscountSchema = new Schema({
+  type: {
+    type: String,
+    enum: ["percentage", "fixed"],
+    required: true,
+  },
+  value: {
+    type: Number,
+    required: true,
+    min: 0,
+  },
+  minParticipants: {
+    type: Number,
+    required: true,
+    min: 2,
+  },
+  name: {
+    type: String,
+    required: true,
+  },
+  description: {
+    type: String,
+  },
+});
+
 // Main Event schema
 const EventSchema = new Schema<IEvent>(
   {
@@ -176,6 +209,14 @@ const EventSchema = new Schema<IEvent>(
     },
     image: {
       type: String,
+    },
+    isDiscountAvailable: {
+      type: Boolean,
+      default: false,
+    },
+    discount: {
+      type: DiscountSchema,
+      required: false,
     },
   },
   {

@@ -97,6 +97,20 @@ export default function Payment() {
     }>
   >([]);
 
+  // State for discount information
+  const [discountInfo, setDiscountInfo] = useState<{
+    isDiscountAvailable: boolean;
+    discount?: {
+      type: "percentage" | "fixed";
+      value: number;
+      minParticipants: number;
+      description?: string;
+    };
+  }>({
+    isDiscountAvailable: false,
+  });
+  const [currentParticipantCount, setCurrentParticipantCount] = useState<number>(0);
+
   const [billingDetails, setBillingDetails] = useState({
     addressLine1: "",
     addressLine2: "",
@@ -113,6 +127,26 @@ export default function Payment() {
 
   // Calculate total price based on number of people
   const [totalPrice, setTotalPrice] = useState<string>("");
+
+  // Helper functions for discount calculations
+  const calculateDiscountedPrice = (basePrice: number, participantCount: number): number => {
+    if (!discountInfo.isDiscountAvailable || !discountInfo.discount) return basePrice;
+    
+    // Check if discount applies based on participant count
+    if (participantCount < discountInfo.discount.minParticipants) return basePrice;
+    
+    if (discountInfo.discount.type === "percentage") {
+      return basePrice - (basePrice * discountInfo.discount.value / 100);
+    } else {
+      return basePrice - discountInfo.discount.value;
+    }
+  };
+
+  // const isDiscountActive = (participantCount: number): boolean => {
+  //   return !!(discountInfo.isDiscountAvailable && 
+  //            discountInfo.discount && 
+  //            participantCount >= discountInfo.discount.minParticipants);
+  // };
 
   // Adapter function to match the expected signature for PaymentProcessor
   const handleSubmitPayment = async (
@@ -198,7 +232,7 @@ export default function Payment() {
     }
   };
 
-  // Fetch event details including options
+  // Fetch event details including options and discount info
   useEffect(() => {
     if (eventId) {
       const fetchEventDetails = async () => {
@@ -206,24 +240,30 @@ export default function Payment() {
           const response = await fetch(`/api/event/${eventId}`);
           if (response.ok) {
             const data = await response.json();
-            if (
-              data.event &&
-              data.event.options &&
-              data.event.options.length > 0
-            ) {
-              // Update event options only if they've changed
-              const newOptions = data.event.options;
-              if (JSON.stringify(newOptions) !== JSON.stringify(eventOptions)) {
-                setEventOptions(newOptions);
+            if (data.event) {
+              // Handle options
+              if (data.event.options && data.event.options.length > 0) {
+                const newOptions = data.event.options;
+                if (JSON.stringify(newOptions) !== JSON.stringify(eventOptions)) {
+                  setEventOptions(newOptions);
 
-                // Initialize selectedOptions with the first choice of each category
-                const initialSelectedOptions = newOptions.map(
-                  (option: EventOption) => ({
-                    categoryName: option.categoryName,
-                    choiceName: option.choices[0]?.name || "",
-                  })
-                );
-                setSelectedOptions(initialSelectedOptions);
+                  // Initialize selectedOptions with the first choice of each category
+                  const initialSelectedOptions = newOptions.map(
+                    (option: EventOption) => ({
+                      categoryName: option.categoryName,
+                      choiceName: option.choices[0]?.name || "",
+                    })
+                  );
+                  setSelectedOptions(initialSelectedOptions);
+                }
+              }
+
+              // Handle discount information
+              if (data.event.isDiscountAvailable && data.event.discount) {
+                setDiscountInfo({
+                  isDiscountAvailable: data.event.isDiscountAvailable,
+                  discount: data.event.discount,
+                });
               }
             }
           }
@@ -232,7 +272,41 @@ export default function Payment() {
         }
       };
 
+      const fetchParticipantCount = async () => {
+        try {
+          const response = await fetch("/api/customer", {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+
+          const responseText = await response.text();
+          let result;
+          try {
+            result = responseText ? JSON.parse(responseText) : {};
+          } catch (parseError) {
+            console.error("Failed to parse customer response as JSON:", parseError);
+            return;
+          }
+
+          if (response.ok && result.data && Array.isArray(result.data)) {
+            // Calculate participant count for this specific event
+            const participantCount = result.data
+              .filter((customer: { event?: { _id: string }; quantity: number }) => 
+                customer.event?._id === eventId)
+              .reduce((total: number, customer: { quantity: number }) => 
+                total + customer.quantity, 0);
+            
+            setCurrentParticipantCount(participantCount);
+          }
+        } catch (error) {
+          console.error("Error fetching participant count:", error);
+        }
+      };
+
       fetchEventDetails();
+      fetchParticipantCount();
     }
   }, [eventId]);
 
@@ -246,13 +320,17 @@ export default function Payment() {
 
       // Remove any non-numeric characters except decimal point
       const cleanPrice = eventPrice.replace(/[^\d.]/g, "");
-      const price = parseFloat(cleanPrice);
+      const basePrice = parseFloat(cleanPrice);
 
-      if (!isNaN(price)) {
+      if (!isNaN(basePrice)) {
+        // Apply discount if applicable
+        const totalCurrentParticipants = currentParticipantCount + billingDetails.numberOfPeople;
+        const discountedPrice = calculateDiscountedPrice(basePrice, totalCurrentParticipants);
+        
         // Format to 2 decimal places
-        setFormattedPrice(price.toFixed(2));
+        setFormattedPrice(discountedPrice.toFixed(2));
         // Calculate total price
-        setTotalPrice((price * billingDetails.numberOfPeople).toFixed(2));
+        setTotalPrice((discountedPrice * billingDetails.numberOfPeople).toFixed(2));
         setIsPriceAvailable(true);
       } else {
         setIsPriceAvailable(false);
@@ -261,7 +339,7 @@ export default function Payment() {
       console.error("Error formatting price:", e);
       setIsPriceAvailable(false);
     }
-  }, [eventPrice, billingDetails.numberOfPeople]);
+  }, [eventPrice, billingDetails.numberOfPeople, discountInfo, currentParticipantCount]);
 
   // Validate form fields
   useEffect(() => {
@@ -422,6 +500,10 @@ export default function Payment() {
             eventTitle={eventTitle}
             formattedPrice={formattedPrice}
             isPriceAvailable={isPriceAvailable}
+            originalPrice={eventPrice}
+            discountInfo={discountInfo}
+            currentParticipantCount={currentParticipantCount}
+            numberOfPeople={billingDetails.numberOfPeople}
           />
         )}
 
@@ -441,6 +523,9 @@ export default function Payment() {
               handleOptionChange={handleOptionChange}
               formattedPrice={formattedPrice}
               totalPrice={totalPrice}
+              originalPrice={eventPrice}
+              discountInfo={discountInfo}
+              currentParticipantCount={currentParticipantCount}
             />
 
             {/* Payment Section */}
