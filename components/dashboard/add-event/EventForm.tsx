@@ -28,6 +28,14 @@ interface EventFormData {
   }>;
   image: File | null;
   imageUrl?: string;
+  isDiscountAvailable: boolean;
+  discount: {
+    type: "percentage" | "fixed";
+    value: string;
+    minParticipants: string;
+    name: string;
+    description: string;
+  };
 }
 
 interface FormErrors {
@@ -41,6 +49,8 @@ interface FormErrors {
   endTime?: string;
   recurringEndDate?: string;
   image?: string;
+  discountValue?: string;
+  discountMinParticipants?: string;
 }
 
 const EventForm: React.FC = () => {
@@ -69,6 +79,14 @@ const EventForm: React.FC = () => {
       },
     ],
     image: null,
+    isDiscountAvailable: false,
+    discount: {
+      type: "percentage",
+      value: "",
+      minParticipants: "2",
+      name: "",
+      description: "",
+    },
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -249,6 +267,24 @@ const EventForm: React.FC = () => {
       }
     }
 
+    if (data.eventType !== "artist" && data.isDiscountAvailable) {
+      if (!data.discount.name.trim()) {
+        newErrors.discountValue = "Discount name is required";
+      }
+      
+      if (!data.discount.value || parseFloat(data.discount.value) <= 0) {
+        newErrors.discountValue = "Discount value is required and must be greater than 0";
+      } else if (data.discount.type === "percentage" && parseFloat(data.discount.value) > 100) {
+        newErrors.discountValue = "Percentage discount cannot exceed 100%";
+      } else if (data.discount.type === "fixed" && data.price && parseFloat(data.discount.value) >= parseFloat(data.price)) {
+        newErrors.discountValue = "Fixed discount cannot be greater than or equal to the price";
+      }
+      
+      if (!data.discount.minParticipants || parseInt(data.discount.minParticipants) < 2) {
+        newErrors.discountMinParticipants = "Minimum participants must be at least 2";
+      }
+    }
+
     return newErrors;
   };
 
@@ -316,6 +352,18 @@ const EventForm: React.FC = () => {
                     )
                   : undefined,
               image: uploadedImageUrl || undefined,
+              isDiscountAvailable:
+                formData.eventType !== "artist" ? formData.isDiscountAvailable : false,
+              discount:
+                formData.eventType !== "artist" && formData.isDiscountAvailable
+                  ? {
+                      type: formData.discount.type,
+                      value: parseFloat(formData.discount.value),
+                      minParticipants: parseInt(formData.discount.minParticipants),
+                      name: formData.discount.name.trim(),
+                      description: formData.discount.description.trim() || undefined,
+                    }
+                  : undefined,
             }),
           }),
           new Promise(resolve => setTimeout(resolve, 1000)) // Minimum 1 second loading
@@ -456,6 +504,41 @@ const EventForm: React.FC = () => {
       ...formData,
       optionCategories: updatedCategories,
     });
+  };
+
+  const handleDiscountChange = (
+    field: keyof typeof formData.discount,
+    value: string
+  ) => {
+    setFormData({
+      ...formData,
+      discount: {
+        ...formData.discount,
+        [field]: value,
+      },
+    });
+  };
+
+  const calculateDiscountedPrice = (): string => {
+    if (!formData.price || !formData.discount.value || !formData.isDiscountAvailable) {
+      return "";
+    }
+    
+    const price = parseFloat(formData.price);
+    const discountValue = parseFloat(formData.discount.value);
+    
+    if (isNaN(price) || isNaN(discountValue)) {
+      return "";
+    }
+    
+    let discountedPrice: number;
+    if (formData.discount.type === "percentage") {
+      discountedPrice = price - (price * discountValue / 100);
+    } else {
+      discountedPrice = price - discountValue;
+    }
+    
+    return discountedPrice > 0 ? `$${discountedPrice.toFixed(2)}` : "$0.00";
   };
 
   return (
@@ -951,6 +1034,166 @@ const EventForm: React.FC = () => {
             >
               + Add Option Category
             </button>
+          </div>
+        )}
+
+        {formData.eventType !== "artist" && (
+          <div className="col-span-1 md:col-span-2 flex items-center mt-4">
+            <input
+              type="checkbox"
+              id="isDiscountAvailable"
+              name="isDiscountAvailable"
+              checked={formData.isDiscountAvailable}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  isDiscountAvailable: e.target.checked,
+                })
+              }
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label
+              htmlFor="isDiscountAvailable"
+              className="ml-2 block text-sm font-medium text-gray-700"
+            >
+              Add Discount
+            </label>
+          </div>
+        )}
+
+        {formData.eventType !== "artist" && formData.isDiscountAvailable && (
+          <div className="col-span-1 md:col-span-2 bg-gray-50 p-4 rounded-md border border-gray-200">
+            <h3 className="text-lg font-medium text-gray-800 mb-3">
+              Discount Settings
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="col-span-1 md:col-span-2">
+                <label
+                  htmlFor="discountName"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Discount Name *
+                </label>
+                <input
+                  type="text"
+                  id="discountName"
+                  value={formData.discount.name}
+                  onChange={(e) =>
+                    handleDiscountChange("name", e.target.value)
+                  }
+                  className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.discountValue && !formData.discount.name.trim() ? "border-red-500" : "border-gray-300"}`}
+                  placeholder="e.g., Group Discount, Early Bird Special"
+                />
+                {errors.discountValue && !formData.discount.name.trim() && (
+                  <p className="mt-1 text-sm text-red-600">Discount name is required</p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  htmlFor="discountType"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Discount Type
+                </label>
+                <select
+                  id="discountType"
+                  value={formData.discount.type}
+                  onChange={(e) =>
+                    handleDiscountChange("type", e.target.value as "percentage" | "fixed")
+                  }
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="percentage">Percentage (%)</option>
+                  <option value="fixed">Fixed Amount ($)</option>
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="discountValue"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Discount Value {formData.discount.type === "percentage" ? "(%)" : "($)"}
+                </label>
+                <input
+                  type="text"
+                  id="discountValue"
+                  value={formData.discount.value}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (/^\d*\.?\d*$/.test(value)) {
+                      handleDiscountChange("value", value);
+                    }
+                  }}
+                  className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.discountValue ? "border-red-500" : "border-gray-300"}`}
+                  placeholder={formData.discount.type === "percentage" ? "Enter percentage" : "Enter dollar amount"}
+                />
+                {errors.discountValue && (
+                  <p className="mt-1 text-sm text-red-600">{errors.discountValue}</p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  htmlFor="minParticipants"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Minimum Participants for Discount
+                </label>
+                <select
+                  id="minParticipants"
+                  value={formData.discount.minParticipants}
+                  onChange={(e) =>
+                    handleDiscountChange("minParticipants", e.target.value)
+                  }
+                  className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.discountMinParticipants ? "border-red-500" : "border-gray-300"}`}
+                >
+                  {Array.from({ length: 19 }, (_, i) => i + 2).map((num) => (
+                    <option key={num} value={num.toString()}>
+                      {num} participants
+                    </option>
+                  ))}
+                </select>
+                {errors.discountMinParticipants && (
+                  <p className="mt-1 text-sm text-red-600">{errors.discountMinParticipants}</p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  htmlFor="discountDescription"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Discount Description (Optional)
+                </label>
+                <input
+                  type="text"
+                  id="discountDescription"
+                  value={formData.discount.description}
+                  onChange={(e) =>
+                    handleDiscountChange("description", e.target.value)
+                  }
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., Group discount for 3+ participants"
+                />
+              </div>
+            </div>
+
+            {formData.price && formData.discount.value && (
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <div className="text-sm text-blue-800">
+                  <span className="font-medium">Original Price:</span> ${formData.price}
+                  <br />
+                  <span className="font-medium">Discounted Price:</span> {calculateDiscountedPrice()}
+                  <br />
+                  <span className="text-xs">
+                    (Applies when {formData.discount.minParticipants} or more participants sign up)
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

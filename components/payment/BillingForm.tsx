@@ -47,6 +47,17 @@ interface BillingFormProps {
   handleOptionChange: (categoryName: string, choiceName: string) => void;
   formattedPrice: string;
   totalPrice: string;
+  originalPrice: string;
+  discountInfo: {
+    isDiscountAvailable: boolean;
+    discount?: {
+      type: "percentage" | "fixed";
+      value: number;
+      minParticipants: number;
+      description?: string;
+    };
+  };
+  currentParticipantCount: number;
 }
 
 const BillingForm: React.FC<BillingFormProps> = ({
@@ -61,7 +72,25 @@ const BillingForm: React.FC<BillingFormProps> = ({
   handleOptionChange,
   formattedPrice,
   totalPrice,
+  originalPrice,
+  discountInfo,
+  currentParticipantCount,
 }) => {
+  // Helper functions
+  const isDiscountActive = (): boolean => {
+    if (!discountInfo.isDiscountAvailable || !discountInfo.discount) return false;
+    const totalParticipants = currentParticipantCount + billingDetails.numberOfPeople;
+    return totalParticipants >= discountInfo.discount.minParticipants;
+  };
+
+  const getOriginalPrice = (): number => {
+    const cleanPrice = originalPrice.replace(/[^\d.]/g, "");
+    return parseFloat(cleanPrice) || 0;
+  };
+
+  const getOriginalTotal = (): string => {
+    return (getOriginalPrice() * billingDetails.numberOfPeople).toFixed(2);
+  };
   return (
     <div className="mb-10">
       <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center">
@@ -699,11 +728,34 @@ const BillingForm: React.FC<BillingFormProps> = ({
         {/* Display total price calculation */}
         {formattedPrice && (
           <div className="md:col-span-2 mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            {/* Discount Badge */}
+            {isDiscountActive() && discountInfo.discount?.description && (
+              <div className="mb-4 p-3 bg-green-100 border border-green-300 rounded-lg">
+                <div className="flex items-center">
+                  <span className="text-green-600 text-xl mr-2">🎉</span>
+                  <span className="text-green-800 font-semibold">
+                    {discountInfo.discount.description}
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div className="flex justify-between items-center">
               <span className="text-lg font-medium text-gray-800">
                 Price per person:
               </span>
-              <span className="text-lg font-semibold">${formattedPrice}</span>
+              <span className="text-lg font-semibold">
+                {isDiscountActive() ? (
+                  <>
+                    <span className="text-gray-500 line-through mr-2">
+                      ${getOriginalPrice().toFixed(2)}
+                    </span>
+                    <span className="text-green-600">${formattedPrice}</span>
+                  </>
+                ) : (
+                  `$${formattedPrice}`
+                )}
+              </span>
             </div>
             <div className="flex justify-between items-center mt-2">
               <span className="text-lg font-medium text-gray-800">
@@ -713,6 +765,17 @@ const BillingForm: React.FC<BillingFormProps> = ({
                 {billingDetails.numberOfPeople}
               </span>
             </div>
+            
+            {/* Show discount savings if active */}
+            {isDiscountActive() && (
+              <div className="flex justify-between items-center mt-2 text-green-600">
+                <span className="text-lg font-medium">You save:</span>
+                <span className="text-lg font-semibold">
+                  ${(parseFloat(getOriginalTotal()) - parseFloat(totalPrice)).toFixed(2)}
+                </span>
+              </div>
+            )}
+            
             <div className="h-px bg-gray-300 my-3"></div>
             <div className="flex justify-between items-center">
               <span className="text-xl font-bold text-gray-900">Total:</span>
@@ -720,6 +783,15 @@ const BillingForm: React.FC<BillingFormProps> = ({
                 ${totalPrice}
               </span>
             </div>
+
+            {/* Discount eligibility info */}
+            {discountInfo.isDiscountAvailable && discountInfo.discount && !isDiscountActive() && (
+              <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded">
+                <p className="text-sm text-blue-700">
+                  💡 Add {discountInfo.discount.minParticipants - currentParticipantCount - billingDetails.numberOfPeople} more participants to qualify for the discount!
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
