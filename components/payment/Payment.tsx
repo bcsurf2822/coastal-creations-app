@@ -142,11 +142,11 @@ export default function Payment() {
     }
   };
 
-  const isDiscountActive = (participantCount: number): boolean => {
-    return !!(discountInfo.isDiscountAvailable && 
-             discountInfo.discount && 
-             participantCount >= discountInfo.discount.minParticipants);
-  };
+  // const isDiscountActive = (participantCount: number): boolean => {
+  //   return !!(discountInfo.isDiscountAvailable && 
+  //            discountInfo.discount && 
+  //            participantCount >= discountInfo.discount.minParticipants);
+  // };
 
   // Adapter function to match the expected signature for PaymentProcessor
   const handleSubmitPayment = async (
