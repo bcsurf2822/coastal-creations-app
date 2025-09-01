@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
-import { Abril_Fatface } from "next/font/google";
+// import { Abril_Fatface } from "next/font/google";
 import WaveText from "./WaveText";
 import SeaCreatures from "./SeaCreatures";
 
@@ -30,10 +30,10 @@ interface CalendarEvent {
   image?: string;
 }
 
-const abrilFatface = Abril_Fatface({
-  subsets: ["latin"],
-  weight: "400",
-});
+// const abrilFatface = Abril_Fatface({
+//   subsets: ["latin"],
+//   weight: "400",
+// });
 
 export default function Hero() {
   const [showLiveEventPopup, setShowLiveEventPopup] = useState(false);

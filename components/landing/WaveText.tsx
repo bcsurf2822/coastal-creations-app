@@ -1,7 +1,7 @@
 "use client";
 
-import React from 'react';
-import { motion } from 'motion/react';
+import React from "react";
+import { motion } from "motion/react";
 import { Abril_Fatface } from "next/font/google";
 
 const abrilFatface = Abril_Fatface({
@@ -24,7 +24,7 @@ const WaveText: React.FC<WaveTextProps> = ({
   duration = 0.5,
   staggerDelay = 0.08,
 }) => {
-  const words = text.split(' ');
+  const words = text.split(" ");
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -43,7 +43,7 @@ const WaveText: React.FC<WaveTextProps> = ({
       y: 0,
       opacity: 1,
       transition: {
-        type: 'spring',
+        type: "spring",
         damping: 12,
         stiffness: 200,
         duration: duration,
@@ -63,14 +63,18 @@ const WaveText: React.FC<WaveTextProps> = ({
       aria-label={text}
     >
       {words.map((word, wordIndex) => (
-        <span key={wordIndex} className="inline-block" style={{ whiteSpace: 'nowrap' }}>
-          {Array.from(word).map((letter, index) => {
+        <span
+          key={wordIndex}
+          className="inline-block"
+          style={{ whiteSpace: "nowrap" }}
+        >
+          {Array.from(word).map((letter) => {
             const currentIndex = letterIndex++;
             return (
               <motion.span
                 key={currentIndex}
                 variants={letterVariants}
-                style={{ display: 'inline-block' }}
+                style={{ display: "inline-block" }}
               >
                 {letter}
               </motion.span>
@@ -80,9 +84,9 @@ const WaveText: React.FC<WaveTextProps> = ({
             <motion.span
               key={letterIndex++}
               variants={letterVariants}
-              style={{ display: 'inline-block', minWidth: '1rem' }}
+              style={{ display: "inline-block", minWidth: "1rem" }}
             >
-              {'\u00A0'}
+              {"\u00A0"}
             </motion.span>
           )}
         </span>
