@@ -18,9 +18,9 @@ export default function Dashboard() {
           Dashboard Overview
         </h2>
         <div className="inline-flex">
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+          {/* <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
             Generate Report
-          </button>
+          </button> */}
         </div>
       </div>
 

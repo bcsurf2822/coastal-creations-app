@@ -24,6 +24,7 @@ interface EventFormData {
     categoryDescription: string;
     choices: Array<{
       name: string;
+      price?: string;
     }>;
   }>;
   image: File | null;
@@ -75,7 +76,7 @@ const EventForm: React.FC = () => {
       {
         categoryName: "",
         categoryDescription: "",
-        choices: [{ name: "" }],
+        choices: [{ name: "", price: "" }],
       },
     ],
     image: null,
@@ -347,9 +348,17 @@ const EventForm: React.FC = () => {
               },
               options:
                 formData.eventType !== "artist" && formData.hasOptions
-                  ? formData.optionCategories.filter(
-                      (cat) => cat.categoryName.trim() !== ""
-                    )
+                  ? formData.optionCategories
+                      .filter((cat) => cat.categoryName.trim() !== "")
+                      .map((cat) => ({
+                        ...cat,
+                        choices: cat.choices.map((choice) => ({
+                          name: choice.name,
+                          price: choice.price && parseFloat(choice.price) > 0 
+                            ? parseFloat(choice.price) 
+                            : undefined,
+                        })),
+                      }))
                   : undefined,
               image: uploadedImageUrl || undefined,
               isDiscountAvailable:
@@ -438,11 +447,13 @@ const EventForm: React.FC = () => {
   const handleOptionChoiceChange = (
     categoryIndex: number,
     choiceIndex: number,
+    field: "name" | "price",
     value: string
   ) => {
     const updatedCategories = [...formData.optionCategories];
     updatedCategories[categoryIndex].choices[choiceIndex] = {
-      name: value,
+      ...updatedCategories[categoryIndex].choices[choiceIndex],
+      [field]: value,
     };
     setFormData({
       ...formData,
@@ -458,7 +469,7 @@ const EventForm: React.FC = () => {
         {
           categoryName: "",
           categoryDescription: "",
-          choices: [{ name: "" }],
+          choices: [{ name: "", price: "" }],
         },
       ],
     });
@@ -475,7 +486,7 @@ const EventForm: React.FC = () => {
             {
               categoryName: "",
               categoryDescription: "",
-              choices: [{ name: "" }],
+              choices: [{ name: "", price: "" }],
             },
           ],
     });
@@ -485,6 +496,7 @@ const EventForm: React.FC = () => {
     const updatedCategories = [...formData.optionCategories];
     updatedCategories[categoryIndex].choices.push({
       name: "",
+      price: "",
     });
     setFormData({
       ...formData,
@@ -498,6 +510,7 @@ const EventForm: React.FC = () => {
     if (updatedCategories[categoryIndex].choices.length === 0) {
       updatedCategories[categoryIndex].choices.push({
         name: "",
+        price: "",
       });
     }
     setFormData({
@@ -979,31 +992,60 @@ const EventForm: React.FC = () => {
                   {category.choices.map((choice, choiceIndex) => (
                     <div
                       key={choiceIndex}
-                      className="flex flex-row gap-3 mb-3 p-3 bg-gray-50 rounded-md"
+                      className="flex flex-col gap-3 mb-3 p-3 bg-gray-50 rounded-md"
                     >
-                      <div className="flex-1">
-                        <label
-                          htmlFor={`choice-name-${categoryIndex}-${choiceIndex}`}
-                          className="block text-xs font-medium text-gray-700 mb-1"
-                        >
-                          Choice Name
-                        </label>
-                        <input
-                          type="text"
-                          id={`choice-name-${categoryIndex}-${choiceIndex}`}
-                          value={choice.name}
-                          onChange={(e) =>
-                            handleOptionChoiceChange(
-                              categoryIndex,
-                              choiceIndex,
-                              e.target.value
-                            )
-                          }
-                          className="w-full px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Enter Choice"
-                        />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <label
+                            htmlFor={`choice-name-${categoryIndex}-${choiceIndex}`}
+                            className="block text-xs font-medium text-gray-700 mb-1"
+                          >
+                            Choice Name
+                          </label>
+                          <input
+                            type="text"
+                            id={`choice-name-${categoryIndex}-${choiceIndex}`}
+                            value={choice.name}
+                            onChange={(e) =>
+                              handleOptionChoiceChange(
+                                categoryIndex,
+                                choiceIndex,
+                                "name",
+                                e.target.value
+                              )
+                            }
+                            className="w-full px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter Choice"
+                          />
+                        </div>
+                        <div>
+                          <label
+                            htmlFor={`choice-price-${categoryIndex}-${choiceIndex}`}
+                            className="block text-xs font-medium text-gray-700 mb-1"
+                          >
+                            Choice Price (Optional)
+                          </label>
+                          <input
+                            type="text"
+                            id={`choice-price-${categoryIndex}-${choiceIndex}`}
+                            value={choice.price || ""}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (/^\d*\.?\d*$/.test(value)) {
+                                handleOptionChoiceChange(
+                                  categoryIndex,
+                                  choiceIndex,
+                                  "price",
+                                  value
+                                );
+                              }
+                            }}
+                            className="w-full px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="0.00"
+                          />
+                        </div>
                       </div>
-                      <div className="flex items-end">
+                      <div className="flex justify-end">
                         <button
                           type="button"
                           onClick={() =>

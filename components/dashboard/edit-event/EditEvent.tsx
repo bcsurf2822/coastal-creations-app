@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 interface EventOption {
   categoryName: string;
   categoryDescription?: string;
-  choices: Array<{ name: string }>;
+  choices: Array<{ name: string; price?: number }>;
 }
 
 interface EventData {
@@ -470,12 +470,14 @@ export default function EditEvent() {
   const handleOptionChoiceChange = (
     categoryIndex: number,
     choiceIndex: number,
-    value: string
+    field: "name" | "price",
+    value: string | number
   ) => {
     setEventData((prev) => {
       const updatedOptions = [...(prev.options || [])];
       updatedOptions[categoryIndex].choices[choiceIndex] = {
-        name: value,
+        ...updatedOptions[categoryIndex].choices[choiceIndex],
+        [field]: value,
       };
       return {
         ...prev,
@@ -492,7 +494,7 @@ export default function EditEvent() {
         {
           categoryName: "",
           categoryDescription: "",
-          choices: [{ name: "" }],
+          choices: [{ name: "", price: 0 }],
         },
       ],
     }));
@@ -512,7 +514,7 @@ export default function EditEvent() {
   const addOptionChoice = (categoryIndex: number) => {
     setEventData((prev) => {
       const updatedOptions = [...(prev.options || [])];
-      updatedOptions[categoryIndex].choices.push({ name: "" });
+      updatedOptions[categoryIndex].choices.push({ name: "", price: 0 });
       return {
         ...prev,
         options: updatedOptions,
@@ -527,7 +529,7 @@ export default function EditEvent() {
 
       // If no choices left, add an empty one
       if (updatedOptions[categoryIndex].choices.length === 0) {
-        updatedOptions[categoryIndex].choices.push({ name: "" });
+        updatedOptions[categoryIndex].choices.push({ name: "", price: 0 });
       }
 
       return {
@@ -1015,30 +1017,68 @@ export default function EditEvent() {
                           {option.choices.map((choice, choiceIndex) => (
                             <div
                               key={choiceIndex}
-                              className="flex flex-row gap-3 mb-3 p-3 bg-gray-50 rounded-md"
+                              className="flex flex-col gap-3 mb-3 p-3 bg-gray-50 rounded-md"
                             >
-                              <div className="flex-1">
-                                <label
-                                  htmlFor={`choice-name-${categoryIndex}-${choiceIndex}`}
-                                  className="block text-xs font-medium text-gray-700 mb-1"
-                                >
-                                  Choice Name
-                                </label>
-                                <input
-                                  type="text"
-                                  id={`choice-name-${categoryIndex}-${choiceIndex}`}
-                                  value={choice.name}
-                                  onChange={(e) =>
-                                    handleOptionChoiceChange(
-                                      categoryIndex,
-                                      choiceIndex,
-                                      e.target.value
-                                    )
-                                  }
-                                  className="w-full px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                  <label
+                                    htmlFor={`choice-name-${categoryIndex}-${choiceIndex}`}
+                                    className="block text-xs font-medium text-gray-700 mb-1"
+                                  >
+                                    Choice Name
+                                  </label>
+                                  <input
+                                    type="text"
+                                    id={`choice-name-${categoryIndex}-${choiceIndex}`}
+                                    value={choice.name}
+                                    onChange={(e) =>
+                                      handleOptionChoiceChange(
+                                        categoryIndex,
+                                        choiceIndex,
+                                        "name",
+                                        e.target.value
+                                      )
+                                    }
+                                    className="w-full px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  />
+                                </div>
+                                <div>
+                                  <label
+                                    htmlFor={`choice-price-${categoryIndex}-${choiceIndex}`}
+                                    className="block text-xs font-medium text-gray-700 mb-1"
+                                  >
+                                    Choice Price (Optional)
+                                  </label>
+                                  <input
+                                    type="number"
+                                    id={`choice-price-${categoryIndex}-${choiceIndex}`}
+                                    value={choice.price || 0}
+                                    onChange={(e) => {
+                                      const value = parseFloat(e.target.value);
+                                      if (!isNaN(value) && value >= 0) {
+                                        handleOptionChoiceChange(
+                                          categoryIndex,
+                                          choiceIndex,
+                                          "price",
+                                          value
+                                        );
+                                      } else if (e.target.value === "") {
+                                        handleOptionChoiceChange(
+                                          categoryIndex,
+                                          choiceIndex,
+                                          "price",
+                                          0
+                                        );
+                                      }
+                                    }}
+                                    min="0"
+                                    step="0.01"
+                                    className="w-full px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="0.00"
+                                  />
+                                </div>
                               </div>
-                              <div className="flex items-end">
+                              <div className="flex justify-end">
                                 <button
                                   type="button"
                                   onClick={() =>

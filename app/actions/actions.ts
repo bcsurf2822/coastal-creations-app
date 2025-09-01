@@ -11,8 +11,8 @@ import PaymentError, { SquareErrorCode } from "@/lib/models/PaymentError";
 
 const { paymentsApi } = new Client({
   accessToken: process.env.PRODUCTION_ACCESS_TOKEN,
-  environment: Environment.Production,
-  // environment: Environment.Sandbox,
+  // environment: Environment.Production,
+  environment: Environment.Sandbox,
 });
 
 export async function submitPayment(
