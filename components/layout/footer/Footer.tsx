@@ -308,6 +308,9 @@ export default function Footer() {
           <Link href="/about" className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase">
             About
           </Link>
+          <Link href="/contact-us" className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase">
+            Contact
+          </Link>
         </nav>
         
         <div className="mt-4 pt-4 border-t border-orange-200 text-center text-black text-sm">

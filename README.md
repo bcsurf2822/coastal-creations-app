@@ -55,7 +55,7 @@ Coastal Creations Studio is a vibrant art studio maintained by Ashley Mathers, o
 
 ## Live Website
 
-Visit us at: [https://coastalcreationsstudio.com/](https://coastalcreationsstudio.com/)
+Visit at: [https://coastalcreationsstudio.com/](https://coastalcreationsstudio.com/)
 
 ## 💻 Tech Stack
 

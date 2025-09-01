@@ -5,6 +5,8 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { Abril_Fatface } from "next/font/google";
+import WaveText from "./WaveText";
+import SeaCreatures from "./SeaCreatures";
 
 interface CalendarEvent {
   _id: string;
@@ -34,20 +36,9 @@ const abrilFatface = Abril_Fatface({
 });
 
 export default function Hero() {
-  const [isClient, setIsClient] = useState(false);
-  const [windowWidth, setWindowWidth] = useState(0);
   const [showLiveEventPopup, setShowLiveEventPopup] = useState(false);
 
   useEffect(() => {
-    setIsClient(true);
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-    };
-
-    if (typeof window !== "undefined") {
-      setWindowWidth(window.innerWidth);
-      window.addEventListener("resize", handleResize);
-    }
 
     // Check for live artist events
     const checkLiveArtistEvents = async () => {
@@ -95,16 +86,8 @@ export default function Hero() {
     };
 
     checkLiveArtistEvents();
-
-    return () => {
-      if (typeof window !== "undefined") {
-        window.removeEventListener("resize", handleResize);
-      }
-    };
   }, []);
 
-  // Define words in the specific order and positioning seen in the image
-  const words = ["Welcome", "to", "Coastal", "Creations", "Studio"];
 
   return (
     <section className="relative -mt-4 md:-mt-6 pb-16 md:pb-20">
@@ -206,88 +189,17 @@ export default function Hero() {
         </motion.div>
       </motion.div>
 
+      <SeaCreatures />
       <div className="container mx-auto px-6 md:px-12 relative z-10 pt-8 md:pt-12">
         <div className="max-w-4xl mx-auto text-center">
-          {isClient ? (
-            <div className="mb-20 sm:mb-24 h-[320px] md:h-[280px] flex items-center justify-center relative text-slate-800">
-              {words.map((word, index) => {
-                // Define specific positioning for each word based on device size
-                const getPosition = () => {
-                  // Desktop layout (two lines)
-                  if (windowWidth >= 1024) {
-                    return [
-                      { x: -80, y: -50 }, // Welcome
-                      { x: 130, y: -50 }, // to
-                      { x: -280, y: 50 }, // Coastal
-                      { x: 0, y: 50 }, // Creations
-                      { x: 260, y: 50 }, // Studio
-                    ][index];
-                  }
-
-                  // Tablet and mobile - stack vertically
-                  return [
-                    { x: 0, y: -140 }, // Welcome
-                    { x: 0, y: -70 }, // to
-                    { x: 0, y: 0 }, // Coastal - centered
-                    { x: 0, y: 70 }, // Creations - centered
-                    { x: 0, y: 140 }, // Studio
-                  ][index];
-                };
-
-                // Text sizes for each word with consistent sizing
-                const sizes = [
-                  "text-5xl sm:text-6xl lg:text-6xl", // Welcome
-                  "text-4xl sm:text-5xl lg:text-5xl", // to - slightly smaller
-                  "text-5xl sm:text-6xl lg:text-6xl", // Coastal
-                  "text-5xl sm:text-6xl lg:text-6xl", // Creations
-                  "text-5xl sm:text-6xl lg:text-6xl", // Studio
-                ];
-
-                return (
-                  <motion.span
-                    key={index}
-                    className={`${abrilFatface.className} ${sizes[index]} font-bold inline-block absolute`}
-                    initial={{
-                      opacity: 0,
-                      x: Math.sin((index / words.length) * Math.PI * 2) * 300,
-                      y: Math.cos((index / words.length) * Math.PI * 2) * 200,
-                      scale: 0.2,
-                      rotate: (index * 45) % 360,
-                    }}
-                    animate={{
-                      opacity: 1,
-                      x: getPosition().x,
-                      y: getPosition().y,
-                      scale: 1,
-                      rotate: 0,
-                    }}
-                    transition={{
-                      duration: 1.5,
-                      delay: index * 0.2,
-                      type: "spring",
-                      stiffness: 70,
-                      damping: 15,
-                    }}
-                    style={{
-                      transformOrigin: "center center",
-                      zIndex: 10 - index,
-                      letterSpacing: "0.02em", // Consistent letter spacing
-                      color: "#326C85",
-                    }}
-                  >
-                    {word}
-                  </motion.span>
-                );
-              })}
-            </div>
-          ) : (
-            <h2
-              className={`${abrilFatface.className} text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-20 sm:mb-24 h-[280px] flex items-center justify-center`}
-              style={{ color: "#326C85" }}
-            >
-              Welcome to Coastal Creations Studio
-            </h2>
-          )}
+          <div className="mb-20 sm:mb-24 h-[320px] md:h-[280px] flex items-center justify-center relative">
+            <WaveText
+              text="Welcome to Coastal Creations Studio"
+              className="text-4xl sm:text-5xl md:text-6xl leading-tight relative z-10"
+              delay={0.3}
+              staggerDelay={0.05}
+            />
+          </div>
 
           <div className="flex flex-wrap justify-center gap-6">
             <Link

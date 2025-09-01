@@ -18,6 +18,7 @@ interface EventOption {
   categoryDescription?: string;
   choices: Array<{
     name: string;
+    price?: number;
   }>;
 }
 
@@ -140,6 +141,36 @@ export default function Payment() {
     } else {
       return basePrice - discountInfo.discount.value;
     }
+  };
+
+  // Helper function to get choice price by name
+  const getChoicePrice = (categoryName: string, choiceName: string): number => {
+    const option = eventOptions.find(opt => opt.categoryName === categoryName);
+    const choice = option?.choices.find(c => c.name === choiceName);
+    return choice?.price || 0;
+  };
+
+  // Calculate total option costs for all participants
+  const calculateTotalOptionCosts = (): number => {
+    let totalOptionCost = 0;
+
+    // Primary customer options (when signing up for self)
+    if (isSigningUpForSelf && selectedOptions.length > 0) {
+      selectedOptions.forEach(selectedOption => {
+        totalOptionCost += getChoicePrice(selectedOption.categoryName, selectedOption.choiceName);
+      });
+    }
+
+    // Additional participants' options
+    participants.forEach(participant => {
+      if (participant.selectedOptions) {
+        participant.selectedOptions.forEach(selectedOption => {
+          totalOptionCost += getChoicePrice(selectedOption.categoryName, selectedOption.choiceName);
+        });
+      }
+    });
+
+    return totalOptionCost;
   };
 
   // const isDiscountActive = (participantCount: number): boolean => {
@@ -329,8 +360,13 @@ export default function Payment() {
         
         // Format to 2 decimal places
         setFormattedPrice(discountedPrice.toFixed(2));
-        // Calculate total price
-        setTotalPrice((discountedPrice * billingDetails.numberOfPeople).toFixed(2));
+        
+        // Calculate total price including option costs
+        const baseTotalPrice = discountedPrice * billingDetails.numberOfPeople;
+        const optionCosts = calculateTotalOptionCosts();
+        const totalWithOptions = baseTotalPrice + optionCosts;
+        
+        setTotalPrice(totalWithOptions.toFixed(2));
         setIsPriceAvailable(true);
       } else {
         setIsPriceAvailable(false);
@@ -339,7 +375,7 @@ export default function Payment() {
       console.error("Error formatting price:", e);
       setIsPriceAvailable(false);
     }
-  }, [eventPrice, billingDetails.numberOfPeople, discountInfo, currentParticipantCount]);
+  }, [eventPrice, billingDetails.numberOfPeople, discountInfo, currentParticipantCount, selectedOptions, participants]);
 
   // Validate form fields
   useEffect(() => {
@@ -369,10 +405,10 @@ export default function Payment() {
         .map((_, index) => ({
           firstName: `Additional Person ${index + 1}`,
           lastName: "Pending",
-          selectedOptions: [] as Array<{
-            categoryName: string;
-            choiceName: string;
-          }>,
+          selectedOptions: eventOptions.map(option => ({
+            categoryName: option.categoryName,
+            choiceName: option.choices[0]?.name || "",
+          })),
         }));
       setParticipants(newParticipants);
     } else {
@@ -382,14 +418,14 @@ export default function Payment() {
         .map((_, index) => ({
           firstName: `Participant ${index + 1}`,
           lastName: "Pending",
-          selectedOptions: [] as Array<{
-            categoryName: string;
-            choiceName: string;
-          }>,
+          selectedOptions: eventOptions.map(option => ({
+            categoryName: option.categoryName,
+            choiceName: option.choices[0]?.name || "",
+          })),
         }));
       setParticipants(newParticipants);
     }
-  }, [billingDetails.numberOfPeople, isSigningUpForSelf]);
+  }, [billingDetails.numberOfPeople, isSigningUpForSelf, eventOptions]);
 
   // Fetch payment configuration from API
   useEffect(() => {
@@ -448,6 +484,7 @@ export default function Payment() {
     }
 
     try {
+      // totalPrice already includes option costs from our useEffect calculation
       const roundedTotal = Math.round(parseFloat(totalPrice) * 100) / 100;
 
       const response = await fetch("/api/customer", {

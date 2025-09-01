@@ -7,6 +7,7 @@ interface EventOption {
   categoryDescription?: string;
   choices: Array<{
     name: string;
+    price?: number;
   }>;
 }
 
@@ -90,6 +91,44 @@ const BillingForm: React.FC<BillingFormProps> = ({
 
   const getOriginalTotal = (): string => {
     return (getOriginalPrice() * billingDetails.numberOfPeople).toFixed(2);
+  };
+
+  // Helper function to get choice price by name
+  const getChoicePrice = (categoryName: string, choiceName: string): number => {
+    const option = eventOptions.find(opt => opt.categoryName === categoryName);
+    const choice = option?.choices.find(c => c.name === choiceName);
+    return choice?.price || 0;
+  };
+
+  // Helper function to format choice display text
+  const formatChoiceDisplay = (choice: { name: string; price?: number }): string => {
+    if (!choice.price || choice.price === 0) {
+      return `${choice.name} - Free`;
+    }
+    return `${choice.name} - $${choice.price.toFixed(2)}`;
+  };
+
+  // Calculate total option costs for all participants
+  const calculateTotalOptionCosts = (): number => {
+    let totalOptionCost = 0;
+
+    // Primary customer options (when signing up for self)
+    if (isSigningUpForSelf && selectedOptions.length > 0) {
+      selectedOptions.forEach(selectedOption => {
+        totalOptionCost += getChoicePrice(selectedOption.categoryName, selectedOption.choiceName);
+      });
+    }
+
+    // Additional participants' options
+    participants.forEach(participant => {
+      if (participant.selectedOptions) {
+        participant.selectedOptions.forEach(selectedOption => {
+          totalOptionCost += getChoicePrice(selectedOption.categoryName, selectedOption.choiceName);
+        });
+      }
+    });
+
+    return totalOptionCost;
   };
   return (
     <div className="mb-10">
@@ -269,7 +308,7 @@ const BillingForm: React.FC<BillingFormProps> = ({
                   >
                     {option.choices.map((choice, choiceIndex) => (
                       <option key={choiceIndex} value={choice.name}>
-                        {choice.name}
+                        {formatChoiceDisplay(choice)}
                       </option>
                     ))}
                   </select>
@@ -385,7 +424,7 @@ const BillingForm: React.FC<BillingFormProps> = ({
                               >
                                 {option.choices.map((choice, choiceIndex) => (
                                   <option key={choiceIndex} value={choice.name}>
-                                    {choice.name}
+                                    {formatChoiceDisplay(choice)}
                                   </option>
                                 ))}
                               </select>
@@ -556,7 +595,7 @@ const BillingForm: React.FC<BillingFormProps> = ({
                                       key={choiceIndex}
                                       value={choice.name}
                                     >
-                                      {choice.name}
+                                      {formatChoiceDisplay(choice)}
                                     </option>
                                   ))}
                                 </select>
@@ -742,7 +781,7 @@ const BillingForm: React.FC<BillingFormProps> = ({
 
             <div className="flex justify-between items-center">
               <span className="text-lg font-medium text-gray-800">
-                Price per person:
+                Event price per person:
               </span>
               <span className="text-lg font-semibold">
                 {isDiscountActive() ? (
@@ -765,13 +804,35 @@ const BillingForm: React.FC<BillingFormProps> = ({
                 {billingDetails.numberOfPeople}
               </span>
             </div>
+
+            {/* Show option costs breakdown if any */}
+            {calculateTotalOptionCosts() > 0 && (
+              <>
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-lg font-medium text-gray-800">
+                    Total option costs:
+                  </span>
+                  <span className="text-lg font-semibold">
+                    ${calculateTotalOptionCosts().toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-lg font-medium text-gray-800">
+                    Subtotal:
+                  </span>
+                  <span className="text-lg font-semibold">
+                    ${((parseFloat(formattedPrice) * billingDetails.numberOfPeople) + calculateTotalOptionCosts()).toFixed(2)}
+                  </span>
+                </div>
+              </>
+            )}
             
             {/* Show discount savings if active */}
             {isDiscountActive() && (
               <div className="flex justify-between items-center mt-2 text-green-600">
                 <span className="text-lg font-medium">You save:</span>
                 <span className="text-lg font-semibold">
-                  ${(parseFloat(getOriginalTotal()) - parseFloat(totalPrice)).toFixed(2)}
+                  ${(parseFloat(getOriginalTotal()) + calculateTotalOptionCosts() - (parseFloat(totalPrice) + calculateTotalOptionCosts())).toFixed(2)}
                 </span>
               </div>
             )}
