@@ -6,7 +6,6 @@ import {
   Column,
   Heading,
   Text,
-  Link,
 } from "@react-email/components";
 
 interface CustomerContactTemplateProps {
@@ -15,6 +14,7 @@ interface CustomerContactTemplateProps {
   phone?: string;
   subject: string;
   description: string;
+  baseUrl?: string;
 }
 
 export const CustomerContactTemplate: React.FC<
@@ -28,19 +28,7 @@ export const CustomerContactTemplate: React.FC<
           alignItems: "center",
           justifyContent: "center",
         }}
-      >
-        <img
-          src="https://coastalcreationsstudio.com/assets/logos/coastalLogoFull.png"
-          alt="Coastal Creations Studio Logo"
-          style={{
-            maxWidth: "350px",
-            width: "100%",
-            height: "auto",
-            display: "block",
-            margin: "0 auto",
-          }}
-        />
-      </div>
+      ></div>
     </Section>
 
     <Section style={styles.mainContent}>
@@ -49,11 +37,7 @@ export const CustomerContactTemplate: React.FC<
           NEW CONTACT MESSAGE
         </Heading>
       </div>
-      <div style={{ textAlign: "left", ...styles.mainContentText }}>
-        <Text style={styles.paragraph}>
-          You have received a new contact message from your website.
-        </Text>
-      </div>
+      <div style={{ textAlign: "left", ...styles.mainContentText }}></div>
     </Section>
 
     <Section style={styles.detailsBoxOuter}>
@@ -109,30 +93,6 @@ export const CustomerContactTemplate: React.FC<
           <Text style={styles.messageText}>{description}</Text>
         </div>
       </div>
-    </Section>
-
-    <Section style={styles.mainContent}>
-      <div style={{ textAlign: "left", ...styles.mainContentText }}>
-        <Text style={styles.paragraph}>
-          Please respond to this customer as soon as possible.
-        </Text>
-      </div>
-    </Section>
-
-    <Section style={styles.footer}>
-      <Text style={styles.footerText}>
-        Coastal Creations Studio
-        <br />
-        411 E 8th Street, Ocean City, NJ 08226
-      </Text>
-      <Text style={styles.footerText}>
-        <Link
-          href="mailto:info@coastalcreationsstudio.com"
-          style={styles.footerLink}
-        >
-          info@coastalcreationsstudio.com
-        </Link>
-      </Text>
     </Section>
   </Html>
 );

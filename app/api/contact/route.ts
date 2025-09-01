@@ -15,7 +15,8 @@ interface ContactFormData {
 
 export async function POST(request: Request) {
   try {
-    const { name, email, phone, subject, description }: ContactFormData = await request.json();
+    const { name, email, phone, subject, description }: ContactFormData =
+      await request.json();
 
     // Validate required fields
     if (!name || typeof name !== "string") {
@@ -42,30 +43,47 @@ export async function POST(request: Request) {
 
     // Validate name length
     if (name.length < 2 || name.length > 100) {
-      return Response.json({ error: "Name must be between 2 and 100 characters" }, { status: 400 });
+      return Response.json(
+        { error: "Name must be between 2 and 100 characters" },
+        { status: 400 }
+      );
     }
 
     // Validate subject length
     if (subject.length < 2 || subject.length > 200) {
-      return Response.json({ error: "Subject must be between 2 and 200 characters" }, { status: 400 });
+      return Response.json(
+        { error: "Subject must be between 2 and 200 characters" },
+        { status: 400 }
+      );
     }
 
     // Validate description length
     if (description.length < 10 || description.length > 2000) {
-      return Response.json({ error: "Message must be between 10 and 2000 characters" }, { status: 400 });
+      return Response.json(
+        { error: "Message must be between 10 and 2000 characters" },
+        { status: 400 }
+      );
     }
 
     // Validate phone if provided
     if (phone && phone.trim() !== "") {
       const phoneRegex = /^[\d\s\-\(\)\+\.]{10,20}$/;
       if (!phoneRegex.test(phone)) {
-        return Response.json({ error: "Invalid phone number format" }, { status: 400 });
+        return Response.json(
+          { error: "Invalid phone number format" },
+          { status: 400 }
+        );
       }
     }
 
-    console.log("[ContactAPI-POST] Processing contact form submission", { name, email, subject });
+    console.log("[ContactAPI-POST] Processing contact form submission", {
+      name,
+      email,
+      subject,
+    });
 
     // Render email template
+    // const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
     const emailHtml = await render(
       React.createElement(CustomerContactTemplate, {
         name: name.trim(),
@@ -73,13 +91,15 @@ export async function POST(request: Request) {
         phone: phone?.trim() || "",
         subject: subject.trim(),
         description: description.trim(),
+        // baseUrl: baseUrl,
       })
     );
 
     // Send notification email to owner
     const { error } = await resend.emails.send({
       from: "Coastal Creations <no-reply@resend.coastalcreationsstudio.com>",
-      to: ["info@coastalcreationsstudio.com"],
+      // to: ["info@coastalcreationsstudio.com"],
+      to: ["crystaledgedev22@gmail.com"],
       subject: `New Contact Message: ${subject.trim()}`,
       html: emailHtml,
       replyTo: email.trim(),
@@ -87,7 +107,10 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error("[ContactAPI-POST] Error sending email:", error);
-      return Response.json({ error: "Failed to send message" }, { status: 500 });
+      return Response.json(
+        { error: "Failed to send message" },
+        { status: 500 }
+      );
     }
 
     console.log("[ContactAPI-POST] Contact message sent successfully");
