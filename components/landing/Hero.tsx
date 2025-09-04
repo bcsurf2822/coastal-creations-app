@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+// import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
@@ -91,15 +91,7 @@ export default function Hero() {
 
   return (
     <section className="relative -mt-4 md:-mt-6 pb-16 md:pb-20">
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="/assets/backgrounds/seaAndBrushSolidBG.png"
-          alt="Coastal pattern background"
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-white/60" />
+      <div className="absolute inset-0 z-0 bg-white/90 backdrop-blur-sm">
       </div>
 
       {/* Live Artist Event Popup */}
