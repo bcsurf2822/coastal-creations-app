@@ -2,7 +2,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import toast from "react-hot-toast";
 
 interface EventOption {
@@ -558,24 +557,28 @@ export default function EditEvent() {
   };
 
   const calculateDiscountedPrice = (): string => {
-    if (!eventData.price || !eventData.discount?.value || !eventData.isDiscountAvailable) {
+    if (
+      !eventData.price ||
+      !eventData.discount?.value ||
+      !eventData.isDiscountAvailable
+    ) {
       return "";
     }
-    
+
     const price = eventData.price;
     const discountValue = eventData.discount.value;
-    
+
     if (isNaN(price) || isNaN(discountValue)) {
       return "";
     }
-    
+
     let discountedPrice: number;
     if (eventData.discount.type === "percentage") {
-      discountedPrice = price - (price * discountValue / 100);
+      discountedPrice = price - (price * discountValue) / 100;
     } else {
       discountedPrice = price - discountValue;
     }
-    
+
     return discountedPrice > 0 ? `$${discountedPrice.toFixed(2)}` : "$0.00";
   };
 
@@ -609,722 +612,712 @@ export default function EditEvent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">Edit Event</h1>
+    <div className="container mx-auto p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl shadow-lg">
+      <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
+        Edit Event
+      </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Information */}
-          <div className="space-y-4">
+      <form
+        onSubmit={handleSubmit}
+        className="grid grid-cols-1 md:grid-cols-2 gap-6"
+      >
+        <div className="col-span-1 md:col-span-2">
+          <label
+            htmlFor="eventName"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Event Name
+          </label>
+          <input
+            type="text"
+            id="eventName"
+            name="eventName"
+            value={eventData.eventName}
+            onChange={handleInputChange}
+            required
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter event name"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="eventType"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Event Type
+          </label>
+          <select
+            id="eventType"
+            name="eventType"
+            value={eventData.eventType}
+            onChange={handleInputChange}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="class">Class</option>
+            <option value="workshop">Workshop</option>
+            <option value="camp">Camp</option>
+            <option value="artist">Artist</option>
+          </select>
+        </div>
+
+        {eventData.eventType !== "artist" && (
+          <div>
+            <label
+              htmlFor="price"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Price ($)
+            </label>
+            <input
+              type="text"
+              id="price"
+              name="price"
+              value={eventData.price}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (/^\d*\.?\d*$/.test(value)) {
+                  handleInputChange(e);
+                }
+              }}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter Price"
+            />
+          </div>
+        )}
+
+        {eventData.eventType !== "artist" && (
+          <div>
+            <label
+              htmlFor="numberOfParticipants"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Number of Participants
+            </label>
+            <select
+              id="numberOfParticipants"
+              name="numberOfParticipants"
+              value={eventData.numberOfParticipants || ""}
+              onChange={handleInputChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Select number of participants</option>
+              {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
+                <option key={num} value={num.toString()}>
+                  {num} participant{num > 1 ? "s" : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <div>
+          <label
+            htmlFor="dates.startDate"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Start Date
+          </label>
+          <input
+            ref={startDateInputRef}
+            type="date"
+            id="dates.startDate"
+            name="dates.startDate"
+            value={eventData.dates?.startDate || ""}
+            onChange={handleInputChange}
+            onClick={() => handleDateInputClick(startDateInputRef)}
+            required
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+          />
+        </div>
+
+        <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label
+              htmlFor="time.startTime"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Start Time
+            </label>
+            <select
+              id="time.startTime"
+              name="time.startTime"
+              value={eventData.time?.startTime || ""}
+              onChange={handleInputChange}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Select start time</option>
+              {generateTimeOptions()}
+            </select>
+          </div>
+          <div>
+            <label
+              htmlFor="time.endTime"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              End Time
+            </label>
+            <select
+              id="time.endTime"
+              name="time.endTime"
+              value={eventData.time?.endTime || ""}
+              onChange={handleInputChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Select end time</option>
+              {generateTimeOptions()}
+            </select>
+          </div>
+        </div>
+
+        {eventData.eventType !== "artist" && (
+          <div className="col-span-1 md:col-span-2 flex items-center">
+            <input
+              type="checkbox"
+              id="dates.isRecurring"
+              name="dates.isRecurring"
+              checked={eventData.dates?.isRecurring || false}
+              onChange={handleInputChange}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label
+              htmlFor="dates.isRecurring"
+              className="ml-2 block text-sm font-medium text-gray-700"
+            >
+              Recurring Event
+            </label>
+          </div>
+        )}
+
+        {eventData.eventType !== "artist" && eventData.dates?.isRecurring && (
+          <>
             <div>
               <label
-                htmlFor="eventName"
-                className="block text-sm font-bold text-gray-700"
+                htmlFor="dates.recurringPattern"
+                className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Event Name
-              </label>
-              <input
-                type="text"
-                id="eventName"
-                name="eventName"
-                value={eventData.eventName}
-                onChange={handleInputChange}
-                required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="description"
-                className="block text-sm font-bold text-gray-700"
-              >
-                Description
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                value={eventData.description}
-                onChange={handleInputChange}
-                rows={4}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="eventType"
-                className="block text-sm font-bold text-gray-700"
-              >
-                Event Type
+                Recurring Pattern
               </label>
               <select
-                id="eventType"
-                name="eventType"
-                value={eventData.eventType}
+                id="dates.recurringPattern"
+                name="dates.recurringPattern"
+                value={eventData.dates?.recurringPattern || "weekly"}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="class">Class</option>
-                <option value="workshop">Workshop</option>
-                <option value="camp">Camp</option>
-                <option value="artist">Artist</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
               </select>
             </div>
 
-            {eventData.eventType !== "artist" && (
-              <div>
-                <label
-                  htmlFor="price"
-                  className="block text-sm font-bold text-gray-700"
-                >
-                  Price
-                </label>
-                <input
-                  type="number"
-                  id="price"
-                  name="price"
-                  value={eventData.price}
-                  onChange={handleInputChange}
-                  min="0"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
-            )}
-
-            {eventData.eventType !== "artist" && (
-              <div>
-                <label
-                  htmlFor="numberOfParticipants"
-                  className="block text-sm font-bold text-gray-700"
-                >
-                  Number of Participants (Optional)
-                </label>
-                <select
-                  id="numberOfParticipants"
-                  name="numberOfParticipants"
-                  value={eventData.numberOfParticipants || ""}
-                  onChange={handleInputChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                >
-                  <option value="">Select number of participants</option>
-                  {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
-                    <option key={num} value={num.toString()}>
-                      {num} participant{num > 1 ? "s" : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
-
-          {/* Dates */}
-          <div className="space-y-4">
-            <h2 className="text-xl text-gray-700 font-semibold">Edit Dates</h2>
-
             <div>
               <label
-                htmlFor="dates.startDate"
-                className="block text-sm font-bold text-gray-700"
+                htmlFor="dates.recurringEndDate"
+                className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Start Date
+                Recurring End Date
               </label>
               <input
-                ref={startDateInputRef}
+                ref={recurringEndDateInputRef}
                 type="date"
-                id="dates.startDate"
-                name="dates.startDate"
-                value={eventData.dates?.startDate || ""}
+                id="dates.recurringEndDate"
+                name="dates.recurringEndDate"
+                value={eventData.dates?.recurringEndDate || ""}
                 onChange={handleInputChange}
-                onClick={() => handleDateInputClick(startDateInputRef)}
-                required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 cursor-pointer"
+                onClick={() => handleDateInputClick(recurringEndDateInputRef)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
               />
             </div>
+          </>
+        )}
 
-            {eventData.eventType !== "artist" && (
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="dates.isRecurring"
-                  name="dates.isRecurring"
-                  checked={eventData.dates?.isRecurring || false}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+        <div className="col-span-1 md:col-span-2">
+          <label
+            htmlFor="description"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Description
+          </label>
+          <textarea
+            id="description"
+            name="description"
+            value={eventData.description}
+            onChange={handleInputChange}
+            rows={4}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Provide a detailed description of the event"
+          ></textarea>
+        </div>
+
+        <div className="col-span-1 md:col-span-2">
+          <label
+            htmlFor="imageFile"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Event Image (Optional)
+          </label>
+          {!eventData.eventName && (
+            <p className="text-sm text-gray-500 mb-2">
+              Please make sure event has a name before uploading an image
+            </p>
+          )}
+          <input
+            type="file"
+            id="imageFile"
+            name="imageFile"
+            accept="image/*"
+            onChange={handleInputChange}
+            disabled={!eventData.eventName}
+            className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300 ${!eventData.eventName ? "opacity-50 cursor-not-allowed" : ""}`}
+          />
+          {imageUploadStatus && (
+            <p
+              className={`mt-1 text-sm ${imageUploadStatus.includes("successfully") ? "text-green-600" : imageUploadStatus.includes("Failed") ? "text-red-600" : "text-blue-600"}`}
+            >
+              {imageUploadStatus}
+            </p>
+          )}
+          {uploadedImageUrl && (
+            <div className="mt-2">
+              <p className="text-sm text-gray-600">Preview:</p>
+              <div className="relative inline-block">
+                <img
+                  src={uploadedImageUrl}
+                  alt="Uploaded event image"
+                  className="mt-1 h-32 w-auto object-cover rounded-md"
+                  onLoad={handleImageLoad}
+                  onLoadStart={handleImageLoadStart}
                 />
-                <label
-                  htmlFor="dates.isRecurring"
-                  className="ml-2 block text-sm font-medium text-gray-700"
+                <button
+                  type="button"
+                  onClick={handleImageDelete}
+                  disabled={isDeletingImage}
+                  className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Delete image"
                 >
-                  Is this a recurring event?
-                </label>
-              </div>
-            )}
-
-            {eventData.eventType !== "artist" &&
-              eventData.dates?.isRecurring && (
-                <>
-                  <div>
-                    <label
-                      htmlFor="dates.recurringPattern"
-                      className="block text-sm font-bold text-gray-700"
-                    >
-                      Recurring Pattern
-                    </label>
-                    <select
-                      id="dates.recurringPattern"
-                      name="dates.recurringPattern"
-                      value={eventData.dates?.recurringPattern || "weekly"}
-                      onChange={handleInputChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    >
-                      <option value="daily">Daily</option>
-                      <option value="weekly">Weekly</option>
-                      <option value="monthly">Monthly</option>
-                      <option value="yearly">Yearly</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="dates.recurringEndDate"
-                      className="block text-sm font-bold text-gray-700"
-                    >
-                      Recurring End Date
-                    </label>
-                    <input
-                      ref={recurringEndDateInputRef}
-                      type="date"
-                      id="dates.recurringEndDate"
-                      name="dates.recurringEndDate"
-                      value={eventData.dates?.recurringEndDate || ""}
-                      onChange={handleInputChange}
-                      onClick={() =>
-                        handleDateInputClick(recurringEndDateInputRef)
-                      }
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 cursor-pointer"
-                    />
-                  </div>
-                </>
-              )}
-          </div>
-
-          {/* Time */}
-          <div className="space-y-4">
-            <h2 className="text-xl text-gray-700 font-semibold">Time</h2>
-
-            <div>
-              <label
-                htmlFor="time.startTime"
-                className="block text-sm font-bold text-gray-700"
-              >
-                Start Time
-              </label>
-              <select
-                id="time.startTime"
-                name="time.startTime"
-                value={eventData.time?.startTime || ""}
-                onChange={handleInputChange}
-                required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                <option value="">Select a time</option>
-                {generateTimeOptions()}
-              </select>
-            </div>
-
-            <div>
-              <label
-                htmlFor="time.endTime"
-                className="block text-sm font-bold text-gray-700"
-              >
-                End Time (if applicable)
-              </label>
-              <select
-                id="time.endTime"
-                name="time.endTime"
-                value={eventData.time?.endTime || ""}
-                onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                <option value="">Select a time</option>
-                {generateTimeOptions()}
-              </select>
-            </div>
-          </div>
-
-          {/* Image Upload */}
-          <div className="space-y-4">
-            <h2 className="text-xl text-gray-700 font-semibold">Event Image</h2>
-
-            <div>
-              <label
-                htmlFor="imageFile"
-                className="block text-sm font-bold text-gray-700 mb-1"
-              >
-                Event Image (Optional)
-              </label>
-              {!eventData.eventName && (
-                <p className="text-sm text-gray-500 mb-2">
-                  Please make sure event has a name before uploading an image
-                </p>
-              )}
-              <input
-                type="file"
-                id="imageFile"
-                name="imageFile"
-                accept="image/*"
-                onChange={handleInputChange}
-                disabled={!eventData.eventName}
-                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300 ${!eventData.eventName ? "opacity-50 cursor-not-allowed" : ""}`}
-              />
-              {imageUploadStatus && (
-                <p
-                  className={`mt-1 text-sm ${imageUploadStatus.includes("successfully") ? "text-green-600" : imageUploadStatus.includes("Failed") ? "text-red-600" : "text-blue-600"}`}
-                >
-                  {imageUploadStatus}
-                </p>
-              )}
-              {uploadedImageUrl && (
-                <div className="mt-2">
-                  <p className="text-sm text-gray-600">Current image:</p>
-                  <div className="relative inline-block">
-                    <Image
-                      src={uploadedImageUrl}
-                      alt="Event image"
-                      width={128}
-                      height={128}
-                      className="mt-1 h-32 w-auto object-cover rounded-md"
-                      onLoad={handleImageLoad}
-                      onLoadStart={handleImageLoadStart}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleImageDelete}
-                      disabled={isDeletingImage}
-                      className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Delete image"
-                    >
-                      {isDeletingImage ? (
-                        <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
-                      ) : (
-                        "×"
-                      )}
-                    </button>
-                    {isImageLoading && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75 rounded-md">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Options */}
-          {eventData.eventType !== "artist" && (
-            <div className="space-y-4">
-              <h2 className="text-xl text-gray-700 font-semibold">Options</h2>
-
-              <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-                {(!eventData.options || eventData.options.length === 0) && (
-                  <div className="text-center py-4">
-                    <p className="text-gray-500 mb-4">
-                      No options available for this event
-                    </p>
-                    <button
-                      type="button"
-                      onClick={addOptionCategory}
-                      className="px-4 py-2 text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-300 rounded-md flex items-center mx-auto"
-                    >
-                      <span className="material-symbols-outlined mr-1">
-                        add
-                      </span>
-                      Add Option Category
-                    </button>
+                  {isDeletingImage ? (
+                    <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
+                  ) : (
+                    "×"
+                  )}
+                </button>
+                {isImageLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75 rounded-md">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+        </div>
 
-                {eventData.options && eventData.options.length > 0 && (
-                  <>
-                    {eventData.options.map((option, categoryIndex) => (
-                      <div
-                        key={categoryIndex}
-                        className="mb-6 p-4 bg-white rounded-md shadow-sm"
+        {eventData.eventType !== "artist" && (
+          <div className="col-span-1 md:col-span-2 flex items-center mt-4">
+            <input
+              type="checkbox"
+              id="hasOptions"
+              name="hasOptions"
+              checked={eventData.options && eventData.options.length > 0}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  addOptionCategory();
+                } else {
+                  setEventData((prev) => ({
+                    ...prev,
+                    options: undefined,
+                  }));
+                }
+              }}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label
+              htmlFor="hasOptions"
+              className="ml-2 block text-sm font-medium text-gray-700"
+            >
+              Add Options
+            </label>
+          </div>
+        )}
+
+        {eventData.eventType !== "artist" &&
+          eventData.options &&
+          eventData.options.length > 0 && (
+            <div className="col-span-1 md:col-span-2 bg-gray-50 p-4 rounded-md border border-gray-200">
+              <h3 className="text-lg font-medium text-gray-800 mb-3">
+                Event Options
+              </h3>
+
+              {eventData.options.map((option, categoryIndex) => (
+                <div
+                  key={categoryIndex}
+                  className="mb-6 p-4 bg-white rounded-md shadow-sm"
+                >
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="text-md font-medium text-gray-700">
+                      Option Category {categoryIndex + 1}
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={() => removeOptionCategory(categoryIndex)}
+                      className="text-red-600 hover:text-red-800 cursor-pointer"
+                    >
+                      Remove
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label
+                        htmlFor={`categoryName-${categoryIndex}`}
+                        className="block text-sm font-medium text-gray-700 mb-1"
                       >
-                        <div className="flex justify-between items-center mb-3">
-                          <h4 className="text-md font-bold text-gray-700">
-                            Option Category {categoryIndex + 1}
-                          </h4>
+                        Category Name
+                      </label>
+                      <input
+                        type="text"
+                        id={`categoryName-${categoryIndex}`}
+                        value={option.categoryName}
+                        onChange={(e) =>
+                          handleOptionCategoryChange(
+                            categoryIndex,
+                            "categoryName",
+                            e.target.value
+                          )
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter Category"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor={`categoryDescription-${categoryIndex}`}
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Category Description
+                      </label>
+                      <input
+                        type="text"
+                        id={`categoryDescription-${categoryIndex}`}
+                        value={option.categoryDescription || ""}
+                        onChange={(e) =>
+                          handleOptionCategoryChange(
+                            categoryIndex,
+                            "categoryDescription",
+                            e.target.value
+                          )
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter Category Description"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Choices
+                    </label>
+                    {option.choices.map((choice, choiceIndex) => (
+                      <div
+                        key={choiceIndex}
+                        className="flex flex-col gap-3 mb-3 p-3 bg-gray-50 rounded-md"
+                      >
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label
+                              htmlFor={`choice-name-${categoryIndex}-${choiceIndex}`}
+                              className="block text-xs font-medium text-gray-700 mb-1"
+                            >
+                              Choice Name
+                            </label>
+                            <input
+                              type="text"
+                              id={`choice-name-${categoryIndex}-${choiceIndex}`}
+                              value={choice.name}
+                              onChange={(e) =>
+                                handleOptionChoiceChange(
+                                  categoryIndex,
+                                  choiceIndex,
+                                  "name",
+                                  e.target.value
+                                )
+                              }
+                              className="w-full px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Enter Choice"
+                            />
+                          </div>
+                          <div>
+                            <label
+                              htmlFor={`choice-price-${categoryIndex}-${choiceIndex}`}
+                              className="block text-xs font-medium text-gray-700 mb-1"
+                            >
+                              Choice Price (Optional)
+                            </label>
+                            <input
+                              type="text"
+                              id={`choice-price-${categoryIndex}-${choiceIndex}`}
+                              value={choice.price?.toString() || ""}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (/^\d*\.?\d*$/.test(value)) {
+                                  handleOptionChoiceChange(
+                                    categoryIndex,
+                                    choiceIndex,
+                                    "price",
+                                    parseFloat(value) || 0
+                                  );
+                                }
+                              }}
+                              className="w-full px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="0.00"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex justify-end">
                           <button
                             type="button"
-                            onClick={() => removeOptionCategory(categoryIndex)}
-                            className="text-red-600 hover:text-red-800 flex items-center"
+                            onClick={() =>
+                              removeOptionChoice(categoryIndex, choiceIndex)
+                            }
+                            className="px-2 py-1 text-xs text-red-600 hover:text-red-800"
                           >
                             Remove
                           </button>
                         </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                          <div>
-                            <label
-                              htmlFor={`categoryName-${categoryIndex}`}
-                              className="block text-sm font-medium text-gray-700 mb-1"
-                            >
-                              Category Name
-                            </label>
-                            <input
-                              type="text"
-                              id={`categoryName-${categoryIndex}`}
-                              value={option.categoryName}
-                              onChange={(e) =>
-                                handleOptionCategoryChange(
-                                  categoryIndex,
-                                  "categoryName",
-                                  e.target.value
-                                )
-                              }
-                              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                          </div>
-                          <div>
-                            <label
-                              htmlFor={`categoryDescription-${categoryIndex}`}
-                              className="block text-sm font-medium text-gray-700 mb-1"
-                            >
-                              Category Description
-                            </label>
-                            <input
-                              type="text"
-                              id={`categoryDescription-${categoryIndex}`}
-                              value={option.categoryDescription || ""}
-                              onChange={(e) =>
-                                handleOptionCategoryChange(
-                                  categoryIndex,
-                                  "categoryDescription",
-                                  e.target.value
-                                )
-                              }
-                              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="mt-4">
-                          <label className="block text-sm font-bold text-gray-700 mb-2">
-                            Choices
-                          </label>
-                          {option.choices.map((choice, choiceIndex) => (
-                            <div
-                              key={choiceIndex}
-                              className="flex flex-col gap-3 mb-3 p-3 bg-gray-50 rounded-md"
-                            >
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div>
-                                  <label
-                                    htmlFor={`choice-name-${categoryIndex}-${choiceIndex}`}
-                                    className="block text-xs font-medium text-gray-700 mb-1"
-                                  >
-                                    Choice Name
-                                  </label>
-                                  <input
-                                    type="text"
-                                    id={`choice-name-${categoryIndex}-${choiceIndex}`}
-                                    value={choice.name}
-                                    onChange={(e) =>
-                                      handleOptionChoiceChange(
-                                        categoryIndex,
-                                        choiceIndex,
-                                        "name",
-                                        e.target.value
-                                      )
-                                    }
-                                    className="w-full px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                  />
-                                </div>
-                                <div>
-                                  <label
-                                    htmlFor={`choice-price-${categoryIndex}-${choiceIndex}`}
-                                    className="block text-xs font-medium text-gray-700 mb-1"
-                                  >
-                                    Choice Price (Optional)
-                                  </label>
-                                  <input
-                                    type="number"
-                                    id={`choice-price-${categoryIndex}-${choiceIndex}`}
-                                    value={choice.price || 0}
-                                    onChange={(e) => {
-                                      const value = parseFloat(e.target.value);
-                                      if (!isNaN(value) && value >= 0) {
-                                        handleOptionChoiceChange(
-                                          categoryIndex,
-                                          choiceIndex,
-                                          "price",
-                                          value
-                                        );
-                                      } else if (e.target.value === "") {
-                                        handleOptionChoiceChange(
-                                          categoryIndex,
-                                          choiceIndex,
-                                          "price",
-                                          0
-                                        );
-                                      }
-                                    }}
-                                    min="0"
-                                    step="0.01"
-                                    className="w-full px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="0.00"
-                                  />
-                                </div>
-                              </div>
-                              <div className="flex justify-end">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    removeOptionChoice(
-                                      categoryIndex,
-                                      choiceIndex
-                                    )
-                                  }
-                                  className="px-2 py-1 text-xs text-red-600 hover:text-red-800 flex items-center"
-                                >
-                                  Remove
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                          <button
-                            type="button"
-                            onClick={() => addOptionChoice(categoryIndex)}
-                            className="mt-2 px-3 py-1 text-sm text-blue-600 hover:text-blue-800 border border-blue-300 rounded-md flex items-center"
-                          >
-                            <span className="material-symbols-outlined text-sm mr-1">
-                              add
-                            </span>
-                            Add Choice
-                          </button>
-                        </div>
                       </div>
                     ))}
-
                     <button
                       type="button"
-                      onClick={addOptionCategory}
-                      className="mt-2 px-4 py-2 text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-300 rounded-md flex items-center"
+                      onClick={() => addOptionChoice(categoryIndex)}
+                      className="mt-2 px-3 py-1 text-sm text-blue-600 hover:text-blue-800 border border-blue-300 rounded-md"
                     >
-                      <span className="material-symbols-outlined mr-1">
-                        add
-                      </span>
-                      Add Option Category
+                      + Add Choice
                     </button>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Discount */}
-          {eventData.eventType !== "artist" && (
-            <div className="space-y-4">
-              <h2 className="text-xl text-gray-700 font-semibold">Discount Settings</h2>
-
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="isDiscountAvailable"
-                  name="isDiscountAvailable"
-                  checked={eventData.isDiscountAvailable || false}
-                  onChange={(e) =>
-                    setEventData((prev) => ({
-                      ...prev,
-                      isDiscountAvailable: e.target.checked,
-                    }))
-                  }
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label
-                  htmlFor="isDiscountAvailable"
-                  className="ml-2 block text-sm font-medium text-gray-700"
-                >
-                  Enable Discount
-                </label>
-              </div>
-
-              {eventData.isDiscountAvailable && (
-                <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="col-span-1 md:col-span-2">
-                      <label
-                        htmlFor="discountName"
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        Discount Name *
-                      </label>
-                      <input
-                        type="text"
-                        id="discountName"
-                        value={eventData.discount?.name || ""}
-                        onChange={(e) =>
-                          handleDiscountChange("name", e.target.value)
-                        }
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="e.g., Group Discount, Early Bird Special"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="discountType"
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        Discount Type
-                      </label>
-                      <select
-                        id="discountType"
-                        value={eventData.discount?.type || "percentage"}
-                        onChange={(e) =>
-                          handleDiscountChange("type", e.target.value as "percentage" | "fixed")
-                        }
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="percentage">Percentage (%)</option>
-                        <option value="fixed">Fixed Amount ($)</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="discountValue"
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        Discount Value {eventData.discount?.type === "percentage" ? "(%)" : "($)"}
-                      </label>
-                      <input
-                        type="number"
-                        id="discountValue"
-                        value={eventData.discount?.value || ""}
-                        onChange={(e) => {
-                          const value = parseFloat(e.target.value);
-                          if (!isNaN(value) && value >= 0) {
-                            handleDiscountChange("value", value);
-                          } else if (e.target.value === "") {
-                            handleDiscountChange("value", 0);
-                          }
-                        }}
-                        min="0"
-                        step="0.01"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder={eventData.discount?.type === "percentage" ? "Enter percentage" : "Enter dollar amount"}
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="minParticipants"
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        Minimum Participants for Discount
-                      </label>
-                      <select
-                        id="minParticipants"
-                        value={eventData.discount?.minParticipants || 2}
-                        onChange={(e) =>
-                          handleDiscountChange("minParticipants", parseInt(e.target.value))
-                        }
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        {Array.from({ length: 19 }, (_, i) => i + 2).map((num) => (
-                          <option key={num} value={num}>
-                            {num} participants
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="discountDescription"
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        Discount Description (Optional)
-                      </label>
-                      <input
-                        type="text"
-                        id="discountDescription"
-                        value={eventData.discount?.description || ""}
-                        onChange={(e) =>
-                          handleDiscountChange("description", e.target.value)
-                        }
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="e.g., Group discount for 3+ participants"
-                      />
-                    </div>
                   </div>
-
-                  {eventData.price && eventData.discount?.value && (
-                    <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                      <div className="text-sm text-blue-800">
-                        <span className="font-medium">Original Price:</span> ${eventData.price}
-                        <br />
-                        <span className="font-medium">Discounted Price:</span> {calculateDiscountedPrice()}
-                        <br />
-                        <span className="text-xs">
-                          (Applies when {eventData.discount?.minParticipants || 2} or more participants sign up)
-                        </span>
-                      </div>
-                    </div>
-                  )}
                 </div>
-              )}
+              ))}
+
+              <button
+                type="button"
+                onClick={addOptionCategory}
+                className="mt-2 px-4 py-2 text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-300 rounded-md"
+              >
+                + Add Option Category
+              </button>
             </div>
           )}
 
-          {/* Action Buttons */}
-          <div className="flex justify-end space-x-4 pt-4 border-t">
-            <Link
-              href="/admin/dashboard"
-              className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors flex items-center"
-            >
-              Cancel
-            </Link>
-            <button
-              type="submit"
-              disabled={
-                isSaving ||
-                isImageUploading ||
-                isImageLoading ||
-                isDeletingImage
+        {eventData.eventType !== "artist" && (
+          <div className="col-span-1 md:col-span-2 flex items-center mt-4">
+            <input
+              type="checkbox"
+              id="isDiscountAvailable"
+              name="isDiscountAvailable"
+              checked={eventData.isDiscountAvailable || false}
+              onChange={(e) =>
+                setEventData((prev) => ({
+                  ...prev,
+                  isDiscountAvailable: e.target.checked,
+                }))
               }
-              className={`px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center justify-center ${
-                isSaving
-                  ? "bg-blue-400 cursor-not-allowed"
-                  : isImageUploading
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : isImageLoading
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : isDeletingImage
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
-              }`}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label
+              htmlFor="isDiscountAvailable"
+              className="ml-2 block text-sm font-medium text-gray-700"
             >
-              {isSaving && (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-              )}
-              {isSaving
-                ? "Saving Changes..."
-                : isImageUploading
-                  ? "Image Uploading... Please Wait"
-                  : isImageLoading
-                    ? "Image Loading... Please Wait"
-                    : isDeletingImage
-                      ? "Deleting Image... Please Wait"
-                      : "Save Changes"}
-            </button>
+              Add Discount
+            </label>
           </div>
-        </form>
-      </div>
+        )}
+
+        {eventData.eventType !== "artist" && eventData.isDiscountAvailable && (
+          <div className="col-span-1 md:col-span-2 bg-gray-50 p-4 rounded-md border border-gray-200">
+            <h3 className="text-lg font-medium text-gray-800 mb-3">
+              Discount Settings
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="col-span-1 md:col-span-2">
+                <label
+                  htmlFor="discountName"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Discount Name *
+                </label>
+                <input
+                  type="text"
+                  id="discountName"
+                  value={eventData.discount?.name || ""}
+                  onChange={(e) => handleDiscountChange("name", e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., Group Discount, Early Bird Special"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="discountType"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Discount Type
+                </label>
+                <select
+                  id="discountType"
+                  value={eventData.discount?.type || "percentage"}
+                  onChange={(e) =>
+                    handleDiscountChange(
+                      "type",
+                      e.target.value as "percentage" | "fixed"
+                    )
+                  }
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="percentage">Percentage (%)</option>
+                  <option value="fixed">Fixed Amount ($)</option>
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="discountValue"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Discount Value{" "}
+                  {eventData.discount?.type === "percentage" ? "(%)" : "($)"}
+                </label>
+                <input
+                  type="text"
+                  id="discountValue"
+                  value={eventData.discount?.value?.toString() || ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (/^\d*\.?\d*$/.test(value)) {
+                      handleDiscountChange("value", parseFloat(value) || 0);
+                    }
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder={
+                    eventData.discount?.type === "percentage"
+                      ? "Enter percentage"
+                      : "Enter dollar amount"
+                  }
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="minParticipants"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Minimum Participants for Discount
+                </label>
+                <select
+                  id="minParticipants"
+                  value={eventData.discount?.minParticipants || 2}
+                  onChange={(e) =>
+                    handleDiscountChange(
+                      "minParticipants",
+                      parseInt(e.target.value)
+                    )
+                  }
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {Array.from({ length: 19 }, (_, i) => i + 2).map((num) => (
+                    <option key={num} value={num}>
+                      {num} participants
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="discountDescription"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Discount Description (Optional)
+                </label>
+                <input
+                  type="text"
+                  id="discountDescription"
+                  value={eventData.discount?.description || ""}
+                  onChange={(e) =>
+                    handleDiscountChange("description", e.target.value)
+                  }
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., Group discount for 3+ participants"
+                />
+              </div>
+            </div>
+
+            {eventData.price && eventData.discount?.value && (
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <div className="text-sm text-blue-800">
+                  <span className="font-medium">Original Price:</span> $
+                  {eventData.price}
+                  <br />
+                  <span className="font-medium">Discounted Price:</span>{" "}
+                  {calculateDiscountedPrice()}
+                  <br />
+                  <span className="text-xs">
+                    (Applies when {eventData.discount?.minParticipants || 2} or
+                    more participants sign up)
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="col-span-1 md:col-span-2 text-center">
+          <button
+            type="submit"
+            disabled={
+              isSaving || isImageUploading || isImageLoading || isDeletingImage
+            }
+            className={`w-full md:w-auto px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center justify-center ${
+              isSaving
+                ? "bg-blue-400 cursor-not-allowed"
+                : isImageUploading
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : isImageLoading
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : isDeletingImage
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+            }`}
+          >
+            {isSaving && (
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+            )}
+            {isSaving
+              ? "Saving Changes..."
+              : isImageUploading
+                ? "Image Uploading... Please Wait"
+                : isImageLoading
+                  ? "Image Loading... Please Wait"
+                  : isDeletingImage
+                    ? "Deleting Image... Please Wait"
+                    : "Save Changes"}
+          </button>
+        </div>
+      </form>
+
+      <style jsx global>{`
+        /* Hide the spinner for number inputs */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+
+        input[type="number"] {
+          -moz-appearance: textfield;
+        }
+      `}</style>
     </div>
   );
 }
