@@ -91,7 +91,7 @@ export default function Hero() {
 
   return (
     <section className="relative -mt-4 md:-mt-6 pb-16 md:pb-20">
-      <div className="absolute inset-0 z-0 bg-white">
+      <div className="absolute inset-0 z-0 bg-white/90 backdrop-blur-sm">
       </div>
 
       {/* Live Artist Event Popup */}
