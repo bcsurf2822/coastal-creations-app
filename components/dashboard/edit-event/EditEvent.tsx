@@ -14,7 +14,7 @@ interface EventData {
   _id?: string;
   eventName: string;
   description: string;
-  eventType: "class" | "camp" | "workshop" | "artist";
+  eventType: "class" | "camp" | "workshop" | "artist" | "reservation";
   price: number;
   numberOfParticipants?: number;
   dates: {
@@ -658,10 +658,11 @@ export default function EditEvent() {
             <option value="workshop">Workshop</option>
             <option value="camp">Camp</option>
             <option value="artist">Artist</option>
+            <option value="reservation">Reservation</option>
           </select>
         </div>
 
-        {eventData.eventType !== "artist" && (
+        {eventData.eventType !== "artist" && eventData.eventType !== "reservation" && (
           <div>
             <label
               htmlFor="price"
@@ -686,7 +687,7 @@ export default function EditEvent() {
           </div>
         )}
 
-        {eventData.eventType !== "artist" && (
+        {eventData.eventType !== "artist" && eventData.eventType !== "reservation" && (
           <div>
             <label
               htmlFor="numberOfParticipants"
@@ -771,7 +772,7 @@ export default function EditEvent() {
           </div>
         </div>
 
-        {eventData.eventType !== "artist" && (
+        {eventData.eventType !== "artist" && eventData.eventType !== "reservation" && (
           <div className="col-span-1 md:col-span-2 flex items-center">
             <input
               type="checkbox"
@@ -790,7 +791,7 @@ export default function EditEvent() {
           </div>
         )}
 
-        {eventData.eventType !== "artist" && eventData.dates?.isRecurring && (
+        {eventData.eventType !== "artist" && eventData.eventType !== "reservation" && eventData.dates?.isRecurring && (
           <>
             <div>
               <label
@@ -914,7 +915,7 @@ export default function EditEvent() {
           )}
         </div>
 
-        {eventData.eventType !== "artist" && (
+        {eventData.eventType !== "artist" && eventData.eventType !== "reservation" && (
           <div className="col-span-1 md:col-span-2 flex items-center mt-4">
             <input
               type="checkbox"
@@ -942,7 +943,7 @@ export default function EditEvent() {
           </div>
         )}
 
-        {eventData.eventType !== "artist" &&
+        {eventData.eventType !== "artist" && eventData.eventType !== "reservation" &&
           eventData.options &&
           eventData.options.length > 0 && (
             <div className="col-span-1 md:col-span-2 bg-gray-50 p-4 rounded-md border border-gray-200">
@@ -1109,7 +1110,7 @@ export default function EditEvent() {
             </div>
           )}
 
-        {eventData.eventType !== "artist" && (
+        {eventData.eventType !== "artist" && eventData.eventType !== "reservation" && (
           <div className="col-span-1 md:col-span-2 flex items-center mt-4">
             <input
               type="checkbox"
@@ -1133,7 +1134,7 @@ export default function EditEvent() {
           </div>
         )}
 
-        {eventData.eventType !== "artist" && eventData.isDiscountAvailable && (
+        {eventData.eventType !== "artist" && eventData.eventType !== "reservation" && eventData.isDiscountAvailable && (
           <div className="col-span-1 md:col-span-2 bg-gray-50 p-4 rounded-md border border-gray-200">
             <h3 className="text-lg font-medium text-gray-800 mb-3">
               Discount Settings

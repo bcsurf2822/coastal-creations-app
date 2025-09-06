@@ -8,7 +8,7 @@ import React from "react";
 
 interface EventFormData {
   eventName: string;
-  eventType: "class" | "workshop" | "camp" | "artist";
+  eventType: "class" | "workshop" | "camp" | "artist" | "reservation";
   description: string;
   price: string;
   numberOfParticipants: string;
@@ -218,14 +218,14 @@ const EventForm: React.FC = () => {
       newErrors.description = "Description is required";
     }
     if (
-      data.eventType !== "artist" &&
+      data.eventType !== "artist" && data.eventType !== "reservation" &&
       (!data.price ||
         isNaN(parseFloat(data.price)) ||
         parseFloat(data.price) < 0)
     ) {
       newErrors.price = "Price is required";
     }
-    if (data.eventType !== "artist") {
+    if (data.eventType !== "artist" && data.eventType !== "reservation") {
       if (!data.numberOfParticipants) {
         newErrors.numberOfParticipants = "Number of participants is required";
       } else if (
@@ -252,7 +252,7 @@ const EventForm: React.FC = () => {
       newErrors.endTime = "End time is required";
     }
 
-    if (data.eventType !== "artist" && data.isRecurring) {
+    if (data.eventType !== "artist" && data.eventType !== "reservation" && data.isRecurring) {
       if (!data.recurringEndDate) {
         newErrors.recurringEndDate =
           "Recurring end date is required for recurring events";
@@ -268,7 +268,7 @@ const EventForm: React.FC = () => {
       }
     }
 
-    if (data.eventType !== "artist" && data.isDiscountAvailable) {
+    if (data.eventType !== "artist" && data.eventType !== "reservation" && data.isDiscountAvailable) {
       if (!data.discount.name.trim()) {
         newErrors.discountValue = "Discount name is required";
       }
@@ -320,23 +320,23 @@ const EventForm: React.FC = () => {
               eventType: formData.eventType,
               description: formData.description,
               price:
-                formData.eventType !== "artist"
+                formData.eventType !== "artist" && formData.eventType !== "reservation"
                   ? parseFloat(formData.price)
                   : undefined,
               numberOfParticipants:
-                formData.eventType !== "artist"
+                formData.eventType !== "artist" && formData.eventType !== "reservation"
                   ? parseInt(formData.numberOfParticipants)
                   : undefined,
               dates: {
                 startDate: formData.startDate,
                 isRecurring:
-                  formData.eventType !== "artist" ? formData.isRecurring : false,
+                  formData.eventType !== "artist" && formData.eventType !== "reservation" ? formData.isRecurring : false,
                 recurringPattern:
-                  formData.eventType !== "artist" && formData.isRecurring
+                  formData.eventType !== "artist" && formData.eventType !== "reservation" && formData.isRecurring
                     ? formData.recurringPattern
                     : undefined,
                 recurringEndDate:
-                  formData.eventType !== "artist" && formData.isRecurring
+                  formData.eventType !== "artist" && formData.eventType !== "reservation" && formData.isRecurring
                     ? formData.recurringEndDate
                     : undefined,
               },
@@ -347,7 +347,7 @@ const EventForm: React.FC = () => {
                 endTime: formData.endTime ? formData.endTime.format("HH:mm") : "",
               },
               options:
-                formData.eventType !== "artist" && formData.hasOptions
+                formData.eventType !== "artist" && formData.eventType !== "reservation" && formData.hasOptions
                   ? formData.optionCategories
                       .filter((cat) => cat.categoryName.trim() !== "")
                       .map((cat) => ({
@@ -362,9 +362,9 @@ const EventForm: React.FC = () => {
                   : undefined,
               image: uploadedImageUrl || undefined,
               isDiscountAvailable:
-                formData.eventType !== "artist" ? formData.isDiscountAvailable : false,
+                formData.eventType !== "artist" && formData.eventType !== "reservation" ? formData.isDiscountAvailable : false,
               discount:
-                formData.eventType !== "artist" && formData.isDiscountAvailable
+                formData.eventType !== "artist" && formData.eventType !== "reservation" && formData.isDiscountAvailable
                   ? {
                       type: formData.discount.type,
                       value: parseFloat(formData.discount.value),
@@ -604,13 +604,14 @@ const EventForm: React.FC = () => {
             <option value="workshop">Workshop</option>
             <option value="camp">Camp</option>
             <option value="artist">Artist</option>
+            <option value="reservation">Reservation</option>
           </select>
           {errors.eventType && (
             <p className="mt-1 text-sm text-red-600">{errors.eventType}</p>
           )}
         </div>
 
-        {formData.eventType !== "artist" && (
+        {formData.eventType !== "artist" && formData.eventType !== "reservation" && (
           <div>
             <label
               htmlFor="price"
@@ -638,7 +639,7 @@ const EventForm: React.FC = () => {
           </div>
         )}
 
-        {formData.eventType !== "artist" && (
+        {formData.eventType !== "artist" && formData.eventType !== "reservation" && (
           <div>
             <label
               htmlFor="numberOfParticipants"
@@ -751,7 +752,7 @@ const EventForm: React.FC = () => {
           </div>
         </div>
 
-        {formData.eventType !== "artist" && (
+        {formData.eventType !== "artist" && formData.eventType !== "reservation" && (
           <div className="col-span-1 md:col-span-2 flex items-center">
             <input
               type="checkbox"
@@ -770,7 +771,7 @@ const EventForm: React.FC = () => {
           </div>
         )}
 
-        {formData.eventType !== "artist" && formData.isRecurring && (
+        {formData.eventType !== "artist" && formData.eventType !== "reservation" && formData.isRecurring && (
           <>
             <div>
               <label
@@ -890,7 +891,7 @@ const EventForm: React.FC = () => {
           )}
         </div>
 
-        {formData.eventType !== "artist" && (
+        {formData.eventType !== "artist" && formData.eventType !== "reservation" && (
           <div className="col-span-1 md:col-span-2 flex items-center mt-4">
             <input
               type="checkbox"
@@ -914,7 +915,7 @@ const EventForm: React.FC = () => {
           </div>
         )}
 
-        {formData.eventType !== "artist" && formData.hasOptions && (
+        {formData.eventType !== "artist" && formData.eventType !== "reservation" && formData.hasOptions && (
           <div className="col-span-1 md:col-span-2 bg-gray-50 p-4 rounded-md border border-gray-200">
             <h3 className="text-lg font-medium text-gray-800 mb-3">
               Event Options
@@ -1079,7 +1080,7 @@ const EventForm: React.FC = () => {
           </div>
         )}
 
-        {formData.eventType !== "artist" && (
+        {formData.eventType !== "artist" && formData.eventType !== "reservation" && (
           <div className="col-span-1 md:col-span-2 flex items-center mt-4">
             <input
               type="checkbox"
@@ -1103,7 +1104,7 @@ const EventForm: React.FC = () => {
           </div>
         )}
 
-        {formData.eventType !== "artist" && formData.isDiscountAvailable && (
+        {formData.eventType !== "artist" && formData.eventType !== "reservation" && formData.isDiscountAvailable && (
           <div className="col-span-1 md:col-span-2 bg-gray-50 p-4 rounded-md border border-gray-200">
             <h3 className="text-lg font-medium text-gray-800 mb-3">
               Discount Settings

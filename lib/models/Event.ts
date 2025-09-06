@@ -16,7 +16,7 @@ const LOCAL_TIMEZONE = "America/New_York"; // Change this to your timezone
 export interface IEvent extends Document {
   _id: string;
   eventName: string;
-  eventType: "class" | "camp" | "workshop" | "artist";
+  eventType: "class" | "camp" | "workshop" | "artist" | "reservation";
   description: string;
   price?: number;
   numberOfParticipants?: number;
@@ -188,7 +188,7 @@ const EventSchema = new Schema<IEvent>(
     eventType: {
       type: String,
       required: true,
-      enum: ["class", "camp", "workshop", "artist"],
+      enum: ["class", "camp", "workshop", "artist", "reservation"],
     },
     description: {
       type: String,
