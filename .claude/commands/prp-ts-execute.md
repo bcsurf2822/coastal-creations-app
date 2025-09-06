@@ -44,10 +44,22 @@ PRPs enable working TypeScript/React code on the first attempt through:
 4. **Progressive Validation**
 
    **Execute the 4-level validation system from the TypeScript PRP:**
-   - **Level 1**: Run TypeScript syntax & style validation commands from PRP (ESLint, tsc, Prettier)
+   - **Level 1**: Run TypeScript syntax & style validation commands from PRP
+     - `npm run type-check` or `tsc --noEmit` - TypeScript compilation check
+     - `npm run lint` - ESLint validation
+     - `npm run format:check` - Prettier formatting check
    - **Level 2**: Execute component and hook unit test validation from PRP
-   - **Level 3**: Run Next.js integration testing commands from PRP (dev server, API routes, production build)
-   - **Level 4**: Execute TypeScript/React-specific validation from PRP (E2E, performance, accessibility)
+     - `npm test` or `npm run test` - Jest unit tests
+     - `npm run test:coverage` - Jest with coverage reporting (minimum 80%)
+     - `npm run test:watch` - Jest in watch mode during development
+   - **Level 3**: Run Next.js integration testing commands from PRP
+     - `npm run build` - Next.js production build validation
+     - `npm run start` - Production server start test
+     - API route testing with Jest for server actions and endpoints
+   - **Level 4**: Execute TypeScript/React-specific validation from PRP
+     - E2E testing (if specified in PRP)
+     - Performance testing with Lighthouse (if specified)
+     - Accessibility testing (if specified)
 
    **Each level must pass before proceeding to the next.**
 
@@ -62,6 +74,9 @@ PRPs enable working TypeScript/React code on the first attempt through:
 **Failure Protocol**: When validation fails, use the TypeScript/React patterns and gotchas from the PRP to fix issues, then re-run validation until passing. Pay special attention to:
 
 - TypeScript compilation errors and type mismatches
+- Jest test failures and missing test coverage (minimum 80% required)
 - React hydration issues between server and client
 - Next.js App Router specific requirements
 - Component prop interface violations
+- Mock setup issues for API routes and external dependencies
+- Test environment configuration problems (jsdom, Next.js integration)

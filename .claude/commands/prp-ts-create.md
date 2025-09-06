@@ -4,7 +4,7 @@
 
 ## PRP Creation Mission
 
-Create a comprehensive TypeScript PRP that enables **one-pass implementation success** through systematic research and context curation.
+Create a comprehensive TypeScript PRP that enables **one-pass implementation success** through systematic research and context curation. After are done creating the PRP save the PRP in Archon in the project specified in the initial.md document
 
 **Critical Understanding**: The executing AI agent only receives:
 
@@ -17,6 +17,7 @@ Create a comprehensive TypeScript PRP that enables **one-pass implementation suc
 
 ## Research Process
 
+## IMPORTANT: USE ARCHON FIRST FOR DOCUMENTATION RESEARCH, IF THE DOCUMENTATION IS UNAVAILABLE USE BRAVE SEARCH TO LOCATE THE DOCUMENTATION
 > During the research process, create clear tasks and spawn as many agents and subagents as needed using the batch tools. The deeper research we do here the better the PRP will be. we optminize for chance of success and not for speed.
 
 1. **TypeScript/React Codebase Analysis in depth**
@@ -108,10 +109,42 @@ Save as: `PRPs/{feature-name}.md`
 - [ ] Component patterns specify Server vs Client component usage
 - [ ] Type definitions are comprehensive and follow existing patterns
 
+## PRP Quality Validation
+
+### Step 6: Run Quality Assessment
+
+After completing the PRP generation, **MANDATORY**: Run the PRP Quality Agent to validate the created PRP meets all quality standards.
+
+```bash
+# Execute quality validation with detailed reporting
+/prp-quality-check PRPs/{feature-name}.md --detailed
+```
+
+**Quality Gate Requirements**:
+- Overall Score: Must be ≥ 8.0/10
+- No critical failures present
+- All required sections included
+- Context passes "No Prior Knowledge" test
+
+**If Quality Check Fails**:
+1. Review the detailed report for specific issues
+2. Address each issue starting with highest-weight problems
+3. Apply suggested fixes from the quality agent
+4. Re-run quality check until score ≥ 8.0/10
+
+**Quality Report Interpretation**:
+- Structure Score < 7: Missing critical sections or formatting issues
+- Context Score < 8: Insufficient documentation or examples
+- Implementation Score < 8: Tasks lack specificity or dependencies
+- Validation Score < 7: Missing or invalid test commands
+- TypeScript Score < 8: Framework patterns incorrect or missing
+
 ## Success Metrics
 
 **Confidence Score**: Rate 1-10 for one-pass TypeScript implementation success likelihood
 
-**Quality Standard**: Minimum 8/10 required before PRP approval
+**Quality Standard**: Minimum 8/10 required before PRP approval (verified by Quality Agent)
 
-**Validation**: The completed PRP should enable an AI agent unfamiliar with the TypeScript/React codebase to implement the feature successfully using only the PRP content and codebase access, with full type safety and React best practices.
+**Final Validation**: 
+1. The completed PRP should enable an AI agent unfamiliar with the TypeScript/React codebase to implement the feature successfully using only the PRP content and codebase access, with full type safety and React best practices.
+2. PRP Quality Agent validation must pass with score ≥ 8.0/10 before the PRP is considered complete.

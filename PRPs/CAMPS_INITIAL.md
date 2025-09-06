@@ -162,6 +162,8 @@ reservationDetails?: {
 - **ESLint & Prettier** - Code quality and formatting
 - **TypeScript compiler** - Type checking
 - **Hot reload** - Development experience
+- **Jest & React Testing Library** - Unit and integration testing framework
+- **@testing-library/jest-dom** - Custom Jest matchers for DOM testing
 
 ### Specific to Reservations Feature
 - **Date Range Validation** - Ensure valid reservation periods
@@ -240,10 +242,15 @@ When you need additional information or clarification:
   - Validate that new fields work with existing data
 
 ### Testing Requirements:
+- **MANDATORY**: Use Jest with React Testing Library for all unit and integration tests
+- **Test Setup**: Follow Next.js Jest configuration with `next/jest` for automatic setup
 - Write comprehensive tests for all new functionality
 - Test edge cases like: overlapping reservations, capacity limits, pricing calculations
 - Ensure backward compatibility with existing event types (class, camp, workshop, artist)
 - Test form validation with various input combinations
+- **Component Testing**: Test user interactions, form validation, and state management
+- **API Testing**: Test server actions and API endpoints with proper error handling
+- **Coverage Requirements**: Maintain minimum 80% code coverage for all new features
 
 ### Error Handling:
 - Implement graceful degradation for network failures
@@ -271,6 +278,9 @@ When you need additional information or clarification:
 ✅ System prevents overbooking and handles edge cases gracefully
 ✅ Code follows all project standards and is well-documented
 ✅ Feature integrates seamlessly with existing event system
+✅ **All components have comprehensive Jest unit tests with 80%+ coverage**
+✅ **Tests validate user interactions, form validation, and edge cases**
+✅ **API endpoints are tested with proper error handling scenarios**
 
 ### Important Notes:
 - This is a complex feature that will touch multiple parts of the application
@@ -429,7 +439,205 @@ export function ReservationPricingForm() {
 }
 ```
 
-#### 3. Multi-Day Date Selection Calendar
+#### 3. Jest Testing Configuration & Examples
+
+##### Jest Setup for Next.js 15
+```bash
+# Install testing dependencies
+npm install -D jest jest-environment-jsdom @testing-library/react @testing-library/dom @testing-library/jest-dom ts-node @types/jest
+```
+
+```typescript
+// jest.config.ts - Next.js Jest Configuration
+import type { Config } from 'jest'
+import nextJest from 'next/jest.js'
+
+const createJestConfig = nextJest({
+  dir: './',
+})
+
+const config: Config = {
+  coverageProvider: 'v8',
+  testEnvironment: 'jsdom',
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  collectCoverageFrom: [
+    'components/**/*.{ts,tsx}',
+    'lib/**/*.{ts,tsx}',
+    'app/**/*.{ts,tsx}',
+    '!**/*.d.ts',
+  ],
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+    },
+  },
+}
+
+export default createJestConfig(config)
+```
+
+```typescript
+// jest.setup.ts
+import '@testing-library/jest-dom'
+```
+
+##### Component Testing Examples
+```typescript
+// components/reservation/__tests__/DaySelectionCalendar.test.tsx
+import { render, screen, fireEvent } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { DaySelectionCalendar } from '../DaySelectionCalendar'
+
+describe('DaySelectionCalendar', () => {
+  const mockProps = {
+    startDate: new Date('2024-07-01'),
+    endDate: new Date('2024-07-07'),
+    maxDays: 7,
+    onSelectionChange: jest.fn(),
+    onPriceChange: jest.fn(),
+    dayPricing: [
+      { numberOfDays: 1, price: 75 },
+      { numberOfDays: 7, price: 400, label: 'Full Week Special' }
+    ]
+  }
+
+  it('renders calendar with correct date range', () => {
+    render(<DaySelectionCalendar {...mockProps} />)
+    expect(screen.getByText('Select Your Days')).toBeInTheDocument()
+    expect(screen.getByText('1')).toBeInTheDocument()
+    expect(screen.getByText('7')).toBeInTheDocument()
+  })
+
+  it('allows day selection and calculates price correctly', async () => {
+    const user = userEvent.setup()
+    render(<DaySelectionCalendar {...mockProps} />)
+    
+    const firstDay = screen.getByText('1')
+    await user.click(firstDay)
+    
+    expect(mockProps.onSelectionChange).toHaveBeenCalledWith([new Date('2024-07-01')])
+    expect(mockProps.onPriceChange).toHaveBeenCalledWith(75, 1)
+  })
+
+  it('respects maxDays limit', async () => {
+    const user = userEvent.setup()
+    const props = { ...mockProps, maxDays: 2 }
+    render(<DaySelectionCalendar {...props} />)
+    
+    // Select maximum allowed days
+    await user.click(screen.getByText('1'))
+    await user.click(screen.getByText('2'))
+    
+    // Third day should be disabled
+    const thirdDay = screen.getByText('3')
+    expect(thirdDay).toHaveClass('cursor-not-allowed', 'opacity-50')
+  })
+})
+```
+
+##### Form Validation Testing
+```typescript
+// components/dashboard/add-event/__tests__/ReservationPricingForm.test.tsx
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { ReservationPricingForm } from '../ReservationPricingForm'
+
+describe('ReservationPricingForm', () => {
+  it('validates required pricing tiers', async () => {
+    render(<ReservationPricingForm />)
+    
+    const submitButton = screen.getByRole('button', { name: /save/i })
+    fireEvent.click(submitButton)
+    
+    await waitFor(() => {
+      expect(screen.getByText(/at least one pricing tier required/i)).toBeInTheDocument()
+    })
+  })
+
+  it('prevents duplicate day pricing tiers', async () => {
+    const user = userEvent.setup()
+    render(<ReservationPricingForm />)
+    
+    // Add second pricing tier with same day count
+    await user.click(screen.getByText('Add Pricing Tier'))
+    
+    const dayInputs = screen.getAllByLabelText(/number of days/i)
+    await user.type(dayInputs[1], '1') // Same as first tier
+    
+    await waitFor(() => {
+      expect(screen.getByText(/duplicate day count not allowed/i)).toBeInTheDocument()
+    })
+  })
+})
+```
+
+##### API Testing
+```typescript
+// app/api/events/__tests__/reservation.test.ts
+import { POST } from '../route'
+import { NextRequest } from 'next/server'
+
+// Mock dependencies
+jest.mock('@/lib/db')
+jest.mock('@/lib/models/Event')
+
+describe('/api/events API', () => {
+  it('creates reservation event with valid data', async () => {
+    const requestData = {
+      eventName: 'Summer Art Camp',
+      eventType: 'reservation',
+      startDate: '2024-07-01',
+      endDate: '2024-07-07',
+      reservationSettings: {
+        dayPricing: [
+          { numberOfDays: 1, price: 75 },
+          { numberOfDays: 7, price: 400 }
+        ],
+        maxDays: 7
+      }
+    }
+
+    const request = new NextRequest('http://localhost:3000/api/events', {
+      method: 'POST',
+      body: JSON.stringify(requestData),
+      headers: { 'Content-Type': 'application/json' }
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(201)
+    expect(data.success).toBe(true)
+    expect(data.event.eventType).toBe('reservation')
+  })
+
+  it('validates reservation pricing requirements', async () => {
+    const invalidData = {
+      eventName: 'Invalid Camp',
+      eventType: 'reservation',
+      // Missing required reservationSettings
+    }
+
+    const request = new NextRequest('http://localhost:3000/api/events', {
+      method: 'POST',
+      body: JSON.stringify(invalidData),
+      headers: { 'Content-Type': 'application/json' }
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.success).toBe(false)
+    expect(data.error).toContain('reservation settings required')
+  })
+})
+```
+
+#### 4. Multi-Day Date Selection Calendar
 ```typescript
 // components/reservation/DaySelectionCalendar.tsx
 import { useState, useMemo } from "react";
