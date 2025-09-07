@@ -7,19 +7,19 @@ An art studio web application for class bookings, event management, and creative
 **Coastal Creations Studio**  
 411 E 8th Street  
 Ocean City, NJ 08226  
-Owner: Ashley Mathers  
+Owner: Ashley Mathers
 
 **Website Development**  
-Developer: Benjamin Corbett  
-
+Developer: Benjamin Corbett
 
 ## About
 
-Coastal Creations Studio is a vibrant art studio maintained by Ashley Mathers, offering a variety of creative classes, workshops, camps, and birthday parties for all ages. Our mission is to inspire creativity and provide a welcoming space for artistic expression in the Ocean City community.
+Coastal Creations Studio is a vibrant art studio maintained by Ashley Mathers, offering a variety of creative classes, workshops, camps, and birthday parties for all ages.
 
 ## Features
 
 ### For Customers
+
 - **Class Registration** - Browse and sign up for art classes online
 - **Event Booking** - Book workshops, camps, and birthday parties
 - **Online Payments** - Secure payment processing through Square
@@ -28,6 +28,7 @@ Coastal Creations Studio is a vibrant art studio maintained by Ashley Mathers, o
 - **Automated Confirmations** - Receive email confirmations for bookings
 
 ### For Administrators
+
 - **Admin Dashboard** - Comprehensive dashboard for managing all aspects of the studio
 - **Event Management** - Create, edit, and manage classes and events
 - **Customer Management** - View and manage customer registrations
@@ -39,18 +40,23 @@ Coastal Creations Studio is a vibrant art studio maintained by Ashley Mathers, o
 ## Screenshots
 
 ### Home Page
+
 ![Home Page](public/assets/readme.images/home.png)
 
 ### Classes Page
+
 ![Classes Page](public/assets/readme.images/classes.png)
 
 ### Registration & Payment
+
 ![Square Registration](public/assets/readme.images/square.register.png)
 
 ### Admin Dashboard - Classes Management
+
 ![Admin Classes](public/assets/readme.images/admin.classes.png)
 
 ### Admin Dashboard - Add Event
+
 ![Admin Add Event](public/assets/readme.images/admin.addevent.png)
 
 ## Live Website
