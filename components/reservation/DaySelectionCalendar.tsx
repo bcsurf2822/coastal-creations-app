@@ -15,7 +15,6 @@ import {
   eachDayOfInterval,
   addMonths,
   subMonths,
-  isSameMonth,
   isValid,
 } from 'date-fns';
 import { ChevronLeftIcon, ChevronRightIcon, CalendarIcon, XMarkIcon } from '@heroicons/react/24/outline';
@@ -76,8 +75,6 @@ interface DaySelectionCalendarProps {
   error?: string | null;
   /** Loading state */
   isLoading?: boolean;
-  /** Event ID for pricing integration */
-  eventId?: string;
 }
 
 /**
@@ -118,7 +115,6 @@ export function DaySelectionCalendar({
   config = {},
   error,
   isLoading = false,
-  eventId,
 }: DaySelectionCalendarProps): ReactElement {
 
   const {
@@ -132,23 +128,12 @@ export function DaySelectionCalendar({
     weekStartsOn = 0,
   } = config;
 
-  // Validate date props
-  if (!isValid(eventStartDate) || !isValid(eventEndDate)) {
-    return (
-      <div className="p-4 border border-red-200 rounded-lg bg-red-50">
-        <p className="text-red-700">Invalid event dates provided</p>
-      </div>
-    );
-  }
-
   // Initialize current month to show (start with event start month)
   const [currentMonth, setCurrentMonth] = useState(() => startOfMonth(eventStartDate));
 
   // Day selection hook
   const {
     selectedDates: internalSelectedDates,
-    selectDate,
-    deselectDate,
     toggleDate,
     clearSelection,
     setSelectedDates,
@@ -158,7 +143,6 @@ export function DaySelectionCalendar({
     isDateDisabled,
     isDateInRange,
     selectedCount,
-    isValidSelection,
     isMaxReached,
     getSelectionError,
   } = useDaySelection(eventStartDate, eventEndDate, {
@@ -234,6 +218,15 @@ export function DaySelectionCalendar({
 
   // Current error message
   const currentError = error || getSelectionError();
+
+  // Validate date props
+  if (!isValid(eventStartDate) || !isValid(eventEndDate)) {
+    return (
+      <div className="p-4 border border-red-200 rounded-lg bg-red-50">
+        <p className="text-red-700">Invalid event dates provided</p>
+      </div>
+    );
+  }
 
   // Loading overlay
   if (isLoading) {
