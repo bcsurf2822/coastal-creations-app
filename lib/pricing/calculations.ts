@@ -273,7 +273,7 @@ export function getSuggestedPricing(
       } else {
         // Suggestion to reduce days (if it saves money per day)
         if (tierPricePerDay < currentPricePerDay) {
-          const fewerDays = currentDayCount - tier.numberOfDays;
+          // const fewerDays = currentDayCount - tier.numberOfDays;
           savings = currentResult.totalPrice - tierResult.totalPrice;
           suggestedPrice = tierResult.totalPrice;
 

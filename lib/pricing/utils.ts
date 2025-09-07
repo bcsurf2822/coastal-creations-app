@@ -3,10 +3,10 @@
  * @module lib/pricing/utils
  */
 
-import type { PricingTier } from '../validations/reservationValidation';
-import type { PriceFormatOptions, PricingConfig } from './types';
-import { DEFAULT_PRICING_CONFIG } from './types';
-import { formatPrice } from './calculations';
+import type { PricingTier } from "../validations/reservationValidation";
+import type { PricingConfig } from "./types";
+import { DEFAULT_PRICING_CONFIG } from "./types";
+import { formatPrice } from "./calculations";
 
 /**
  * Create a pricing tier with default values.
@@ -15,7 +15,7 @@ import { formatPrice } from './calculations';
  * @param price - Price for this tier
  * @param label - Optional label for display
  * @returns Complete pricing tier object
- * 
+ *
  * @example
  * ```typescript
  * const tier = createPricingTier(5, 300, 'Weekly Rate');
@@ -29,7 +29,7 @@ export function createPricingTier(
   return {
     numberOfDays,
     price,
-    label: label || `${numberOfDays} Day${numberOfDays > 1 ? 's' : ''}`,
+    label: label || `${numberOfDays} Day${numberOfDays > 1 ? "s" : ""}`,
   };
 }
 
@@ -42,7 +42,7 @@ export function createPricingTier(
  * @param maxDays - Maximum number of days to generate tiers for
  * @param discountStrategy - How to calculate discounts for longer stays
  * @returns Array of pricing tiers
- * 
+ *
  * @example
  * ```typescript
  * const tiers = generatePricingTiers(75, 7, 'progressive');
@@ -52,40 +52,40 @@ export function createPricingTier(
 export function generatePricingTiers(
   baseDailyRate: number,
   maxDays: number,
-  discountStrategy: 'none' | 'linear' | 'progressive' | 'bulk' = 'progressive'
+  discountStrategy: "none" | "linear" | "progressive" | "bulk" = "progressive"
 ): PricingTier[] {
   if (baseDailyRate <= 0 || maxDays <= 0) {
-    throw new Error('Base daily rate and max days must be positive numbers');
+    throw new Error("Base daily rate and max days must be positive numbers");
   }
 
   const tiers: PricingTier[] = [];
 
   for (let days = 1; days <= maxDays; days++) {
     let price = baseDailyRate * days;
-    
+
     // Apply discount strategy
     switch (discountStrategy) {
-      case 'none':
+      case "none":
         // No discount, straight multiplication
         break;
-        
-      case 'linear':
+
+      case "linear":
         // Linear discount: 5% off per additional day after first
         if (days > 1) {
           const discountPercent = (days - 1) * 0.05;
           price = price * (1 - Math.min(discountPercent, 0.5)); // Max 50% discount
         }
         break;
-        
-      case 'progressive':
+
+      case "progressive":
         // Progressive discount: increasing discount for longer stays
         if (days >= 2) {
           const discountPercent = Math.min(0.1 + (days - 2) * 0.03, 0.4); // 10% + 3% per day, max 40%
           price = price * (1 - discountPercent);
         }
         break;
-        
-      case 'bulk':
+
+      case "bulk":
         // Bulk discount: discount thresholds
         if (days >= 7) {
           price = price * 0.7; // 30% off for week+
@@ -112,7 +112,7 @@ export function generatePricingTiers(
  * @param tiers - Pricing tiers to analyze
  * @param preferredDays - Optional preferred number of days for weighting
  * @returns Tier with the best price per day ratio
- * 
+ *
  * @example
  * ```typescript
  * const bestValue = findBestValueTier(pricingTiers);
@@ -122,10 +122,10 @@ export function generatePricingTiers(
 export function findBestValueTier(
   tiers: PricingTier[],
   preferredDays?: number
-): PricingTier & { pricePerDay: number } | null {
+): (PricingTier & { pricePerDay: number }) | null {
   if (tiers.length === 0) return null;
 
-  const tiersWithPricePerDay = tiers.map(tier => ({
+  const tiersWithPricePerDay = tiers.map((tier) => ({
     ...tier,
     pricePerDay: tier.price / tier.numberOfDays,
   }));
@@ -133,8 +133,11 @@ export function findBestValueTier(
   // If preferred days specified, weight towards that
   if (preferredDays) {
     return tiersWithPricePerDay.reduce((best, current) => {
-      const bestScore = best.pricePerDay + Math.abs(best.numberOfDays - preferredDays) * 2;
-      const currentScore = current.pricePerDay + Math.abs(current.numberOfDays - preferredDays) * 2;
+      const bestScore =
+        best.pricePerDay + Math.abs(best.numberOfDays - preferredDays) * 2;
+      const currentScore =
+        current.pricePerDay +
+        Math.abs(current.numberOfDays - preferredDays) * 2;
       return currentScore < bestScore ? current : best;
     });
   }
@@ -151,13 +154,16 @@ export function findBestValueTier(
  * @param originalPrice - Original price
  * @param discountedPrice - Discounted price
  * @returns Discount percentage (0-1)
- * 
+ *
  * @example
  * ```typescript
  * const discount = calculateDiscountPercentage(100, 80); // 0.2 (20%)
  * ```
  */
-export function calculateDiscountPercentage(originalPrice: number, discountedPrice: number): number {
+export function calculateDiscountPercentage(
+  originalPrice: number,
+  discountedPrice: number
+): number {
   if (originalPrice <= 0) return 0;
   return Math.max(0, (originalPrice - discountedPrice) / originalPrice);
 }
@@ -168,7 +174,7 @@ export function calculateDiscountPercentage(originalPrice: number, discountedPri
  * @param discountPercent - Discount as decimal (0.2 for 20%)
  * @param includePercent - Whether to include % symbol
  * @returns Formatted discount string
- * 
+ *
  * @example
  * ```typescript
  * formatDiscountPercentage(0.15); // "15%"
@@ -180,7 +186,7 @@ export function formatDiscountPercentage(
   includePercent: boolean = true
 ): string {
   const percent = Math.round(discountPercent * 100);
-  return `${percent}${includePercent ? '%' : ''}`;
+  return `${percent}${includePercent ? "%" : ""}`;
 }
 
 /**
@@ -189,7 +195,7 @@ export function formatDiscountPercentage(
  * @param tiers - Pricing tiers to summarize
  * @param config - Pricing configuration
  * @returns Human-readable pricing summary
- * 
+ *
  * @example
  * ```typescript
  * const summary = createPricingSummary(tiers);
@@ -200,20 +206,24 @@ export function createPricingSummary(
   tiers: PricingTier[],
   config: PricingConfig = DEFAULT_PRICING_CONFIG
 ): string {
-  if (tiers.length === 0) return 'No pricing available';
+  if (tiers.length === 0) return "No pricing available";
 
-  const sortedTiers = [...tiers].sort((a, b) => a.numberOfDays - b.numberOfDays);
+  const sortedTiers = [...tiers].sort(
+    (a, b) => a.numberOfDays - b.numberOfDays
+  );
   const baseTier = sortedTiers[0];
   const basePricePerDay = baseTier.price / baseTier.numberOfDays;
 
-  const summaryParts = sortedTiers.map(tier => {
-    const priceStr = formatPrice(tier.price, { currency: config.defaultCurrency });
-    const dayStr = `${tier.numberOfDays} day${tier.numberOfDays > 1 ? 's' : ''}`;
-    
+  const summaryParts = sortedTiers.map((tier) => {
+    const priceStr = formatPrice(tier.price, {
+      currency: config.defaultCurrency,
+    });
+    const dayStr = `${tier.numberOfDays} day${tier.numberOfDays > 1 ? "s" : ""}`;
+
     // Calculate savings vs base daily rate
     const expectedPrice = basePricePerDay * tier.numberOfDays;
     const savings = expectedPrice - tier.price;
-    
+
     if (savings > 5 && tier.numberOfDays > 1) {
       const savingsPercent = formatDiscountPercentage(savings / expectedPrice);
       return `${dayStr}: ${priceStr} (save ${savingsPercent})`;
@@ -222,7 +232,7 @@ export function createPricingSummary(
     }
   });
 
-  return summaryParts.join(', ');
+  return summaryParts.join(", ");
 }
 
 /**
@@ -231,18 +241,23 @@ export function createPricingSummary(
  * @param dayCount - Number of days to check
  * @param tiers - Available pricing tiers
  * @returns Whether pricing is available for this day count
- * 
+ *
  * @example
  * ```typescript
  * const canPrice = canPriceDayCount(3, pricingTiers); // true/false
  * ```
  */
-export function canPriceDayCount(dayCount: number, tiers: PricingTier[]): boolean {
+export function canPriceDayCount(
+  dayCount: number,
+  tiers: PricingTier[]
+): boolean {
   if (dayCount <= 0 || tiers.length === 0) return false;
 
   // Can price if there's an exact match or a higher tier available
-  const sortedTiers = [...tiers].sort((a, b) => a.numberOfDays - b.numberOfDays);
-  return sortedTiers.some(tier => tier.numberOfDays >= dayCount);
+  const sortedTiers = [...tiers].sort(
+    (a, b) => a.numberOfDays - b.numberOfDays
+  );
+  return sortedTiers.some((tier) => tier.numberOfDays >= dayCount);
 }
 
 /**
@@ -251,7 +266,7 @@ export function canPriceDayCount(dayCount: number, tiers: PricingTier[]): boolea
  * @param tiers - Available pricing tiers
  * @param maxDays - Maximum days to check coverage for
  * @returns Object with coverage information
- * 
+ *
  * @example
  * ```typescript
  * const coverage = getPricingCoverage(tiers, 10);
@@ -269,7 +284,7 @@ export function getPricingCoverage(
 } {
   const coveredDays: number[] = [];
   const gaps: number[] = [];
-  
+
   if (tiers.length === 0) {
     return {
       coveredDays: [],
@@ -279,7 +294,7 @@ export function getPricingCoverage(
     };
   }
 
-  const highestTier = Math.max(...tiers.map(t => t.numberOfDays));
+  const highestTier = Math.max(...tiers.map((t) => t.numberOfDays));
 
   for (let day = 1; day <= maxDays; day++) {
     if (canPriceDayCount(day, tiers)) {
@@ -305,7 +320,7 @@ export function getPricingCoverage(
  * @param tierArrays - Arrays of pricing tiers to merge
  * @param conflictResolution - How to resolve conflicts ('higher_price' | 'lower_price' | 'error')
  * @returns Merged pricing tiers
- * 
+ *
  * @example
  * ```typescript
  * const merged = mergePricingTiers([baseTiers, seasonalTiers], 'higher_price');
@@ -313,20 +328,28 @@ export function getPricingCoverage(
  */
 export function mergePricingTiers(
   tierArrays: PricingTier[][],
-  conflictResolution: 'higher_price' | 'lower_price' | 'error' = 'error'
+  conflictResolution: "higher_price" | "lower_price" | "error" = "error"
 ): PricingTier[] {
   const tierMap = new Map<number, PricingTier>();
 
   for (const tiers of tierArrays) {
     for (const tier of tiers) {
       const existing = tierMap.get(tier.numberOfDays);
-      
+
       if (existing) {
-        if (conflictResolution === 'error') {
-          throw new Error(`Conflicting pricing tiers for ${tier.numberOfDays} days`);
-        } else if (conflictResolution === 'higher_price' && tier.price > existing.price) {
+        if (conflictResolution === "error") {
+          throw new Error(
+            `Conflicting pricing tiers for ${tier.numberOfDays} days`
+          );
+        } else if (
+          conflictResolution === "higher_price" &&
+          tier.price > existing.price
+        ) {
           tierMap.set(tier.numberOfDays, tier);
-        } else if (conflictResolution === 'lower_price' && tier.price < existing.price) {
+        } else if (
+          conflictResolution === "lower_price" &&
+          tier.price < existing.price
+        ) {
           tierMap.set(tier.numberOfDays, tier);
         }
       } else {
@@ -335,7 +358,9 @@ export function mergePricingTiers(
     }
   }
 
-  return Array.from(tierMap.values()).sort((a, b) => a.numberOfDays - b.numberOfDays);
+  return Array.from(tierMap.values()).sort(
+    (a, b) => a.numberOfDays - b.numberOfDays
+  );
 }
 
 /**
@@ -343,20 +368,22 @@ export function mergePricingTiers(
  *
  * @param tiers - Pricing tiers to convert
  * @returns Map from day count to pricing tier
- * 
+ *
  * @example
  * ```typescript
  * const lookup = createPricingLookup(tiers);
  * const price = lookup.get(3)?.price; // Quick price lookup
  * ```
  */
-export function createPricingLookup(tiers: PricingTier[]): Map<number, PricingTier> {
+export function createPricingLookup(
+  tiers: PricingTier[]
+): Map<number, PricingTier> {
   const lookup = new Map<number, PricingTier>();
-  
+
   for (const tier of tiers) {
     lookup.set(tier.numberOfDays, tier);
   }
-  
+
   return lookup;
 }
 
@@ -365,7 +392,7 @@ export function createPricingLookup(tiers: PricingTier[]): Map<number, PricingTi
  *
  * @param tiers - Pricing tiers to analyze
  * @returns Analysis with suggestions for improvement
- * 
+ *
  * @example
  * ```typescript
  * const analysis = analyzePricingStrategy(tiers);
@@ -389,8 +416,8 @@ export function analyzePricingStrategy(tiers: PricingTier[]): {
   if (tiers.length === 0) {
     return {
       isOptimal: false,
-      issues: ['No pricing tiers provided'],
-      suggestions: ['Add at least one pricing tier'],
+      issues: ["No pricing tiers provided"],
+      suggestions: ["Add at least one pricing tier"],
       metrics: {
         averageDiscountPercent: 0,
         maxDiscountPercent: 0,
@@ -400,7 +427,9 @@ export function analyzePricingStrategy(tiers: PricingTier[]): {
     };
   }
 
-  const sortedTiers = [...tiers].sort((a, b) => a.numberOfDays - b.numberOfDays);
+  const sortedTiers = [...tiers].sort(
+    (a, b) => a.numberOfDays - b.numberOfDays
+  );
   const baseTier = sortedTiers[0];
   const basePricePerDay = baseTier.price / baseTier.numberOfDays;
 
@@ -422,34 +451,46 @@ export function analyzePricingStrategy(tiers: PricingTier[]): {
     if (i > 0) {
       const prevTier = sortedTiers[i - 1];
       const prevPricePerDay = prevTier.price / prevTier.numberOfDays;
-      
+
       if (pricePerDay > prevPricePerDay) {
         valueInconsistencies++;
-        issues.push(`${tier.numberOfDays}-day tier has higher price per day than ${prevTier.numberOfDays}-day tier`);
+        issues.push(
+          `${tier.numberOfDays}-day tier has higher price per day than ${prevTier.numberOfDays}-day tier`
+        );
       }
     }
 
     // Check for reasonable discount progression
     if (i > 0 && discount < 0.02 && tier.numberOfDays > 2) {
-      suggestions.push(`Consider increasing discount for ${tier.numberOfDays}-day tier to provide better value`);
+      suggestions.push(
+        `Consider increasing discount for ${tier.numberOfDays}-day tier to provide better value`
+      );
     }
   }
 
   const averageDiscountPercent = totalDiscount / sortedTiers.length;
-  const priceRangeRatio = sortedTiers[sortedTiers.length - 1].price / baseTier.price;
-  const valueConsistency = 1 - (valueInconsistencies / Math.max(1, sortedTiers.length - 1));
+  const priceRangeRatio =
+    sortedTiers[sortedTiers.length - 1].price / baseTier.price;
+  const valueConsistency =
+    1 - valueInconsistencies / Math.max(1, sortedTiers.length - 1);
 
   // Generate overall suggestions
   if (averageDiscountPercent < 0.05) {
-    suggestions.push('Consider offering higher discounts for longer stays to encourage larger bookings');
+    suggestions.push(
+      "Consider offering higher discounts for longer stays to encourage larger bookings"
+    );
   }
 
   if (maxDiscount > 0.5) {
-    suggestions.push('Very high discount tiers may devalue your service - consider reducing maximum discount');
+    suggestions.push(
+      "Very high discount tiers may devalue your service - consider reducing maximum discount"
+    );
   }
 
   if (valueConsistency < 0.8) {
-    suggestions.push('Pricing structure has inconsistencies - longer stays should generally offer better per-day value');
+    suggestions.push(
+      "Pricing structure has inconsistencies - longer stays should generally offer better per-day value"
+    );
   }
 
   return {
