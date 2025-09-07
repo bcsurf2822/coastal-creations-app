@@ -1,7 +1,4 @@
-// Quick test to verify our event form data transformation logic
-console.log('Testing event form data transformation...');
 
-// Simulate form data for a reservation event
 const formData = {
   eventName: 'Test Camp',
   eventType: 'reservation',
