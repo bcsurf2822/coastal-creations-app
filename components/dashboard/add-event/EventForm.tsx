@@ -1,97 +1,64 @@
+/**
+ * @fileoverview Event form component with React Hook Form and Zod validation
+ * @module components/dashboard/add-event/EventForm
+ */
+
 "use client";
 
-import { useState, useRef, useCallback } from "react";
-import dayjs, { Dayjs } from "dayjs";
+import React, { ReactElement, useRef, useCallback, useState } from "react";
+import { useForm, useFieldArray, type SubmitHandler } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import React from "react";
+import {
+  unifiedEventFormSchema,
+  UnifiedEventFormData,
+  getDefaultValuesForEventType,
+  EventType,
+} from "../../../lib/validations/eventFormValidation";
 
-interface EventFormData {
-  eventName: string;
-  eventType: "class" | "workshop" | "camp" | "artist" | "reservation";
-  description: string;
-  price: string;
-  numberOfParticipants: string;
-  startDate: string;
-  startTime: Dayjs | null;
-  endTime: Dayjs | null;
-  isRecurring: boolean;
-  recurringPattern: "daily" | "weekly";
-  recurringEndDate: string;
-  hasOptions: boolean;
-  optionCategories: Array<{
-    categoryName: string;
-    categoryDescription: string;
-    choices: Array<{
-      name: string;
-      price?: string;
-    }>;
-  }>;
-  image: File | null;
-  imageUrl?: string;
-  isDiscountAvailable: boolean;
-  discount: {
-    type: "percentage" | "fixed";
-    value: string;
-    minParticipants: string;
-    name: string;
-    description: string;
-  };
-}
-
-interface FormErrors {
-  eventName?: string;
-  eventType?: string;
-  description?: string;
-  price?: string;
-  numberOfParticipants?: string;
-  startDate?: string;
-  startTime?: string;
-  endTime?: string;
-  recurringEndDate?: string;
-  image?: string;
-  discountValue?: string;
-  discountMinParticipants?: string;
-}
-
-const EventForm: React.FC = () => {
+const EventForm = (): ReactElement => {
   const router = useRouter();
   const isSubmittingRef = useRef(false);
   const startDateInputRef = useRef<HTMLInputElement>(null);
+  const endDateInputRef = useRef<HTMLInputElement>(null);
   const recurringEndDateInputRef = useRef<HTMLInputElement>(null);
-  const [formData, setFormData] = useState<EventFormData>({
-    eventName: "",
-    eventType: "class",
-    description: "",
-    price: "",
-    numberOfParticipants: "",
-    startDate: "",
-    startTime: null,
-    endTime: null,
-    isRecurring: false,
-    recurringPattern: "weekly",
-    recurringEndDate: "",
-    hasOptions: false,
-    optionCategories: [
-      {
-        categoryName: "",
-        categoryDescription: "",
-        choices: [{ name: "", price: "" }],
-      },
-    ],
-    image: null,
-    isDiscountAvailable: false,
-    discount: {
-      type: "percentage",
-      value: "",
-      minParticipants: "2",
-      name: "",
-      description: "",
-    },
+
+  // Initialize React Hook Form with Zod validation
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors, isSubmitting },
+    control,
+    clearErrors,
+    setError,
+    reset,
+  } = useForm<UnifiedEventFormData>({
+    resolver: zodResolver(unifiedEventFormSchema),
+    defaultValues: getDefaultValuesForEventType("class"),
+    mode: "onBlur",
   });
 
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Watch event type to conditionally show/hide fields
+  const eventType = watch("eventType");
+  const isRecurring = watch("isRecurring");
+  const hasOptions = watch("hasOptions");
+  const isDiscountAvailable = watch("isDiscountAvailable");
+  const isReservationEvent = eventType === "reservation";
+
+  // Field arrays for dynamic option categories
+  const {
+    fields: optionCategoryFields,
+    append: appendOptionCategory,
+    remove: removeOptionCategory,
+  } = useFieldArray({
+    control,
+    name: "optionCategories",
+  });
+
+  // State for image upload (not part of form since we upload separately)
   const [imageUploadStatus, setImageUploadStatus] = useState<string | null>(
     null
   );
@@ -99,1174 +66,1064 @@ const EventForm: React.FC = () => {
   const [isImageUploading, setIsImageUploading] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
 
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
-  ) => {
-    const { name, value, type } = e.target;
+  // Handle event type change and reset form values accordingly
+  const handleEventTypeChange = useCallback(
+    (newEventType: EventType) => {
+      const defaultValues = getDefaultValuesForEventType(newEventType);
+      reset(defaultValues);
+      setUploadedImageUrl(null);
+      setImageUploadStatus(null);
+    },
+    [reset]
+  );
 
-    if (type === "checkbox" && e.target instanceof HTMLInputElement) {
-      setFormData({
-        ...formData,
-        [name]: e.target.checked,
-      });
-    } else if (
-      type === "file" &&
-      e.target instanceof HTMLInputElement &&
-      e.target.files
-    ) {
-      const file = e.target.files[0];
-      setFormData({
-        ...formData,
-        [name]: file,
-      });
-      // Auto-upload image when selected
-      if (file && formData.eventName) {
-        handleImageUpload(file);
+  // Handle image upload
+  const handleImageUpload = useCallback(
+    async (file: File) => {
+      const eventName = watch("eventName");
+      if (!eventName) {
+        setError("image", { message: "Please enter an event name first" });
+        return;
       }
-    } else {
-      setFormData({
-        ...formData,
-        [name]: value,
-      });
-    }
-  };
 
-  const handleImageUpload = async (file: File) => {
-    if (!formData.eventName) {
-      setErrors({ ...errors, image: "Please enter an event name first" });
-      return;
-    }
+      setIsImageUploading(true);
+      setImageUploadStatus("Uploading image...");
 
-    setIsImageUploading(true);
-    setImageUploadStatus("Uploading image...");
-    const formDataUpload = new FormData();
-    formDataUpload.append("file", file);
-    formDataUpload.append("title", formData.eventName);
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("eventName", eventName);
+
+        const response = await fetch("/api/events/upload-image", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to upload image");
+        }
+
+        const data = await response.json();
+        setUploadedImageUrl(data.imageUrl);
+        setValue("imageUrl", data.imageUrl);
+        clearErrors("image");
+        setImageUploadStatus("Image uploaded successfully!");
+
+        setTimeout(() => setImageUploadStatus(null), 3000);
+      } catch (error) {
+        console.error("Image upload failed:", error);
+        setError("image", {
+          message: "Failed to upload image. Please try again.",
+        });
+        setImageUploadStatus("Failed to upload image");
+      } finally {
+        setIsImageUploading(false);
+      }
+    },
+    [watch, setValue, clearErrors, setError]
+  );
+
+  // Handle file upload with form integration
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        setValue("image", file);
+        const eventName = watch("eventName");
+        if (eventName) {
+          handleImageUpload(file);
+        } else {
+          setError("image", { message: "Please enter an event name first" });
+        }
+      }
+    },
+    [setValue, watch, setError, handleImageUpload]
+  );
+
+  // Option category management
+  const addOptionCategory = useCallback(() => {
+    appendOptionCategory({
+      categoryName: "",
+      categoryDescription: "",
+      choices: [{ name: "", price: "" }],
+    });
+  }, [appendOptionCategory]);
+
+  const addChoiceToCategory = useCallback(
+    (categoryIndex: number) => {
+      const currentCategories = watch("optionCategories") || [];
+      const updatedCategories = [...currentCategories];
+      updatedCategories[categoryIndex].choices.push({ name: "", price: "" });
+      setValue("optionCategories", updatedCategories);
+    },
+    [setValue, watch]
+  );
+
+  const removeChoiceFromCategory = useCallback(
+    (categoryIndex: number, choiceIndex: number) => {
+      const currentCategories = watch("optionCategories") || [];
+      const updatedCategories = [...currentCategories];
+      updatedCategories[categoryIndex].choices.splice(choiceIndex, 1);
+      setValue("optionCategories", updatedCategories);
+    },
+    [setValue, watch]
+  );
+
+  // Handle form submission
+  const onSubmit: SubmitHandler<UnifiedEventFormData> = async (data) => {
+    if (isSubmittingRef.current) return;
+
+    isSubmittingRef.current = true;
 
     try {
-      const response = await fetch("/api/upload-image", {
+      // Transform form data to match Event model structure
+      const eventData = {
+        ...data,
+        imageUrl: uploadedImageUrl,
+        // Transform dates for different event types
+        dates: {
+          startDate: data.startDate,
+          isRecurring:
+            data.eventType !== "reservation"
+              ? data.isRecurring || false
+              : false,
+          ...(data.eventType === "reservation" &&
+            data.endDate && {
+              endDate: data.endDate,
+            }),
+          ...(data.eventType !== "reservation" &&
+            data.isRecurring && {
+              recurringPattern: data.recurringPattern,
+              recurringEndDate: data.recurringEndDate,
+            }),
+        },
+        time: {
+          startTime: data.startTime,
+          endTime: data.endTime,
+        },
+      };
+
+      const response = await fetch("/api/events", {
         method: "POST",
-        body: formDataUpload,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(eventData),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to upload image");
+        throw new Error("Failed to create event");
       }
 
-      const result = await response.json();
-      setUploadedImageUrl(result.imageUrl);
-      setIsImageLoading(true); // Start image loading for preview
-      setImageUploadStatus("Image uploaded successfully!");
-
-      // Clear the success message after 3 seconds
-      setTimeout(() => {
-        setImageUploadStatus(null);
-      }, 3000);
+      toast.success("Event created successfully!");
+      router.push("/admin/dashboard");
     } catch (error) {
-      console.error("Error uploading image:", error);
-      setImageUploadStatus("Failed to upload image. Please try again.");
-      setErrors({ ...errors, image: "Failed to upload image" });
+      console.error("Form submission error:", error);
+      toast.error("Failed to create event. Please try again.");
     } finally {
-      setIsImageUploading(false);
+      isSubmittingRef.current = false;
     }
   };
 
-  const handleTimeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const { name, value } = event.target;
-    if (value === "") {
-      setFormData({
-        ...formData,
-        [name]: null,
-      });
-    } else {
-      const [hours, minutes] = value.split(":").map(Number);
-      if (!isNaN(hours) && !isNaN(minutes)) {
-        setFormData({
-          ...formData,
-          [name]: dayjs().hour(hours).minute(minutes).second(0),
-        });
+  const getFieldError = (fieldPath: string) => {
+    const paths = fieldPath.split(".");
+    let error: unknown = errors;
+    for (const path of paths) {
+      if (error && typeof error === "object" && path in error) {
+        error = (error as Record<string, unknown>)[path];
+      } else {
+        return null;
       }
     }
+    return (error as { message?: string })?.message || null;
   };
 
-  const handleImageLoad = () => {
-    setIsImageLoading(false);
+  // Generate time options from 9:00 AM to 9:00 PM with smart filtering
+  const generateTimeOptions = (isEndTime = false, selectedStartTime?: string) => {
+    const options = [];
+    
+    // For end time, filter to only show times after start time
+    if (isEndTime && selectedStartTime) {
+      const [startHourStr, startMinuteStr] = selectedStartTime.split(':');
+      const startTimeHour = parseInt(startHourStr);
+      const startTimeMinute = parseInt(startMinuteStr);
+      
+      // Calculate minimum end time (start time + 30 minutes)
+      let minEndTimeHour = startTimeHour;
+      let minEndTimeMinute = startTimeMinute + 30;
+      
+      if (minEndTimeMinute >= 60) {
+        minEndTimeHour += 1;
+        minEndTimeMinute = 0;
+      }
+      
+      // Add options from minimum end time
+      for (let hour = minEndTimeHour; hour <= 21; hour++) {
+        for (const minute of [0, 30]) {
+          // Skip 9:30 PM (21:30) since we only want up to 9:00 PM
+          if (hour === 21 && minute > 0) continue;
+          
+          // Skip times before the minimum end time
+          if (hour === minEndTimeHour && minute < minEndTimeMinute) continue;
+
+          const time = new Date();
+          time.setHours(hour, minute, 0);
+
+          const timeStr = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+          const formattedTime = time.toLocaleTimeString([], {
+            hour: "numeric",
+            minute: "2-digit",
+          });
+
+          options.push(
+            <option key={timeStr} value={timeStr}>
+              {formattedTime}
+            </option>
+          );
+        }
+      }
+    } else {
+      // Standard time options for start time or when no filtering needed
+      for (let hour = 9; hour <= 21; hour++) {
+        for (const minute of [0, 30]) {
+          // Skip 9:30 PM (21:30) since we only want up to 9:00 PM
+          if (hour === 21 && minute > 0) continue;
+
+          const time = new Date();
+          time.setHours(hour, minute, 0);
+
+          const timeStr = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+          const formattedTime = time.toLocaleTimeString([], {
+            hour: "numeric",
+            minute: "2-digit",
+          });
+
+          options.push(
+            <option key={timeStr} value={timeStr}>
+              {formattedTime}
+            </option>
+          );
+        }
+      }
+    }
+    return options;
   };
 
-  const handleImageLoadStart = () => {
-    setIsImageLoading(true);
-  };
-
+  // Handle date input click to show picker
   const handleDateInputClick = (inputRef: React.RefObject<HTMLInputElement | null>) => {
     if (inputRef.current) {
       inputRef.current.showPicker();
     }
   };
 
-  const validate = (data: EventFormData): FormErrors => {
-    const newErrors: FormErrors = {};
-
-    if (!data.eventName.trim()) {
-      newErrors.eventName = "Event name is required";
-    }
-    if (!data.eventType) {
-      newErrors.eventType = "Event type is required";
-    }
-    if (!data.description.trim()) {
-      newErrors.description = "Description is required";
-    }
-    if (
-      data.eventType !== "artist" && data.eventType !== "reservation" &&
-      (!data.price ||
-        isNaN(parseFloat(data.price)) ||
-        parseFloat(data.price) < 0)
-    ) {
-      newErrors.price = "Price is required";
-    }
-    if (data.eventType !== "artist" && data.eventType !== "reservation") {
-      if (!data.numberOfParticipants) {
-        newErrors.numberOfParticipants = "Number of participants is required";
-      } else if (
-        isNaN(parseInt(data.numberOfParticipants)) ||
-        parseInt(data.numberOfParticipants) < 1
-      ) {
-        newErrors.numberOfParticipants =
-          "Number of participants must be a positive number";
-      }
-    }
-    if (!data.startDate) {
-      newErrors.startDate = "Start date is required";
-    } else {
-      const startDate = dayjs(data.startDate);
-      if (!startDate.isValid()) {
-        newErrors.startDate = "Invalid start date format";
-      } else if (startDate.isBefore(dayjs(), "day")) {
-      }
-    }
-    if (!data.startTime) {
-      newErrors.startTime = "Start time is required";
-    }
-    if (!data.endTime) {
-      newErrors.endTime = "End time is required";
-    }
-
-    if (data.eventType !== "artist" && data.eventType !== "reservation" && data.isRecurring) {
-      if (!data.recurringEndDate) {
-        newErrors.recurringEndDate =
-          "Recurring end date is required for recurring events";
-      } else {
-        const recurringEndDate = dayjs(data.recurringEndDate);
-        const startDate = dayjs(data.startDate);
-        if (!recurringEndDate.isValid()) {
-          newErrors.recurringEndDate = "Invalid recurring end date format";
-        } else if (recurringEndDate.isBefore(startDate, "day")) {
-          newErrors.recurringEndDate =
-            "Recurring end date must be after the start date";
-        }
-      }
-    }
-
-    if (data.eventType !== "artist" && data.eventType !== "reservation" && data.isDiscountAvailable) {
-      if (!data.discount.name.trim()) {
-        newErrors.discountValue = "Discount name is required";
-      }
-      
-      if (!data.discount.value || parseFloat(data.discount.value) <= 0) {
-        newErrors.discountValue = "Discount value is required and must be greater than 0";
-      } else if (data.discount.type === "percentage" && parseFloat(data.discount.value) > 100) {
-        newErrors.discountValue = "Percentage discount cannot exceed 100%";
-      } else if (data.discount.type === "fixed" && data.price && parseFloat(data.discount.value) >= parseFloat(data.price)) {
-        newErrors.discountValue = "Fixed discount cannot be greater than or equal to the price";
-      }
-      
-      if (!data.discount.minParticipants || parseInt(data.discount.minParticipants) < 2) {
-        newErrors.discountMinParticipants = "Minimum participants must be at least 2";
-      }
-    }
-
-    return newErrors;
-  };
-
-  const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    
-    // Prevent double submission
-    if (isSubmittingRef.current) return;
-    
-    isSubmittingRef.current = true;
-    setIsSubmitting(true);
-    
-    const validationErrors = validate(formData);
-    setErrors(validationErrors);
-
-    if (Object.keys(validationErrors).length === 0) {
-      // Show loading toast
-      const loadingToastId = toast.loading('Creating event...', {
-        duration: Infinity,
-      });
-
-      try {
-        // Add minimum loading duration of 1 second for better UX
-        const [response] = await Promise.all([
-          fetch("/api/events", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              eventName: formData.eventName,
-              eventType: formData.eventType,
-              description: formData.description,
-              price:
-                formData.eventType !== "artist" && formData.eventType !== "reservation"
-                  ? parseFloat(formData.price)
-                  : undefined,
-              numberOfParticipants:
-                formData.eventType !== "artist" && formData.eventType !== "reservation"
-                  ? parseInt(formData.numberOfParticipants)
-                  : undefined,
-              dates: {
-                startDate: formData.startDate,
-                isRecurring:
-                  formData.eventType !== "artist" && formData.eventType !== "reservation" ? formData.isRecurring : false,
-                recurringPattern:
-                  formData.eventType !== "artist" && formData.eventType !== "reservation" && formData.isRecurring
-                    ? formData.recurringPattern
-                    : undefined,
-                recurringEndDate:
-                  formData.eventType !== "artist" && formData.eventType !== "reservation" && formData.isRecurring
-                    ? formData.recurringEndDate
-                    : undefined,
-              },
-              time: {
-                startTime: formData.startTime
-                  ? formData.startTime.format("HH:mm")
-                  : "",
-                endTime: formData.endTime ? formData.endTime.format("HH:mm") : "",
-              },
-              options:
-                formData.eventType !== "artist" && formData.eventType !== "reservation" && formData.hasOptions
-                  ? formData.optionCategories
-                      .filter((cat) => cat.categoryName.trim() !== "")
-                      .map((cat) => ({
-                        ...cat,
-                        choices: cat.choices.map((choice) => ({
-                          name: choice.name,
-                          price: choice.price && parseFloat(choice.price) > 0 
-                            ? parseFloat(choice.price) 
-                            : undefined,
-                        })),
-                      }))
-                  : undefined,
-              image: uploadedImageUrl || undefined,
-              isDiscountAvailable:
-                formData.eventType !== "artist" && formData.eventType !== "reservation" ? formData.isDiscountAvailable : false,
-              discount:
-                formData.eventType !== "artist" && formData.eventType !== "reservation" && formData.isDiscountAvailable
-                  ? {
-                      type: formData.discount.type,
-                      value: parseFloat(formData.discount.value),
-                      minParticipants: parseInt(formData.discount.minParticipants),
-                      name: formData.discount.name.trim(),
-                      description: formData.discount.description.trim() || undefined,
-                    }
-                  : undefined,
-            }),
-          }),
-          new Promise(resolve => setTimeout(resolve, 1000)) // Minimum 1 second loading
-        ]);
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error || "Failed to create event");
-        }
-
-        // Dismiss loading toast and show success
-        toast.dismiss(loadingToastId);
-        toast.success('Event created successfully! Redirecting...', {
-          duration: 2000,
-        });
-
-        // Keep loading state active during redirect
-        setTimeout(() => {
-          router.push("/admin/dashboard/");
-        }, 1000);
-      } catch (error) {
-        console.error("[EVENT-FORM-SUBMIT] Error submitting form:", error);
-        
-        // Dismiss loading toast and show error
-        toast.dismiss(loadingToastId);
-        toast.error(
-          typeof error === "string" ? error : (error as Error).message || "Failed to create event"
-        );
-        
-        // Only reset loading state on error
-        isSubmittingRef.current = false;
-        setIsSubmitting(false);
-      }
-    } else {
-      isSubmittingRef.current = false;
-      setIsSubmitting(false);
-    }
-  }, [formData, router, uploadedImageUrl]);
-
-  const generateTimeOptions = () => {
-    const options = [];
-    for (let hour = 9; hour <= 21; hour++) {
-      for (const minute of [0, 30]) {
-        // Skip 9:30 PM (21:30) since we only want up to 9:00 PM
-        if (hour === 21 && minute > 0) continue;
-        const time = dayjs().hour(hour).minute(minute).second(0);
-        const timeStr = time.format("HH:mm");
-        options.push(timeStr);
-      }
-    }
-    return options;
-  };
-
-  // Add these new functions to handle options
-  const handleOptionCategoryChange = (
-    index: number,
-    field: keyof (typeof formData.optionCategories)[0],
-    value: string
-  ) => {
-    const updatedCategories = [...formData.optionCategories];
-    updatedCategories[index] = {
-      ...updatedCategories[index],
-      [field]: value,
-    };
-    setFormData({
-      ...formData,
-      optionCategories: updatedCategories,
-    });
-  };
-
-  const handleOptionChoiceChange = (
-    categoryIndex: number,
-    choiceIndex: number,
-    field: "name" | "price",
-    value: string
-  ) => {
-    const updatedCategories = [...formData.optionCategories];
-    updatedCategories[categoryIndex].choices[choiceIndex] = {
-      ...updatedCategories[categoryIndex].choices[choiceIndex],
-      [field]: value,
-    };
-    setFormData({
-      ...formData,
-      optionCategories: updatedCategories,
-    });
-  };
-
-  const addOptionCategory = () => {
-    setFormData({
-      ...formData,
-      optionCategories: [
-        ...formData.optionCategories,
-        {
-          categoryName: "",
-          categoryDescription: "",
-          choices: [{ name: "", price: "" }],
-        },
-      ],
-    });
-  };
-
-  const removeOptionCategory = (index: number) => {
-    const updatedCategories = [...formData.optionCategories];
-    updatedCategories.splice(index, 1);
-    setFormData({
-      ...formData,
-      optionCategories: updatedCategories.length
-        ? updatedCategories
-        : [
-            {
-              categoryName: "",
-              categoryDescription: "",
-              choices: [{ name: "", price: "" }],
-            },
-          ],
-    });
-  };
-
-  const addOptionChoice = (categoryIndex: number) => {
-    const updatedCategories = [...formData.optionCategories];
-    updatedCategories[categoryIndex].choices.push({
-      name: "",
-      price: "",
-    });
-    setFormData({
-      ...formData,
-      optionCategories: updatedCategories,
-    });
-  };
-
-  const removeOptionChoice = (categoryIndex: number, choiceIndex: number) => {
-    const updatedCategories = [...formData.optionCategories];
-    updatedCategories[categoryIndex].choices.splice(choiceIndex, 1);
-    if (updatedCategories[categoryIndex].choices.length === 0) {
-      updatedCategories[categoryIndex].choices.push({
-        name: "",
-        price: "",
-      });
-    }
-    setFormData({
-      ...formData,
-      optionCategories: updatedCategories,
-    });
-  };
-
-  const handleDiscountChange = (
-    field: keyof typeof formData.discount,
-    value: string
-  ) => {
-    setFormData({
-      ...formData,
-      discount: {
-        ...formData.discount,
-        [field]: value,
-      },
-    });
-  };
-
-  const calculateDiscountedPrice = (): string => {
-    if (!formData.price || !formData.discount.value || !formData.isDiscountAvailable) {
-      return "";
-    }
-    
-    const price = parseFloat(formData.price);
-    const discountValue = parseFloat(formData.discount.value);
-    
-    if (isNaN(price) || isNaN(discountValue)) {
-      return "";
-    }
-    
-    let discountedPrice: number;
-    if (formData.discount.type === "percentage") {
-      discountedPrice = price - (price * discountValue / 100);
-    } else {
-      discountedPrice = price - discountValue;
-    }
-    
-    return discountedPrice > 0 ? `$${discountedPrice.toFixed(2)}` : "$0.00";
-  };
-
   return (
-    <div className="container mx-auto p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl shadow-lg">
-      <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
-        Create New Event
-      </h2>
+    <div className="p-6 bg-white rounded-lg">
+      <div className="bg-white rounded-lg">
+        <h1 className="text-3xl font-bold mb-6 text-center">
+          Create New Event
+        </h1>
 
-
-      <form
-        onSubmit={handleSubmit}
-        className="grid grid-cols-1 md:grid-cols-2 gap-6"
-      >
-        <div className="col-span-1 md:col-span-2">
-          <label
-            htmlFor="eventName"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Event Name
-          </label>
-          <input
-            type="text"
-            id="eventName"
-            name="eventName"
-            value={formData.eventName}
-            onChange={handleChange}
-            className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.eventName ? "border-red-500" : "border-gray-300"}`}
-            placeholder="Enter event name"
-          />
-          {errors.eventName && (
-            <p className="mt-1 text-sm text-red-600">{errors.eventName}</p>
-          )}
-        </div>
-
-        <div>
-          <label
-            htmlFor="eventType"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Event Type
-          </label>
-          <select
-            id="eventType"
-            name="eventType"
-            value={formData.eventType}
-            onChange={handleChange}
-            className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.eventType ? "border-red-500" : "border-gray-300"}`}
-          >
-            <option value="class">Class</option>
-            <option value="workshop">Workshop</option>
-            <option value="camp">Camp</option>
-            <option value="artist">Artist</option>
-            <option value="reservation">Reservation</option>
-          </select>
-          {errors.eventType && (
-            <p className="mt-1 text-sm text-red-600">{errors.eventType}</p>
-          )}
-        </div>
-
-        {formData.eventType !== "artist" && formData.eventType !== "reservation" && (
-          <div>
-            <label
-              htmlFor="price"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Price ($)
-            </label>
-            <input
-              type="text"
-              id="price"
-              name="price"
-              value={formData.price}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (/^\d*\.?\d*$/.test(value)) {
-                  handleChange(e);
-                }
-              }}
-              className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.price ? "border-red-500" : "border-gray-300"}`}
-              placeholder="Enter Price"
-            />
-            {errors.price && (
-              <p className="mt-1 text-sm text-red-600">{errors.price}</p>
-            )}
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-6"
+          noValidate
+        >
+          {/* Hidden inputs to prevent autocomplete */}
+          <div style={{ display: 'none' }}>
+            <input type="text" name="username" autoComplete="username" />
+            <input type="password" name="password" autoComplete="current-password" />
           </div>
-        )}
-
-        {formData.eventType !== "artist" && formData.eventType !== "reservation" && (
+          {/* Event Type Selection */}
           <div>
-            <label
-              htmlFor="numberOfParticipants"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Number of Participants
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Event Type <span className="text-red-500">*</span>
             </label>
             <select
-              id="numberOfParticipants"
-              name="numberOfParticipants"
-              value={formData.numberOfParticipants}
-              onChange={handleChange}
-              className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.numberOfParticipants ? "border-red-500" : "border-gray-300"}`}
+              {...register("eventType", {
+                onChange: (e) =>
+                  handleEventTypeChange(e.target.value as EventType),
+              })}
+              autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck="false"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Select number of participants</option>
-              {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
-                <option key={num} value={num.toString()}>
-                  {num} participant{num > 1 ? "s" : ""}
-                </option>
-              ))}
+              <option value="class">Class</option>
+              <option value="workshop">Workshop</option>
+              <option value="camp">Camp</option>
+              <option value="artist">Artist</option>
+              <option value="reservation">Reservation</option>
             </select>
-            {errors.numberOfParticipants && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.numberOfParticipants}
+            {getFieldError("eventType") && (
+              <p className="text-red-600 text-sm mt-1">
+                {getFieldError("eventType")}
               </p>
             )}
           </div>
-        )}
 
-        <div>
-          <label
-            htmlFor="startDate"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Start Date
-          </label>
-          <input
-            ref={startDateInputRef}
-            type="date"
-            id="startDate"
-            name="startDate"
-            value={formData.startDate}
-            onChange={handleChange}
-            onClick={() => handleDateInputClick(startDateInputRef)}
-            className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer ${errors.startDate ? "border-red-500" : "border-gray-300"}`}
-          />
-          {errors.startDate && (
-            <p className="mt-1 text-sm text-red-600">{errors.startDate}</p>
-          )}
-        </div>
-
-        <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Event Name */}
           <div>
-            <label
-              htmlFor="startTime"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Start Time
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Event Name <span className="text-red-500">*</span>
             </label>
-            <select
-              id="startTime"
-              name="startTime"
-              value={
-                formData.startTime ? formData.startTime.format("HH:mm") : ""
-              }
-              onChange={handleTimeChange}
-              className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.startTime ? "border-red-500" : "border-gray-300"}`}
-            >
-              <option value="">Select start time</option>
-              {generateTimeOptions().map((time) => (
-                <option key={time} value={time}>
-                  {dayjs()
-                    .hour(Number(time.split(":")[0]))
-                    .minute(Number(time.split(":")[1]))
-                    .format("h:mm A")}
-                </option>
-              ))}
-            </select>
-            {errors.startTime && (
-              <p className="mt-1 text-sm text-red-600">{errors.startTime}</p>
-            )}
-          </div>
-          <div>
-            <label
-              htmlFor="endTime"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              End Time
-            </label>
-            <select
-              id="endTime"
-              name="endTime"
-              value={formData.endTime ? formData.endTime.format("HH:mm") : ""}
-              onChange={handleTimeChange}
-              className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.endTime ? "border-red-500" : "border-gray-300"}`}
-            >
-              <option value="">Select end time</option>
-              {generateTimeOptions().map((time) => (
-                <option key={time} value={time}>
-                  {dayjs()
-                    .hour(Number(time.split(":")[0]))
-                    .minute(Number(time.split(":")[1]))
-                    .format("h:mm A")}
-                </option>
-              ))}
-            </select>
-            {errors.endTime && (
-              <p className="mt-1 text-sm text-red-600">{errors.endTime}</p>
-            )}
-          </div>
-        </div>
-
-        {formData.eventType !== "artist" && formData.eventType !== "reservation" && (
-          <div className="col-span-1 md:col-span-2 flex items-center">
             <input
-              type="checkbox"
-              id="isRecurring"
-              name="isRecurring"
-              checked={formData.isRecurring}
-              onChange={handleChange}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              type="text"
+              {...register("eventName")}
+              autoComplete="new-password"
+              autoCapitalize="none" 
+              autoCorrect="off" 
+              spellCheck="false"
+              data-lpignore="true"
+              data-form-type="other"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter event name"
             />
-            <label
-              htmlFor="isRecurring"
-              className="ml-2 block text-sm font-medium text-gray-700"
-            >
-              Recurring Event
-            </label>
+            {getFieldError("eventName") && (
+              <p className="text-red-600 text-sm mt-1">
+                {getFieldError("eventName")}
+              </p>
+            )}
           </div>
-        )}
 
-        {formData.eventType !== "artist" && formData.eventType !== "reservation" && formData.isRecurring && (
-          <>
-            <div>
-              <label
-                htmlFor="recurringPattern"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Recurring Pattern
-              </label>
-              <select
-                id="recurringPattern"
-                name="recurringPattern"
-                value={formData.recurringPattern}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-              </select>
-            </div>
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Description <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              {...register("description")}
+              rows={4}
+              autoComplete="new-password"
+              autoCapitalize="none" 
+              autoCorrect="off" 
+              spellCheck="false"
+              data-lpignore="true"
+              data-form-type="other"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter event description"
+            />
+            {getFieldError("description") && (
+              <p className="text-red-600 text-sm mt-1">
+                {getFieldError("description")}
+              </p>
+            )}
+          </div>
 
+          {/* Date and Time */}
+          <div
+            className={`grid grid-cols-1 ${isReservationEvent ? "md:grid-cols-2" : "md:grid-cols-3"} gap-4`}
+          >
             <div>
-              <label
-                htmlFor="recurringEndDate"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Recurring End Date
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Start Date <span className="text-red-500">*</span>
               </label>
               <input
-                ref={recurringEndDateInputRef}
                 type="date"
-                id="recurringEndDate"
-                name="recurringEndDate"
-                value={formData.recurringEndDate}
-                onChange={handleChange}
-                onClick={() => handleDateInputClick(recurringEndDateInputRef)}
-                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer ${errors.recurringEndDate ? "border-red-500" : "border-gray-300"}`}
+                {...register("startDate", {
+                  setValueAs: (value) => value,
+                })}
+                ref={startDateInputRef}
+                onClick={() => handleDateInputClick(startDateInputRef)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
               />
-              {errors.recurringEndDate && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.recurringEndDate}
+              {getFieldError("startDate") && (
+                <p className="text-red-600 text-sm mt-1">
+                  {getFieldError("startDate")}
                 </p>
               )}
             </div>
-          </>
-        )}
 
-        <div className="col-span-1 md:col-span-2">
-          <label
-            htmlFor="description"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Description
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            rows={4}
-            className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.description ? "border-red-500" : "border-gray-300"}`}
-            placeholder="Provide a detailed description of the event"
-          ></textarea>
-          {errors.description && (
-            <p className="mt-1 text-sm text-red-600">{errors.description}</p>
-          )}
-        </div>
-
-        <div className="col-span-1 md:col-span-2">
-          <label
-            htmlFor="image"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Event Image (Optional)
-          </label>
-          {!formData.eventName && (
-            <p className="text-sm text-gray-500 mb-2">
-              Please enter an event name before uploading an image
-            </p>
-          )}
-          <input
-            type="file"
-            id="image"
-            name="image"
-            accept="image/*"
-            onChange={handleChange}
-            disabled={!formData.eventName}
-            className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.image ? "border-red-500" : "border-gray-300"} ${!formData.eventName ? "opacity-50 cursor-not-allowed" : ""}`}
-          />
-          {imageUploadStatus && (
-            <p
-              className={`mt-1 text-sm ${imageUploadStatus.includes("successfully") ? "text-green-600" : imageUploadStatus.includes("Failed") ? "text-red-600" : "text-blue-600"}`}
-            >
-              {imageUploadStatus}
-            </p>
-          )}
-          {uploadedImageUrl && (
-            <div className="mt-2">
-              <p className="text-sm text-gray-600">Preview:</p>
-              <div className="relative">
-                <img
-                  src={uploadedImageUrl}
-                  alt="Uploaded event image"
-                  className="mt-1 h-32 w-auto object-cover rounded-md"
-                  onLoad={handleImageLoad}
-                  onLoadStart={handleImageLoadStart}
+            {/* TODO: Implement proper reservation date range selection */}
+            {isReservationEvent && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  End Date <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  {...register("endDate", {
+                    setValueAs: (value) => value,
+                  })}
+                  ref={endDateInputRef}
+                  onClick={() => handleDateInputClick(endDateInputRef)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                 />
-                {isImageLoading && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75 rounded-md">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-                  </div>
+                {getFieldError("endDate") && (
+                  <p className="text-red-600 text-sm mt-1">
+                    {getFieldError("endDate")}
+                  </p>
                 )}
               </div>
-            </div>
-          )}
-          {errors.image && (
-            <p className="mt-1 text-sm text-red-600">{errors.image}</p>
-          )}
-        </div>
+            )}
 
-        {formData.eventType !== "artist" && formData.eventType !== "reservation" && (
-          <div className="col-span-1 md:col-span-2 flex items-center mt-4">
-            <input
-              type="checkbox"
-              id="hasOptions"
-              name="hasOptions"
-              checked={formData.hasOptions}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  hasOptions: e.target.checked,
-                })
-              }
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label
-              htmlFor="hasOptions"
-              className="ml-2 block text-sm font-medium text-gray-700"
-            >
-              Add Options
-            </label>
-          </div>
-        )}
-
-        {formData.eventType !== "artist" && formData.eventType !== "reservation" && formData.hasOptions && (
-          <div className="col-span-1 md:col-span-2 bg-gray-50 p-4 rounded-md border border-gray-200">
-            <h3 className="text-lg font-medium text-gray-800 mb-3">
-              Event Options
-            </h3>
-
-            {formData.optionCategories.map((category, categoryIndex) => (
-              <div
-                key={categoryIndex}
-                className="mb-6 p-4 bg-white rounded-md shadow-sm"
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Start Time <span className="text-red-500">*</span>
+              </label>
+              <select
+                {...register("startTime")}
+                autoComplete="new-password"
+                data-lpignore="true"
+                data-form-type="other"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <div className="flex justify-between items-center mb-3">
-                  <h4 className="text-md font-medium text-gray-700">
-                    Option Category {categoryIndex + 1}
-                  </h4>
-                  <button
-                    type="button"
-                    onClick={() => removeOptionCategory(categoryIndex)}
-                    className="text-red-600 hover:text-red-800 cursor-pointer"
-                  >
-                    Remove
-                  </button>
-                </div>
+                <option value="">Select start time</option>
+                {generateTimeOptions()}
+              </select>
+              {getFieldError("startTime") && (
+                <p className="text-red-600 text-sm mt-1">
+                  {getFieldError("startTime")}
+                </p>
+              )}
+            </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label
-                      htmlFor={`categoryName-${categoryIndex}`}
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Category Name
-                    </label>
-                    <input
-                      type="text"
-                      id={`categoryName-${categoryIndex}`}
-                      value={category.categoryName}
-                      onChange={(e) =>
-                        handleOptionCategoryChange(
-                          categoryIndex,
-                          "categoryName",
-                          e.target.value
-                        )
-                      }
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter Category"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor={`categoryDescription-${categoryIndex}`}
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Category Description
-                    </label>
-                    <input
-                      type="text"
-                      id={`categoryDescription-${categoryIndex}`}
-                      value={category.categoryDescription}
-                      onChange={(e) =>
-                        handleOptionCategoryChange(
-                          categoryIndex,
-                          "categoryDescription",
-                          e.target.value
-                        )
-                      }
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter Category Description"
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Choices
-                  </label>
-                  {category.choices.map((choice, choiceIndex) => (
-                    <div
-                      key={choiceIndex}
-                      className="flex flex-col gap-3 mb-3 p-3 bg-gray-50 rounded-md"
-                    >
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                          <label
-                            htmlFor={`choice-name-${categoryIndex}-${choiceIndex}`}
-                            className="block text-xs font-medium text-gray-700 mb-1"
-                          >
-                            Choice Name
-                          </label>
-                          <input
-                            type="text"
-                            id={`choice-name-${categoryIndex}-${choiceIndex}`}
-                            value={choice.name}
-                            onChange={(e) =>
-                              handleOptionChoiceChange(
-                                categoryIndex,
-                                choiceIndex,
-                                "name",
-                                e.target.value
-                              )
-                            }
-                            className="w-full px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Enter Choice"
-                          />
-                        </div>
-                        <div>
-                          <label
-                            htmlFor={`choice-price-${categoryIndex}-${choiceIndex}`}
-                            className="block text-xs font-medium text-gray-700 mb-1"
-                          >
-                            Choice Price (Optional)
-                          </label>
-                          <input
-                            type="text"
-                            id={`choice-price-${categoryIndex}-${choiceIndex}`}
-                            value={choice.price || ""}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              if (/^\d*\.?\d*$/.test(value)) {
-                                handleOptionChoiceChange(
-                                  categoryIndex,
-                                  choiceIndex,
-                                  "price",
-                                  value
-                                );
-                              }
-                            }}
-                            className="w-full px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="0.00"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex justify-end">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            removeOptionChoice(categoryIndex, choiceIndex)
-                          }
-                          className="px-2 py-1 text-xs text-red-600 hover:text-red-800"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => addOptionChoice(categoryIndex)}
-                    className="mt-2 px-3 py-1 text-sm text-blue-600 hover:text-blue-800 border border-blue-300 rounded-md"
-                  >
-                    + Add Choice
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            <button
-              type="button"
-              onClick={addOptionCategory}
-              className="mt-2 px-4 py-2 text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-300 rounded-md"
-            >
-              + Add Option Category
-            </button>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                End Time <span className="text-red-500">*</span>
+              </label>
+              <select
+                {...register("endTime")}
+                autoComplete="new-password"
+                data-lpignore="true"
+                data-form-type="other"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select end time</option>
+                {generateTimeOptions(true, watch("startTime"))}
+              </select>
+              {getFieldError("endTime") && (
+                <p className="text-red-600 text-sm mt-1">
+                  {getFieldError("endTime")}
+                </p>
+              )}
+            </div>
           </div>
-        )}
 
-        {formData.eventType !== "artist" && formData.eventType !== "reservation" && (
-          <div className="col-span-1 md:col-span-2 flex items-center mt-4">
-            <input
-              type="checkbox"
-              id="isDiscountAvailable"
-              name="isDiscountAvailable"
-              checked={formData.isDiscountAvailable}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  isDiscountAvailable: e.target.checked,
-                })
-              }
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label
-              htmlFor="isDiscountAvailable"
-              className="ml-2 block text-sm font-medium text-gray-700"
-            >
-              Add Discount
-            </label>
-          </div>
-        )}
-
-        {formData.eventType !== "artist" && formData.eventType !== "reservation" && formData.isDiscountAvailable && (
-          <div className="col-span-1 md:col-span-2 bg-gray-50 p-4 rounded-md border border-gray-200">
-            <h3 className="text-lg font-medium text-gray-800 mb-3">
-              Discount Settings
-            </h3>
-
+          {/* Pricing and Participants (not for artist or reservation events) */}
+          {eventType !== "artist" && eventType !== "reservation" && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="col-span-1 md:col-span-2">
-                <label
-                  htmlFor="discountName"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Discount Name *
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Price <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  id="discountName"
-                  value={formData.discount.name}
-                  onChange={(e) =>
-                    handleDiscountChange("name", e.target.value)
-                  }
-                  className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.discountValue && !formData.discount.name.trim() ? "border-red-500" : "border-gray-300"}`}
-                  placeholder="e.g., Group Discount, Early Bird Special"
+                  {...register("price", {
+                    onChange: (e) => {
+                      const value = e.target.value;
+                      if (!/^\d*\.?\d*$/.test(value)) {
+                        e.target.value = value.slice(0, -1);
+                      }
+                    },
+                  })}
+                  autoComplete="new-password"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck="false"
+                  data-lpignore="true"
+                  data-form-type="other"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter Price"
                 />
-                {errors.discountValue && !formData.discount.name.trim() && (
-                  <p className="mt-1 text-sm text-red-600">Discount name is required</p>
+                {getFieldError("price") && (
+                  <p className="text-red-600 text-sm mt-1">
+                    {getFieldError("price")}
+                  </p>
                 )}
               </div>
 
               <div>
-                <label
-                  htmlFor="discountType"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Discount Type
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Number of Participants <span className="text-red-500">*</span>
                 </label>
                 <select
-                  id="discountType"
-                  value={formData.discount.type}
-                  onChange={(e) =>
-                    handleDiscountChange("type", e.target.value as "percentage" | "fixed")
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  {...register("numberOfParticipants")}
+                  autoComplete="new-password"
+                  data-lpignore="true"
+                  data-form-type="other"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="percentage">Percentage (%)</option>
-                  <option value="fixed">Fixed Amount ($)</option>
-                </select>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="discountValue"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Discount Value {formData.discount.type === "percentage" ? "(%)" : "($)"}
-                </label>
-                <input
-                  type="text"
-                  id="discountValue"
-                  value={formData.discount.value}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (/^\d*\.?\d*$/.test(value)) {
-                      handleDiscountChange("value", value);
-                    }
-                  }}
-                  className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.discountValue ? "border-red-500" : "border-gray-300"}`}
-                  placeholder={formData.discount.type === "percentage" ? "Enter percentage" : "Enter dollar amount"}
-                />
-                {errors.discountValue && (
-                  <p className="mt-1 text-sm text-red-600">{errors.discountValue}</p>
-                )}
-              </div>
-
-              <div>
-                <label
-                  htmlFor="minParticipants"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Minimum Participants for Discount
-                </label>
-                <select
-                  id="minParticipants"
-                  value={formData.discount.minParticipants}
-                  onChange={(e) =>
-                    handleDiscountChange("minParticipants", e.target.value)
-                  }
-                  className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.discountMinParticipants ? "border-red-500" : "border-gray-300"}`}
-                >
-                  {Array.from({ length: 19 }, (_, i) => i + 2).map((num) => (
+                  <option value="">Select number of participants</option>
+                  {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
                     <option key={num} value={num.toString()}>
-                      {num} participants
+                      {num} participant{num > 1 ? "s" : ""}
                     </option>
                   ))}
                 </select>
-                {errors.discountMinParticipants && (
-                  <p className="mt-1 text-sm text-red-600">{errors.discountMinParticipants}</p>
+                {getFieldError("numberOfParticipants") && (
+                  <p className="text-red-600 text-sm mt-1">
+                    {getFieldError("numberOfParticipants")}
+                  </p>
                 )}
               </div>
+            </div>
+          )}
 
-              <div>
-                <label
-                  htmlFor="discountDescription"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Discount Description (Optional)
+          {/* Image Upload */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Event Image
+            </label>
+            <div className="border-2 border-dashed border-gray-300 rounded-md p-6 text-center">
+              {uploadedImageUrl ? (
+                <div className="space-y-4">
+                  <img
+                    src={uploadedImageUrl}
+                    alt="Event preview"
+                    className="max-w-full h-auto max-h-64 mx-auto rounded-md"
+                    onLoad={() => setIsImageLoading(false)}
+                    onLoadStart={() => setIsImageLoading(true)}
+                  />
+                  {isImageLoading && (
+                    <div className="text-blue-600">Loading image...</div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div className="text-6xl text-gray-400 mb-4">📷</div>
+                  <p className="text-gray-500 mb-4">
+                    Upload an image for your event
+                  </p>
+                </>
+              )}
+
+              <div className="mt-4">
+                <label className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 cursor-pointer">
+                  {isImageUploading ? "Uploading..." : "Choose File"}
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    disabled={isImageUploading}
+                  />
                 </label>
+              </div>
+
+              {imageUploadStatus && (
+                <p
+                  className={`text-sm mt-2 ${
+                    imageUploadStatus.includes("successfully")
+                      ? "text-green-600"
+                      : imageUploadStatus.includes("Failed")
+                        ? "text-red-600"
+                        : "text-blue-600"
+                  }`}
+                >
+                  {imageUploadStatus}
+                </p>
+              )}
+
+              {getFieldError("image") && (
+                <p className="text-red-600 text-sm mt-2">
+                  {getFieldError("image")}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Recurring Events (not for artist or reservation events) */}
+          {eventType !== "artist" && eventType !== "reservation" && (
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
                 <input
-                  type="text"
-                  id="discountDescription"
-                  value={formData.discount.description}
-                  onChange={(e) =>
-                    handleDiscountChange("description", e.target.value)
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., Group discount for 3+ participants"
+                  type="checkbox"
+                  {...register("isRecurring")}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
+                <label className="text-sm font-medium text-gray-700">
+                  This is a recurring event
+                </label>
+              </div>
+
+              {isRecurring && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Recurring Pattern <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      {...register("recurringPattern")}
+                      autoComplete="new-password"
+                      data-lpignore="true"
+                      data-form-type="other"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="daily">Daily</option>
+                      <option value="weekly">Weekly</option>
+                    </select>
+                    {getFieldError("recurringPattern") && (
+                      <p className="text-red-600 text-sm mt-1">
+                        {getFieldError("recurringPattern")}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      End Date <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      {...register("recurringEndDate", {
+                        setValueAs: (value) => value,
+                      })}
+                      ref={recurringEndDateInputRef}
+                      onClick={() => handleDateInputClick(recurringEndDateInputRef)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                    />
+                    {getFieldError("recurringEndDate") && (
+                      <p className="text-red-600 text-sm mt-1">
+                        {getFieldError("recurringEndDate")}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Options System (not for artist or reservation events) */}
+          {eventType !== "artist" && eventType !== "reservation" && (
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  {...register("hasOptions")}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label className="text-sm font-medium text-gray-700">
+                  This event has additional options
+                </label>
+              </div>
+
+              {hasOptions && (
+                <div className="ml-6 space-y-6">
+                  {optionCategoryFields.map((field, categoryIndex) => (
+                    <div
+                      key={field.id}
+                      className="border border-gray-200 rounded-md p-4"
+                    >
+                      <div className="flex justify-between items-center mb-4">
+                        <h4 className="text-lg font-medium">
+                          Option Category {categoryIndex + 1}
+                        </h4>
+                        {optionCategoryFields.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeOptionCategory(categoryIndex)}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            Remove Category
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Category Name{" "}
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            {...register(
+                              `optionCategories.${categoryIndex}.categoryName`
+                            )}
+                            autoComplete="new-password"
+                            autoCapitalize="none"
+                            autoCorrect="off"
+                            spellCheck="false"
+                            data-lpignore="true"
+                            data-form-type="other"
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="e.g., Add-ons, Extras"
+                          />
+                          {getFieldError(
+                            `optionCategories.${categoryIndex}.categoryName`
+                          ) && (
+                            <p className="text-red-600 text-sm mt-1">
+                              {getFieldError(
+                                `optionCategories.${categoryIndex}.categoryName`
+                              )}
+                            </p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Category Description
+                          </label>
+                          <textarea
+                            {...register(
+                              `optionCategories.${categoryIndex}.categoryDescription`
+                            )}
+                            rows={2}
+                            autoComplete="new-password"
+                            autoCapitalize="none"
+                            autoCorrect="off"
+                            spellCheck="false"
+                            data-lpignore="true"
+                            data-form-type="other"
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Optional description for this category"
+                          />
+                        </div>
+
+                        {/* Choices */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Choices <span className="text-red-500">*</span>
+                          </label>
+                          <div className="space-y-2">
+                            {(
+                              watch(
+                                `optionCategories.${categoryIndex}.choices`
+                              ) || []
+                            ).map((_, choiceIndex: number) => (
+                              <div
+                                key={choiceIndex}
+                                className="flex space-x-2 items-end"
+                              >
+                                <div className="flex-1">
+                                  <input
+                                    type="text"
+                                    {...register(
+                                      `optionCategories.${categoryIndex}.choices.${choiceIndex}.name`
+                                    )}
+                                    autoComplete="new-password"
+                                    autoCapitalize="none"
+                                    autoCorrect="off"
+                                    spellCheck="false"
+                                    data-lpignore="true"
+                                    data-form-type="other"
+                                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Choice name"
+                                  />
+                                </div>
+                                <div className="w-32">
+                                  <input
+                                    type="text"
+                                    {...register(
+                                      `optionCategories.${categoryIndex}.choices.${choiceIndex}.price`,
+                                      {
+                                        onChange: (e) => {
+                                          const value = e.target.value;
+                                          if (!/^\d*\.?\d*$/.test(value)) {
+                                            e.target.value = value.slice(0, -1);
+                                          }
+                                        },
+                                      }
+                                    )}
+                                    autoComplete="new-password"
+                                    autoCapitalize="none"
+                                    autoCorrect="off"
+                                    spellCheck="false"
+                                    data-lpignore="true"
+                                    data-form-type="other"
+                                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="0.00"
+                                  />
+                                </div>
+                                {(
+                                  watch(
+                                    `optionCategories.${categoryIndex}.choices`
+                                  ) || []
+                                ).length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      removeChoiceFromCategory(
+                                        categoryIndex,
+                                        choiceIndex
+                                      )
+                                    }
+                                    className="px-3 py-2 text-red-600 hover:text-red-800"
+                                  >
+                                    Remove
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => addChoiceToCategory(categoryIndex)}
+                            className="mt-2 px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                          >
+                            Add Choice
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={addOptionCategory}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  >
+                    Add Option Category
+                  </button>
+
+                  {getFieldError("optionCategories") && (
+                    <p className="text-red-600 text-sm">
+                      {getFieldError("optionCategories")}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Discount System (not for artist events) */}
+          {eventType !== "artist" && (
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  {...register("isDiscountAvailable")}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label className="text-sm font-medium text-gray-700">
+                  Offer discount for multiple participants
+                </label>
+              </div>
+
+              {isDiscountAvailable && (
+                <div className="ml-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Discount Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      {...register("discount.name")}
+                      autoComplete="new-password"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck="false"
+                      data-lpignore="true"
+                      data-form-type="other"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Group Discount"
+                    />
+                    {getFieldError("discount.name") && (
+                      <p className="text-red-600 text-sm mt-1">
+                        {getFieldError("discount.name")}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Discount Type <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      {...register("discount.type")}
+                      autoComplete="new-password"
+                      data-lpignore="true"
+                      data-form-type="other"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="percentage">Percentage</option>
+                      <option value="fixed">Fixed Amount</option>
+                    </select>
+                    {getFieldError("discount.type") && (
+                      <p className="text-red-600 text-sm mt-1">
+                        {getFieldError("discount.type")}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Discount Value <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      {...register("discount.value", {
+                        onChange: (e) => {
+                          const value = e.target.value;
+                          if (!/^\d*\.?\d*$/.test(value)) {
+                            e.target.value = value.slice(0, -1);
+                          }
+                        },
+                      })}
+                      autoComplete="new-password"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck="false"
+                      data-lpignore="true"
+                      data-form-type="other"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder={
+                        watch("discount.type") === "percentage"
+                          ? "Enter percentage"
+                          : "Enter dollar amount"
+                      }
+                    />
+                    {getFieldError("discount.value") && (
+                      <p className="text-red-600 text-sm mt-1">
+                        {getFieldError("discount.value")}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Minimum Participants{" "}
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      {...register("discount.minParticipants")}
+                      autoComplete="new-password"
+                      data-lpignore="true"
+                      data-form-type="other"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      {Array.from({ length: 19 }, (_, i) => i + 2).map(
+                        (num) => (
+                          <option key={num} value={num}>
+                            {num} participants
+                          </option>
+                        )
+                      )}
+                    </select>
+                    {getFieldError("discount.minParticipants") && (
+                      <p className="text-red-600 text-sm mt-1">
+                        {getFieldError("discount.minParticipants")}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Discount Description
+                    </label>
+                    <textarea
+                      {...register("discount.description")}
+                      rows={2}
+                      autoComplete="new-password"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck="false"
+                      data-lpignore="true"
+                      data-form-type="other"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Optional description of the discount"
+                    />
+                  </div>
+
+                  {/* Discount Calculation Preview */}
+                  {watch("price") && watch("discount.value") && (
+                    <div className="md:col-span-2 mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                      <div className="text-sm text-blue-800">
+                        <span className="font-medium">Original Price:</span> $
+                        {watch("price")}
+                        <br />
+                        <span className="font-medium">Discounted Price:</span>{" "}
+                        {(() => {
+                          const price = parseFloat(watch("price") || "0");
+                          const discountValue = parseFloat(watch("discount.value") || "0");
+                          const discountType = watch("discount.type");
+                          
+                          if (isNaN(price) || isNaN(discountValue)) {
+                            return "";
+                          }
+
+                          let discountedPrice: number;
+                          if (discountType === "percentage") {
+                            discountedPrice = price - (price * discountValue) / 100;
+                          } else {
+                            discountedPrice = price - discountValue;
+                          }
+
+                          return discountedPrice > 0 ? `$${discountedPrice.toFixed(2)}` : "$0.00";
+                        })()}
+                        <br />
+                        <span className="text-xs">
+                          (Applies when {watch("discount.minParticipants") || 2} or
+                          more participants sign up)
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Enhanced Reservation Discounts */}
+              {eventType === "reservation" && isDiscountAvailable && (
+                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-4">
+                  <h4 className="text-md font-semibold text-blue-900">
+                    Reservation Discount Options
+                  </h4>
+                  <p className="text-sm text-blue-700">
+                    Configure advanced discount options for multi-day
+                    reservations
+                  </p>
+                  <p className="text-xs text-orange-600">
+                    Note: These advanced options will be available in a future
+                    update. For now, use the basic discount settings above.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Reservation Settings (only for reservation events) */}
+          {isReservationEvent && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-gray-900">
+                Reservation Settings
+              </h3>
+
+              {/* Daily Capacity */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Daily Capacity (Optional)
+                </label>
+                <select
+                  {...register("reservationSettings.dailyCapacity")}
+                  autoComplete="new-password"
+                  data-lpignore="true"
+                  data-form-type="other"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">No capacity limit</option>
+                  {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
+                    <option key={num} value={num}>
+                      {num} participant{num > 1 ? "s" : ""} per day
+                    </option>
+                  ))}
+                </select>
+                {getFieldError("reservationSettings.dailyCapacity") && (
+                  <p className="text-red-600 text-sm mt-1">
+                    {getFieldError("reservationSettings.dailyCapacity")}
+                  </p>
+                )}
               </div>
             </div>
+          )}
 
-            {formData.price && formData.discount.value && (
-              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                <div className="text-sm text-blue-800">
-                  <span className="font-medium">Original Price:</span> ${formData.price}
-                  <br />
-                  <span className="font-medium">Discounted Price:</span> {calculateDiscountedPrice()}
-                  <br />
-                  <span className="text-xs">
-                    (Applies when {formData.discount.minParticipants} or more participants sign up)
-                  </span>
-                </div>
-              </div>
-            )}
+          {/* Form Actions */}
+          <div className="flex justify-end space-x-4 pt-6 border-t">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? "Creating..." : "Create Event"}
+            </button>
           </div>
-        )}
-
-        <div className="col-span-1 md:col-span-2 text-center">
-          <button
-            type="submit"
-            disabled={isSubmitting || isImageUploading || isImageLoading}
-            className={`w-full md:w-auto px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center justify-center ${
-              isSubmitting
-                ? "bg-blue-400 cursor-not-allowed"
-                : isImageUploading
-                ? "bg-gray-400 cursor-not-allowed"
-                : isImageLoading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
-            }`}
-          >
-            {isSubmitting && (
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-            )}
-            {isSubmitting
-              ? "Creating Event..."
-              : isImageUploading
-                ? "Image Uploading... Please Wait"
-                : isImageLoading
-                ? "Image Loading... Please Wait"
-                : "Create Event"}
-          </button>
-        </div>
-      </form>
+        </form>
+      </div>
 
       <style jsx global>{`
         /* Hide the spinner for number inputs */

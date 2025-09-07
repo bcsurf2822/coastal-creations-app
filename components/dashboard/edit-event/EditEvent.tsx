@@ -39,6 +39,9 @@ interface EventData {
     name: string;
     description?: string;
   };
+  reservationSettings?: {
+    maxParticipants?: number;
+  };
 }
 
 export default function EditEvent() {
@@ -279,6 +282,14 @@ export default function EditEvent() {
               [child]: updatedValue,
             },
           };
+        } else if (parent === "reservationSettings") {
+          return {
+            ...prev,
+            reservationSettings: {
+              ...prev.reservationSettings,
+              [child]: updatedValue,
+            },
+          };
         } else {
           // For other nested objects (like options)
           return {
@@ -354,6 +365,7 @@ export default function EditEvent() {
           image: uploadedImageUrl || eventData.image || undefined,
           isDiscountAvailable: eventData.isDiscountAvailable,
           discount: eventData.discount,
+          reservationSettings: eventData.reservationSettings,
         };
 
         // Prepare dates for submission
@@ -621,6 +633,11 @@ export default function EditEvent() {
         onSubmit={handleSubmit}
         className="grid grid-cols-1 md:grid-cols-2 gap-6"
       >
+        {/* Hidden inputs to prevent autocomplete */}
+        <div style={{ display: 'none' }}>
+          <input type="text" name="username" autoComplete="username" />
+          <input type="password" name="password" autoComplete="current-password" />
+        </div>
         <div className="col-span-1 md:col-span-2">
           <label
             htmlFor="eventName"
@@ -635,6 +652,12 @@ export default function EditEvent() {
             value={eventData.eventName}
             onChange={handleInputChange}
             required
+            autoComplete="new-password"
+            autoCapitalize="none" 
+            autoCorrect="off" 
+            spellCheck="false"
+            data-lpignore="true"
+            data-form-type="other"
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter event name"
           />
@@ -652,6 +675,9 @@ export default function EditEvent() {
             name="eventType"
             value={eventData.eventType}
             onChange={handleInputChange}
+            autoComplete="new-password"
+            data-lpignore="true"
+            data-form-type="other"
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="class">Class</option>
@@ -681,6 +707,12 @@ export default function EditEvent() {
                   handleInputChange(e);
                 }
               }}
+              autoComplete="new-password"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck="false"
+              data-lpignore="true"
+              data-form-type="other"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter Price"
             />
@@ -700,6 +732,9 @@ export default function EditEvent() {
               name="numberOfParticipants"
               value={eventData.numberOfParticipants || ""}
               onChange={handleInputChange}
+              autoComplete="new-password"
+              data-lpignore="true"
+              data-form-type="other"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select number of participants</option>
@@ -712,27 +747,47 @@ export default function EditEvent() {
           </div>
         )}
 
-        <div>
-          <label
-            htmlFor="dates.startDate"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Start Date
-          </label>
-          <input
-            ref={startDateInputRef}
-            type="date"
-            id="dates.startDate"
-            name="dates.startDate"
-            value={eventData.dates?.startDate || ""}
-            onChange={handleInputChange}
-            onClick={() => handleDateInputClick(startDateInputRef)}
-            required
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-          />
-        </div>
+        <div className={`col-span-1 md:col-span-2 grid grid-cols-1 ${eventData.eventType === "reservation" ? 'md:grid-cols-2' : 'md:grid-cols-3'} gap-4`}>
+          <div>
+            <label
+              htmlFor="dates.startDate"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Start Date
+            </label>
+            <input
+              ref={startDateInputRef}
+              type="date"
+              id="dates.startDate"
+              name="dates.startDate"
+              value={eventData.dates?.startDate || ""}
+              onChange={handleInputChange}
+              onClick={() => handleDateInputClick(startDateInputRef)}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+            />
+          </div>
 
-        <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+          {eventData.eventType === "reservation" && (
+            <div>
+              <label
+                htmlFor="dates.endDate"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                End Date
+              </label>
+              <input
+                type="date"
+                id="dates.endDate"
+                name="dates.endDate"
+                value={eventData.dates?.endDate || ""}
+                onChange={handleInputChange}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              />
+            </div>
+          )}
+
           <div>
             <label
               htmlFor="time.startTime"
@@ -746,6 +801,9 @@ export default function EditEvent() {
               value={eventData.time?.startTime || ""}
               onChange={handleInputChange}
               required
+              autoComplete="new-password"
+              data-lpignore="true"
+              data-form-type="other"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select start time</option>
@@ -764,10 +822,13 @@ export default function EditEvent() {
               name="time.endTime"
               value={eventData.time?.endTime || ""}
               onChange={handleInputChange}
+              autoComplete="new-password"
+              data-lpignore="true"
+              data-form-type="other"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select end time</option>
-              {generateTimeOptions()}
+              {generateTimeOptions(true, eventData.time?.startTime)}
             </select>
           </div>
         </div>
@@ -805,6 +866,9 @@ export default function EditEvent() {
                 name="dates.recurringPattern"
                 value={eventData.dates?.recurringPattern || "weekly"}
                 onChange={handleInputChange}
+                autoComplete="new-password"
+                data-lpignore="true"
+                data-form-type="other"
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="daily">Daily</option>
@@ -848,6 +912,12 @@ export default function EditEvent() {
             value={eventData.description}
             onChange={handleInputChange}
             rows={4}
+            autoComplete="new-password"
+            autoCapitalize="none" 
+            autoCorrect="off" 
+            spellCheck="false"
+            data-lpignore="true"
+            data-form-type="other"
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Provide a detailed description of the event"
           ></textarea>
@@ -872,6 +942,7 @@ export default function EditEvent() {
             accept="image/*"
             onChange={handleInputChange}
             disabled={!eventData.eventName}
+            autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck="false"
             className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300 ${!eventData.eventName ? "opacity-50 cursor-not-allowed" : ""}`}
           />
           {imageUploadStatus && (
@@ -988,6 +1059,12 @@ export default function EditEvent() {
                             e.target.value
                           )
                         }
+                        autoComplete="new-password"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck="false"
+                        data-lpignore="true"
+                        data-form-type="other"
                         className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Enter Category"
                       />
@@ -1010,6 +1087,12 @@ export default function EditEvent() {
                             e.target.value
                           )
                         }
+                        autoComplete="new-password"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck="false"
+                        data-lpignore="true"
+                        data-form-type="other"
                         className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Enter Category Description"
                       />
@@ -1045,6 +1128,12 @@ export default function EditEvent() {
                                   e.target.value
                                 )
                               }
+                              autoComplete="new-password"
+                              autoCapitalize="none"
+                              autoCorrect="off"
+                              spellCheck="false"
+                              data-lpignore="true"
+                              data-form-type="other"
                               className="w-full px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                               placeholder="Enter Choice"
                             />
@@ -1071,6 +1160,12 @@ export default function EditEvent() {
                                   );
                                 }
                               }}
+                              autoComplete="new-password"
+                              autoCapitalize="none"
+                              autoCorrect="off"
+                              spellCheck="false"
+                              data-lpignore="true"
+                              data-form-type="other"
                               className="w-full px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                               placeholder="0.00"
                             />
@@ -1134,6 +1229,40 @@ export default function EditEvent() {
           </div>
         )}
 
+        {/* Reservation Settings (only for reservation events) */}
+        {eventData.eventType === "reservation" && (
+          <div className="col-span-1 md:col-span-2 space-y-4">
+            <h3 className="text-lg font-medium text-gray-900">Reservation Settings</h3>
+            
+            {/* Max Participants Per Day */}
+            <div>
+              <label
+                htmlFor="reservationSettings.maxParticipants"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Maximum Participants Per Day
+              </label>
+              <select
+                id="reservationSettings.maxParticipants"
+                name="reservationSettings.maxParticipants"
+                value={eventData.reservationSettings?.maxParticipants || ""}
+                onChange={handleInputChange}
+                autoComplete="new-password"
+                data-lpignore="true"
+                data-form-type="other"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select maximum participants per day</option>
+                {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
+                  <option key={num} value={num.toString()}>
+                    {num} participant{num > 1 ? "s" : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
+
         {eventData.eventType !== "artist" && eventData.eventType !== "reservation" && eventData.isDiscountAvailable && (
           <div className="col-span-1 md:col-span-2 bg-gray-50 p-4 rounded-md border border-gray-200">
             <h3 className="text-lg font-medium text-gray-800 mb-3">
@@ -1153,6 +1282,12 @@ export default function EditEvent() {
                   id="discountName"
                   value={eventData.discount?.name || ""}
                   onChange={(e) => handleDiscountChange("name", e.target.value)}
+                  autoComplete="new-password"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck="false"
+                  data-lpignore="true"
+                  data-form-type="other"
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="e.g., Group Discount, Early Bird Special"
                 />
@@ -1174,6 +1309,9 @@ export default function EditEvent() {
                       e.target.value as "percentage" | "fixed"
                     )
                   }
+                  autoComplete="new-password"
+                  data-lpignore="true"
+                  data-form-type="other"
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="percentage">Percentage (%)</option>
@@ -1199,6 +1337,12 @@ export default function EditEvent() {
                       handleDiscountChange("value", parseFloat(value) || 0);
                     }
                   }}
+                  autoComplete="new-password"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck="false"
+                  data-lpignore="true"
+                  data-form-type="other"
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder={
                     eventData.discount?.type === "percentage"
@@ -1224,6 +1368,9 @@ export default function EditEvent() {
                       parseInt(e.target.value)
                     )
                   }
+                  autoComplete="new-password"
+                  data-lpignore="true"
+                  data-form-type="other"
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {Array.from({ length: 19 }, (_, i) => i + 2).map((num) => (
@@ -1248,6 +1395,12 @@ export default function EditEvent() {
                   onChange={(e) =>
                     handleDiscountChange("description", e.target.value)
                   }
+                  autoComplete="new-password"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck="false"
+                  data-lpignore="true"
+                  data-form-type="other"
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="e.g., Group discount for 3+ participants"
                 />

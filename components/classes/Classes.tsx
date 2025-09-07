@@ -436,7 +436,7 @@ const DiscountBadge = styled("div")({
   gap: "0.5rem",
   padding: "0.5rem 1rem",
   background: "linear-gradient(135deg, #4caf50, #66bb6a)",
-  color: "white",
+  color: "black",
   borderRadius: "15px",
   fontSize: "0.875rem",
   fontWeight: "700",
@@ -811,7 +811,7 @@ export default function Classes() {
                       {/* Show discount badge if available and active */}
                       {discountActive && (event.discount?.name || event.discount?.description) && (
                         <DiscountBadge>
-                          🎉 {event.discount.name || event.discount.description}
+                          {event.discount.name || event.discount.description}
                         </DiscountBadge>
                       )}
                       
@@ -823,14 +823,20 @@ export default function Classes() {
                           gap: "0.5rem",
                           padding: "0.5rem 1rem",
                           background: "linear-gradient(135deg, #81c784, #a5d6a7)",
-                          color: "white",
+                          color: "black",
                           borderRadius: "15px",
                           fontSize: "0.875rem",
                           fontWeight: "700",
                           boxShadow: "0 2px 8px rgba(129, 199, 132, 0.3)",
-                          marginBottom: "1rem"
+                          marginBottom: "1rem",
+                          width: "fit-content",
+                          maxWidth: "50%"
                         }}>
-                          💰 {event.discount.name || event.discount.description} 
+                          Discount Available:
+                          <br />
+                          <span style={{ paddingLeft: "1rem" }}>
+                            {event.discount.name || event.discount.description}
+                          </span> 
                     
                         </div>
                       )}

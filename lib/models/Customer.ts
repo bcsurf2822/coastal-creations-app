@@ -32,6 +32,34 @@ export interface ICustomer extends Document {
     emailAddress?: string;
     phoneNumber?: string;
   };
+  // Reservation details for multi-day bookings (optional)
+  reservationDetails?: {
+    selectedDates: Date[];
+    numberOfDays: number;
+    appliedPriceTier: {
+      numberOfDays: number;
+      price: number;
+      label?: string;
+    };
+    isConsecutive: boolean;
+    checkInDate: Date;
+    checkOutDate?: Date;
+    // Enhanced day-by-day participant management
+    dailyParticipants?: Array<{
+      date: Date;
+      participantCount: number;
+      participants?: Array<{
+        firstName: string;
+        lastName: string;
+        selectedOptions?: Array<{
+          categoryName: string;
+          choiceName: string;
+        }>;
+      }>;
+      dailyTotal?: number;
+    }>;
+    totalReservationCost?: number;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -134,6 +162,108 @@ const ParticipantSchema = new Schema(
   }
 );
 
+// Schema for individual day participant information
+const DailyParticipantSchema = new Schema({
+  date: {
+    type: Date,
+    required: true,
+  },
+  participantCount: {
+    type: Number,
+    required: true,
+    min: 1,
+  },
+  participants: {
+    type: [ParticipantSchema],
+    required: false,
+    default: [],
+  },
+  dailyTotal: {
+    type: Number,
+    required: false,
+    min: 0,
+  },
+}, { _id: false });
+
+// Reservation details schema for multi-day bookings
+const ReservationDetailsSchema = new Schema({
+  selectedDates: {
+    type: [Date],
+    required: true,
+    validate: {
+      validator: function(dates: Date[]) {
+        return dates && dates.length > 0;
+      },
+      message: 'At least one date must be selected'
+    }
+  },
+  numberOfDays: {
+    type: Number,
+    required: true,
+    min: 1,
+    validate: {
+      validator: function(this: { selectedDates?: Date[] }, value: number) {
+        // Validate numberOfDays matches selectedDates length
+        return !this.selectedDates || value === this.selectedDates.length;
+      },
+      message: 'Number of days must match selected dates count'
+    }
+  },
+  appliedPriceTier: {
+    numberOfDays: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+    price: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    label: {
+      type: String,
+      required: false,
+    },
+    _id: false,
+  },
+  isConsecutive: {
+    type: Boolean,
+    required: true,
+  },
+  checkInDate: {
+    type: Date,
+    required: true,
+  },
+  checkOutDate: {
+    type: Date,
+    required: false,
+  },
+  // Enhanced day-by-day participant management
+  dailyParticipants: {
+    type: [DailyParticipantSchema],
+    required: false,
+    default: [],
+    validate: {
+      validator: function(this: { selectedDates?: Date[] }, dailyParticipants: Array<{date: Date}>) {
+        // Validate that dailyParticipants dates match selectedDates
+        if (!this.selectedDates || !dailyParticipants) return true;
+        
+        const selectedDatesStr = this.selectedDates.map(date => date.toISOString().split('T')[0]);
+        const dailyParticipantDatesStr = dailyParticipants.map(dp => dp.date.toISOString().split('T')[0]);
+        
+        // Check if all selected dates have corresponding daily participant entries
+        return selectedDatesStr.every(dateStr => dailyParticipantDatesStr.includes(dateStr));
+      },
+      message: 'Daily participants must be specified for all selected dates'
+    }
+  },
+  totalReservationCost: {
+    type: Number,
+    required: false,
+    min: 0,
+  },
+}, { _id: false });
+
 // Main Customer schema
 const CustomerSchema = new Schema<ICustomer>(
   {
@@ -173,33 +303,67 @@ const CustomerSchema = new Schema<ICustomer>(
       type: BillingInfoSchema,
       required: true,
     },
+    reservationDetails: {
+      type: ReservationDetailsSchema,
+      required: false,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-// Middleware to calculate total before saving
 CustomerSchema.pre("save", async function (next) {
-  if (this.isModified("quantity") || this.isNew) {
-    if (typeof this.event !== "string") {
-      // Handle case where price might be undefined (for artist events)
-      const eventPrice = (this.event as IEvent).price || 0;
-      this.total = this.quantity * eventPrice;
-    } else {
-      // If we only have the event ID, we need to fetch the event to get its price
-      try {
+
+  const shouldCalculateTotal = 
+    (this.total === undefined || this.total === null || this.total === 0) && 
+    (this.isModified("quantity") || this.isModified("reservationDetails") || this.isNew);
+
+  if (shouldCalculateTotal) {
+    try {
+      let event: IEvent;
+      
+
+      if (typeof this.event !== "string") {
+        event = this.event;
+      } else {
         const Event = mongoose.model("Event");
-        const event = await Event.findById(this.event);
-        if (event) {
-          // Handle case where price might be undefined (for artist events)
-          const eventPrice = event.price || 0;
-          this.total = this.quantity * eventPrice;
+        const foundEvent = await Event.findById(this.event);
+        if (!foundEvent) {
+          next(new Error("Event not found"));
+          return;
         }
-      } catch (error) {
-        next(error as Error);
-        return;
+        event = foundEvent as IEvent;
       }
+
+      if (event.eventType === "reservation" && this.reservationDetails) {
+
+        if (this.reservationDetails.dailyParticipants && this.reservationDetails.dailyParticipants.length > 0) {
+          const appliedPrice = this.reservationDetails.appliedPriceTier.price;
+          let totalReservationCost = 0;
+          
+
+          for (const dailyParticipant of this.reservationDetails.dailyParticipants) {
+            const dailyTotal = dailyParticipant.participantCount * appliedPrice;
+            dailyParticipant.dailyTotal = dailyTotal;
+            totalReservationCost += dailyTotal;
+          }
+          
+          this.reservationDetails.totalReservationCost = totalReservationCost;
+          this.total = totalReservationCost;
+        } else {
+          // Fallback to simple calculation if no daily participants specified
+          const appliedPrice = this.reservationDetails.appliedPriceTier.price;
+          this.total = this.quantity * appliedPrice;
+        }
+      } else {
+        // For regular events, use the event price
+        const eventPrice = event.price || 0;
+        this.total = this.quantity * eventPrice;
+      }
+    } catch (error) {
+      next(error as Error);
+      return;
     }
   }
   next();

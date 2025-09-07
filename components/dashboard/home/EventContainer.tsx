@@ -9,7 +9,7 @@ import {
   RiDeleteBinLine,
   RiSearchLine,
   RiFilterLine,
-  RiArrowRightLine,
+  RiUserLine,
 } from "react-icons/ri";
 import Link from "next/link";
 import Dialog from "@mui/material/Dialog";
@@ -552,21 +552,23 @@ export default function EventContainer() {
                     )}
                   </div>
                   <div className="mt-4 flex justify-between items-center">
-                    <Link
-                      href={`/admin/dashboard/edit-event?id=${event.id}`}
-                      className="flex items-center space-x-1 p-2 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-colors"
-                    >
-                      <RiEdit2Line className="w-4 h-4" />
-                      <span className="text-sm">Edit</span>
-                    </Link>
+                    <div className="flex items-center space-x-2">
+                      <Link
+                        href={`/admin/dashboard/events/${event.id}`}
+                        className="flex items-center space-x-1 px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm"
+                      >
+                        <RiUserLine className="w-4 h-4" />
+                        <span>View Customers</span>
+                      </Link>
+                      <Link
+                        href={`/admin/dashboard/edit-event?id=${event.id}`}
+                        className="flex items-center space-x-1 p-2 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-colors"
+                      >
+                        <RiEdit2Line className="w-4 h-4" />
+                        <span className="text-sm">Edit</span>
+                      </Link>
+                    </div>
                     
-                    {/* <button
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg cursor-pointer"
-                      onClick={() => handleEventClick(event)}
-                    >
-                      View Event
-                    </button>
-                     */}
                     <button
                       className={`p-2 rounded-lg transition-colors ${
                         deletingEventIds.has(event.id)
@@ -757,13 +759,20 @@ export default function EventContainer() {
                       </div>
                     </div>
 
-                    <div className="mt-6">
+                    <div className="mt-6 space-y-3">
                       <Link
-                        href={`/admin/dashboard/edit-event?id=${selectedEvent.id}`}
+                        href={`/admin/dashboard/events/${selectedEvent.id}`}
                         className="flex items-center justify-center w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                       >
+                        <RiUserLine className="w-4 h-4 mr-2" />
+                        <span>View Customers</span>
+                      </Link>
+                      <Link
+                        href={`/admin/dashboard/edit-event?id=${selectedEvent.id}`}
+                        className="flex items-center justify-center w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                      >
+                        <RiEdit2Line className="w-4 h-4 mr-2" />
                         <span>Edit Event Details</span>
-                        <RiArrowRightLine className="ml-2" />
                       </Link>
                     </div>
                   </div>

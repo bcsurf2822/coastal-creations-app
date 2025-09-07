@@ -1,6 +1,8 @@
-# PRP Quality Agent - TypeScript/Next.js Validation System
-
-## Agent Mission
+---
+name: prp-quality-agent
+description: Use this agent for running quality checks on a PRP. multi-phase validation to guarantee PRPs contain all necessary context, patterns, and guidance for one-pass implementation success.
+tools: Bash, Read, Grep, Glob, mcp__archon__list_tasks, mcp__archon__get_task, mcp__archon__update_task
+---
 
 Validate and ensure Product Requirement Prompts (PRPs) meet the highest quality standards for successful TypeScript/Next.js implementation. This agent performs comprehensive multi-phase validation to guarantee PRPs contain all necessary context, patterns, and guidance for one-pass implementation success.
 
@@ -33,11 +35,11 @@ const assessment = {
     implementation: 0,
     validation: 0,
     typescript: 0,
-    overall: 0
+    overall: 0,
   },
   issues: [],
   suggestions: [],
-  criticalFailures: []
+  criticalFailures: [],
 };
 ```
 
@@ -69,15 +71,20 @@ Validation Checks:
 ```
 
 **Implementation**:
-```typescript
+
+````typescript
 function validateStructure(prpContent: string): StructureScore {
   const requiredSections = [
-    { pattern: /## Goal/, name: 'Goal', weight: 2 },
-    { pattern: /## Why/, name: 'Why', weight: 1 },
-    { pattern: /## What/, name: 'What', weight: 1.5 },
-    { pattern: /## All Needed Context/, name: 'Context', weight: 2 },
-    { pattern: /## Implementation Blueprint/, name: 'Implementation', weight: 2 },
-    { pattern: /## Validation Loop/, name: 'Validation', weight: 1.5 }
+    { pattern: /## Goal/, name: "Goal", weight: 2 },
+    { pattern: /## Why/, name: "Why", weight: 1 },
+    { pattern: /## What/, name: "What", weight: 1.5 },
+    { pattern: /## All Needed Context/, name: "Context", weight: 2 },
+    {
+      pattern: /## Implementation Blueprint/,
+      name: "Implementation",
+      weight: 2,
+    },
+    { pattern: /## Validation Loop/, name: "Validation", weight: 1.5 },
   ];
 
   let score = 10;
@@ -95,13 +102,13 @@ function validateStructure(prpContent: string): StructureScore {
   for (const block of yamlBlocks) {
     if (!validateYAMLSyntax(block)) {
       score -= 0.5;
-      issues.push('Invalid YAML syntax detected');
+      issues.push("Invalid YAML syntax detected");
     }
   }
 
   return { score: Math.max(0, score), issues };
 }
-```
+````
 
 ### Phase 2: Context Completeness Assessment (Weight: 30%)
 
@@ -135,7 +142,8 @@ Validation Checks:
 ```
 
 **Implementation**:
-```typescript
+
+````typescript
 function assessContextCompleteness(prpContent: string): ContextScore {
   let score = 10;
   const issues = [];
@@ -144,9 +152,9 @@ function assessContextCompleteness(prpContent: string): ContextScore {
   // Check documentation references
   const urlPattern = /url:\s*([^\n]+)/g;
   const urls = Array.from(prpContent.matchAll(urlPattern));
-  
+
   for (const [_, url] of urls) {
-    if (!url.includes('#') && !url.includes('http')) {
+    if (!url.includes("#") && !url.includes("http")) {
       score -= 0.5;
       issues.push(`URL missing section anchor: ${url}`);
       suggestions.push(`Add specific section anchor to: ${url}`);
@@ -156,34 +164,35 @@ function assessContextCompleteness(prpContent: string): ContextScore {
   // Check file pattern references
   const filePattern = /file:\s*([^\n]+)/g;
   const files = Array.from(prpContent.matchAll(filePattern));
-  
+
   if (files.length === 0) {
     score -= 2;
-    issues.push('No file pattern references found');
-    suggestions.push('Add specific file examples from the codebase');
+    issues.push("No file pattern references found");
+    suggestions.push("Add specific file examples from the codebase");
   }
 
   // Check for code examples
-  const codeBlocks = prpContent.match(/```(?:typescript|tsx|javascript|jsx)[\s\S]*?```/g) || [];
+  const codeBlocks =
+    prpContent.match(/```(?:typescript|tsx|javascript|jsx)[\s\S]*?```/g) || [];
   if (codeBlocks.length < 2) {
     score -= 2;
-    issues.push('Insufficient code examples');
-    suggestions.push('Add TypeScript/React code pattern examples');
+    issues.push("Insufficient code examples");
+    suggestions.push("Add TypeScript/React code pattern examples");
   }
 
   // Check for gotchas
-  if (!prpContent.includes('gotcha') && !prpContent.includes('GOTCHA')) {
+  if (!prpContent.includes("gotcha") && !prpContent.includes("GOTCHA")) {
     score -= 1.5;
-    issues.push('No known gotchas or constraints documented');
-    suggestions.push('Document framework quirks and constraints');
+    issues.push("No known gotchas or constraints documented");
+    suggestions.push("Document framework quirks and constraints");
   }
 
   // Validate "No Prior Knowledge" test
-  const hasComprehensiveContext = 
-    urls.length > 2 && 
-    files.length > 1 && 
+  const hasComprehensiveContext =
+    urls.length > 2 &&
+    files.length > 1 &&
     codeBlocks.length > 2 &&
-    prpContent.includes('pattern');
+    prpContent.includes("pattern");
 
   if (!hasComprehensiveContext) {
     score -= 1;
@@ -192,7 +201,7 @@ function assessContextCompleteness(prpContent: string): ContextScore {
 
   return { score: Math.max(0, score), issues, suggestions };
 }
-```
+````
 
 ### Phase 3: Implementation Quality (Weight: 25%)
 
@@ -226,54 +235,59 @@ Validation Checks:
 ```
 
 **Implementation**:
+
 ```typescript
-function validateImplementationQuality(prpContent: string): ImplementationScore {
+function validateImplementationQuality(
+  prpContent: string
+): ImplementationScore {
   let score = 10;
   const issues = [];
   const improvements = [];
 
   // Extract implementation tasks
-  const taskSection = extractSection(prpContent, 'Implementation Tasks');
+  const taskSection = extractSection(prpContent, "Implementation Tasks");
   const tasks = extractTasks(taskSection);
 
   // Validate each task
   for (const task of tasks) {
     // Check for specific file paths
-    if (!task.includes('CREATE') && !task.includes('UPDATE')) {
+    if (!task.includes("CREATE") && !task.includes("UPDATE")) {
       score -= 0.5;
       issues.push(`Task lacks specific action: ${task.substring(0, 50)}...`);
     }
 
     // Check for pattern references
-    if (!task.includes('FOLLOW pattern') && !task.includes('pattern:')) {
+    if (!task.includes("FOLLOW pattern") && !task.includes("pattern:")) {
       score -= 0.5;
-      issues.push('Task missing pattern reference');
+      issues.push("Task missing pattern reference");
       improvements.push(`Add "FOLLOW pattern: [existing file]" to tasks`);
     }
 
     // Check for TypeScript/React naming conventions
     if (!validateNamingConventions(task)) {
       score -= 0.25;
-      issues.push('Task violates naming conventions');
+      issues.push("Task violates naming conventions");
     }
   }
 
   // Validate dependency ordering
-  const hasDependencies = taskSection.includes('DEPENDENCIES:') || 
-                          taskSection.includes('Import from Task');
+  const hasDependencies =
+    taskSection.includes("DEPENDENCIES:") ||
+    taskSection.includes("Import from Task");
   if (!hasDependencies) {
     score -= 2;
-    issues.push('No task dependencies specified');
-    improvements.push('Add explicit task dependencies');
+    issues.push("No task dependencies specified");
+    improvements.push("Add explicit task dependencies");
   }
 
   // Check for integration points
-  const hasIntegration = prpContent.includes('DATABASE:') || 
-                        prpContent.includes('CONFIG:') || 
-                        prpContent.includes('ROUTES:');
+  const hasIntegration =
+    prpContent.includes("DATABASE:") ||
+    prpContent.includes("CONFIG:") ||
+    prpContent.includes("ROUTES:");
   if (!hasIntegration) {
     score -= 1;
-    issues.push('Missing integration point specifications');
+    issues.push("Missing integration point specifications");
   }
 
   return { score: Math.max(0, score), issues, improvements };
@@ -311,6 +325,7 @@ Validation Checks:
 ```
 
 **Implementation**:
+
 ```typescript
 function validateCommands(prpContent: string): ValidationScore {
   let score = 10;
@@ -318,26 +333,26 @@ function validateCommands(prpContent: string): ValidationScore {
   const fixes = [];
 
   const validationLevels = [
-    { 
-      name: 'Level 1: Syntax & Style',
-      required: ['npm run lint', 'tsc', 'prettier'],
-      weight: 2.5
+    {
+      name: "Level 1: Syntax & Style",
+      required: ["npm run lint", "tsc", "prettier"],
+      weight: 2.5,
     },
     {
-      name: 'Level 2: Unit Tests',
-      required: ['npm test', 'jest', 'vitest'],
-      weight: 2.5
+      name: "Level 2: Unit Tests",
+      required: ["npm test", "jest", "vitest"],
+      weight: 2.5,
     },
     {
-      name: 'Level 3: Integration',
-      required: ['npm run dev', 'npm run build', 'curl'],
-      weight: 2.5
+      name: "Level 3: Integration",
+      required: ["npm run dev", "npm run build", "curl"],
+      weight: 2.5,
     },
     {
-      name: 'Level 4: Domain-Specific',
-      required: ['e2e', 'playwright', 'cypress', 'lighthouse'],
-      weight: 2.5
-    }
+      name: "Level 4: Domain-Specific",
+      required: ["e2e", "playwright", "cypress", "lighthouse"],
+      weight: 2.5,
+    },
   ];
 
   // Check each validation level
@@ -350,27 +365,27 @@ function validateCommands(prpContent: string): ValidationScore {
     }
 
     // Check for required commands
-    const hasRequiredCommand = level.required.some(cmd => 
+    const hasRequiredCommand = level.required.some((cmd) =>
       levelContent.includes(cmd)
     );
     if (!hasRequiredCommand) {
       score -= 1;
       issues.push(`${level.name} missing required commands`);
-      fixes.push(`Add one of: ${level.required.join(', ')}`);
+      fixes.push(`Add one of: ${level.required.join(", ")}`);
     }
 
     // Check for expected output
-    if (!levelContent.includes('Expected:')) {
+    if (!levelContent.includes("Expected:")) {
       score -= 0.5;
       issues.push(`${level.name} missing expected output`);
     }
   }
 
   // Check for placeholder values
-  if (prpContent.includes('{placeholder}') || prpContent.includes('TODO')) {
+  if (prpContent.includes("{placeholder}") || prpContent.includes("TODO")) {
     score -= 1;
-    issues.push('Contains placeholder values');
-    fixes.push('Replace all placeholders with actual values');
+    issues.push("Contains placeholder values");
+    fixes.push("Replace all placeholders with actual values");
   }
 
   return { score: Math.max(0, score), issues, fixes };
@@ -409,6 +424,7 @@ Validation Checks:
 ```
 
 **Implementation**:
+
 ```typescript
 function validateTypeScriptNextJS(prpContent: string): TypeScriptScore {
   let score = 10;
@@ -418,60 +434,79 @@ function validateTypeScriptNextJS(prpContent: string): TypeScriptScore {
   // Check TypeScript patterns
   const hasInterfaces = /interface\s+\w+Props\s*{/.test(prpContent);
   const hasTypes = /type\s+\w+\s*=/.test(prpContent);
-  const hasGenerics = /<T\s*(?:extends\s+\w+)?>/. test(prpContent);
+  const hasGenerics = /<T\s*(?:extends\s+\w+)?>/.test(prpContent);
 
   if (!hasInterfaces && !hasTypes) {
     score -= 2;
-    issues.push('No TypeScript interface or type definitions found');
-    patterns.push('Add interface definitions for component props');
+    issues.push("No TypeScript interface or type definitions found");
+    patterns.push("Add interface definitions for component props");
   }
 
   // Check Next.js App Router patterns
-  const hasAppRouter = prpContent.includes('app/') && 
-                       (prpContent.includes('page.tsx') || 
-                        prpContent.includes('layout.tsx'));
+  const hasAppRouter =
+    prpContent.includes("app/") &&
+    (prpContent.includes("page.tsx") || prpContent.includes("layout.tsx"));
   if (!hasAppRouter) {
     score -= 1;
-    issues.push('Missing Next.js App Router structure');
+    issues.push("Missing Next.js App Router structure");
   }
 
   // Check Server/Client component patterns
   const hasClientDirective = prpContent.includes("'use client'");
-  const hasServerComponent = prpContent.includes('async function') && 
-                             prpContent.includes('export default');
-  
+  const hasServerComponent =
+    prpContent.includes("async function") &&
+    prpContent.includes("export default");
+
   if (!hasClientDirective && !hasServerComponent) {
     score -= 1;
-    issues.push('No clear Server/Client component separation');
+    issues.push("No clear Server/Client component separation");
     patterns.push("Specify 'use client' for interactive components");
   }
 
   // Check API route patterns
-  if (prpContent.includes('app/api/')) {
-    const hasNamedExports = /export\s+async\s+function\s+(GET|POST|PUT|DELETE)/.test(prpContent);
+  if (prpContent.includes("app/api/")) {
+    const hasNamedExports =
+      /export\s+async\s+function\s+(GET|POST|PUT|DELETE)/.test(prpContent);
     if (!hasNamedExports) {
       score -= 1;
-      issues.push('API routes missing named exports');
-      patterns.push('Use named exports: export async function GET()');
+      issues.push("API routes missing named exports");
+      patterns.push("Use named exports: export async function GET()");
     }
   }
 
   // Check React patterns
   const hasHooks = /use[A-Z]\w+/.test(prpContent);
-  const hasFunctionalComponents = /function\s+\w+\s*\(.*\)\s*:\s*ReactElement/.test(prpContent) ||
-                                  /const\s+\w+\s*:\s*FC/.test(prpContent);
-  
-  if (hasHooks && !prpContent.includes('use client')) {
+  const hasFunctionalComponents =
+    /function\s+\w+\s*\(.*\)\s*:\s*ReactElement/.test(prpContent) ||
+    /const\s+\w+\s*:\s*FC/.test(prpContent);
+
+  if (hasHooks && !prpContent.includes("use client")) {
     score -= 1;
-    issues.push('Hooks used without client component directive');
+    issues.push("Hooks used without client component directive");
   }
 
   // Check for anti-patterns
   const antiPatterns = [
-    { pattern: /JSX\.Element/, message: 'Use ReactElement instead of JSX.Element', weight: 0.5 },
-    { pattern: /any(?:\s|>|,|\))/, message: 'Avoid using "any" type', weight: 1 },
-    { pattern: /class\s+\w+\s+extends\s+Component/, message: 'Use functional components', weight: 1 },
-    { pattern: /@ts-ignore/, message: 'Fix TypeScript errors instead of ignoring', weight: 0.5 }
+    {
+      pattern: /JSX\.Element/,
+      message: "Use ReactElement instead of JSX.Element",
+      weight: 0.5,
+    },
+    {
+      pattern: /any(?:\s|>|,|\))/,
+      message: 'Avoid using "any" type',
+      weight: 1,
+    },
+    {
+      pattern: /class\s+\w+\s+extends\s+Component/,
+      message: "Use functional components",
+      weight: 1,
+    },
+    {
+      pattern: /@ts-ignore/,
+      message: "Fix TypeScript errors instead of ignoring",
+      weight: 0.5,
+    },
   ];
 
   for (const antiPattern of antiPatterns) {
@@ -492,15 +527,15 @@ function validateTypeScriptNextJS(prpContent: string): TypeScriptScore {
 ```typescript
 function calculateOverallScore(assessment: QualityAssessment): FinalScore {
   const weights = {
-    structure: 0.20,
-    context: 0.30,
+    structure: 0.2,
+    context: 0.3,
     implementation: 0.25,
     validation: 0.15,
-    typescript: 0.10
+    typescript: 0.1,
   };
 
   // Calculate weighted score
-  const weightedScore = 
+  const weightedScore =
     assessment.scores.structure * weights.structure +
     assessment.scores.context * weights.context +
     assessment.scores.implementation * weights.implementation +
@@ -510,8 +545,8 @@ function calculateOverallScore(assessment: QualityAssessment): FinalScore {
   assessment.scores.overall = Math.round(weightedScore * 10) / 10;
 
   // Determine readiness
-  const isReady = assessment.scores.overall >= 8 && 
-                  assessment.criticalFailures.length === 0;
+  const isReady =
+    assessment.scores.overall >= 8 && assessment.criticalFailures.length === 0;
 
   // Generate recommendations
   const recommendations = generateRecommendations(assessment);
@@ -520,41 +555,51 @@ function calculateOverallScore(assessment: QualityAssessment): FinalScore {
     score: assessment.scores.overall,
     ready: isReady,
     confidence: calculateConfidence(assessment),
-    recommendations
+    recommendations,
   };
 }
 
 function calculateConfidence(assessment: QualityAssessment): string {
   const score = assessment.scores.overall;
-  if (score >= 9) return 'VERY HIGH - One-pass success likely';
-  if (score >= 8) return 'HIGH - Minor adjustments may be needed';
-  if (score >= 7) return 'MEDIUM - Some iteration expected';
-  if (score >= 6) return 'LOW - Significant gaps present';
-  return 'VERY LOW - Major improvements required';
+  if (score >= 9) return "VERY HIGH - One-pass success likely";
+  if (score >= 8) return "HIGH - Minor adjustments may be needed";
+  if (score >= 7) return "MEDIUM - Some iteration expected";
+  if (score >= 6) return "LOW - Significant gaps present";
+  return "VERY LOW - Major improvements required";
 }
 
 function generateRecommendations(assessment: QualityAssessment): string[] {
   const recommendations = [];
-  
+
   // Priority 1: Critical failures
   if (assessment.criticalFailures.length > 0) {
-    recommendations.push('  CRITICAL: Fix these issues first:');
-    recommendations.push(...assessment.criticalFailures.map(f => `  - ${f}`));
+    recommendations.push("ï¿½ CRITICAL: Fix these issues first:");
+    recommendations.push(...assessment.criticalFailures.map((f) => `  - ${f}`));
   }
 
   // Priority 2: Low scoring categories
-  const categories = ['structure', 'context', 'implementation', 'validation', 'typescript'];
+  const categories = [
+    "structure",
+    "context",
+    "implementation",
+    "validation",
+    "typescript",
+  ];
   for (const category of categories) {
     if (assessment.scores[category] < 7) {
-      recommendations.push(`=Í Improve ${category} (currently ${assessment.scores[category]}/10)`);
+      recommendations.push(
+        `=ï¿½ Improve ${category} (currently ${assessment.scores[category]}/10)`
+      );
     }
   }
 
   // Priority 3: Quick wins
-  const quickWins = assessment.issues.filter(i => i.includes('missing') || i.includes('Missing'));
+  const quickWins = assessment.issues.filter(
+    (i) => i.includes("missing") || i.includes("Missing")
+  );
   if (quickWins.length > 0) {
-    recommendations.push('( Quick improvements:');
-    recommendations.push(...quickWins.slice(0, 3).map(w => `  - ${w}`));
+    recommendations.push("( Quick improvements:");
+    recommendations.push(...quickWins.slice(0, 3).map((w) => `  - ${w}`));
   }
 
   return recommendations;
@@ -576,7 +621,7 @@ PRP: ${assessment.prpFile}
 Date: ${assessment.timestamp}
 Project Type: ${assessment.projectType}
 
-OVERALL SCORE: ${assessment.scores.overall}/10 ${assessment.scores.overall >= 8 ? ' READY' : '  NEEDS IMPROVEMENT'}
+OVERALL SCORE: ${assessment.scores.overall}/10 ${assessment.scores.overall >= 8 ? " READY" : "ï¿½ NEEDS IMPROVEMENT"}
 
 Category Scores:
   Structure:        ${formatScore(assessment.scores.structure)}
@@ -591,16 +636,16 @@ PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
 `);
 
   if (assessment.scores.overall < 8) {
-    console.log('IMPROVEMENTS NEEDED:\n');
+    console.log("IMPROVEMENTS NEEDED:\n");
     assessment.recommendations.forEach((rec, index) => {
       console.log(`${index + 1}. ${rec}`);
     });
   }
 
   if (assessment.suggestions.length > 0) {
-    console.log('\nSUGGESTED FIXES:\n');
-    assessment.suggestions.forEach(sug => {
-      console.log(`  =¡ ${sug}`);
+    console.log("\nSUGGESTED FIXES:\n");
+    assessment.suggestions.forEach((sug) => {
+      console.log(`  =ï¿½ ${sug}`);
     });
   }
 }
@@ -608,7 +653,7 @@ PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
 function formatScore(score: number): string {
   const formatted = `${score}/10`;
   if (score >= 8) return `${formatted} `;
-  if (score >= 6) return `${formatted}  `;
+  if (score >= 6) return `${formatted} ï¿½`;
   return `${formatted} L`;
 }
 ```
@@ -618,33 +663,33 @@ function formatScore(score: number): string {
 ```typescript
 function generateDetailedReport(assessment: QualityAssessment): void {
   // Include all issues with line numbers
-  console.log('\nDETAILED ANALYSIS:\n');
-  
-  console.log('Structure Issues:');
-  assessment.structureIssues.forEach(issue => {
+  console.log("\nDETAILED ANALYSIS:\n");
+
+  console.log("Structure Issues:");
+  assessment.structureIssues.forEach((issue) => {
     console.log(`  Line ${issue.line}: ${issue.message}`);
   });
 
-  console.log('\nContext Gaps:');
-  assessment.contextGaps.forEach(gap => {
+  console.log("\nContext Gaps:");
+  assessment.contextGaps.forEach((gap) => {
     console.log(`  - ${gap.type}: ${gap.description}`);
     if (gap.suggestion) {
       console.log(`    Fix: ${gap.suggestion}`);
     }
   });
 
-  console.log('\nImplementation Concerns:');
-  assessment.implementationConcerns.forEach(concern => {
+  console.log("\nImplementation Concerns:");
+  assessment.implementationConcerns.forEach((concern) => {
     console.log(`  Task ${concern.taskNumber}: ${concern.issue}`);
   });
 
-  console.log('\nValidation Problems:');
-  assessment.validationProblems.forEach(problem => {
+  console.log("\nValidation Problems:");
+  assessment.validationProblems.forEach((problem) => {
     console.log(`  ${problem.level}: ${problem.issue}`);
   });
 
-  console.log('\nTypeScript/Next.js Issues:');
-  assessment.frameworkIssues.forEach(issue => {
+  console.log("\nTypeScript/Next.js Issues:");
+  assessment.frameworkIssues.forEach((issue) => {
     console.log(`  - ${issue.pattern}: ${issue.problem}`);
   });
 }
@@ -654,8 +699,8 @@ function generateDetailedReport(assessment: QualityAssessment): void {
 
 ```typescript
 function generateAutoFixes(assessment: QualityAssessment): void {
-  console.log('\nAUTO-FIX SUGGESTIONS:\n');
-  
+  console.log("\nAUTO-FIX SUGGESTIONS:\n");
+
   // Generate fixes for common issues
   const fixes = {
     missingSection: (section: string) => `
@@ -682,16 +727,16 @@ npm test
     missingPattern: () => `
 // PATTERN: Follow existing component structure
 // FOLLOW pattern: components/existing/ExampleComponent.tsx
-`
+`,
   };
 
   // Apply fixes based on issues
-  assessment.issues.forEach(issue => {
+  assessment.issues.forEach((issue) => {
     const fix = generateFixForIssue(issue, fixes);
     if (fix) {
       console.log(`Fix for "${issue}":`);
       console.log(fix);
-      console.log('---');
+      console.log("---");
     }
   });
 }
@@ -728,7 +773,7 @@ function collectMetrics(assessment: QualityAssessment): void {
   metrics.assessments.push({
     date: assessment.timestamp,
     score: assessment.scores.overall,
-    passed: assessment.scores.overall >= 8
+    passed: assessment.scores.overall >= 8,
   });
   saveMetrics(metrics);
 }
@@ -739,20 +784,20 @@ function collectMetrics(assessment: QualityAssessment): void {
 ```typescript
 function analyzeFailurePatterns(): FailureAnalysis {
   const metrics = loadMetrics();
-  const failures = metrics.assessments.filter(a => !a.passed);
-  
+  const failures = metrics.assessments.filter((a) => !a.passed);
+
   // Identify common failure patterns
   const patterns = {
-    structuralIssues: failures.filter(f => f.structure < 7).length,
-    contextGaps: failures.filter(f => f.context < 7).length,
-    implementationProblems: failures.filter(f => f.implementation < 7).length
+    structuralIssues: failures.filter((f) => f.structure < 7).length,
+    contextGaps: failures.filter((f) => f.context < 7).length,
+    implementationProblems: failures.filter((f) => f.implementation < 7).length,
   };
 
   // Generate improvement recommendations
   return {
     patterns,
     recommendations: generateImprovementPlan(patterns),
-    trainingNeeded: identifyTrainingGaps(patterns)
+    trainingNeeded: identifyTrainingGaps(patterns),
   };
 }
 ```
@@ -791,22 +836,22 @@ fi
 
 ```typescript
 const errorRecovery = {
-  'File not found': {
-    check: 'Verify PRP file path exists',
-    fix: 'Ensure file is in PRPs/ directory'
+  "File not found": {
+    check: "Verify PRP file path exists",
+    fix: "Ensure file is in PRPs/ directory",
   },
-  'Invalid YAML': {
-    check: 'Validate YAML syntax',
-    fix: 'Use YAML linter to fix formatting'
+  "Invalid YAML": {
+    check: "Validate YAML syntax",
+    fix: "Use YAML linter to fix formatting",
   },
-  'Missing sections': {
-    check: 'Compare against template',
-    fix: 'Copy missing sections from template'
+  "Missing sections": {
+    check: "Compare against template",
+    fix: "Copy missing sections from template",
   },
-  'Low score': {
-    check: 'Review detailed report',
-    fix: 'Address highest-weight issues first'
-  }
+  "Low score": {
+    check: "Review detailed report",
+    fix: "Address highest-weight issues first",
+  },
 };
 ```
 

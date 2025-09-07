@@ -82,14 +82,24 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await connectMongo();
 
     // Clean up past events before fetching current ones
     await cleanupPastEvents();
 
-    const events = await Event.find({}).sort({ createdAt: -1 });
+    // Parse query parameters
+    const { searchParams } = new URL(request.url);
+    const eventType = searchParams.get("type");
+
+    // Build filter object
+    const filter: { eventType?: string } = {};
+    if (eventType) {
+      filter.eventType = eventType;
+    }
+
+    const events = await Event.find(filter).sort({ createdAt: -1 });
     return NextResponse.json({ success: true, events });
   } catch (error) {
     console.error("Error fetching events:", error);

@@ -4,6 +4,8 @@
 
 ## Mission: One-Pass TypeScript Implementation Success
 
+## BE SURE TO USE THE ARCHON MCP and @.claude/agents/prp-validation-gate-agent/prp-validation-gate-agent.md TO HELP TRACK / VALIDATE TASKS AS YOU GO THROUGH
+
 PRPs enable working TypeScript/React code on the first attempt through:
 
 - **Context Completeness**: Everything needed, nothing guessed

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { PiSquareLogoFill } from "react-icons/pi";
 import dynamic from "next/dynamic";
+import React from "react";
 
 // Dynamically import Square payment components with SSR disabled
 const DynamicPaymentForm = dynamic(
@@ -10,7 +11,12 @@ const DynamicPaymentForm = dynamic(
     const { PaymentForm } = await import("react-square-web-payments-sdk");
     return PaymentForm;
   },
-  { ssr: false }
+  {
+    ssr: false,
+    loading: () => (
+      <div className="animate-pulse h-32 bg-gray-200 rounded-lg"></div>
+    ),
+  }
 );
 
 const DynamicCreditCard = dynamic(
@@ -18,7 +24,12 @@ const DynamicCreditCard = dynamic(
     const { CreditCard } = await import("react-square-web-payments-sdk");
     return CreditCard;
   },
-  { ssr: false }
+  {
+    ssr: false,
+    loading: () => (
+      <div className="animate-pulse h-16 bg-gray-200 rounded-lg"></div>
+    ),
+  }
 );
 
 interface PaymentConfig {
@@ -68,6 +79,15 @@ interface PaymentResult {
   };
 }
 
+interface Participant {
+  firstName: string;
+  lastName: string;
+  selectedOptions?: Array<{
+    categoryName: string;
+    choiceName: string;
+  }>;
+}
+
 interface PaymentProcessorProps {
   error: string;
   setError: (error: string) => void;
@@ -83,6 +103,8 @@ interface PaymentProcessorProps {
     billingDetails: PaymentSubmitData
   ) => Promise<PaymentResult>;
   router: ReturnType<typeof useRouter>;
+  participants: Participant[];
+  getParticipantValidationError: () => string | null;
 }
 
 // Helper function to convert Square error codes to user-friendly messages
@@ -157,7 +179,13 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
   totalPrice,
   submitPayment,
   router,
+  getParticipantValidationError,
 }) => {
+  // Create unique ID for this payment form to prevent conflicts
+  const formId = React.useMemo(
+    () => `payment-form-${eventId}-${Date.now()}`,
+    [eventId]
+  );
   return (
     <div className="mb-8">
       <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center">
@@ -207,10 +235,10 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
         <div className="p-6 bg-gray-50 rounded-lg">
           {!formValid && (
             <div className="mb-4 p-3 bg-yellow-50 border border-yellow-300 text-yellow-800 rounded-lg">
-              <p className="flex items-center">
+              <div className="flex items-start">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-2"
+                  className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0"
                   viewBox="0 0 20 20"
                   fill="currentColor"
                 >
@@ -220,13 +248,23 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
                     clipRule="evenodd"
                   />
                 </svg>
-                Please complete all required fields above before proceeding with
-                payment. You must provide either an email address or phone
-                number.
-              </p>
+                <div className="space-y-1">
+                  <p>
+                    Please complete all required fields above before proceeding
+                    with payment. You must provide either an email address or
+                    phone number.
+                  </p>
+                  {getParticipantValidationError() && (
+                    <p className="font-medium">
+                      {getParticipantValidationError()}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
           <DynamicPaymentForm
+            key={formId}
             applicationId={config.applicationId}
             locationId={config.locationId}
             createPaymentRequest={() => {
@@ -254,10 +292,18 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
                 billingDetails.postalCode.trim() !== "" &&
                 isContactProvided;
 
+              // Check participant validation
+              const participantError = getParticipantValidationError();
+
               if (!areRequiredFieldsFilled) {
                 setError(
                   "Please fill in all required fields. Either email or phone number must be provided."
                 );
+                return;
+              }
+
+              if (participantError) {
+                setError(participantError);
                 return;
               }
 
@@ -427,11 +473,18 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
             }}
           >
             <div className="max-w-md mx-auto">
-              <DynamicCreditCard />
+              <DynamicCreditCard key={`${formId}-card`} />
               {!formValid && (
-                <div className="mt-4 text-red-600 text-center text-sm font-medium">
-                  Please complete all required fields above before submitting
-                  payment
+                <div className="mt-4 text-red-600 text-center text-sm font-medium space-y-1">
+                  <div>
+                    Please complete all required fields above before submitting
+                    payment
+                  </div>
+                  {getParticipantValidationError() && (
+                    <div className="font-bold">
+                      {getParticipantValidationError()}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -454,4 +507,4 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
   );
 };
 
-export default PaymentProcessor;
+export default React.memo(PaymentProcessor);

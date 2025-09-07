@@ -26,14 +26,14 @@ const RegistrationHeader: React.FC<RegistrationHeaderProps> = ({
   isPriceAvailable,
   originalPrice,
   discountInfo,
-  currentParticipantCount,
   numberOfPeople,
 }) => {
   // Helper functions
   const isDiscountActive = (): boolean => {
-    if (!discountInfo.isDiscountAvailable || !discountInfo.discount) return false;
-    const totalParticipants = currentParticipantCount + numberOfPeople;
-    return totalParticipants >= discountInfo.discount.minParticipants;
+    if (!discountInfo.isDiscountAvailable || !discountInfo.discount)
+      return false;
+    // Only consider current registration for discount, not existing participants
+    return numberOfPeople >= discountInfo.discount.minParticipants;
   };
 
   const getOriginalPrice = (): number => {
@@ -59,7 +59,7 @@ const RegistrationHeader: React.FC<RegistrationHeaderProps> = ({
                 </p>
               </div>
             )}
-            
+
             {/* Price Display */}
             <div className="bg-white/70 py-3 px-8 rounded-full inline-block shadow-md">
               <p className="text-xl">
@@ -69,22 +69,24 @@ const RegistrationHeader: React.FC<RegistrationHeaderProps> = ({
                     <span className="font-medium text-gray-500 line-through mr-2">
                       ${getOriginalPrice().toFixed(2)}
                     </span>
-                    <span className="font-bold text-green-600">${formattedPrice}</span>
+                    <span className="font-bold text-green-600">
+                      ${formattedPrice}
+                    </span>
                   </>
                 ) : (
-                  <span className="font-bold text-black">${formattedPrice}</span>
+                  <span className="font-bold text-black">
+                    ${formattedPrice}
+                  </span>
                 )}
                 <span className="text-black font-medium"> / Per Person</span>
               </p>
-              
+
               {/* Discount Information */}
               {discountInfo.isDiscountAvailable && discountInfo.discount && (
                 <p className="text-sm text-gray-600 mt-1">
-                  {isDiscountActive() ? (
-                    `Discount applied! (${discountInfo.discount.minParticipants}+ participants)`
-                  ) : (
-                    `Discount available with ${discountInfo.discount.minParticipants}+ total participants`
-                  )}
+                  {isDiscountActive()
+                    ? `Discount applied! (${discountInfo.discount.minParticipants}+ participants)`
+                    : `Discount available with ${discountInfo.discount.minParticipants}+ total participants`}
                 </p>
               )}
             </div>

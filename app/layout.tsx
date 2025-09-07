@@ -10,8 +10,7 @@ import {
   Abril_Fatface,
   EB_Garamond,
 } from "next/font/google";
-import NavBar from "@/components/layout/nav/NavBar";
-import Footer from "@/components/layout/footer/Footer";
+import ConditionalLayout from "@/components/layout/ConditionalLayout";
 import AnalyticsEvents from "@/components/AnalyticsEvents";
 import { GA_TRACKING_ID } from "@/lib/gtag";
 import "./globals.css";
@@ -63,13 +62,7 @@ export default function RootLayout({
           <AnalyticsEvents />
         </Suspense>
         {/* <AuthProvider> */}
-        <NavBar />
-        <div className="relative pt-32 md:pt-56">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#b6dce6] via-[#BEDCDC] to-[#daebeb]  z-10"></div>
-
-          <div className="relative z-20">{children}</div>
-        </div>
-        <Footer />
+        <ConditionalLayout>{children}</ConditionalLayout>
         {GA_TRACKING_ID && (
           <>
             <Script

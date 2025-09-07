@@ -6,11 +6,32 @@ import { useSearchParams, useRouter } from "next/navigation";
 import RegistrationHeader from "./RegistrationHeader";
 import BillingForm from "./BillingForm";
 import PaymentProcessor from "./PaymentProcessor";
+import ReservationSummary from "./ReservationSummary";
 
 interface PaymentConfig {
   applicationId: string;
   locationId: string;
   redirectUrl: string;
+}
+
+interface ReservationBooking {
+  eventId: string;
+  selectedDates: Array<{
+    date: string;
+    participantCount: number;
+    participants: Array<{
+      firstName: string;
+      lastName: string;
+    }>;
+  }>;
+  appliedPriceTier: {
+    numberOfDays: number;
+    price: number;
+    label?: string;
+  };
+  totalCost: number;
+  totalDays: number;
+  totalParticipants: number;
 }
 
 interface EventOption {
@@ -73,6 +94,16 @@ export default function Payment() {
     redirectUrl: "",
   });
 
+  // Reservation booking state
+  const [reservationBooking, setReservationBooking] =
+    useState<ReservationBooking | null>(null);
+  const [isReservationBooking, setIsReservationBooking] = useState(false);
+  const [eventDetails, setEventDetails] = useState<{
+    eventName: string;
+    description: string;
+    eventType: string;
+  } | null>(null);
+
   const searchParams = useSearchParams();
   const eventId = searchParams.get("eventId") || "";
   const eventTitle = searchParams.get("eventTitle") || "";
@@ -110,7 +141,8 @@ export default function Payment() {
   }>({
     isDiscountAvailable: false,
   });
-  const [currentParticipantCount, setCurrentParticipantCount] = useState<number>(0);
+  const [currentParticipantCount, setCurrentParticipantCount] =
+    useState<number>(0);
 
   const [billingDetails, setBillingDetails] = useState({
     addressLine1: "",
@@ -130,14 +162,19 @@ export default function Payment() {
   const [totalPrice, setTotalPrice] = useState<string>("");
 
   // Helper functions for discount calculations
-  const calculateDiscountedPrice = (basePrice: number, participantCount: number): number => {
-    if (!discountInfo.isDiscountAvailable || !discountInfo.discount) return basePrice;
-    
+  const calculateDiscountedPrice = (
+    basePrice: number,
+    participantCount: number
+  ): number => {
+    if (!discountInfo.isDiscountAvailable || !discountInfo.discount)
+      return basePrice;
+
     // Check if discount applies based on participant count
-    if (participantCount < discountInfo.discount.minParticipants) return basePrice;
-    
+    if (participantCount < discountInfo.discount.minParticipants)
+      return basePrice;
+
     if (discountInfo.discount.type === "percentage") {
-      return basePrice - (basePrice * discountInfo.discount.value / 100);
+      return basePrice - (basePrice * discountInfo.discount.value) / 100;
     } else {
       return basePrice - discountInfo.discount.value;
     }
@@ -145,8 +182,10 @@ export default function Payment() {
 
   // Helper function to get choice price by name
   const getChoicePrice = (categoryName: string, choiceName: string): number => {
-    const option = eventOptions.find(opt => opt.categoryName === categoryName);
-    const choice = option?.choices.find(c => c.name === choiceName);
+    const option = eventOptions.find(
+      (opt) => opt.categoryName === categoryName
+    );
+    const choice = option?.choices.find((c) => c.name === choiceName);
     return choice?.price || 0;
   };
 
@@ -156,16 +195,22 @@ export default function Payment() {
 
     // Primary customer options (when signing up for self)
     if (isSigningUpForSelf && selectedOptions.length > 0) {
-      selectedOptions.forEach(selectedOption => {
-        totalOptionCost += getChoicePrice(selectedOption.categoryName, selectedOption.choiceName);
+      selectedOptions.forEach((selectedOption) => {
+        totalOptionCost += getChoicePrice(
+          selectedOption.categoryName,
+          selectedOption.choiceName
+        );
       });
     }
 
     // Additional participants' options
-    participants.forEach(participant => {
+    participants.forEach((participant) => {
       if (participant.selectedOptions) {
-        participant.selectedOptions.forEach(selectedOption => {
-          totalOptionCost += getChoicePrice(selectedOption.categoryName, selectedOption.choiceName);
+        participant.selectedOptions.forEach((selectedOption) => {
+          totalOptionCost += getChoicePrice(
+            selectedOption.categoryName,
+            selectedOption.choiceName
+          );
         });
       }
     });
@@ -174,8 +219,8 @@ export default function Payment() {
   };
 
   // const isDiscountActive = (participantCount: number): boolean => {
-  //   return !!(discountInfo.isDiscountAvailable && 
-  //            discountInfo.discount && 
+  //   return !!(discountInfo.isDiscountAvailable &&
+  //            discountInfo.discount &&
   //            participantCount >= discountInfo.discount.minParticipants);
   // };
 
@@ -214,7 +259,9 @@ export default function Payment() {
 
       // If payment is successful, submit customer details and send confirmation email
       if (result.result?.payment?.status === "COMPLETED") {
-        const customerData = await submitCustomerDetails();
+        const customerData = await submitCustomerDetails(
+          paymentData.eventPrice
+        );
 
         // Send confirmation email if customer data was successfully saved
         if (customerData && customerData.data && customerData.data._id) {
@@ -275,7 +322,9 @@ export default function Payment() {
               // Handle options
               if (data.event.options && data.event.options.length > 0) {
                 const newOptions = data.event.options;
-                if (JSON.stringify(newOptions) !== JSON.stringify(eventOptions)) {
+                if (
+                  JSON.stringify(newOptions) !== JSON.stringify(eventOptions)
+                ) {
                   setEventOptions(newOptions);
 
                   // Initialize selectedOptions with the first choice of each category
@@ -317,18 +366,26 @@ export default function Payment() {
           try {
             result = responseText ? JSON.parse(responseText) : {};
           } catch (parseError) {
-            console.error("Failed to parse customer response as JSON:", parseError);
+            console.error(
+              "Failed to parse customer response as JSON:",
+              parseError
+            );
             return;
           }
 
           if (response.ok && result.data && Array.isArray(result.data)) {
             // Calculate participant count for this specific event
             const participantCount = result.data
-              .filter((customer: { event?: { _id: string }; quantity: number }) => 
-                customer.event?._id === eventId)
-              .reduce((total: number, customer: { quantity: number }) => 
-                total + customer.quantity, 0);
-            
+              .filter(
+                (customer: { event?: { _id: string }; quantity: number }) =>
+                  customer.event?._id === eventId
+              )
+              .reduce(
+                (total: number, customer: { quantity: number }) =>
+                  total + customer.quantity,
+                0
+              );
+
             setCurrentParticipantCount(participantCount);
           }
         } catch (error) {
@@ -340,6 +397,42 @@ export default function Payment() {
       fetchParticipantCount();
     }
   }, [eventId]);
+
+  // Check for reservation booking data from sessionStorage
+  useEffect(() => {
+    const reservationData = sessionStorage.getItem("reservationBooking");
+    if (reservationData) {
+      try {
+        const booking: ReservationBooking = JSON.parse(reservationData);
+        setReservationBooking(booking);
+        setIsReservationBooking(true);
+
+        // Fetch event details for reservation
+        const fetchReservationEventDetails = async () => {
+          try {
+            const response = await fetch(`/api/events/${booking.eventId}`);
+            if (response.ok) {
+              const data = await response.json();
+              if (data.success && data.event) {
+                setEventDetails({
+                  eventName: data.event.eventName,
+                  description: data.event.description,
+                  eventType: data.event.eventType,
+                });
+              }
+            }
+          } catch (error) {
+            console.error("Error fetching reservation event details:", error);
+          }
+        };
+
+        fetchReservationEventDetails();
+      } catch (error) {
+        console.error("Error parsing reservation booking data:", error);
+        sessionStorage.removeItem("reservationBooking");
+      }
+    }
+  }, []);
 
   // Format price for display and ensure it's a valid number
   useEffect(() => {
@@ -354,18 +447,20 @@ export default function Payment() {
       const basePrice = parseFloat(cleanPrice);
 
       if (!isNaN(basePrice)) {
-        // Apply discount if applicable
-        const totalCurrentParticipants = currentParticipantCount + billingDetails.numberOfPeople;
-        const discountedPrice = calculateDiscountedPrice(basePrice, totalCurrentParticipants);
-        
+        // Apply discount if applicable - only based on current registration
+        const discountedPrice = calculateDiscountedPrice(
+          basePrice,
+          billingDetails.numberOfPeople
+        );
+
         // Format to 2 decimal places
         setFormattedPrice(discountedPrice.toFixed(2));
-        
+
         // Calculate total price including option costs
         const baseTotalPrice = discountedPrice * billingDetails.numberOfPeople;
         const optionCosts = calculateTotalOptionCosts();
         const totalWithOptions = baseTotalPrice + optionCosts;
-        
+
         setTotalPrice(totalWithOptions.toFixed(2));
         setIsPriceAvailable(true);
       } else {
@@ -375,7 +470,14 @@ export default function Payment() {
       console.error("Error formatting price:", e);
       setIsPriceAvailable(false);
     }
-  }, [eventPrice, billingDetails.numberOfPeople, discountInfo, currentParticipantCount, selectedOptions, participants]);
+  }, [
+    eventPrice,
+    billingDetails.numberOfPeople,
+    discountInfo,
+    currentParticipantCount,
+    selectedOptions,
+    participants,
+  ]);
 
   // Validate form fields
   useEffect(() => {
@@ -392,8 +494,36 @@ export default function Payment() {
       billingDetails.postalCode.trim() !== "" &&
       isContactProvided;
 
-    setFormValid(areRequiredFieldsFilled);
-  }, [billingDetails]);
+    // Validate participant names are filled when required
+    const areParticipantNamesFilled = participants.every(
+      (participant) =>
+        participant.firstName.trim() !== "" &&
+        participant.lastName.trim() !== ""
+    );
+
+    setFormValid(areRequiredFieldsFilled && areParticipantNamesFilled);
+  }, [billingDetails, participants]);
+
+  // Create validation error message for participants
+  const getParticipantValidationError = (): string | null => {
+    const missingNames = participants.filter(
+      (participant) =>
+        participant.firstName.trim() === "" ||
+        participant.lastName.trim() === ""
+    );
+
+    if (missingNames.length === 0) return null;
+
+    if (isSigningUpForSelf) {
+      return `Please provide names for all additional participants. ${missingNames.length} participant${
+        missingNames.length > 1 ? "s are" : " is"
+      } missing required information.`;
+    } else {
+      return `Please provide names for all participants. ${missingNames.length} participant${
+        missingNames.length > 1 ? "s are" : " is"
+      } missing required information.`;
+    }
+  };
 
   // Update participants when numberOfPeople changes or isSigningUpForSelf changes
   useEffect(() => {
@@ -402,10 +532,10 @@ export default function Payment() {
       const additionalPeople = Math.max(0, billingDetails.numberOfPeople - 1);
       const newParticipants = Array(additionalPeople)
         .fill(null)
-        .map((_, index) => ({
-          firstName: `Additional Person ${index + 1}`,
-          lastName: "Pending",
-          selectedOptions: eventOptions.map(option => ({
+        .map(() => ({
+          firstName: "",
+          lastName: "",
+          selectedOptions: eventOptions.map((option) => ({
             categoryName: option.categoryName,
             choiceName: option.choices[0]?.name || "",
           })),
@@ -415,10 +545,10 @@ export default function Payment() {
       // If signing up for others, we need numberOfPeople participants
       const newParticipants = Array(billingDetails.numberOfPeople)
         .fill(null)
-        .map((_, index) => ({
-          firstName: `Participant ${index + 1}`,
-          lastName: "Pending",
-          selectedOptions: eventOptions.map(option => ({
+        .map(() => ({
+          firstName: "",
+          lastName: "",
+          selectedOptions: eventOptions.map((option) => ({
             categoryName: option.categoryName,
             choiceName: option.choices[0]?.name || "",
           })),
@@ -477,15 +607,17 @@ export default function Payment() {
     });
   };
 
-  const submitCustomerDetails = async () => {
+  const submitCustomerDetails = async (chargedAmount?: string) => {
     if (!formValid) {
       setError("Please complete all required fields before submitting");
       return null;
     }
 
     try {
-      // totalPrice already includes option costs from our useEffect calculation
-      const roundedTotal = Math.round(parseFloat(totalPrice) * 100) / 100;
+      // Use the exact amount that was charged, or fall back to calculated totalPrice
+      const actualTotal = chargedAmount
+        ? Math.round(parseFloat(chargedAmount) * 100) / 100
+        : Math.round(parseFloat(totalPrice) * 100) / 100;
 
       const response = await fetch("/api/customer", {
         method: "POST",
@@ -495,7 +627,7 @@ export default function Payment() {
         body: JSON.stringify({
           event: eventId,
           quantity: billingDetails.numberOfPeople,
-          total: roundedTotal,
+          total: actualTotal,
           isSigningUpForSelf: isSigningUpForSelf,
           participants,
           selectedOptions,
@@ -530,42 +662,48 @@ export default function Payment() {
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      <div className="bg-white rounded-xl shadow-2xl overflow-hidden">
-        {/* Event Header */}
-        {eventTitle && (
-          <RegistrationHeader
-            eventTitle={eventTitle}
-            formattedPrice={formattedPrice}
-            isPriceAvailable={isPriceAvailable}
-            originalPrice={eventPrice}
-            discountInfo={discountInfo}
-            currentParticipantCount={currentParticipantCount}
-            numberOfPeople={billingDetails.numberOfPeople}
-          />
-        )}
+      {isReservationBooking && reservationBooking ? (
+        // Reservation Booking Flow
+        <div className="space-y-6">
+          {/* Reservation Header */}
+          <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white rounded-xl p-6">
+            <h1 className="text-2xl font-bold mb-2">
+              Complete Your Reservation
+            </h1>
+            <p className="text-blue-100">
+              Review your booking details and provide payment information
+            </p>
+          </div>
 
-        {isPriceAvailable ? (
-          // Only show billing and payment form if price is available
-          <div className="p-6 sm:p-10">
-            {/* Billing Section */}
+          {/* Reservation Summary */}
+          <ReservationSummary
+            reservationBooking={reservationBooking}
+            eventDetails={eventDetails}
+          />
+
+          {/* Billing and Payment for Reservation */}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-6">
+              Billing Information
+            </h2>
+
             <BillingForm
               billingDetails={billingDetails}
               handleInputChange={handleInputChange}
-              isSigningUpForSelf={isSigningUpForSelf}
-              setIsSigningUpForSelf={setIsSigningUpForSelf}
-              eventOptions={eventOptions}
-              participants={participants}
-              setParticipants={setParticipants}
-              selectedOptions={selectedOptions}
-              handleOptionChange={handleOptionChange}
-              formattedPrice={formattedPrice}
-              totalPrice={totalPrice}
-              originalPrice={eventPrice}
-              discountInfo={discountInfo}
-              currentParticipantCount={currentParticipantCount}
+              isSigningUpForSelf={true}
+              setIsSigningUpForSelf={() => {}}
+              eventOptions={[]}
+              participants={[]}
+              setParticipants={() => {}}
+              selectedOptions={[]}
+              handleOptionChange={() => {}}
+              formattedPrice={reservationBooking.totalCost.toFixed(2)}
+              totalPrice={reservationBooking.totalCost.toFixed(2)}
+              originalPrice={reservationBooking.totalCost.toString()}
+              discountInfo={{ isDiscountAvailable: false }}
+              currentParticipantCount={reservationBooking.totalParticipants}
             />
 
-            {/* Payment Section */}
             <PaymentProcessor
               error={error}
               setError={setError}
@@ -573,50 +711,110 @@ export default function Payment() {
               config={config}
               formValid={formValid}
               billingDetails={billingDetails}
-              eventId={eventId}
-              eventTitle={eventTitle}
-              totalPrice={totalPrice}
+              eventId={reservationBooking.eventId}
+              eventTitle={eventDetails?.eventName || "Reservation Event"}
+              totalPrice={reservationBooking.totalCost.toFixed(2)}
               submitPayment={handleSubmitPayment}
               router={router}
+              participants={[]}
+              getParticipantValidationError={() => null}
             />
           </div>
-        ) : (
-          <div className="p-10 text-center">
-            <p className="text-lg mb-6">
-              To register for this event, please contact us directly by email.
-            </p>
-            <div className="flex justify-center gap-4 mb-8">
-              <button
-                onClick={() =>
-                  (window.location.href =
-                    "mailto:info@coastalcreationsstudio.com")
-                }
-                className="px-6 py-3 bg-white text-black font-medium rounded-md hover:bg-gray-100 transition-colors border-2 border-black flex items-center justify-center"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                  />
-                </svg>
-                Email
-              </button>
+        </div>
+      ) : (
+        // Regular Event Flow
+        <div className="bg-white rounded-xl shadow-2xl overflow-hidden">
+          {/* Event Header */}
+          {eventTitle && (
+            <RegistrationHeader
+              eventTitle={eventTitle}
+              formattedPrice={formattedPrice}
+              isPriceAvailable={isPriceAvailable}
+              originalPrice={eventPrice}
+              discountInfo={discountInfo}
+              currentParticipantCount={currentParticipantCount}
+              numberOfPeople={billingDetails.numberOfPeople}
+            />
+          )}
+
+          {isPriceAvailable ? (
+            // Only show billing and payment form if price is available
+            <div className="p-6 sm:p-10">
+              {/* Billing Section */}
+              <BillingForm
+                billingDetails={billingDetails}
+                handleInputChange={handleInputChange}
+                isSigningUpForSelf={isSigningUpForSelf}
+                setIsSigningUpForSelf={setIsSigningUpForSelf}
+                eventOptions={eventOptions}
+                participants={participants}
+                setParticipants={setParticipants}
+                selectedOptions={selectedOptions}
+                handleOptionChange={handleOptionChange}
+                formattedPrice={formattedPrice}
+                totalPrice={totalPrice}
+                originalPrice={eventPrice}
+                discountInfo={discountInfo}
+                currentParticipantCount={currentParticipantCount}
+              />
+
+              {/* Payment Section */}
+              <PaymentProcessor
+                error={error}
+                setError={setError}
+                isLoaded={isLoaded}
+                config={config}
+                formValid={formValid}
+                billingDetails={billingDetails}
+                eventId={eventId}
+                eventTitle={eventTitle}
+                totalPrice={totalPrice}
+                submitPayment={handleSubmitPayment}
+                router={router}
+                participants={participants}
+                getParticipantValidationError={getParticipantValidationError}
+              />
             </div>
-            <p className="text-gray-600">
-              We&apos;ll be happy to assist you with your registration and
-              answer any questions you may have.
-            </p>
-          </div>
-        )}
-      </div>
+          ) : (
+            <div className="p-10 text-center">
+              <p className="text-lg mb-6">
+                To register for this event, please contact us directly by email.
+              </p>
+              <div className="flex justify-center gap-4 mb-8">
+                <button
+                  onClick={
+                    () =>
+                      (window.location.href =
+                        "mailto:info@coastalcreationsstudio.com")
+                    // "mailto:crystaledgedev22@gmail.com"
+                  }
+                  className="px-6 py-3 bg-white text-black font-medium rounded-md hover:bg-gray-100 transition-colors border-2 border-black flex items-center justify-center"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 mr-2"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                    />
+                  </svg>
+                  Email
+                </button>
+              </div>
+              <p className="text-gray-600">
+                We&apos;ll be happy to assist you with your registration and
+                answer any questions you may have.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
