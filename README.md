@@ -1,6 +1,8 @@
 # Coastal Creations Studio
 
-An art studio web application for class bookings, event management, and creative workshops in Ocean City, NJ.
+## About
+
+Coastal Creations Studio is a vibrant art studio maintained by Ashley Mathers, offering a variety of creative classes, workshops, camps, and birthday parties for all ages.
 
 ## Studio Information
 
@@ -11,10 +13,6 @@ Owner: Ashley Mathers
 
 **Website Development**  
 Developer: Benjamin Corbett
-
-## About
-
-Coastal Creations Studio is a vibrant art studio maintained by Ashley Mathers, offering a variety of creative classes, workshops, camps, and birthday parties for all ages.
 
 ## Features
 
