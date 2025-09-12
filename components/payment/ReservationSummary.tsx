@@ -78,7 +78,7 @@ export default function ReservationSummary({
         <div className="space-y-3">
           {reservationBooking.selectedDates
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-            .map((selectedDate, index) => (
+            .map((selectedDate) => (
               <div 
                 key={selectedDate.date} 
                 className="bg-gray-50 rounded-lg p-4 border border-gray-200"

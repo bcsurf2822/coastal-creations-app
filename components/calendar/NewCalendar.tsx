@@ -5,7 +5,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import "./calendar.css";
 import { useRouter } from "next/navigation";
 import { CalendarEvent, ApiEvent } from "@/types/interfaces";
@@ -31,7 +31,7 @@ export default function NewCalendar() {
   ];
 
   // Add a helper function to convert 24-hour time to 12-hour time
-  const convertTo12Hour = (time24: string): string => {
+  const convertTo12Hour = useCallback((time24: string): string => {
     if (!time24) return "";
 
     const [hours, minutes] = time24.split(":").map(Number);
@@ -39,10 +39,10 @@ export default function NewCalendar() {
     const hours12 = hours % 12 || 12; // Convert 0 to 12 for 12 AM
 
     return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
-  };
+  }, []);
 
   // Transform API events to FullCalendar format
-  const transformEvents = (apiEvents: ApiEvent[]): CalendarEvent[] => {
+  const transformEvents = useCallback((apiEvents: ApiEvent[]): CalendarEvent[] => {
     let calendarEvents: CalendarEvent[] = [];
 
     apiEvents.forEach((event) => {
@@ -190,7 +190,7 @@ export default function NewCalendar() {
     });
 
     return calendarEvents;
-  };
+  }, [convertTo12Hour]);
 
   // Helper function to generate recurring event instances
   const generateRecurringEvents = (
@@ -356,7 +356,7 @@ export default function NewCalendar() {
 
     fetchEvents();
     fetchCustomers();
-  }, []);
+  }, [transformEvents]);
 
   // Define a function to get event colors based on type
   const getEventColor = (eventType: string): string => {

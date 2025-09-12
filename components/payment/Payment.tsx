@@ -396,7 +396,7 @@ export default function Payment() {
       fetchEventDetails();
       fetchParticipantCount();
     }
-  }, [eventId]);
+  }, [eventId, eventOptions]);
 
   // Check for reservation booking data from sessionStorage
   useEffect(() => {
@@ -477,6 +477,8 @@ export default function Payment() {
     currentParticipantCount,
     selectedOptions,
     participants,
+    calculateDiscountedPrice,
+    calculateTotalOptionCosts,
   ]);
 
   // Validate form fields

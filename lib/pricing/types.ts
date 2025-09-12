@@ -3,8 +3,14 @@
  * @module lib/pricing/types
  */
 
-import { z } from 'zod';
-import type { PricingTier } from '../validations/reservationValidation';
+/**
+ * Pricing tier interface for reservation events.
+ */
+export interface PricingTier {
+  numberOfDays: number;
+  price: number;
+  label?: string;
+}
 
 /**
  * Options for pricing calculations with various configuration flags.
@@ -146,34 +152,26 @@ export class PricingError extends Error {
 }
 
 /**
- * Validation schema for pricing options.
+ * Additional types for reservation settings.
  */
-export const pricingOptionsSchema = z.object({
-  requireConsecutiveDays: z.boolean().optional(),
-  includeTax: z.boolean().optional(),
-  taxRate: z.number().min(0).max(1).optional(),
-  maxDiscount: z.number().min(0).max(1).optional(),
-  roundPrices: z.boolean().optional(),
-  currency: z.string().length(3).optional(),
-}).strict();
+export interface ReservationSettings {
+  dayPricing: PricingTier[];
+  maxDays?: number;
+  requireConsecutiveDays?: boolean;
+  dailyCapacity?: number;
+}
 
 /**
- * Validation schema for pricing configuration.
+ * Reservation details for customer bookings.
  */
-export const pricingConfigSchema = z.object({
-  defaultCurrency: z.string().length(3),
-  defaultTaxRate: z.number().min(0).max(1),
-  enableSuggestions: z.boolean(),
-  maxSuggestions: z.number().int().min(1).max(10),
-  minSuggestedSavings: z.number().min(0),
-  roundingStrategy: z.enum(['none', 'nearest_dollar', 'nearest_quarter', 'up', 'down']),
-}).strict();
-
-/**
- * Type inference exports for external use.
- */
-export type PricingOptionsInput = z.infer<typeof pricingOptionsSchema>;
-export type PricingConfigInput = z.infer<typeof pricingConfigSchema>;
+export interface ReservationDetails {
+  selectedDates: Date[];
+  numberOfDays: number;
+  appliedPriceTier: PricingTier;
+  isConsecutive: boolean;
+  checkInDate: Date;
+  checkOutDate?: Date;
+}
 
 /**
  * Default pricing configuration.

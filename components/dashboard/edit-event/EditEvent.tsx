@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import toast from "react-hot-toast";
 
 interface EventOption {
@@ -956,9 +957,11 @@ export default function EditEvent() {
             <div className="mt-2">
               <p className="text-sm text-gray-600">Preview:</p>
               <div className="relative inline-block">
-                <img
+                <Image
                   src={uploadedImageUrl}
                   alt="Uploaded event image"
+                  width={128}
+                  height={128}
                   className="mt-1 h-32 w-auto object-cover rounded-md"
                   onLoad={handleImageLoad}
                   onLoadStart={handleImageLoadStart}

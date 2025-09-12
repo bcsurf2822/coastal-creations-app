@@ -5,7 +5,7 @@
 
 'use client';
 
-import { ReactElement, memo, useCallback } from 'react';
+import { memo, useCallback } from 'react';
 import { format, isSameMonth, isToday } from 'date-fns';
 import type { PricingTier } from '../../lib/validations/reservationValidation';
 
@@ -175,7 +175,6 @@ export const CalendarDay = memo<CalendarDayProps>(({
       onKeyDown={handleKeyDown}
       disabled={isDisabled || !canSelect}
       aria-label={getAriaLabel()}
-      aria-selected={isSelected}
       aria-disabled={isDisabled || !canSelect}
       title={combinedTooltip || undefined}
       tabIndex={isAvailable && canSelect ? 0 : -1}
@@ -285,3 +284,5 @@ export const CalendarDayWithPricing = memo<CalendarDayWithPricingProps>(({
     />
   );
 });
+
+CalendarDayWithPricing.displayName = 'CalendarDayWithPricing';

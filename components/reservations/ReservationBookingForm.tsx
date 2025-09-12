@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, ReactElement } from "react";
+import { useState, useEffect, useCallback, ReactElement } from "react";
 import { useRouter } from "next/navigation";
 
 interface Event {
@@ -60,11 +60,6 @@ export default function ReservationBookingForm({
     }
   }, [event]);
 
-  // Calculate pricing when selected dates change
-  useEffect(() => {
-    calculatePricing();
-  }, [selectedDates, event.reservationSettings]);
-
   const generateDateRange = (startDate: string, endDate: string): string[] => {
     const dates: string[] = [];
     const start = new Date(startDate);
@@ -85,7 +80,7 @@ export default function ReservationBookingForm({
     return dates;
   };
 
-  const calculatePricing = (): void => {
+  const calculatePricing = useCallback((): void => {
     if (!selectedDates.length || !event.reservationSettings?.dayPricing) {
       setTotalCost(0);
       setAppliedPriceTier(null);
@@ -111,7 +106,12 @@ export default function ReservationBookingForm({
     // Calculate total: each participant-day at the tier price
     const cost = totalParticipants * selectedTier.price;
     setTotalCost(cost);
-  };
+  }, [selectedDates, event.reservationSettings?.dayPricing]);
+
+  // Calculate pricing when selected dates change
+  useEffect(() => {
+    calculatePricing();
+  }, [selectedDates, event.reservationSettings, calculatePricing]);
 
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -391,9 +391,11 @@ export default function ReservationBookingForm({
                           )
                         }
                         disabled={
-                          event.reservationSettings?.dailyCapacity &&
-                          selectedDate.participantCount >=
-                            event.reservationSettings.dailyCapacity
+                          !!(
+                            event.reservationSettings?.dailyCapacity &&
+                            selectedDate.participantCount >=
+                              event.reservationSettings.dailyCapacity
+                          )
                         }
                         className="w-10 h-10 rounded-full border border-gray-300 bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 flex items-center justify-center font-semibold"
                       >
