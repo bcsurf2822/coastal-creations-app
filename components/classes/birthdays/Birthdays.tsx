@@ -336,7 +336,7 @@ const Birthdays = () => {
               },
             }}
           />
-          <LoadingText>Loading magical birthday parties... 🎉</LoadingText>
+          <LoadingText>Loading...</LoadingText>
         </LoadingContainer>
       </StyledContainer>
     );
@@ -367,7 +367,7 @@ const Birthdays = () => {
         <TitleIcon>
           <FaBirthdayCake />
         </TitleIcon>
-        Birthday Parties
+        Private Events
         <TitleIcon>
           <GiBalloons />
         </TitleIcon>

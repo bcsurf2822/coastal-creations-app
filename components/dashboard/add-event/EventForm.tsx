@@ -1195,7 +1195,7 @@ const EventForm = (): ReactElement => {
                       data-lpignore="true"
                       data-form-type="other"
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="e.g., Group Discount"
+                      placeholder="Discount Name to appear on class card"
                     />
                     {getFieldError("discount.name") && (
                       <p className="text-red-600 text-sm mt-1">
@@ -1302,7 +1302,7 @@ const EventForm = (): ReactElement => {
                       data-lpignore="true"
                       data-form-type="other"
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Optional description of the discount"
+                      placeholder="Optional description that will display when condition is met in payments page"
                     />
                   </div>
 
