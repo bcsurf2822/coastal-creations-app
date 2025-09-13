@@ -9,13 +9,46 @@ import React, { ReactElement, useRef, useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import toast from "react-hot-toast";
-import {
-  EventFormData,
-  EventType,
-  getDefaultValuesForEventType,
-  validators,
-  OptionCategory,
-} from "../../../lib/types/eventTypes";
+import dayjs, { Dayjs } from "dayjs";
+import type { IEvent } from "../../../lib/models/Event";
+
+interface EventFormState {
+  eventName: string;
+  eventType: "class" | "camp" | "workshop" | "artist" | "reservation";
+  description: string;
+  price?: number;
+  numberOfParticipants?: number;
+  startDate: string;
+  endDate?: string;
+  startTime: Dayjs | null;
+  endTime: Dayjs | null;
+  isRecurring: boolean;
+  recurringPattern?: "daily" | "weekly" | "monthly" | "yearly";
+  recurringEndDate: string;
+  hasOptions: boolean;
+  optionCategories: Array<{
+    categoryName: string;
+    categoryDescription?: string;
+    choices: Array<{ name: string; price?: number }>;
+  }>;
+  isDiscountAvailable: boolean;
+  discount?: {
+    type: "percentage" | "fixed";
+    value: number;
+    minParticipants: number;
+    name: string;
+    description?: string;
+  };
+  image?: File;
+  reservationSettings?: {
+    dayPricing: Array<{
+      numberOfDays: number;
+      price: number;
+      label?: string;
+    }>;
+    dailyCapacity?: number;
+  };
+}
 
 const EventForm = (): ReactElement => {
   const router = useRouter();
@@ -24,10 +57,27 @@ const EventForm = (): ReactElement => {
   const endDateInputRef = useRef<HTMLInputElement>(null);
   const recurringEndDateInputRef = useRef<HTMLInputElement>(null);
 
-  // Form state
-  const [formData, setFormData] = useState<EventFormData>(() => 
-    getDefaultValuesForEventType("class") as EventFormData
-  );
+  // Form state with proper dayjs types
+  const [formData, setFormData] = useState<EventFormState>({
+    eventName: "",
+    eventType: "class",
+    description: "",
+    price: undefined,
+    numberOfParticipants: undefined,
+    startDate: "",
+    endDate: undefined,
+    startTime: null,
+    endTime: null,
+    isRecurring: false,
+    recurringPattern: "weekly",
+    recurringEndDate: "",
+    hasOptions: false,
+    optionCategories: [],
+    isDiscountAvailable: false,
+    discount: undefined,
+    image: undefined,
+    reservationSettings: undefined,
+  });
   
   // Form errors state
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -39,23 +89,22 @@ const EventForm = (): ReactElement => {
   const [isImageLoading, setIsImageLoading] = useState(false);
 
   // Prepare date for submission to prevent timezone issues
-  const prepareDateForSubmit = (dateString: string) => {
-    if (!dateString) return "";
+  const prepareDateForSubmit = (dateString: string): Date | null => {
+    if (!dateString) return null;
     const [year, month, day] = dateString.split("-").map(Number);
     // Create a Date object using local components to prevent timezone shift
-    const date = new Date(year, month - 1, day, 12, 0, 0);
-    return date.toISOString();
+    return new Date(year, month - 1, day, 12, 0, 0);
   };
 
   // Handle form field changes
-  const handleInputChange = useCallback((field: keyof EventFormData, value: string | boolean | File | null | OptionCategory[]) => {
+  const handleInputChange = useCallback((field: keyof EventFormState, value: string | boolean | File | number | null | Dayjs | EventFormState['optionCategories'] | EventFormState['reservationSettings']) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
     // Clear error for this field when user starts typing
-    if (errors[field]) {
+    if (errors[field as string]) {
       setErrors(prev => {
         const newErrors = { ...prev };
-        delete newErrors[field];
+        delete newErrors[field as string];
         return newErrors;
       });
     }
@@ -72,7 +121,7 @@ const EventForm = (): ReactElement => {
         if (!current[fieldParts[i]]) {
           current[fieldParts[i]] = {};
         }
-        current = current[fieldParts[i]];
+        current = current[fieldParts[i]] as Record<string, unknown>;
       }
       
       current[fieldParts[fieldParts.length - 1]] = value;
@@ -90,9 +139,30 @@ const EventForm = (): ReactElement => {
   }, [errors]);
 
   // Handle event type change and reset form values accordingly
-  const handleEventTypeChange = useCallback((newEventType: EventType) => {
-    const defaultValues = getDefaultValuesForEventType(newEventType);
-    setFormData(defaultValues as EventFormData);
+  const handleEventTypeChange = useCallback((newEventType: "class" | "camp" | "workshop" | "artist" | "reservation") => {
+    setFormData({
+      eventName: "",
+      eventType: newEventType,
+      description: "",
+      price: undefined,
+      numberOfParticipants: undefined,
+      startDate: "",
+      endDate: newEventType === "reservation" ? "" : undefined,
+      startTime: null,
+      endTime: null,
+      isRecurring: false,
+      recurringPattern: "weekly",
+      recurringEndDate: "",
+      hasOptions: false,
+      optionCategories: [],
+      isDiscountAvailable: false,
+      discount: undefined,
+      image: undefined,
+      reservationSettings: newEventType === "reservation" ? {
+        dayPricing: [{ numberOfDays: 1, price: 75 }],
+        dailyCapacity: undefined,
+      } : undefined,
+    });
     setUploadedImageUrl(null);
     setImageUploadStatus(null);
     setErrors({});
@@ -157,31 +227,31 @@ const EventForm = (): ReactElement => {
 
   // Option category management
   const addOptionCategory = useCallback(() => {
-    const newCategory: OptionCategory = {
+    const newCategory = {
       categoryName: "",
       categoryDescription: "",
-      choices: [{ name: "", price: "" }],
+      choices: [{ name: "", price: undefined as number | undefined }],
     };
     
     setFormData(prev => ({
       ...prev,
-      optionCategories: [...(prev.optionCategories || []), newCategory]
+      optionCategories: [...prev.optionCategories, newCategory]
     }));
   }, []);
 
   const removeOptionCategory = useCallback((index: number) => {
     setFormData(prev => ({
       ...prev,
-      optionCategories: prev.optionCategories?.filter((_, i) => i !== index)
+      optionCategories: prev.optionCategories.filter((_, i) => i !== index)
     }));
   }, []);
 
   const addChoiceToCategory = useCallback((categoryIndex: number) => {
     setFormData(prev => {
-      const newCategories = [...(prev.optionCategories || [])];
+      const newCategories = [...prev.optionCategories];
       newCategories[categoryIndex] = {
         ...newCategories[categoryIndex],
-        choices: [...newCategories[categoryIndex].choices, { name: "", price: "" }]
+        choices: [...newCategories[categoryIndex].choices, { name: "", price: undefined }]
       };
       return { ...prev, optionCategories: newCategories };
     });
@@ -189,7 +259,7 @@ const EventForm = (): ReactElement => {
 
   const removeChoiceFromCategory = useCallback((categoryIndex: number, choiceIndex: number) => {
     setFormData(prev => {
-      const newCategories = [...(prev.optionCategories || [])];
+      const newCategories = [...prev.optionCategories];
       newCategories[categoryIndex] = {
         ...newCategories[categoryIndex],
         choices: newCategories[categoryIndex].choices.filter((_, i) => i !== choiceIndex)
@@ -200,7 +270,7 @@ const EventForm = (): ReactElement => {
 
   const updateOptionCategory = useCallback((categoryIndex: number, field: string, value: string) => {
     setFormData(prev => {
-      const newCategories = [...(prev.optionCategories || [])];
+      const newCategories = [...prev.optionCategories];
       newCategories[categoryIndex] = {
         ...newCategories[categoryIndex],
         [field]: value
@@ -209,119 +279,107 @@ const EventForm = (): ReactElement => {
     });
   }, []);
 
-  const updateChoice = useCallback((categoryIndex: number, choiceIndex: number, field: string, value: string) => {
+  const updateChoice = useCallback((categoryIndex: number, choiceIndex: number, field: string, value: string | number | undefined) => {
     setFormData(prev => {
-      const newCategories = [...(prev.optionCategories || [])];
+      const newCategories = [...prev.optionCategories];
       newCategories[categoryIndex] = {
         ...newCategories[categoryIndex],
         choices: newCategories[categoryIndex].choices.map((choice, i) => 
-          i === choiceIndex ? { ...choice, [field]: value } : choice
+          i === choiceIndex ? { ...choice, [field]: field === 'price' ? (value ? Number(value) : undefined) : value } : choice
         )
       };
       return { ...prev, optionCategories: newCategories };
     });
   }, []);
 
+  // Handle time field changes
+  const handleTimeChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>, field: 'startTime' | 'endTime') => {
+    const timeValue = event.target.value;
+    if (timeValue) {
+      const [hours, minutes] = timeValue.split(':').map(Number);
+      const timeObj = dayjs().hour(hours).minute(minutes).second(0);
+      handleInputChange(field, timeObj);
+    } else {
+      handleInputChange(field, null);
+    }
+  }, [handleInputChange]);
+
   // Form validation
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
     // Basic validations
-    const requiredError = validators.required(formData.eventName, "Event name");
-    if (requiredError) newErrors.eventName = requiredError;
-
-    const descError = validators.required(formData.description, "Description");
-    if (descError) newErrors.description = descError;
-    else {
-      const minLengthError = validators.minLength(formData.description, 10, "Description");
-      if (minLengthError) newErrors.description = minLengthError;
+    if (!formData.eventName.trim()) {
+      newErrors.eventName = "Event name is required";
     }
 
-    const startDateError = validators.required(formData.startDate, "Start date");
-    if (startDateError) newErrors.startDate = startDateError;
-    else {
-      const dateFormatError = validators.dateFormat(formData.startDate, "Start date");
-      if (dateFormatError) newErrors.startDate = dateFormatError;
-      else {
-        const futureDateError = validators.futureDate(formData.startDate, "Start date");
-        if (futureDateError) newErrors.startDate = futureDateError;
+    if (!formData.description.trim()) {
+      newErrors.description = "Description is required";
+    } else if (formData.description.length < 10) {
+      newErrors.description = "Description must be at least 10 characters";
+    }
+
+    if (!formData.startDate) {
+      newErrors.startDate = "Start date is required";
+    } else {
+      const startDate = new Date(formData.startDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (startDate < today) {
+        newErrors.startDate = "Start date must be in the future";
       }
     }
 
-    const startTimeError = validators.required(formData.startTime, "Start time");
-    if (startTimeError) newErrors.startTime = startTimeError;
-    else {
-      const timeFormatError = validators.timeFormat(formData.startTime, "Start time");
-      if (timeFormatError) newErrors.startTime = timeFormatError;
+    if (!formData.startTime) {
+      newErrors.startTime = "Start time is required";
     }
 
-    const endTimeError = validators.required(formData.endTime, "End time");
-    if (endTimeError) newErrors.endTime = endTimeError;
-    else {
-      const timeFormatError = validators.timeFormat(formData.endTime, "End time");
-      if (timeFormatError) newErrors.endTime = timeFormatError;
-      else {
-        const endAfterStartError = validators.endTimeAfterStart(formData.startTime, formData.endTime);
-        if (endAfterStartError) newErrors.endTime = endAfterStartError;
-      }
+    if (!formData.endTime) {
+      newErrors.endTime = "End time is required";
+    } else if (formData.startTime && formData.endTime.isBefore(formData.startTime)) {
+      newErrors.endTime = "End time must be after start time";
     }
 
     // Event type specific validations
     if (formData.eventType !== "artist" && formData.eventType !== "reservation") {
-      const priceError = validators.required(formData.price, "Price");
-      if (priceError) newErrors.price = priceError;
-      else {
-        const numError = validators.positiveNumber(formData.price, "Price");
-        if (numError) newErrors.price = numError;
+      if (!formData.price || formData.price <= 0) {
+        newErrors.price = "Price is required and must be greater than 0";
       }
 
-      const participantsError = validators.required(formData.numberOfParticipants, "Number of participants");
-      if (participantsError) newErrors.numberOfParticipants = participantsError;
-      else {
-        const rangeError = validators.range(formData.numberOfParticipants, 1, 20, "Number of participants");
-        if (rangeError) newErrors.numberOfParticipants = rangeError;
+      if (!formData.numberOfParticipants || formData.numberOfParticipants < 1 || formData.numberOfParticipants > 20) {
+        newErrors.numberOfParticipants = "Number of participants must be between 1 and 20";
       }
     }
 
     // Reservation specific validations
     if (formData.eventType === "reservation") {
-      const endDateError = validators.required(formData.endDate, "End date");
-      if (endDateError) newErrors.endDate = endDateError;
-      else {
-        const dateFormatError = validators.dateFormat(formData.endDate, "End date");
-        if (dateFormatError) newErrors.endDate = dateFormatError;
-        else {
-          const futureDateError = validators.futureDate(formData.endDate, "End date");
-          if (futureDateError) newErrors.endDate = futureDateError;
-          else {
-            const endAfterStartError = validators.endDateAfterStart(formData.startDate, formData.endDate);
-            if (endAfterStartError) newErrors.endDate = endAfterStartError;
-          }
+      if (!formData.endDate) {
+        newErrors.endDate = "End date is required for reservation events";
+      } else {
+        const startDate = new Date(formData.startDate);
+        const endDate = new Date(formData.endDate);
+        if (endDate <= startDate) {
+          newErrors.endDate = "End date must be after start date";
         }
       }
     }
 
     // Recurring event validations
     if (formData.eventType !== "artist" && formData.eventType !== "reservation" && formData.isRecurring) {
-      const recurringEndError = validators.required(formData.recurringEndDate, "Recurring end date");
-      if (recurringEndError) newErrors.recurringEndDate = recurringEndError;
-      else {
-        const dateFormatError = validators.dateFormat(formData.recurringEndDate, "Recurring end date");
-        if (dateFormatError) newErrors.recurringEndDate = dateFormatError;
-        else {
-          const futureDateError = validators.futureDate(formData.recurringEndDate, "Recurring end date");
-          if (futureDateError) newErrors.recurringEndDate = futureDateError;
-          else {
-            const endAfterStartError = validators.endDateAfterStart(formData.startDate, formData.recurringEndDate);
-            if (endAfterStartError) newErrors.recurringEndDate = endAfterStartError;
-          }
+      if (!formData.recurringEndDate) {
+        newErrors.recurringEndDate = "Recurring end date is required";
+      } else {
+        const startDate = new Date(formData.startDate);
+        const recurringEndDate = new Date(formData.recurringEndDate);
+        if (recurringEndDate <= startDate) {
+          newErrors.recurringEndDate = "Recurring end date must be after start date";
         }
       }
     }
 
     // Options validations
     if (formData.eventType !== "artist" && formData.eventType !== "reservation" && formData.hasOptions) {
-      if (!formData.optionCategories || formData.optionCategories.length === 0) {
+      if (formData.optionCategories.length === 0) {
         newErrors.optionCategories = "At least one option category is required when options are enabled";
       } else {
         formData.optionCategories.forEach((category, categoryIndex) => {
@@ -332,11 +390,8 @@ const EventForm = (): ReactElement => {
             if (!choice.name.trim()) {
               newErrors[`optionCategories.${categoryIndex}.choices.${choiceIndex}.name`] = "Choice name is required";
             }
-            if (choice.price && choice.price.trim()) {
-              const priceError = validators.positiveNumber(choice.price, "Choice price");
-              if (priceError) {
-                newErrors[`optionCategories.${categoryIndex}.choices.${choiceIndex}.price`] = priceError;
-              }
+            if (choice.price !== undefined && choice.price < 0) {
+              newErrors[`optionCategories.${categoryIndex}.choices.${choiceIndex}.price`] = "Choice price must be 0 or greater";
             }
           });
         });
@@ -349,30 +404,19 @@ const EventForm = (): ReactElement => {
         newErrors["discount.name"] = "Discount name is required";
       }
       
-      const discountValueError = validators.required(formData.discount.value, "Discount value");
-      if (discountValueError) newErrors["discount.value"] = discountValueError;
-      else {
-        const numError = validators.positiveNumber(formData.discount.value, "Discount value");
-        if (numError) newErrors["discount.value"] = numError;
-        else {
-          const discountValue = parseFloat(formData.discount.value);
-          if (formData.discount.type === "percentage" && discountValue > 100) {
-            newErrors["discount.value"] = "Percentage discount cannot exceed 100%";
-          }
-          if (formData.discount.type === "fixed" && formData.price) {
-            const price = parseFloat(formData.price);
-            if (discountValue >= price) {
-              newErrors["discount.value"] = "Fixed discount cannot be greater than or equal to the price";
-            }
-          }
+      if (!formData.discount.value || formData.discount.value <= 0) {
+        newErrors["discount.value"] = "Discount value is required and must be greater than 0";
+      } else {
+        if (formData.discount.type === "percentage" && formData.discount.value > 100) {
+          newErrors["discount.value"] = "Percentage discount cannot exceed 100%";
+        }
+        if (formData.discount.type === "fixed" && formData.price && formData.discount.value >= formData.price) {
+          newErrors["discount.value"] = "Fixed discount cannot be greater than or equal to the price";
         }
       }
 
-      const minParticipantsError = validators.required(formData.discount.minParticipants, "Minimum participants");
-      if (minParticipantsError) newErrors["discount.minParticipants"] = minParticipantsError;
-      else {
-        const rangeError = validators.range(formData.discount.minParticipants, 2, 20, "Minimum participants");
-        if (rangeError) newErrors["discount.minParticipants"] = rangeError;
+      if (!formData.discount.minParticipants || formData.discount.minParticipants < 2 || formData.discount.minParticipants > 20) {
+        newErrors["discount.minParticipants"] = "Minimum participants must be between 2 and 20";
       }
     }
 
@@ -412,57 +456,49 @@ const EventForm = (): ReactElement => {
       });
 
       // Transform form data to match Event model structure
-      const eventData = {
-        ...formData,
-        image: uploadedImageUrl,
+      const eventData: Partial<IEvent> = {
+        eventName: formData.eventName,
+        eventType: formData.eventType,
+        description: formData.description,
+        price: formData.price,
+        numberOfParticipants: formData.numberOfParticipants,
+        image: uploadedImageUrl || undefined,
         // Transform dates for different event types
         dates: {
-          startDate: prepareDateForSubmit(formData.startDate),
-          isRecurring:
-            formData.eventType !== "reservation"
-              ? formData.isRecurring || false
-              : false,
-          ...(formData.eventType === "reservation" &&
-            formData.endDate && {
-              endDate: prepareDateForSubmit(formData.endDate),
-            }),
-          ...(formData.eventType !== "reservation" &&
-            formData.isRecurring && {
-              recurringPattern: formData.recurringPattern,
-              recurringEndDate: prepareDateForSubmit(formData.recurringEndDate || ""),
-            }),
+          startDate: prepareDateForSubmit(formData.startDate)!,
+          isRecurring: formData.eventType !== "reservation" ? formData.isRecurring : false,
+          ...(formData.eventType === "reservation" && formData.endDate && {
+            endDate: prepareDateForSubmit(formData.endDate)!,
+          }),
+          ...(formData.eventType !== "reservation" && formData.isRecurring && {
+            recurringPattern: formData.recurringPattern,
+            recurringEndDate: prepareDateForSubmit(formData.recurringEndDate)!,
+          }),
         },
         time: {
-          startTime: formData.startTime,
-          endTime: formData.endTime,
+          startTime: formData.startTime?.format('HH:mm') || '',
+          endTime: formData.endTime?.format('HH:mm') || '',
         },
-        // Transform options data structure and field name
-        ...(formData.hasOptions && formData.optionCategories && formData.optionCategories.length > 0 && {
+        // Transform options data structure
+        ...(formData.hasOptions && formData.optionCategories.length > 0 && {
           options: formData.optionCategories.map(category => ({
             categoryName: category.categoryName,
             categoryDescription: category.categoryDescription,
             choices: category.choices.map(choice => ({
               name: choice.name,
-              price: choice.price ? parseFloat(choice.price) : 0,
+              price: choice.price || 0,
             })),
           })),
         }),
-        // Transform discount data to numbers
+        // Transform discount data
         ...(formData.isDiscountAvailable && formData.discount && {
-          discount: {
-            ...formData.discount,
-            value: parseFloat(formData.discount.value),
-            minParticipants: parseInt(formData.discount.minParticipants, 10),
-          },
+          isDiscountAvailable: true,
+          discount: formData.discount,
         }),
-        // Transform price and numberOfParticipants to numbers
-        ...(formData.price && { price: parseFloat(formData.price) }),
-        ...(formData.numberOfParticipants && { numberOfParticipants: parseInt(formData.numberOfParticipants, 10) }),
-        // Remove form-only fields that shouldn't be sent to API
-        hasOptions: undefined,
-        optionCategories: undefined,
-        isDiscountAvailable: undefined,
-        imageUrl: undefined,
+        // Add reservation settings if applicable
+        ...(formData.eventType === "reservation" && formData.reservationSettings && {
+          reservationSettings: formData.reservationSettings,
+        }),
       };
 
       const response = await fetch("/api/events", {
@@ -592,7 +628,7 @@ const EventForm = (): ReactElement => {
             </label>
             <select
               value={formData.eventType}
-              onChange={(e) => handleEventTypeChange(e.target.value as EventType)}
+              onChange={(e) => handleEventTypeChange(e.target.value as "class" | "camp" | "workshop" | "artist" | "reservation")}
               autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck="false"
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
@@ -709,8 +745,8 @@ const EventForm = (): ReactElement => {
                 Start Time <span className="text-red-500">*</span>
               </label>
               <select
-                value={formData.startTime}
-                onChange={(e) => handleInputChange("startTime", e.target.value)}
+                value={formData.startTime ? formData.startTime.format('HH:mm') : ''}
+                onChange={(e) => handleTimeChange(e, 'startTime')}
                 autoComplete="new-password"
                 data-lpignore="true"
                 data-form-type="other"
@@ -731,15 +767,15 @@ const EventForm = (): ReactElement => {
                 End Time <span className="text-red-500">*</span>
               </label>
               <select
-                value={formData.endTime}
-                onChange={(e) => handleInputChange("endTime", e.target.value)}
+                value={formData.endTime ? formData.endTime.format('HH:mm') : ''}
+                onChange={(e) => handleTimeChange(e, 'endTime')}
                 autoComplete="new-password"
                 data-lpignore="true"
                 data-form-type="other"
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select end time</option>
-                {generateTimeOptions(true, formData.startTime)}
+                {generateTimeOptions(true, formData.startTime ? formData.startTime.format('HH:mm') : undefined)}
               </select>
               {getFieldError("endTime") && (
                 <p className="text-red-600 text-sm mt-1">
@@ -758,11 +794,11 @@ const EventForm = (): ReactElement => {
                 </label>
                 <input
                   type="text"
-                  value={formData.price || ""}
+                  value={formData.price?.toString() || ""}
                   onChange={(e) => {
                     const value = e.target.value;
                     if (/^\d*\.?\d*$/.test(value)) {
-                      handleInputChange("price", value);
+                      handleInputChange("price", value ? Number(value) : undefined);
                     }
                   }}
                   autoComplete="new-password"
@@ -786,8 +822,8 @@ const EventForm = (): ReactElement => {
                   Number of Participants <span className="text-red-500">*</span>
                 </label>
                 <select
-                  value={formData.numberOfParticipants || ""}
-                  onChange={(e) => handleInputChange("numberOfParticipants", e.target.value)}
+                  value={formData.numberOfParticipants?.toString() || ""}
+                  onChange={(e) => handleInputChange("numberOfParticipants", e.target.value ? Number(e.target.value) : undefined)}
                   autoComplete="new-password"
                   data-lpignore="true"
                   data-form-type="other"
@@ -953,7 +989,7 @@ const EventForm = (): ReactElement => {
 
               {formData.hasOptions && (
                 <div className="ml-6 space-y-6">
-                  {(formData.optionCategories || []).map((category, categoryIndex) => (
+                  {formData.optionCategories.map((category, categoryIndex) => (
                     <div
                       key={categoryIndex}
                       className="border border-gray-200 rounded-md p-4"
@@ -962,7 +998,7 @@ const EventForm = (): ReactElement => {
                         <h4 className="text-lg font-medium">
                           Option Category {categoryIndex + 1}
                         </h4>
-                        {(formData.optionCategories || []).length > 1 && (
+                        {formData.optionCategories.length > 1 && (
                           <button
                             type="button"
                             onClick={() => removeOptionCategory(categoryIndex)}
@@ -1047,11 +1083,11 @@ const EventForm = (): ReactElement => {
                                 <div className="w-32">
                                   <input
                                     type="text"
-                                    value={choice.price || ""}
+                                    value={choice.price?.toString() || ""}
                                     onChange={(e) => {
                                       const value = e.target.value;
                                       if (/^\d*\.?\d*$/.test(value)) {
-                                        updateChoice(categoryIndex, choiceIndex, "price", value);
+                                        updateChoice(categoryIndex, choiceIndex, "price", value ? Number(value) : undefined);
                                       }
                                     }}
                                     autoComplete="new-password"
@@ -1114,7 +1150,27 @@ const EventForm = (): ReactElement => {
                 <input
                   type="checkbox"
                   checked={formData.isDiscountAvailable || false}
-                  onChange={(e) => handleInputChange("isDiscountAvailable", e.target.checked)}
+                  onChange={(e) => {
+                    const isChecked = e.target.checked;
+                    handleInputChange("isDiscountAvailable", isChecked);
+                    if (isChecked && !formData.discount) {
+                      setFormData(prev => ({
+                        ...prev,
+                        discount: {
+                          type: "percentage" as const,
+                          value: 0,
+                          minParticipants: 2,
+                          name: "",
+                          description: "",
+                        }
+                      }));
+                    } else if (!isChecked) {
+                      setFormData(prev => ({
+                        ...prev,
+                        discount: undefined
+                      }));
+                    }
+                  }}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
                 <label className="text-sm font-medium text-gray-700">
@@ -1130,7 +1186,7 @@ const EventForm = (): ReactElement => {
                     </label>
                     <input
                       type="text"
-                      value={formData.discount.name}
+                      value={formData.discount?.name || ''}
                       onChange={(e) => handleNestedChange("discount.name", e.target.value)}
                       autoComplete="new-password"
                       autoCapitalize="none"
@@ -1153,7 +1209,7 @@ const EventForm = (): ReactElement => {
                       Discount Type <span className="text-red-500">*</span>
                     </label>
                     <select
-                      value={formData.discount.type}
+                      value={formData.discount?.type || 'percentage'}
                       onChange={(e) => handleNestedChange("discount.type", e.target.value)}
                       autoComplete="new-password"
                       data-lpignore="true"
@@ -1176,11 +1232,11 @@ const EventForm = (): ReactElement => {
                     </label>
                     <input
                       type="text"
-                      value={formData.discount.value}
+                      value={formData.discount?.value?.toString() || ''}
                       onChange={(e) => {
                         const value = e.target.value;
                         if (/^\d*\.?\d*$/.test(value)) {
-                          handleNestedChange("discount.value", value);
+                          handleNestedChange("discount.value", value ? Number(value) : 0);
                         }
                       }}
                       autoComplete="new-password"
@@ -1191,7 +1247,7 @@ const EventForm = (): ReactElement => {
                       data-form-type="other"
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder={
-                        formData.discount.type === "percentage"
+                        formData.discount?.type === "percentage"
                           ? "Enter percentage"
                           : "Enter dollar amount"
                       }
@@ -1209,8 +1265,8 @@ const EventForm = (): ReactElement => {
                       <span className="text-red-500">*</span>
                     </label>
                     <select
-                      value={formData.discount.minParticipants}
-                      onChange={(e) => handleNestedChange("discount.minParticipants", e.target.value)}
+                      value={formData.discount?.minParticipants?.toString() || '2'}
+                      onChange={(e) => handleNestedChange("discount.minParticipants", Number(e.target.value))}
                       autoComplete="new-password"
                       data-lpignore="true"
                       data-form-type="other"
@@ -1236,7 +1292,7 @@ const EventForm = (): ReactElement => {
                       Discount Description
                     </label>
                     <textarea
-                      value={formData.discount.description || ""}
+                      value={formData.discount?.description || ""}
                       onChange={(e) => handleNestedChange("discount.description", e.target.value)}
                       rows={2}
                       autoComplete="new-password"
@@ -1251,7 +1307,7 @@ const EventForm = (): ReactElement => {
                   </div>
 
                   {/* Discount Calculation Preview */}
-                  {formData.price && formData.discount.value && (
+                  {formData.price && formData.discount?.value && (
                     <div className="md:col-span-2 mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
                       <div className="text-sm text-blue-800">
                         <span className="font-medium">Original Price:</span> $
@@ -1259,14 +1315,10 @@ const EventForm = (): ReactElement => {
                         <br />
                         <span className="font-medium">Discounted Price:</span>{" "}
                         {(() => {
-                          const price = parseFloat(formData.price || "0");
-                          const discountValue = parseFloat(formData.discount?.value || "0");
+                          const price = formData.price || 0;
+                          const discountValue = formData.discount?.value || 0;
                           const discountType = formData.discount?.type;
                           
-                          if (isNaN(price) || isNaN(discountValue)) {
-                            return "";
-                          }
-
                           let discountedPrice: number;
                           if (discountType === "percentage") {
                             discountedPrice = price - (price * discountValue) / 100;

@@ -4,6 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import toast from "react-hot-toast";
+import dayjs, { Dayjs } from "dayjs";
 
 interface EventOption {
   categoryName: string;
@@ -26,8 +27,8 @@ interface EventData {
     recurringEndDate?: string;
   };
   time: {
-    startTime: string;
-    endTime?: string;
+    startTime: Dayjs | null;
+    endTime: Dayjs | null;
   };
   options?: EventOption[];
   image?: string;
@@ -41,7 +42,7 @@ interface EventData {
     description?: string;
   };
   reservationSettings?: {
-    maxParticipants?: number;
+    dailyCapacity?: number;
   };
 }
 
@@ -75,14 +76,13 @@ export default function EditEvent() {
       isRecurring: false,
     },
     time: {
-      startTime: "",
+      startTime: null,
+      endTime: null,
     },
   });
 
-  // Format date string to YYYY-MM-DD for input fields
   const formatDateForInput = (dateString: string) => {
     if (!dateString) return "";
-    // Create date with no timezone conversion
     const date = new Date(dateString);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -90,17 +90,14 @@ export default function EditEvent() {
     return `${year}-${month}-${day}`;
   };
 
-  // Prepare date for submission to prevent timezone issues
-  const prepareDateForSubmit = (dateString: string) => {
+  const prepareDateForSubmit = (dateString: string): string => {
     if (!dateString) return "";
     const [year, month, day] = dateString.split("-").map(Number);
-    // Create a Date object using local components to prevent timezone shift
     const date = new Date(year, month - 1, day, 12, 0, 0);
     return date.toISOString();
   };
 
   useEffect(() => {
-    // Fetch event data
     const fetchEvent = async () => {
       if (!eventId) {
         setError("No event ID provided");
@@ -122,7 +119,6 @@ export default function EditEvent() {
           throw new Error(data.error || "Event not found");
         }
 
-        // Format dates for input fields
         const event = data.event;
         if (event.dates?.startDate) {
           event.dates.startDate = formatDateForInput(event.dates.startDate);
@@ -136,9 +132,21 @@ export default function EditEvent() {
           );
         }
 
+        if (event.time?.startTime) {
+          const [hours, minutes] = event.time.startTime.split(":").map(Number);
+          event.time.startTime = dayjs().hour(hours).minute(minutes).second(0);
+        } else {
+          event.time.startTime = null;
+        }
+
+        if (event.time?.endTime) {
+          const [hours, minutes] = event.time.endTime.split(":").map(Number);
+          event.time.endTime = dayjs().hour(hours).minute(minutes).second(0);
+        } else {
+          event.time.endTime = null;
+        }
         setEventData(event);
 
-        // Set existing image URL if available
         if (event.image) {
           setUploadedImageUrl(event.image);
         }
@@ -179,7 +187,7 @@ export default function EditEvent() {
 
       const result = await response.json();
       setUploadedImageUrl(result.imageUrl);
-      setIsImageLoading(true); // Start image loading for preview
+      setIsImageLoading(true);
       setImageUploadStatus("Image uploaded successfully!");
 
       // Clear the success message after 3 seconds
@@ -253,14 +261,12 @@ export default function EditEvent() {
         ...prev,
         imageFile: file,
       }));
-      // Auto-upload image when selected
       if (file && eventData.eventName) {
         handleImageUpload(file);
       }
       return;
     }
 
-    // Handle nested properties
     if (name.includes(".")) {
       const [parent, child] = name.split(".");
       setEventData((prev) => {
@@ -288,11 +294,10 @@ export default function EditEvent() {
             ...prev,
             reservationSettings: {
               ...prev.reservationSettings,
-              [child]: updatedValue,
+              [child]: updatedValue === "" ? undefined : Number(updatedValue),
             },
           };
         } else {
-          // For other nested objects (like options)
           return {
             ...prev,
             [parent]: {
@@ -303,7 +308,6 @@ export default function EditEvent() {
         }
       });
     } else {
-      // Handle direct properties
       setEventData((prev) => ({
         ...prev,
         [name]:
@@ -337,19 +341,16 @@ export default function EditEvent() {
         return;
       }
 
-      // Prevent double submission
       if (isSavingRef.current) return;
 
       isSavingRef.current = true;
       setIsSaving(true);
 
-      // Show loading toast
       const loadingToastId = toast.loading("Saving changes...", {
         duration: Infinity,
       });
 
       try {
-        // Create a copy of the event data to modify dates for submission
         const submissionData = {
           _id: eventData._id,
           eventName: eventData.eventName,
@@ -360,16 +361,17 @@ export default function EditEvent() {
           dates: {
             ...eventData.dates,
           },
-          time: eventData.time,
+          time: {
+            startTime: eventData.time.startTime?.format("HH:mm") || "",
+            endTime: eventData.time.endTime?.format("HH:mm") || "",
+          },
           options: eventData.options,
-          // Include image URL if available, exclude imageFile
           image: uploadedImageUrl || eventData.image || undefined,
           isDiscountAvailable: eventData.isDiscountAvailable,
           discount: eventData.discount,
           reservationSettings: eventData.reservationSettings,
         };
 
-        // Prepare dates for submission
         if (submissionData.dates.startDate) {
           submissionData.dates.startDate = prepareDateForSubmit(
             submissionData.dates.startDate
@@ -386,7 +388,6 @@ export default function EditEvent() {
           );
         }
 
-        // Add minimum loading duration of 1 second for better UX
         const [response] = await Promise.all([
           fetch(`/api/event/${eventId}`, {
             method: "PATCH",
@@ -403,20 +404,17 @@ export default function EditEvent() {
           throw new Error(errorData.error || "Failed to update event");
         }
 
-        // Dismiss loading toast and show success
         toast.dismiss(loadingToastId);
         toast.success("Event updated successfully! Redirecting...", {
           duration: 2000,
         });
 
-        // Keep loading state active during redirect
         setTimeout(() => {
           router.push("/admin/dashboard");
         }, 1000);
       } catch (err) {
         console.error("[EditEvent-handleSubmit] Error updating event:", err);
 
-        // Dismiss loading toast and show error
         toast.dismiss(loadingToastId);
         toast.error(
           err instanceof Error
@@ -424,7 +422,6 @@ export default function EditEvent() {
             : "An error occurred while updating the event"
         );
 
-        // Only reset loading state on error
         isSavingRef.current = false;
         setIsSaving(false);
       }
@@ -432,35 +429,100 @@ export default function EditEvent() {
     [eventData, eventId, router, uploadedImageUrl]
   );
 
-  // Generate time options from 9:00 AM to 9:00 PM
-  const generateTimeOptions = () => {
+  const handleTimeChange = useCallback(
+    (
+      event: React.ChangeEvent<HTMLSelectElement>,
+      field: "startTime" | "endTime"
+    ) => {
+      const timeValue = event.target.value;
+      if (timeValue) {
+        const [hours, minutes] = timeValue.split(":").map(Number);
+        const timeObj = dayjs().hour(hours).minute(minutes).second(0);
+        setEventData((prev) => ({
+          ...prev,
+          time: {
+            ...prev.time,
+            [field]: timeObj,
+          },
+        }));
+      } else {
+        setEventData((prev) => ({
+          ...prev,
+          time: {
+            ...prev.time,
+            [field]: null,
+          },
+        }));
+      }
+    },
+    []
+  );
+
+  const generateTimeOptions = (
+    isEndTime = false,
+    selectedStartTime?: Dayjs | null
+  ) => {
     const options = [];
-    // Start at 9 AM (hour 9) and end at 21:00 (9:00 PM)
-    for (let hour = 9; hour <= 21; hour++) {
-      for (const minute of [0, 30]) {
-        // Skip 9:30 PM (21:30) since we only want up to 9:00 PM
-        if (hour === 21 && minute > 0) continue;
 
-        const time = new Date();
-        time.setHours(hour, minute, 0);
+    if (isEndTime && selectedStartTime) {
+      const startTimeHour = selectedStartTime.hour();
+      const startTimeMinute = selectedStartTime.minute();
 
-        const timeStr = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
-        const formattedTime = time.toLocaleTimeString([], {
-          hour: "numeric",
-          minute: "2-digit",
-        });
+      let minEndTimeHour = startTimeHour;
+      let minEndTimeMinute = startTimeMinute + 30;
 
-        options.push(
-          <option key={timeStr} value={timeStr}>
-            {formattedTime}
-          </option>
-        );
+      if (minEndTimeMinute >= 60) {
+        minEndTimeHour += 1;
+        minEndTimeMinute = 0;
+      }
+
+      for (let hour = minEndTimeHour; hour <= 21; hour++) {
+        for (const minute of [0, 30]) {
+          if (hour === 21 && minute > 0) continue;
+
+          if (hour === minEndTimeHour && minute < minEndTimeMinute) continue;
+
+          const time = new Date();
+          time.setHours(hour, minute, 0);
+
+          const timeStr = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+          const formattedTime = time.toLocaleTimeString([], {
+            hour: "numeric",
+            minute: "2-digit",
+          });
+
+          options.push(
+            <option key={timeStr} value={timeStr}>
+              {formattedTime}
+            </option>
+          );
+        }
+      }
+    } else {
+      for (let hour = 9; hour <= 21; hour++) {
+        for (const minute of [0, 30]) {
+          if (hour === 21 && minute > 0) continue;
+
+          const time = new Date();
+          time.setHours(hour, minute, 0);
+
+          const timeStr = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+          const formattedTime = time.toLocaleTimeString([], {
+            hour: "numeric",
+            minute: "2-digit",
+          });
+
+          options.push(
+            <option key={timeStr} value={timeStr}>
+              {formattedTime}
+            </option>
+          );
+        }
       }
     }
     return options;
   };
 
-  // Options management functions
   const handleOptionCategoryChange = (
     index: number,
     field: string,
@@ -539,7 +601,6 @@ export default function EditEvent() {
       const updatedOptions = [...(prev.options || [])];
       updatedOptions[categoryIndex].choices.splice(choiceIndex, 1);
 
-      // If no choices left, add an empty one
       if (updatedOptions[categoryIndex].choices.length === 0) {
         updatedOptions[categoryIndex].choices.push({ name: "", price: 0 });
       }
@@ -635,9 +696,13 @@ export default function EditEvent() {
         className="grid grid-cols-1 md:grid-cols-2 gap-6"
       >
         {/* Hidden inputs to prevent autocomplete */}
-        <div style={{ display: 'none' }}>
+        <div style={{ display: "none" }}>
           <input type="text" name="username" autoComplete="username" />
-          <input type="password" name="password" autoComplete="current-password" />
+          <input
+            type="password"
+            name="password"
+            autoComplete="current-password"
+          />
         </div>
         <div className="col-span-1 md:col-span-2">
           <label
@@ -654,8 +719,8 @@ export default function EditEvent() {
             onChange={handleInputChange}
             required
             autoComplete="new-password"
-            autoCapitalize="none" 
-            autoCorrect="off" 
+            autoCapitalize="none"
+            autoCorrect="off"
             spellCheck="false"
             data-lpignore="true"
             data-form-type="other"
@@ -689,66 +754,70 @@ export default function EditEvent() {
           </select>
         </div>
 
-        {eventData.eventType !== "artist" && eventData.eventType !== "reservation" && (
-          <div>
-            <label
-              htmlFor="price"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Price ($)
-            </label>
-            <input
-              type="text"
-              id="price"
-              name="price"
-              value={eventData.price}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (/^\d*\.?\d*$/.test(value)) {
-                  handleInputChange(e);
-                }
-              }}
-              autoComplete="new-password"
-              autoCapitalize="none"
-              autoCorrect="off"
-              spellCheck="false"
-              data-lpignore="true"
-              data-form-type="other"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter Price"
-            />
-          </div>
-        )}
+        {eventData.eventType !== "artist" &&
+          eventData.eventType !== "reservation" && (
+            <div>
+              <label
+                htmlFor="price"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Price ($)
+              </label>
+              <input
+                type="text"
+                id="price"
+                name="price"
+                value={eventData.price}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (/^\d*\.?\d*$/.test(value)) {
+                    handleInputChange(e);
+                  }
+                }}
+                autoComplete="new-password"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
+                data-lpignore="true"
+                data-form-type="other"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter Price"
+              />
+            </div>
+          )}
 
-        {eventData.eventType !== "artist" && eventData.eventType !== "reservation" && (
-          <div>
-            <label
-              htmlFor="numberOfParticipants"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Number of Participants
-            </label>
-            <select
-              id="numberOfParticipants"
-              name="numberOfParticipants"
-              value={eventData.numberOfParticipants || ""}
-              onChange={handleInputChange}
-              autoComplete="new-password"
-              data-lpignore="true"
-              data-form-type="other"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select number of participants</option>
-              {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
-                <option key={num} value={num.toString()}>
-                  {num} participant{num > 1 ? "s" : ""}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+        {eventData.eventType !== "artist" &&
+          eventData.eventType !== "reservation" && (
+            <div>
+              <label
+                htmlFor="numberOfParticipants"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Number of Participants
+              </label>
+              <select
+                id="numberOfParticipants"
+                name="numberOfParticipants"
+                value={eventData.numberOfParticipants || ""}
+                onChange={handleInputChange}
+                autoComplete="new-password"
+                data-lpignore="true"
+                data-form-type="other"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select number of participants</option>
+                {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
+                  <option key={num} value={num.toString()}>
+                    {num} participant{num > 1 ? "s" : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
-        <div className={`col-span-1 md:col-span-2 grid grid-cols-1 ${eventData.eventType === "reservation" ? 'md:grid-cols-2' : 'md:grid-cols-3'} gap-4`}>
+        <div
+          className={`col-span-1 md:col-span-2 grid grid-cols-1 ${eventData.eventType === "reservation" ? "md:grid-cols-2" : "md:grid-cols-3"} gap-4`}
+        >
           <div>
             <label
               htmlFor="dates.startDate"
@@ -799,8 +868,12 @@ export default function EditEvent() {
             <select
               id="time.startTime"
               name="time.startTime"
-              value={eventData.time?.startTime || ""}
-              onChange={handleInputChange}
+              value={
+                eventData.time?.startTime
+                  ? eventData.time.startTime.format("HH:mm")
+                  : ""
+              }
+              onChange={(e) => handleTimeChange(e, "startTime")}
               required
               autoComplete="new-password"
               data-lpignore="true"
@@ -821,8 +894,12 @@ export default function EditEvent() {
             <select
               id="time.endTime"
               name="time.endTime"
-              value={eventData.time?.endTime || ""}
-              onChange={handleInputChange}
+              value={
+                eventData.time?.endTime
+                  ? eventData.time.endTime.format("HH:mm")
+                  : ""
+              }
+              onChange={(e) => handleTimeChange(e, "endTime")}
               autoComplete="new-password"
               data-lpignore="true"
               data-form-type="other"
@@ -834,71 +911,74 @@ export default function EditEvent() {
           </div>
         </div>
 
-        {eventData.eventType !== "artist" && eventData.eventType !== "reservation" && (
-          <div className="col-span-1 md:col-span-2 flex items-center">
-            <input
-              type="checkbox"
-              id="dates.isRecurring"
-              name="dates.isRecurring"
-              checked={eventData.dates?.isRecurring || false}
-              onChange={handleInputChange}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label
-              htmlFor="dates.isRecurring"
-              className="ml-2 block text-sm font-medium text-gray-700"
-            >
-              Recurring Event
-            </label>
-          </div>
-        )}
-
-        {eventData.eventType !== "artist" && eventData.eventType !== "reservation" && eventData.dates?.isRecurring && (
-          <>
-            <div>
-              <label
-                htmlFor="dates.recurringPattern"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Recurring Pattern
-              </label>
-              <select
-                id="dates.recurringPattern"
-                name="dates.recurringPattern"
-                value={eventData.dates?.recurringPattern || "weekly"}
-                onChange={handleInputChange}
-                autoComplete="new-password"
-                data-lpignore="true"
-                data-form-type="other"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-                <option value="yearly">Yearly</option>
-              </select>
-            </div>
-
-            <div>
-              <label
-                htmlFor="dates.recurringEndDate"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Recurring End Date
-              </label>
+        {eventData.eventType !== "artist" &&
+          eventData.eventType !== "reservation" && (
+            <div className="col-span-1 md:col-span-2 flex items-center">
               <input
-                ref={recurringEndDateInputRef}
-                type="date"
-                id="dates.recurringEndDate"
-                name="dates.recurringEndDate"
-                value={eventData.dates?.recurringEndDate || ""}
+                type="checkbox"
+                id="dates.isRecurring"
+                name="dates.isRecurring"
+                checked={eventData.dates?.isRecurring || false}
                 onChange={handleInputChange}
-                onClick={() => handleDateInputClick(recurringEndDateInputRef)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
+              <label
+                htmlFor="dates.isRecurring"
+                className="ml-2 block text-sm font-medium text-gray-700"
+              >
+                Recurring Event
+              </label>
             </div>
-          </>
-        )}
+          )}
+
+        {eventData.eventType !== "artist" &&
+          eventData.eventType !== "reservation" &&
+          eventData.dates?.isRecurring && (
+            <>
+              <div>
+                <label
+                  htmlFor="dates.recurringPattern"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Recurring Pattern
+                </label>
+                <select
+                  id="dates.recurringPattern"
+                  name="dates.recurringPattern"
+                  value={eventData.dates?.recurringPattern || "weekly"}
+                  onChange={handleInputChange}
+                  autoComplete="new-password"
+                  data-lpignore="true"
+                  data-form-type="other"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="yearly">Yearly</option>
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="dates.recurringEndDate"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Recurring End Date
+                </label>
+                <input
+                  ref={recurringEndDateInputRef}
+                  type="date"
+                  id="dates.recurringEndDate"
+                  name="dates.recurringEndDate"
+                  value={eventData.dates?.recurringEndDate || ""}
+                  onChange={handleInputChange}
+                  onClick={() => handleDateInputClick(recurringEndDateInputRef)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                />
+              </div>
+            </>
+          )}
 
         <div className="col-span-1 md:col-span-2">
           <label
@@ -914,8 +994,8 @@ export default function EditEvent() {
             onChange={handleInputChange}
             rows={4}
             autoComplete="new-password"
-            autoCapitalize="none" 
-            autoCorrect="off" 
+            autoCapitalize="none"
+            autoCorrect="off"
             spellCheck="false"
             data-lpignore="true"
             data-form-type="other"
@@ -943,7 +1023,10 @@ export default function EditEvent() {
             accept="image/*"
             onChange={handleInputChange}
             disabled={!eventData.eventName}
-            autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck="false"
+            autoComplete="off"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck="false"
             className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300 ${!eventData.eventName ? "opacity-50 cursor-not-allowed" : ""}`}
           />
           {imageUploadStatus && (
@@ -989,35 +1072,37 @@ export default function EditEvent() {
           )}
         </div>
 
-        {eventData.eventType !== "artist" && eventData.eventType !== "reservation" && (
-          <div className="col-span-1 md:col-span-2 flex items-center mt-4">
-            <input
-              type="checkbox"
-              id="hasOptions"
-              name="hasOptions"
-              checked={eventData.options && eventData.options.length > 0}
-              onChange={(e) => {
-                if (e.target.checked) {
-                  addOptionCategory();
-                } else {
-                  setEventData((prev) => ({
-                    ...prev,
-                    options: undefined,
-                  }));
-                }
-              }}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label
-              htmlFor="hasOptions"
-              className="ml-2 block text-sm font-medium text-gray-700"
-            >
-              Add Options
-            </label>
-          </div>
-        )}
+        {eventData.eventType !== "artist" &&
+          eventData.eventType !== "reservation" && (
+            <div className="col-span-1 md:col-span-2 flex items-center mt-4">
+              <input
+                type="checkbox"
+                id="hasOptions"
+                name="hasOptions"
+                checked={eventData.options && eventData.options.length > 0}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    addOptionCategory();
+                  } else {
+                    setEventData((prev) => ({
+                      ...prev,
+                      options: undefined,
+                    }));
+                  }
+                }}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label
+                htmlFor="hasOptions"
+                className="ml-2 block text-sm font-medium text-gray-700"
+              >
+                Add Options
+              </label>
+            </div>
+          )}
 
-        {eventData.eventType !== "artist" && eventData.eventType !== "reservation" &&
+        {eventData.eventType !== "artist" &&
+          eventData.eventType !== "reservation" &&
           eventData.options &&
           eventData.options.length > 0 && (
             <div className="col-span-1 md:col-span-2 bg-gray-50 p-4 rounded-md border border-gray-200">
@@ -1208,54 +1293,57 @@ export default function EditEvent() {
             </div>
           )}
 
-        {eventData.eventType !== "artist" && eventData.eventType !== "reservation" && (
-          <div className="col-span-1 md:col-span-2 flex items-center mt-4">
-            <input
-              type="checkbox"
-              id="isDiscountAvailable"
-              name="isDiscountAvailable"
-              checked={eventData.isDiscountAvailable || false}
-              onChange={(e) =>
-                setEventData((prev) => ({
-                  ...prev,
-                  isDiscountAvailable: e.target.checked,
-                }))
-              }
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label
-              htmlFor="isDiscountAvailable"
-              className="ml-2 block text-sm font-medium text-gray-700"
-            >
-              Add Discount
-            </label>
-          </div>
-        )}
+        {eventData.eventType !== "artist" &&
+          eventData.eventType !== "reservation" && (
+            <div className="col-span-1 md:col-span-2 flex items-center mt-4">
+              <input
+                type="checkbox"
+                id="isDiscountAvailable"
+                name="isDiscountAvailable"
+                checked={eventData.isDiscountAvailable || false}
+                onChange={(e) =>
+                  setEventData((prev) => ({
+                    ...prev,
+                    isDiscountAvailable: e.target.checked,
+                  }))
+                }
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label
+                htmlFor="isDiscountAvailable"
+                className="ml-2 block text-sm font-medium text-gray-700"
+              >
+                Add Discount
+              </label>
+            </div>
+          )}
 
         {/* Reservation Settings (only for reservation events) */}
         {eventData.eventType === "reservation" && (
           <div className="col-span-1 md:col-span-2 space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">Reservation Settings</h3>
-            
+            <h3 className="text-lg font-medium text-gray-900">
+              Reservation Settings
+            </h3>
+
             {/* Max Participants Per Day */}
             <div>
               <label
-                htmlFor="reservationSettings.maxParticipants"
+                htmlFor="reservationSettings.dailyCapacity"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Maximum Participants Per Day
+                Daily Capacity (Optional)
               </label>
               <select
-                id="reservationSettings.maxParticipants"
-                name="reservationSettings.maxParticipants"
-                value={eventData.reservationSettings?.maxParticipants || ""}
+                id="reservationSettings.dailyCapacity"
+                name="reservationSettings.dailyCapacity"
+                value={eventData.reservationSettings?.dailyCapacity || ""}
                 onChange={handleInputChange}
                 autoComplete="new-password"
                 data-lpignore="true"
                 data-form-type="other"
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">Select maximum participants per day</option>
+                <option value="">No capacity limit</option>
                 {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
                   <option key={num} value={num.toString()}>
                     {num} participant{num > 1 ? "s" : ""}
@@ -1266,168 +1354,172 @@ export default function EditEvent() {
           </div>
         )}
 
-        {eventData.eventType !== "artist" && eventData.eventType !== "reservation" && eventData.isDiscountAvailable && (
-          <div className="col-span-1 md:col-span-2 bg-gray-50 p-4 rounded-md border border-gray-200">
-            <h3 className="text-lg font-medium text-gray-800 mb-3">
-              Discount Settings
-            </h3>
+        {eventData.eventType !== "artist" &&
+          eventData.eventType !== "reservation" &&
+          eventData.isDiscountAvailable && (
+            <div className="col-span-1 md:col-span-2 bg-gray-50 p-4 rounded-md border border-gray-200">
+              <h3 className="text-lg font-medium text-gray-800 mb-3">
+                Discount Settings
+              </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="col-span-1 md:col-span-2">
-                <label
-                  htmlFor="discountName"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Discount Name *
-                </label>
-                <input
-                  type="text"
-                  id="discountName"
-                  value={eventData.discount?.name || ""}
-                  onChange={(e) => handleDiscountChange("name", e.target.value)}
-                  autoComplete="new-password"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck="false"
-                  data-lpignore="true"
-                  data-form-type="other"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., Group Discount, Early Bird Special"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="discountType"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Discount Type
-                </label>
-                <select
-                  id="discountType"
-                  value={eventData.discount?.type || "percentage"}
-                  onChange={(e) =>
-                    handleDiscountChange(
-                      "type",
-                      e.target.value as "percentage" | "fixed"
-                    )
-                  }
-                  autoComplete="new-password"
-                  data-lpignore="true"
-                  data-form-type="other"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="percentage">Percentage (%)</option>
-                  <option value="fixed">Fixed Amount ($)</option>
-                </select>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="discountValue"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Discount Value{" "}
-                  {eventData.discount?.type === "percentage" ? "(%)" : "($)"}
-                </label>
-                <input
-                  type="text"
-                  id="discountValue"
-                  value={eventData.discount?.value?.toString() || ""}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (/^\d*\.?\d*$/.test(value)) {
-                      handleDiscountChange("value", parseFloat(value) || 0);
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="col-span-1 md:col-span-2">
+                  <label
+                    htmlFor="discountName"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Discount Name *
+                  </label>
+                  <input
+                    type="text"
+                    id="discountName"
+                    value={eventData.discount?.name || ""}
+                    onChange={(e) =>
+                      handleDiscountChange("name", e.target.value)
                     }
-                  }}
-                  autoComplete="new-password"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck="false"
-                  data-lpignore="true"
-                  data-form-type="other"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder={
-                    eventData.discount?.type === "percentage"
-                      ? "Enter percentage"
-                      : "Enter dollar amount"
-                  }
-                />
-              </div>
+                    autoComplete="new-password"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck="false"
+                    data-lpignore="true"
+                    data-form-type="other"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., Group Discount, Early Bird Special"
+                  />
+                </div>
 
-              <div>
-                <label
-                  htmlFor="minParticipants"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Minimum Participants for Discount
-                </label>
-                <select
-                  id="minParticipants"
-                  value={eventData.discount?.minParticipants || 2}
-                  onChange={(e) =>
-                    handleDiscountChange(
-                      "minParticipants",
-                      parseInt(e.target.value)
-                    )
-                  }
-                  autoComplete="new-password"
-                  data-lpignore="true"
-                  data-form-type="other"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {Array.from({ length: 19 }, (_, i) => i + 2).map((num) => (
-                    <option key={num} value={num}>
-                      {num} participants
-                    </option>
-                  ))}
-                </select>
-              </div>
+                <div>
+                  <label
+                    htmlFor="discountType"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Discount Type
+                  </label>
+                  <select
+                    id="discountType"
+                    value={eventData.discount?.type || "percentage"}
+                    onChange={(e) =>
+                      handleDiscountChange(
+                        "type",
+                        e.target.value as "percentage" | "fixed"
+                      )
+                    }
+                    autoComplete="new-password"
+                    data-lpignore="true"
+                    data-form-type="other"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="percentage">Percentage (%)</option>
+                    <option value="fixed">Fixed Amount ($)</option>
+                  </select>
+                </div>
 
-              <div>
-                <label
-                  htmlFor="discountDescription"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Discount Description (Optional)
-                </label>
-                <input
-                  type="text"
-                  id="discountDescription"
-                  value={eventData.discount?.description || ""}
-                  onChange={(e) =>
-                    handleDiscountChange("description", e.target.value)
-                  }
-                  autoComplete="new-password"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck="false"
-                  data-lpignore="true"
-                  data-form-type="other"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., Group discount for 3+ participants"
-                />
-              </div>
-            </div>
+                <div>
+                  <label
+                    htmlFor="discountValue"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Discount Value{" "}
+                    {eventData.discount?.type === "percentage" ? "(%)" : "($)"}
+                  </label>
+                  <input
+                    type="text"
+                    id="discountValue"
+                    value={eventData.discount?.value?.toString() || ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (/^\d*\.?\d*$/.test(value)) {
+                        handleDiscountChange("value", parseFloat(value) || 0);
+                      }
+                    }}
+                    autoComplete="new-password"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck="false"
+                    data-lpignore="true"
+                    data-form-type="other"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder={
+                      eventData.discount?.type === "percentage"
+                        ? "Enter percentage"
+                        : "Enter dollar amount"
+                    }
+                  />
+                </div>
 
-            {eventData.price && eventData.discount?.value && (
-              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                <div className="text-sm text-blue-800">
-                  <span className="font-medium">Original Price:</span> $
-                  {eventData.price}
-                  <br />
-                  <span className="font-medium">Discounted Price:</span>{" "}
-                  {calculateDiscountedPrice()}
-                  <br />
-                  <span className="text-xs">
-                    (Applies when {eventData.discount?.minParticipants || 2} or
-                    more participants sign up)
-                  </span>
+                <div>
+                  <label
+                    htmlFor="minParticipants"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Minimum Participants for Discount
+                  </label>
+                  <select
+                    id="minParticipants"
+                    value={eventData.discount?.minParticipants || 2}
+                    onChange={(e) =>
+                      handleDiscountChange(
+                        "minParticipants",
+                        parseInt(e.target.value)
+                      )
+                    }
+                    autoComplete="new-password"
+                    data-lpignore="true"
+                    data-form-type="other"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {Array.from({ length: 19 }, (_, i) => i + 2).map((num) => (
+                      <option key={num} value={num}>
+                        {num} participants
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="discountDescription"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Discount Description (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    id="discountDescription"
+                    value={eventData.discount?.description || ""}
+                    onChange={(e) =>
+                      handleDiscountChange("description", e.target.value)
+                    }
+                    autoComplete="new-password"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck="false"
+                    data-lpignore="true"
+                    data-form-type="other"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., Group discount for 3+ participants"
+                  />
                 </div>
               </div>
-            )}
-          </div>
-        )}
+
+              {eventData.price && eventData.discount?.value && (
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <div className="text-sm text-blue-800">
+                    <span className="font-medium">Original Price:</span> $
+                    {eventData.price}
+                    <br />
+                    <span className="font-medium">Discounted Price:</span>{" "}
+                    {calculateDiscountedPrice()}
+                    <br />
+                    <span className="text-xs">
+                      (Applies when {eventData.discount?.minParticipants || 2}{" "}
+                      or more participants sign up)
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
         <div className="col-span-1 md:col-span-2 text-center">
           <button
