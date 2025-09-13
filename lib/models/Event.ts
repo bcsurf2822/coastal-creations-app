@@ -7,12 +7,8 @@ import timezone from "dayjs/plugin/timezone";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-// Set your local timezone - adjust this to your actual timezone
-// Common US timezones: "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles"
-// For other timezones, see: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-const LOCAL_TIMEZONE = "America/New_York"; // Change this to your timezone
 
-// TypeScript interface for Event document
+const LOCAL_TIMEZONE = "America/New_York"; 
 export interface IEvent extends Document {
   _id: string;
   eventName: string;
@@ -175,7 +171,8 @@ const DiscountSchema = new Schema({
   description: {
     type: String,
   },
-});
+}, { _id: false });
+
 
 // Main Event schema
 const EventSchema = new Schema<IEvent>(
@@ -230,6 +227,7 @@ const EventSchema = new Schema<IEvent>(
     timestamps: true,
   }
 );
+
 
 // Index for efficient searching
 EventSchema.index({ "dates.startDate": 1, eventType: 1 });

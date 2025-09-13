@@ -179,27 +179,33 @@ const CustomerSchema = new Schema<ICustomer>(
   }
 );
 
-// Middleware to calculate total before saving
 CustomerSchema.pre("save", async function (next) {
-  if (this.isModified("quantity") || this.isNew) {
-    if (typeof this.event !== "string") {
-      // Handle case where price might be undefined (for artist events)
-      const eventPrice = (this.event as IEvent).price || 0;
-      this.total = this.quantity * eventPrice;
-    } else {
-      // If we only have the event ID, we need to fetch the event to get its price
-      try {
+  const shouldCalculateTotal =
+    (this.total === undefined || this.total === null || this.total === 0) &&
+    (this.isModified("quantity") || this.isNew);
+
+  if (shouldCalculateTotal) {
+    try {
+      let event: IEvent;
+
+      if (typeof this.event !== "string") {
+        event = this.event;
+      } else {
         const Event = mongoose.model("Event");
-        const event = await Event.findById(this.event);
-        if (event) {
-          // Handle case where price might be undefined (for artist events)
-          const eventPrice = event.price || 0;
-          this.total = this.quantity * eventPrice;
+        const foundEvent = await Event.findById(this.event);
+        if (!foundEvent) {
+          next(new Error("Event not found"));
+          return;
         }
-      } catch (error) {
-        next(error as Error);
-        return;
+        event = foundEvent as IEvent;
       }
+
+      // For regular events, use the event price
+      const eventPrice = event.price || 0;
+      this.total = this.quantity * eventPrice;
+    } catch (error) {
+      next(error as Error);
+      return;
     }
   }
   next();

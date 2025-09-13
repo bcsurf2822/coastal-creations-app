@@ -9,7 +9,7 @@ import {
   RiDeleteBinLine,
   RiSearchLine,
   RiFilterLine,
-  RiArrowRightLine,
+  RiUserLine,
 } from "react-icons/ri";
 import Link from "next/link";
 import Dialog from "@mui/material/Dialog";
@@ -42,6 +42,12 @@ interface Event {
       name: string;
     }>;
   }>;
+  isDiscountAvailable?: boolean;
+  discount?: {
+    type?: string;
+    value?: number;
+    description?: string;
+  };
 }
 
 // Define types for SimpleDialog props
@@ -58,7 +64,6 @@ interface SimpleDialogProps {
   isDeleting: boolean;
 }
 
-// Define types for EventDetailsDialog props
 interface EventDetailsDialogProps {
   eventDetails: {
     id: string;
@@ -71,7 +76,6 @@ interface EventDetailsDialogProps {
   isDeleting: boolean;
 }
 
-// Update EventDetailsDialog component with types
 function EventDetailsDialog({
   eventDetails,
   onClose,
@@ -232,6 +236,8 @@ export default function EventContainer() {
           endTime: event.time?.endTime,
           image: event.image,
           options: event.options,
+          isDiscountAvailable: event.isDiscountAvailable,
+          discount: event.discount,
         }));
 
         // Sort events by start date - closest events first, furthest events last
@@ -391,22 +397,19 @@ export default function EventContainer() {
     return matchesSearch && matchesFilter;
   });
 
-  // Get unique event types for filter
   const eventTypes = Array.from(
     new Set(events.map((event) => event.eventType))
   );
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-      {/* Header with filters */}
       <div className="p-5 border-b border-gray-200 dark:border-gray-700">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Upcoming Events
+            
           </h3>
 
           <div className="flex flex-col sm:flex-row gap-3">
-            {/* Search */}
             <div className="relative">
               <RiSearchLine className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
@@ -418,7 +421,6 @@ export default function EventContainer() {
               />
             </div>
 
-            {/* Filter dropdown */}
             <div className="relative">
               <select
                 value={filterType || ""}
@@ -441,7 +443,6 @@ export default function EventContainer() {
         </div>
       </div>
 
-      {/* Content */}
       <div className="p-5">
         {isLoading ? (
           <div className="flex justify-center items-center py-12">
@@ -467,7 +468,6 @@ export default function EventContainer() {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Events list */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               {filteredEvents.map((event) => (
                 <div
@@ -524,7 +524,7 @@ export default function EventContainer() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center">
+                    <div className="flex items-center space-x-2">
                       <span
                         className={`text-xs px-2 py-1 rounded-full ${
                           event.eventType === "class"
@@ -536,6 +536,11 @@ export default function EventContainer() {
                       >
                         {event.eventType || "Event"}
                       </span>
+                      {event.isDiscountAvailable && (
+                        <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 font-medium">
+                          Discount
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="mt-2 flex justify-between items-center">
@@ -552,21 +557,23 @@ export default function EventContainer() {
                     )}
                   </div>
                   <div className="mt-4 flex justify-between items-center">
-                    <Link
-                      href={`/admin/dashboard/edit-event?id=${event.id}`}
-                      className="flex items-center space-x-1 p-2 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-colors"
-                    >
-                      <RiEdit2Line className="w-4 h-4" />
-                      <span className="text-sm">Edit</span>
-                    </Link>
+                    <div className="flex items-center space-x-2">
+                      <Link
+                        href={`/admin/dashboard/events/${event.id}`}
+                        className="flex items-center space-x-1 px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm"
+                      >
+
+                        <span>View Event</span>
+                      </Link>
+                      <Link
+                        href={`/admin/dashboard/edit-event?id=${event.id}`}
+                        className="flex items-center space-x-1 p-2 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-colors"
+                      >
+                        <RiEdit2Line className="w-4 h-4" />
+                        <span className="text-sm">Edit</span>
+                      </Link>
+                    </div>
                     
-                    {/* <button
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg cursor-pointer"
-                      onClick={() => handleEventClick(event)}
-                    >
-                      View Event
-                    </button>
-                     */}
                     <button
                       className={`p-2 rounded-lg transition-colors ${
                         deletingEventIds.has(event.id)
@@ -588,7 +595,6 @@ export default function EventContainer() {
               ))}
             </div>
 
-            {/* Selected event details */}
             {selectedEvent && (
               <div
                 className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 animate-fadeIn shadow-sm relative ${
@@ -652,9 +658,16 @@ export default function EventContainer() {
                           <p className="text-sm text-gray-500 dark:text-gray-400">
                             Type
                           </p>
-                          <p className="font-medium text-gray-900 dark:text-white">
-                            {selectedEvent.eventType || "N/A"}
-                          </p>
+                          <div className="flex items-center space-x-2">
+                            <p className="font-medium text-gray-900 dark:text-white">
+                              {selectedEvent.eventType || "N/A"}
+                            </p>
+                            {selectedEvent.isDiscountAvailable && (
+                              <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 font-medium">
+                                Discount
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -757,13 +770,20 @@ export default function EventContainer() {
                       </div>
                     </div>
 
-                    <div className="mt-6">
+                    <div className="mt-6 space-y-3">
                       <Link
-                        href={`/admin/dashboard/edit-event?id=${selectedEvent.id}`}
+                        href={`/admin/dashboard/events/${selectedEvent.id}`}
                         className="flex items-center justify-center w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                       >
+                        <RiUserLine className="w-4 h-4 mr-2" />
+                        <span>View Customers</span>
+                      </Link>
+                      <Link
+                        href={`/admin/dashboard/edit-event?id=${selectedEvent.id}`}
+                        className="flex items-center justify-center w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                      >
+                        <RiEdit2Line className="w-4 h-4 mr-2" />
                         <span>Edit Event Details</span>
-                        <RiArrowRightLine className="ml-2" />
                       </Link>
                     </div>
                   </div>

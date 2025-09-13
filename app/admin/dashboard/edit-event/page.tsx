@@ -1,6 +1,5 @@
-import EditEvent from "@/components/dashboard/edit-event/EditEvent";
-
+import EditEventForm from "@/components/dashboard/event-form/EditEventForm";
 
 export default function EditEventPage() {
-  return <EditEvent />;
+  return <EditEventForm />;
 }

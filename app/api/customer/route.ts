@@ -16,11 +16,15 @@ export async function POST(request: NextRequest) {
     const {
       event: eventId,
       quantity,
+      total,
       isSigningUpForSelf,
       participants,
       selectedOptions,
       billingInfo,
     } = data;
+
+    // Log the received total for debugging
+    console.log(`[CUSTOMER-API-POST] Received total: ${total}, type: ${typeof total}`);
 
     // Verify event exists
     const event = await Event.findById(eventId);
@@ -28,14 +32,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
-    // Calculate total based on event price and quantity
-    const total = (event.price || 0) * quantity;
+    // Use the provided total, or calculate it if not provided
+    const customerTotal = total !== undefined ? total : (event.price || 0) * quantity;
+
+    console.log(`[CUSTOMER-API-POST] Using total: ${customerTotal} (provided: ${total}, calculated: ${(event.price || 0) * quantity})`);
 
     // Create a new customer record
     const customer = new Customer({
       event: eventId,
       quantity,
-      total,
+      total: customerTotal,
       isSigningUpForSelf,
       participants: participants || [],
       selectedOptions: selectedOptions || [],
@@ -86,19 +92,31 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     // Connect to MongoDB
     await connectMongo();
 
-    // Retrieve all customers from the database
-    const customers = await Customer.find({}).populate("event");
+    // Get query parameters
+    const { searchParams } = new URL(request.url);
+    const eventId = searchParams.get("eventId");
 
-    // Return success response with all customers
+    // Build query filter
+    let query = {};
+    if (eventId) {
+      query = { event: eventId };
+    }
+
+    // Retrieve customers from the database with optional filtering
+    const customers = await Customer.find(query).populate("event").sort({ createdAt: -1 });
+
+    // Return success response with customers
     return NextResponse.json(
       {
         success: true,
-        message: "Customers retrieved successfully",
+        message: eventId 
+          ? `Customers for event ${eventId} retrieved successfully`
+          : "Customers retrieved successfully",
         data: customers,
         count: customers.length,
       },

@@ -1,4 +1,4 @@
-import EventForm from "@/components/dashboard/add-event/EventForm";
+import AddEventForm from "@/components/dashboard/event-form/AddEventForm";
 import Link from "next/link";
 import { FaArrowLeft } from "react-icons/fa";
 
@@ -13,7 +13,7 @@ export default async function AddEvent() {
           <FaArrowLeft className="mr-2" /> Go Back
         </Link>
       </div>
-      <EventForm />
+      <AddEventForm />
     </div>
   );
 }

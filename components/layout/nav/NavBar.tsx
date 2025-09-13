@@ -268,7 +268,6 @@ export default function NavBar() {
               </Link>
             </motion.div>
 
-
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/about"

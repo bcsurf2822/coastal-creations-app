@@ -232,9 +232,9 @@ export default function ErrorLogs() {
       {/* Header with Title and Actions */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">
+          {/* <h2 className="text-2xl font-bold text-gray-900">
             Payment Error Logs
-          </h2>
+          </h2> */}
           <p className="text-sm text-gray-500 mt-1">
             {filteredLogs.length} of {errorLogs.length} error
             {errorLogs.length !== 1 ? "s" : ""} shown
@@ -346,11 +346,7 @@ export default function ErrorLogs() {
           <h3 className="text-lg font-medium text-gray-800 mb-2">
             {errorLogs.length === 0 ? "No Error Logs" : "No Results Found"}
           </h3>
-          <p className="text-gray-600">
-            {errorLogs.length === 0
-              ? "Great! No payment errors have been recorded."
-              : "Try adjusting your filters to see more results."}
-          </p>
+
         </div>
       ) : (
         <>

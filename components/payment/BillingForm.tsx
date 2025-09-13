@@ -75,13 +75,15 @@ const BillingForm: React.FC<BillingFormProps> = ({
   totalPrice,
   originalPrice,
   discountInfo,
-  currentParticipantCount,
 }) => {
   // Helper functions
   const isDiscountActive = (): boolean => {
-    if (!discountInfo.isDiscountAvailable || !discountInfo.discount) return false;
-    const totalParticipants = currentParticipantCount + billingDetails.numberOfPeople;
-    return totalParticipants >= discountInfo.discount.minParticipants;
+    if (!discountInfo.isDiscountAvailable || !discountInfo.discount)
+      return false;
+    // Only consider current registration for discount, not existing participants
+    return (
+      billingDetails.numberOfPeople >= discountInfo.discount.minParticipants
+    );
   };
 
   const getOriginalPrice = (): number => {
@@ -95,13 +97,18 @@ const BillingForm: React.FC<BillingFormProps> = ({
 
   // Helper function to get choice price by name
   const getChoicePrice = (categoryName: string, choiceName: string): number => {
-    const option = eventOptions.find(opt => opt.categoryName === categoryName);
-    const choice = option?.choices.find(c => c.name === choiceName);
+    const option = eventOptions.find(
+      (opt) => opt.categoryName === categoryName
+    );
+    const choice = option?.choices.find((c) => c.name === choiceName);
     return choice?.price || 0;
   };
 
   // Helper function to format choice display text
-  const formatChoiceDisplay = (choice: { name: string; price?: number }): string => {
+  const formatChoiceDisplay = (choice: {
+    name: string;
+    price?: number;
+  }): string => {
     if (!choice.price || choice.price === 0) {
       return `${choice.name} - Free`;
     }
@@ -114,16 +121,22 @@ const BillingForm: React.FC<BillingFormProps> = ({
 
     // Primary customer options (when signing up for self)
     if (isSigningUpForSelf && selectedOptions.length > 0) {
-      selectedOptions.forEach(selectedOption => {
-        totalOptionCost += getChoicePrice(selectedOption.categoryName, selectedOption.choiceName);
+      selectedOptions.forEach((selectedOption) => {
+        totalOptionCost += getChoicePrice(
+          selectedOption.categoryName,
+          selectedOption.choiceName
+        );
       });
     }
 
     // Additional participants' options
-    participants.forEach(participant => {
+    participants.forEach((participant) => {
       if (participant.selectedOptions) {
-        participant.selectedOptions.forEach(selectedOption => {
-          totalOptionCost += getChoicePrice(selectedOption.categoryName, selectedOption.choiceName);
+        participant.selectedOptions.forEach((selectedOption) => {
+          totalOptionCost += getChoicePrice(
+            selectedOption.categoryName,
+            selectedOption.choiceName
+          );
         });
       }
     });
@@ -331,7 +344,7 @@ const BillingForm: React.FC<BillingFormProps> = ({
                   className="border-b border-gray-200 pb-4 last:border-0 last:pb-0"
                 >
                   <h4 className="font-medium text-gray-700 mb-3">
-                    Person {index + 2}
+                    Additional Participant {index + 1}
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -341,12 +354,14 @@ const BillingForm: React.FC<BillingFormProps> = ({
                       <input
                         type="text"
                         value={participant.firstName}
+                        placeholder="Enter First Name"
                         onChange={(e) => {
                           const newParticipants = [...participants];
                           newParticipants[index].firstName = e.target.value;
                           setParticipants(newParticipants);
                         }}
-                        className="w-full p-2 border border-gray-300 rounded-md"
+                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary transition"
+                        required
                       />
                     </div>
                     <div>
@@ -356,12 +371,14 @@ const BillingForm: React.FC<BillingFormProps> = ({
                       <input
                         type="text"
                         value={participant.lastName}
+                        placeholder="Enter Last Name"
                         onChange={(e) => {
                           const newParticipants = [...participants];
                           newParticipants[index].lastName = e.target.value;
                           setParticipants(newParticipants);
                         }}
-                        className="w-full p-2 border border-gray-300 rounded-md"
+                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary transition"
+                        required
                       />
                     </div>
 
@@ -473,6 +490,7 @@ const BillingForm: React.FC<BillingFormProps> = ({
                         <input
                           type="text"
                           value={participant.firstName}
+                          placeholder="Enter First Name"
                           onChange={(e) => {
                             const newParticipants = [...participants];
                             // Create or update the participant
@@ -487,7 +505,8 @@ const BillingForm: React.FC<BillingFormProps> = ({
                             }
                             setParticipants(newParticipants);
                           }}
-                          className="w-full p-2 border border-gray-300 rounded-md"
+                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary transition"
+                          required
                         />
                       </div>
                       <div>
@@ -497,6 +516,7 @@ const BillingForm: React.FC<BillingFormProps> = ({
                         <input
                           type="text"
                           value={participant.lastName}
+                          placeholder="Enter Last Name"
                           onChange={(e) => {
                             const newParticipants = [...participants];
                             // Create or update the participant
@@ -511,7 +531,8 @@ const BillingForm: React.FC<BillingFormProps> = ({
                             }
                             setParticipants(newParticipants);
                           }}
-                          className="w-full p-2 border border-gray-300 rounded-md"
+                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary transition"
+                          required
                         />
                       </div>
 
@@ -821,22 +842,32 @@ const BillingForm: React.FC<BillingFormProps> = ({
                     Subtotal:
                   </span>
                   <span className="text-lg font-semibold">
-                    ${((parseFloat(formattedPrice) * billingDetails.numberOfPeople) + calculateTotalOptionCosts()).toFixed(2)}
+                    $
+                    {(
+                      parseFloat(formattedPrice) *
+                        billingDetails.numberOfPeople +
+                      calculateTotalOptionCosts()
+                    ).toFixed(2)}
                   </span>
                 </div>
               </>
             )}
-            
+
             {/* Show discount savings if active */}
             {isDiscountActive() && (
               <div className="flex justify-between items-center mt-2 text-green-600">
                 <span className="text-lg font-medium">You save:</span>
                 <span className="text-lg font-semibold">
-                  ${(parseFloat(getOriginalTotal()) + calculateTotalOptionCosts() - (parseFloat(totalPrice) + calculateTotalOptionCosts())).toFixed(2)}
+                  $
+                  {(
+                    parseFloat(getOriginalTotal()) +
+                    calculateTotalOptionCosts() -
+                    (parseFloat(totalPrice) + calculateTotalOptionCosts())
+                  ).toFixed(2)}
                 </span>
               </div>
             )}
-            
+
             <div className="h-px bg-gray-300 my-3"></div>
             <div className="flex justify-between items-center">
               <span className="text-xl font-bold text-gray-900">Total:</span>
@@ -846,13 +877,18 @@ const BillingForm: React.FC<BillingFormProps> = ({
             </div>
 
             {/* Discount eligibility info */}
-            {discountInfo.isDiscountAvailable && discountInfo.discount && !isDiscountActive() && (
-              <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded">
-                <p className="text-sm text-blue-700">
-                  💡 Add {discountInfo.discount.minParticipants - currentParticipantCount - billingDetails.numberOfPeople} more participants to qualify for the discount!
-                </p>
-              </div>
-            )}
+            {discountInfo.isDiscountAvailable &&
+              discountInfo.discount &&
+              !isDiscountActive() && (
+                <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded">
+                  <p className="text-sm text-blue-700">
+                    💡 Add{" "}
+                    {discountInfo.discount.minParticipants -
+                      billingDetails.numberOfPeople}{" "}
+                    more participants to qualify for the discount!
+                  </p>
+                </div>
+              )}
           </div>
         )}
       </div>
