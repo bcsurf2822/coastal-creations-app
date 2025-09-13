@@ -42,6 +42,12 @@ interface Event {
       name: string;
     }>;
   }>;
+  isDiscountAvailable?: boolean;
+  discount?: {
+    type?: string;
+    value?: number;
+    description?: string;
+  };
 }
 
 // Define types for SimpleDialog props
@@ -230,6 +236,8 @@ export default function EventContainer() {
           endTime: event.time?.endTime,
           image: event.image,
           options: event.options,
+          isDiscountAvailable: event.isDiscountAvailable,
+          discount: event.discount,
         }));
 
         // Sort events by start date - closest events first, furthest events last
@@ -516,7 +524,7 @@ export default function EventContainer() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center">
+                    <div className="flex items-center space-x-2">
                       <span
                         className={`text-xs px-2 py-1 rounded-full ${
                           event.eventType === "class"
@@ -528,6 +536,11 @@ export default function EventContainer() {
                       >
                         {event.eventType || "Event"}
                       </span>
+                      {event.isDiscountAvailable && (
+                        <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 font-medium">
+                          Discount
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="mt-2 flex justify-between items-center">
@@ -645,9 +658,16 @@ export default function EventContainer() {
                           <p className="text-sm text-gray-500 dark:text-gray-400">
                             Type
                           </p>
-                          <p className="font-medium text-gray-900 dark:text-white">
-                            {selectedEvent.eventType || "N/A"}
-                          </p>
+                          <div className="flex items-center space-x-2">
+                            <p className="font-medium text-gray-900 dark:text-white">
+                              {selectedEvent.eventType || "N/A"}
+                            </p>
+                            {selectedEvent.isDiscountAvailable && (
+                              <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 font-medium">
+                                Discount
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500 dark:text-gray-400">

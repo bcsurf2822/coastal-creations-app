@@ -34,7 +34,7 @@ const EventOptionsFields = ({
           className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
         />
         <label className="text-sm font-medium text-gray-700">
-          This event has additional options
+          Choice Options
         </label>
       </div>
 
