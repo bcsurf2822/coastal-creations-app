@@ -50,10 +50,13 @@ export default function EventCustomersPage(): ReactElement {
         const eventResult = await eventResponse.json();
 
         // Fetch customers for this event
-        const customersResponse = await fetch(`/api/customer?eventId=${eventId}`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
+        const customersResponse = await fetch(
+          `/api/customer?eventId=${eventId}`,
+          {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          }
+        );
 
         if (!customersResponse.ok) {
           throw new Error("Failed to fetch customers");
@@ -97,12 +100,18 @@ export default function EventCustomersPage(): ReactElement {
 
   const getTotalParticipants = (): number => {
     if (!data?.customers) return 0;
-    return data.customers.reduce((total, customer) => total + customer.quantity, 0);
+    return data.customers.reduce(
+      (total, customer) => total + customer.quantity,
+      0
+    );
   };
 
   const getTotalRevenue = (): number => {
     if (!data?.customers) return 0;
-    return data.customers.reduce((total, customer) => total + customer.total, 0);
+    return data.customers.reduce(
+      (total, customer) => total + customer.total,
+      0
+    );
   };
 
   if (isLoading) {
@@ -138,7 +147,7 @@ export default function EventCustomersPage(): ReactElement {
         <div className="flex items-center space-x-4">
           <button
             onClick={() => router.back()}
-            className="p-2 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-colors"
+            className="p-2 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-colors cursor-pointer"
           >
             <RiArrowLeftLine className="w-5 h-5" />
           </button>
@@ -146,14 +155,14 @@ export default function EventCustomersPage(): ReactElement {
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               Event Registrations
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            {/* <p className="text-gray-600 dark:text-gray-400">
               Manage participants for {event.eventName}
-            </p>
+            </p> */}
           </div>
         </div>
         <Link
           href={`/admin/dashboard/edit-event?id=${eventId}`}
-          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
         >
           <RiEdit2Line className="w-4 h-4" />
           <span>Edit Event</span>
@@ -171,9 +180,11 @@ export default function EventCustomersPage(): ReactElement {
               {event.description}
             </p>
           </div>
-          
+
           <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Schedule</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+              Schedule
+            </p>
             <div className="flex items-center text-gray-900 dark:text-white">
               <RiCalendarEventLine className="w-4 h-4 mr-2" />
               <span>{formatDate(event.dates?.startDate)}</span>
@@ -187,7 +198,9 @@ export default function EventCustomersPage(): ReactElement {
           </div>
 
           <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Participants</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+              Participants
+            </p>
             <div className="text-2xl font-bold text-gray-900 dark:text-white">
               {getTotalParticipants()}
             </div>
@@ -197,12 +210,14 @@ export default function EventCustomersPage(): ReactElement {
           </div>
 
           <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Revenue</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+              Revenue
+            </p>
             <div className="text-2xl font-bold text-green-600 dark:text-green-400">
               ${getTotalRevenue().toFixed(2)}
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {customers.length} registration{customers.length !== 1 ? 's' : ''}
+              {customers.length} registration{customers.length !== 1 ? "s" : ""}
             </p>
           </div>
         </div>
@@ -239,7 +254,8 @@ export default function EventCustomersPage(): ReactElement {
                       </h4>
                       <div className="space-y-1">
                         <p className="font-medium text-gray-900 dark:text-white">
-                          {customer.billingInfo.firstName} {customer.billingInfo.lastName}
+                          {customer.billingInfo.firstName}{" "}
+                          {customer.billingInfo.lastName}
                         </p>
                         {customer.billingInfo.emailAddress && (
                           <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
@@ -256,8 +272,11 @@ export default function EventCustomersPage(): ReactElement {
                         <div className="flex items-start text-sm text-gray-600 dark:text-gray-400">
                           <RiMapPinLine className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
                           <span>
-                            {customer.billingInfo.addressLine1}<br />
-                            {customer.billingInfo.city}, {customer.billingInfo.stateProvince} {customer.billingInfo.postalCode}
+                            {customer.billingInfo.addressLine1}
+                            <br />
+                            {customer.billingInfo.city},{" "}
+                            {customer.billingInfo.stateProvince}{" "}
+                            {customer.billingInfo.postalCode}
                           </span>
                         </div>
                       </div>
@@ -270,25 +289,33 @@ export default function EventCustomersPage(): ReactElement {
                       </h4>
                       <div className="space-y-1 text-sm">
                         <p>
-                          <span className="text-gray-500 dark:text-gray-400">Participants:</span>{" "}
+                          <span className="text-gray-500 dark:text-gray-400">
+                            Participants:
+                          </span>{" "}
                           <span className="font-medium text-gray-900 dark:text-white">
                             {customer.quantity}
                           </span>
                         </p>
                         <p>
-                          <span className="text-gray-500 dark:text-gray-400">Total:</span>{" "}
+                          <span className="text-gray-500 dark:text-gray-400">
+                            Total:
+                          </span>{" "}
                           <span className="font-medium text-green-600 dark:text-green-400">
                             ${customer.total.toFixed(2)}
                           </span>
                         </p>
                         <p>
-                          <span className="text-gray-500 dark:text-gray-400">Registered:</span>{" "}
+                          <span className="text-gray-500 dark:text-gray-400">
+                            Registered:
+                          </span>{" "}
                           <span className="font-medium text-gray-900 dark:text-white">
                             {formatDate(customer.createdAt)}
                           </span>
                         </p>
                         <p>
-                          <span className="text-gray-500 dark:text-gray-400">For Self:</span>{" "}
+                          <span className="text-gray-500 dark:text-gray-400">
+                            For Self:
+                          </span>{" "}
                           <span className="font-medium text-gray-900 dark:text-white">
                             {customer.isSigningUpForSelf ? "Yes" : "No"}
                           </span>
@@ -304,20 +331,32 @@ export default function EventCustomersPage(): ReactElement {
                       <div className="space-y-1 text-sm">
                         {customer.isSigningUpForSelf && (
                           <p className="text-gray-900 dark:text-white">
-                            {customer.billingInfo.firstName} {customer.billingInfo.lastName}
+                            {customer.billingInfo.firstName}{" "}
+                            {customer.billingInfo.lastName}
                           </p>
                         )}
                         {customer.participants?.map((participant, pIndex) => (
-                          <p key={pIndex} className="text-gray-900 dark:text-white">
+                          <p
+                            key={pIndex}
+                            className="text-gray-900 dark:text-white"
+                          >
                             {participant.firstName} {participant.lastName}
                           </p>
                         ))}
                       </div>
-                      
+
                       {/* Selected Options */}
-                      {(customer.selectedOptions?.length > 0 || customer.participants?.some(p => p.selectedOptions?.length > 0)) && (
+                      {((customer.selectedOptions?.length &&
+                        customer.selectedOptions.length > 0) ||
+                        customer.participants?.some(
+                          (p) =>
+                            p.selectedOptions?.length &&
+                            p.selectedOptions.length > 0
+                        )) && (
                         <div className="mt-2">
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Options:</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                            Options:
+                          </p>
                           <div className="flex flex-wrap gap-1">
                             {customer.selectedOptions?.map((option, oIndex) => (
                               <span
@@ -342,21 +381,31 @@ export default function EventCustomersPage(): ReactElement {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div>
                           <p>
-                            <span className="text-gray-500 dark:text-gray-400">Check-in:</span>{" "}
+                            <span className="text-gray-500 dark:text-gray-400">
+                              Check-in:
+                            </span>{" "}
                             <span className="text-gray-900 dark:text-white">
-                              {formatDate(customer.reservationDetails.checkInDate)}
+                              {formatDate(
+                                customer.reservationDetails.checkInDate
+                              )}
                             </span>
                           </p>
                           {customer.reservationDetails.checkOutDate && (
                             <p>
-                              <span className="text-gray-500 dark:text-gray-400">Check-out:</span>{" "}
+                              <span className="text-gray-500 dark:text-gray-400">
+                                Check-out:
+                              </span>{" "}
                               <span className="text-gray-900 dark:text-white">
-                                {formatDate(customer.reservationDetails.checkOutDate)}
+                                {formatDate(
+                                  customer.reservationDetails.checkOutDate
+                                )}
                               </span>
                             </p>
                           )}
                           <p>
-                            <span className="text-gray-500 dark:text-gray-400">Days:</span>{" "}
+                            <span className="text-gray-500 dark:text-gray-400">
+                              Days:
+                            </span>{" "}
                             <span className="text-gray-900 dark:text-white">
                               {customer.reservationDetails.numberOfDays}
                             </span>
@@ -364,16 +413,28 @@ export default function EventCustomersPage(): ReactElement {
                         </div>
                         <div>
                           <p>
-                            <span className="text-gray-500 dark:text-gray-400">Price Tier:</span>{" "}
+                            <span className="text-gray-500 dark:text-gray-400">
+                              Price Tier:
+                            </span>{" "}
                             <span className="text-gray-900 dark:text-white">
-                              ${customer.reservationDetails.appliedPriceTier.price} per day
+                              $
+                              {
+                                customer.reservationDetails.appliedPriceTier
+                                  .price
+                              }{" "}
+                              per day
                             </span>
                           </p>
                           {customer.reservationDetails.totalReservationCost && (
                             <p>
-                              <span className="text-gray-500 dark:text-gray-400">Total Cost:</span>{" "}
+                              <span className="text-gray-500 dark:text-gray-400">
+                                Total Cost:
+                              </span>{" "}
                               <span className="font-medium text-green-600 dark:text-green-400">
-                                ${customer.reservationDetails.totalReservationCost.toFixed(2)}
+                                $
+                                {customer.reservationDetails.totalReservationCost.toFixed(
+                                  2
+                                )}
                               </span>
                             </p>
                           )}

@@ -58,7 +58,6 @@ interface SimpleDialogProps {
   isDeleting: boolean;
 }
 
-// Define types for EventDetailsDialog props
 interface EventDetailsDialogProps {
   eventDetails: {
     id: string;
@@ -71,7 +70,6 @@ interface EventDetailsDialogProps {
   isDeleting: boolean;
 }
 
-// Update EventDetailsDialog component with types
 function EventDetailsDialog({
   eventDetails,
   onClose,
@@ -391,22 +389,19 @@ export default function EventContainer() {
     return matchesSearch && matchesFilter;
   });
 
-  // Get unique event types for filter
   const eventTypes = Array.from(
     new Set(events.map((event) => event.eventType))
   );
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-      {/* Header with filters */}
       <div className="p-5 border-b border-gray-200 dark:border-gray-700">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Upcoming Events
+            
           </h3>
 
           <div className="flex flex-col sm:flex-row gap-3">
-            {/* Search */}
             <div className="relative">
               <RiSearchLine className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
@@ -418,7 +413,6 @@ export default function EventContainer() {
               />
             </div>
 
-            {/* Filter dropdown */}
             <div className="relative">
               <select
                 value={filterType || ""}
@@ -441,7 +435,6 @@ export default function EventContainer() {
         </div>
       </div>
 
-      {/* Content */}
       <div className="p-5">
         {isLoading ? (
           <div className="flex justify-center items-center py-12">
@@ -467,7 +460,6 @@ export default function EventContainer() {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Events list */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               {filteredEvents.map((event) => (
                 <div
@@ -557,8 +549,8 @@ export default function EventContainer() {
                         href={`/admin/dashboard/events/${event.id}`}
                         className="flex items-center space-x-1 px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm"
                       >
-                        <RiUserLine className="w-4 h-4" />
-                        <span>View Customers</span>
+
+                        <span>View Event</span>
                       </Link>
                       <Link
                         href={`/admin/dashboard/edit-event?id=${event.id}`}
@@ -590,7 +582,6 @@ export default function EventContainer() {
               ))}
             </div>
 
-            {/* Selected event details */}
             {selectedEvent && (
               <div
                 className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 animate-fadeIn shadow-sm relative ${

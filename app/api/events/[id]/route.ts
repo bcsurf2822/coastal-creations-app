@@ -4,12 +4,12 @@ import Event from "@/lib/models/Event";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectMongo();
-    
-    const { id } = params;
+
+    const { id } = await params;
     
     if (!id) {
       return NextResponse.json(
@@ -39,12 +39,12 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectMongo();
-    
-    const { id } = params;
+
+    const { id } = await params;
     const data = await request.json();
     
     if (!id) {
