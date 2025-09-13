@@ -1,25 +1,14 @@
-/**
- * @fileoverview React hook for calendar day selection state management
- * @module hooks/useDaySelection
- */
+"use client";
 
-'use client';
-
-import { useState, useCallback, useMemo } from 'react';
-import { 
-  isSameDay, 
-  isWithinInterval, 
+import { useState, useCallback, useMemo } from "react";
+import {
+  isSameDay,
+  isWithinInterval,
   differenceInDays,
-  addDays,
-  subDays,
   startOfDay,
-  isAfter,
   isBefore,
-} from 'date-fns';
+} from "date-fns";
 
-/**
- * Configuration options for day selection behavior.
- */
 interface DaySelectionOptions {
   /** Maximum number of days that can be selected */
   maxDays?: number;
@@ -33,9 +22,6 @@ interface DaySelectionOptions {
   allowPastDates?: boolean;
 }
 
-/**
- * Result of the useDaySelection hook with selection state and operations.
- */
 interface UseDaySelectionResult {
   /** Array of currently selected dates */
   selectedDates: Date[];
@@ -79,10 +65,10 @@ interface UseDaySelectionResult {
  * and date range constraints.
  *
  * @param eventStartDate - Start date of the event period
- * @param eventEndDate - End date of the event period  
+ * @param eventEndDate - End date of the event period
  * @param options - Configuration options for selection behavior
  * @returns Object with selection state and manipulation functions
- * 
+ *
  * @example
  * ```typescript
  * const {
@@ -107,7 +93,6 @@ export function useDaySelection(
   eventEndDate: Date,
   options: DaySelectionOptions = {}
 ): UseDaySelectionResult {
-  
   const {
     maxDays = 7,
     requireConsecutive = false,
@@ -116,77 +101,96 @@ export function useDaySelection(
     allowPastDates = false,
   } = options;
 
-  // State for selected dates
   const [selectedDates, setSelectedDatesState] = useState<Date[]>([]);
 
-  // Normalize dates to start of day for consistent comparison
-  const normalizedEventStart = useMemo(() => startOfDay(eventStartDate), [eventStartDate]);
-  const normalizedEventEnd = useMemo(() => startOfDay(eventEndDate), [eventEndDate]);
+  const normalizedEventStart = useMemo(
+    () => startOfDay(eventStartDate),
+    [eventStartDate]
+  );
+  const normalizedEventEnd = useMemo(
+    () => startOfDay(eventEndDate),
+    [eventEndDate]
+  );
   const normalizedDisabledDates = useMemo(
-    () => disabledDates.map(date => startOfDay(date)),
+    () => disabledDates.map((date) => startOfDay(date)),
     [disabledDates]
   );
 
   /**
    * Check if a date is within the event date range.
    */
-  const isDateInRange = useCallback((date: Date): boolean => {
-    const normalizedDate = startOfDay(date);
-    return isWithinInterval(normalizedDate, {
-      start: normalizedEventStart,
-      end: normalizedEventEnd,
-    });
-  }, [normalizedEventStart, normalizedEventEnd]);
+  const isDateInRange = useCallback(
+    (date: Date): boolean => {
+      const normalizedDate = startOfDay(date);
+      return isWithinInterval(normalizedDate, {
+        start: normalizedEventStart,
+        end: normalizedEventEnd,
+      });
+    },
+    [normalizedEventStart, normalizedEventEnd]
+  );
 
   /**
    * Check if a date is disabled.
    */
-  const isDateDisabled = useCallback((date: Date): boolean => {
-    const normalizedDate = startOfDay(date);
-    
-    // Check if date is in disabled dates array
-    if (normalizedDisabledDates.some(disabledDate => 
-      isSameDay(normalizedDate, disabledDate)
-    )) {
-      return true;
-    }
+  const isDateDisabled = useCallback(
+    (date: Date): boolean => {
+      const normalizedDate = startOfDay(date);
 
-    // Check if past dates are allowed
-    if (!allowPastDates && isBefore(normalizedDate, startOfDay(new Date()))) {
-      return true;
-    }
+      if (
+        normalizedDisabledDates.some((disabledDate) =>
+          isSameDay(normalizedDate, disabledDate)
+        )
+      ) {
+        return true;
+      }
 
-    return false;
-  }, [normalizedDisabledDates, allowPastDates]);
+      if (!allowPastDates && isBefore(normalizedDate, startOfDay(new Date()))) {
+        return true;
+      }
 
-  /**
-   * Check if a date is currently selected.
-   */
-  const isDateSelected = useCallback((date: Date): boolean => {
-    const normalizedDate = startOfDay(date);
-    return selectedDates.some(selectedDate => 
-      isSameDay(startOfDay(selectedDate), normalizedDate)
-    );
-  }, [selectedDates]);
+      return false;
+    },
+    [normalizedDisabledDates, allowPastDates]
+  );
 
   /**
-   * Check if a date is available for selection (in range and not disabled).
+   * Check if a date is currently selected
    */
-  const isDateAvailable = useCallback((date: Date): boolean => {
-    return isDateInRange(date) && !isDateDisabled(date);
-  }, [isDateInRange, isDateDisabled]);
+  const isDateSelected = useCallback(
+    (date: Date): boolean => {
+      const normalizedDate = startOfDay(date);
+      return selectedDates.some((selectedDate) =>
+        isSameDay(startOfDay(selectedDate), normalizedDate)
+      );
+    },
+    [selectedDates]
+  );
+
+  /**
+   * Check if a date is available for selection (in range and not disabled)
+   */
+  const isDateAvailable = useCallback(
+    (date: Date): boolean => {
+      return isDateInRange(date) && !isDateDisabled(date);
+    },
+    [isDateInRange, isDateDisabled]
+  );
 
   /**
    * Get consecutive date ranges from current selection.
    */
-  const getConsecutiveRanges = useCallback((): Array<{ start: Date; end: Date; length: number }> => {
+  const getConsecutiveRanges = useCallback((): Array<{
+    start: Date;
+    end: Date;
+    length: number;
+  }> => {
     if (selectedDates.length === 0) {
       return [];
     }
 
-    // Sort selected dates
     const sortedDates = [...selectedDates]
-      .map(date => startOfDay(date))
+      .map((date) => startOfDay(date))
       .sort((a, b) => a.getTime() - b.getTime());
 
     const ranges: Array<{ start: Date; end: Date; length: number }> = [];
@@ -197,11 +201,9 @@ export function useDaySelection(
       const currentDate = sortedDates[i];
       const previousDate = sortedDates[i - 1];
 
-      // Check if current date is consecutive to previous
       if (differenceInDays(currentDate, previousDate) === 1) {
         currentRangeEnd = currentDate;
       } else {
-        // End current range and start new one
         ranges.push({
           start: currentRangeStart,
           end: currentRangeEnd,
@@ -212,7 +214,6 @@ export function useDaySelection(
       }
     }
 
-    // Add the last range
     ranges.push({
       start: currentRangeStart,
       end: currentRangeEnd,
@@ -223,101 +224,115 @@ export function useDaySelection(
   }, [selectedDates]);
 
   /**
-   * Check if a date can be selected given current constraints.
+   * Check if a date can be selected given current constraints
    */
-  const canSelectDate = useCallback((date: Date): boolean => {
-    // Basic availability check
-    if (!isDateAvailable(date)) {
-      return false;
-    }
-
-    // If date is already selected, it can be deselected
-    if (isDateSelected(date)) {
-      return true;
-    }
-
-    // Check maximum days constraint
-    if (selectedDates.length >= maxDays) {
-      return false;
-    }
-
-    // Check consecutive days constraint
-    if (requireConsecutive && selectedDates.length > 0) {
-      const normalizedDate = startOfDay(date);
-      const normalizedSelected = selectedDates.map(d => startOfDay(d));
-      
-      // Check if date extends existing consecutive selection
-      const hasAdjacentDate = normalizedSelected.some(selectedDate => {
-        const diffDays = Math.abs(differenceInDays(normalizedDate, selectedDate));
-        return diffDays === 1;
-      });
-
-      if (!hasAdjacentDate) {
+  const canSelectDate = useCallback(
+    (date: Date): boolean => {
+      if (!isDateAvailable(date)) {
         return false;
       }
-    }
 
-    return true;
-  }, [isDateAvailable, isDateSelected, selectedDates, maxDays, requireConsecutive]);
+      if (isDateSelected(date)) {
+        return true;
+      }
+
+      if (selectedDates.length >= maxDays) {
+        return false;
+      }
+
+      if (requireConsecutive && selectedDates.length > 0) {
+        const normalizedDate = startOfDay(date);
+        const normalizedSelected = selectedDates.map((d) => startOfDay(d));
+
+        const hasAdjacentDate = normalizedSelected.some((selectedDate) => {
+          const diffDays = Math.abs(
+            differenceInDays(normalizedDate, selectedDate)
+          );
+          return diffDays === 1;
+        });
+
+        if (!hasAdjacentDate) {
+          return false;
+        }
+      }
+
+      return true;
+    },
+    [
+      isDateAvailable,
+      isDateSelected,
+      selectedDates,
+      maxDays,
+      requireConsecutive,
+    ]
+  );
 
   /**
-   * Add a date to the selection.
+   * Add a date to the selection
    */
-  const selectDate = useCallback((date: Date): void => {
-    const normalizedDate = startOfDay(date);
+  const selectDate = useCallback(
+    (date: Date): void => {
+      const normalizedDate = startOfDay(date);
 
-    if (!canSelectDate(normalizedDate)) {
-      return;
-    }
+      if (!canSelectDate(normalizedDate)) {
+        return;
+      }
 
-    if (!isDateSelected(normalizedDate)) {
-      setSelectedDatesState(prev => [...prev, normalizedDate]);
-    }
-  }, [canSelectDate, isDateSelected]);
+      if (!isDateSelected(normalizedDate)) {
+        setSelectedDatesState((prev) => [...prev, normalizedDate]);
+      }
+    },
+    [canSelectDate, isDateSelected]
+  );
 
   /**
-   * Remove a date from the selection.
+   * Remove a date from the selection
    */
   const deselectDate = useCallback((date: Date): void => {
     const normalizedDate = startOfDay(date);
-    
-    setSelectedDatesState(prev => 
-      prev.filter(selectedDate => 
-        !isSameDay(startOfDay(selectedDate), normalizedDate)
+
+    setSelectedDatesState((prev) =>
+      prev.filter(
+        (selectedDate) => !isSameDay(startOfDay(selectedDate), normalizedDate)
       )
     );
   }, []);
 
   /**
-   * Toggle a date's selection state.
+   * Toggle a date's selection state
    */
-  const toggleDate = useCallback((date: Date): void => {
-    if (isDateSelected(date)) {
-      deselectDate(date);
-    } else {
-      selectDate(date);
-    }
-  }, [isDateSelected, deselectDate, selectDate]);
+  const toggleDate = useCallback(
+    (date: Date): void => {
+      if (isDateSelected(date)) {
+        deselectDate(date);
+      } else {
+        selectDate(date);
+      }
+    },
+    [isDateSelected, deselectDate, selectDate]
+  );
 
   /**
-   * Clear all selected dates.
+   * Clear all selected dates
    */
   const clearSelection = useCallback((): void => {
     setSelectedDatesState([]);
   }, []);
 
   /**
-   * Set the entire selection to a new array of dates.
+   * Set the entire selection to a new array of dates
    */
-  const setSelectedDates = useCallback((dates: Date[]): void => {
-    // Filter and normalize the provided dates
-    const validDates = dates
-      .map(date => startOfDay(date))
-      .filter(date => isDateAvailable(date))
-      .slice(0, maxDays); // Ensure we don't exceed max days
+  const setSelectedDates = useCallback(
+    (dates: Date[]): void => {
+      const validDates = dates
+        .map((date) => startOfDay(date))
+        .filter((date) => isDateAvailable(date))
+        .slice(0, maxDays);
 
-    setSelectedDatesState(validDates);
-  }, [isDateAvailable, maxDays]);
+      setSelectedDatesState(validDates);
+    },
+    [isDateAvailable, maxDays]
+  );
 
   // Computed properties
   const selectedCount = selectedDates.length;
@@ -325,11 +340,11 @@ export function useDaySelection(
   const isValidSelection = selectedCount >= minDays && selectedCount <= maxDays;
 
   /**
-   * Get error message for current selection state.
+   * Get error message for current selection state
    */
   const getSelectionError = useCallback((): string | null => {
     if (selectedCount < minDays) {
-      return `Please select at least ${minDays} day${minDays > 1 ? 's' : ''}`;
+      return `Please select at least ${minDays} day${minDays > 1 ? "s" : ""}`;
     }
 
     if (selectedCount > maxDays) {
@@ -339,12 +354,18 @@ export function useDaySelection(
     if (requireConsecutive && selectedCount > 1) {
       const ranges = getConsecutiveRanges();
       if (ranges.length > 1) {
-        return 'Selected days must be consecutive';
+        return "Selected days must be consecutive";
       }
     }
 
     return null;
-  }, [selectedCount, minDays, maxDays, requireConsecutive, getConsecutiveRanges]);
+  }, [
+    selectedCount,
+    minDays,
+    maxDays,
+    requireConsecutive,
+    getConsecutiveRanges,
+  ]);
 
   return {
     selectedDates,
