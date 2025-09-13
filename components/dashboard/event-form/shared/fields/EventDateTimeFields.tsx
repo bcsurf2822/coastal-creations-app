@@ -16,7 +16,7 @@ const EventDateTimeFields = ({
 }: EventDateTimeFieldsProps): ReactElement => {
   const { generateTimeOptions } = useTimeOptions();
   const startDateInputRef = useRef<HTMLInputElement>(null);
-  const endDateInputRef = useRef<HTMLInputElement>(null);
+  // const endDateInputRef = useRef<HTMLInputElement>(null);
   const recurringEndDateInputRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -30,7 +30,9 @@ const EventDateTimeFields = ({
           <input
             type="date"
             value={formData.startDate}
-            onChange={(e) => actions.handleInputChange("startDate", e.target.value)}
+            onChange={(e) =>
+              actions.handleInputChange("startDate", e.target.value)
+            }
             ref={startDateInputRef}
             onClick={() => handleDateInputClick(startDateInputRef)}
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
@@ -39,7 +41,6 @@ const EventDateTimeFields = ({
             <p className="text-red-600 text-sm mt-1">{errors.startDate}</p>
           )}
         </div>
-
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -76,7 +77,9 @@ const EventDateTimeFields = ({
             <option value="">Select end time</option>
             {generateTimeOptions(
               true,
-              formData.startTime ? formData.startTime.format("HH:mm") : undefined
+              formData.startTime
+                ? formData.startTime.format("HH:mm")
+                : undefined
             )}
           </select>
           {errors.endTime && (
@@ -87,71 +90,77 @@ const EventDateTimeFields = ({
 
       {/* Recurring Events (not for artist events) */}
       {formData.eventType !== "artist" && (
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={formData.isRecurring || false}
-                onChange={(e) =>
-                  actions.handleInputChange("isRecurring", e.target.checked)
-                }
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <label className="text-sm font-medium text-gray-700">
-                This is a recurring event
-              </label>
-            </div>
-
-            {formData.isRecurring && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Recurring Pattern <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={formData.recurringPattern || "weekly"}
-                    onChange={(e) =>
-                      actions.handleInputChange("recurringPattern", e.target.value)
-                    }
-                    autoComplete="new-password"
-                    data-lpignore="true"
-                    data-form-type="other"
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
-                  </select>
-                  {errors.recurringPattern && (
-                    <p className="text-red-600 text-sm mt-1">
-                      {errors.recurringPattern}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    End Date <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.recurringEndDate || ""}
-                    onChange={(e) =>
-                      actions.handleInputChange("recurringEndDate", e.target.value)
-                    }
-                    ref={recurringEndDateInputRef}
-                    onClick={() => handleDateInputClick(recurringEndDateInputRef)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                  />
-                  {errors.recurringEndDate && (
-                    <p className="text-red-600 text-sm mt-1">
-                      {errors.recurringEndDate}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={formData.isRecurring || false}
+              onChange={(e) =>
+                actions.handleInputChange("isRecurring", e.target.checked)
+              }
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label className="text-sm font-medium text-gray-700">
+              This is a recurring event
+            </label>
           </div>
-        )}
+
+          {formData.isRecurring && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Recurring Pattern <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.recurringPattern || "weekly"}
+                  onChange={(e) =>
+                    actions.handleInputChange(
+                      "recurringPattern",
+                      e.target.value
+                    )
+                  }
+                  autoComplete="new-password"
+                  data-lpignore="true"
+                  data-form-type="other"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                </select>
+                {errors.recurringPattern && (
+                  <p className="text-red-600 text-sm mt-1">
+                    {errors.recurringPattern}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  End Date <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={formData.recurringEndDate || ""}
+                  onChange={(e) =>
+                    actions.handleInputChange(
+                      "recurringEndDate",
+                      e.target.value
+                    )
+                  }
+                  ref={recurringEndDateInputRef}
+                  onClick={() => handleDateInputClick(recurringEndDateInputRef)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                />
+                {errors.recurringEndDate && (
+                  <p className="text-red-600 text-sm mt-1">
+                    {errors.recurringEndDate}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </>
   );
 };
