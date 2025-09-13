@@ -1384,7 +1384,7 @@ export default function EditEvent() {
                     data-lpignore="true"
                     data-form-type="other"
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="e.g., Group Discount, Early Bird Special"
+                    placeholder="Discount Name to appear on class card"
                   />
                 </div>
 
@@ -1497,7 +1497,7 @@ export default function EditEvent() {
                     data-lpignore="true"
                     data-form-type="other"
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="e.g., Group discount for 3+ participants"
+                    placeholder="Optional description that will display when condition is met in payments page"
                   />
                 </div>
               </div>
