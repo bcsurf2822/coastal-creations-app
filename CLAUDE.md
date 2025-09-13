@@ -236,7 +236,6 @@ auth.ts                    # NextAuth configuration
 - **NEVER use `any` type** - use `unknown` if type is truly unknown
 - **MUST have explicit return types** for all functions and components
 - **MUST use proper generic constraints** for reusable components
-- **MUST use type inference from Zod schemas** using `z.infer<typeof schema>`
 - **NEVER use `@ts-ignore`** or `@ts-expect-error` - fix the type issue properly
 
 ## 📦 Package Management & Dependencies
@@ -271,89 +270,10 @@ auth.ts                    # NextAuth configuration
 # UI and Styling
 npm install @radix-ui/react-* class-variance-authority clsx tailwind-merge
 
-# Form Handling and Validation
-npm install react-hook-form @hookform/resolvers zod
-
-# State Management (when needed)
-npm install @tanstack/react-query zustand
-
 # Development Tools
 npm install -D @testing-library/react @testing-library/jest-dom vitest jsdom
 ```
 
-## 🛡️ Data Validation with Zod (MANDATORY FOR ALL EXTERNAL DATA)
-
-### MUST Follow These Validation Rules
-
-- **MUST validate ALL external data**: API responses, form inputs, URL params, environment variables
-- **MUST use branded types**: For all IDs and domain-specific values
-- **MUST fail fast**: Validate at system boundaries, throw errors immediately
-- **MUST use type inference**: Always derive TypeScript types from Zod schemas
-
-### Schema Example (MANDATORY PATTERNS)
-
-```typescript
-import { z } from "zod";
-
-// MUST use branded types for ALL IDs
-const UserIdSchema = z.string().uuid().brand<"UserId">();
-type UserId = z.infer<typeof UserIdSchema>;
-
-// Environment validation (REQUIRED)
-export const envSchema = z.object({
-  NODE_ENV: z.enum(["development", "test", "production"]),
-  NEXT_PUBLIC_APP_URL: z.string().url(),
-  DATABASE_URL: z.string().min(1),
-  NEXTAUTH_SECRET: z.string().min(1),
-  NEXTAUTH_URL: z.string().url(),
-});
-
-export const env = envSchema.parse(process.env);
-
-// API response validation
-export const apiResponseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
-  z.object({
-    success: z.boolean(),
-    data: dataSchema,
-    error: z.string().optional(),
-    timestamp: z.string().datetime(),
-  });
-```
-
-### Form Validation with React Hook Form
-
-```typescript
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-
-const formSchema = z.object({
-  email: z.string().email(),
-  username: z.string().min(3).max(20),
-});
-
-type FormData = z.infer<typeof formSchema>;
-
-function UserForm(): ReactElement {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    mode: 'onBlur',
-  });
-
-  const onSubmit = async (data: FormData): Promise<void> => {
-    // Handle validated data
-  };
-
-  return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      {/* Form fields */}
-    </form>
-  );
-}
-```
 
 ## 🧪 Testing Strategy (MANDATORY REQUIREMENTS)
 
@@ -561,79 +481,6 @@ export { Button, buttonVariants }
 4. **Server State**: MUST use TanStack Query for ALL API data
 5. **Global State**: Zustand ONLY when truly needed app-wide
 
-### Server State Pattern (TanStack Query)
-
-```typescript
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
-function useUser(id: UserId) {
-  return useQuery({
-    queryKey: ["user", id],
-    queryFn: async () => {
-      const response = await fetch(`/api/users/${id}`);
-
-      if (!response.ok) {
-        throw new ApiError("Failed to fetch user", response.status);
-      }
-
-      const data = await response.json();
-      return userSchema.parse(data);
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 3,
-  });
-}
-
-function useUpdateUser() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (userData: UpdateUserData) => {
-      const response = await fetch("/api/users", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userData),
-      });
-
-      if (!response.ok) {
-        throw new ApiError("Failed to update user", response.status);
-      }
-
-      return response.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["user"] });
-    },
-  });
-}
-```
-
-## 🔐 Security Requirements (MANDATORY)
-
-### Input Validation (MUST IMPLEMENT ALL)
-
-- **MUST sanitize ALL user inputs** with Zod before processing
-- **MUST validate file uploads**: type, size, and content
-- **MUST prevent XSS** with proper escaping
-- **MUST implement CSRF protection** for forms
-- **NEVER use dangerouslySetInnerHTML** without sanitization
-
-### Environment Variables (MUST VALIDATE)
-
-```typescript
-// lib/env.ts
-import { z } from "zod";
-
-const envSchema = z.object({
-  NODE_ENV: z.enum(["development", "test", "production"]),
-  NEXT_PUBLIC_APP_URL: z.string().url(),
-  DATABASE_URL: z.string().min(1),
-  NEXTAUTH_SECRET: z.string().min(32),
-  NEXTAUTH_URL: z.string().url(),
-});
-
-export const env = envSchema.parse(process.env);
-```
 
 ## 🚀 Performance Guidelines
 
@@ -733,50 +580,20 @@ export default eslintConfig;
 ## ⚠️ CRITICAL GUIDELINES (MUST FOLLOW ALL)
 
 1. **ENFORCE strict TypeScript** - ZERO compromises on type safety
-2. **VALIDATE everything with Zod** - ALL external data must be validated
 3. **MINIMUM 80% test coverage** - NO EXCEPTIONS
 4. **MUST co-locate related files** - Tests MUST be in `__tests__` folders
 5. **MAXIMUM 500 lines per file** - Split if larger
 6. **MAXIMUM 200 lines per component** - Refactor if larger
 7. **MUST handle ALL states** - Loading, error, empty, and success
-8. **MUST use semantic commits** - feat:, fix:, docs:, refactor:, test:
-9. **MUST write complete JSDoc** - ALL exports must be documented
 10. **NEVER use `any` type** - Use proper typing or `unknown`
-11. **MUST pass ALL automated checks** - Before ANY merge
 
-## 📋 Pre-commit Checklist (MUST COMPLETE ALL)
-
-- [ ] TypeScript compiles with ZERO errors (`npm run type-check`)
-- [ ] Tests written and passing with 80%+ coverage (`npm run test:coverage`)
-- [ ] ESLint passes with ZERO warnings (`npm run lint`)
-- [ ] Prettier formatting applied (`npm run format`)
-- [ ] All components have complete JSDoc documentation
-- [ ] Zod schemas validate ALL external data
-- [ ] ALL states handled (loading, error, empty, success)
-- [ ] Error boundaries implemented for features
-- [ ] Accessibility requirements met (ARIA labels, keyboard nav)
-- [ ] No console.log statements in production code
-- [ ] Environment variables validated with Zod
-- [ ] Component files under 200 lines
-- [ ] No prop drilling beyond 2 levels
-- [ ] Server/Client components used appropriately
 
 ### FORBIDDEN Practices
 
-- **NEVER use `any` type** (except library declaration merging with comments)
-- **NEVER skip tests** for new functionality
 - **NEVER ignore TypeScript errors** with `@ts-ignore`
-- **NEVER trust external data** without Zod validation
 - **NEVER use `JSX.Element`** - use `ReactElement` instead
 - **NEVER store sensitive data** in localStorage or client state
 - **NEVER use dangerouslySetInnerHTML** without sanitization
 - **NEVER exceed file/component size limits**
 - **NEVER prop drill** beyond 2 levels - use context or state management
 - **NEVER commit** without passing all quality checks
-
----
-
-_This guide is optimized for Next.js 15 with React 19. Keep it updated as frameworks evolve._
-_Focus on type safety, performance, and maintainability in all development decisions._
-_Last updated: January 2025_
-- Don't rm test files
