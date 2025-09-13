@@ -12,7 +12,7 @@ const LOCAL_TIMEZONE = "America/New_York";
 export interface IEvent extends Document {
   _id: string;
   eventName: string;
-  eventType: "class" | "camp" | "workshop" | "artist" | "reservation";
+  eventType: "class" | "camp" | "workshop" | "artist";
   description: string;
   price?: number;
   numberOfParticipants?: number;
@@ -45,32 +45,6 @@ export interface IEvent extends Document {
     minParticipants: number;
     name: string;
     description?: string;
-    // Enhanced discount options for reservations
-    applicationType?: "total" | "per_day" | "per_participant_day";
-    dayTiers?: {
-      "3"?: number;
-      "5"?: number;
-      "7"?: number;
-    };
-    participantTiers?: {
-      "10"?: number;
-      "20"?: number;
-      "30"?: number;
-    };
-    earlyBird?: {
-      enabled: boolean;
-      daysBeforeEvent?: number;
-      value?: number;
-    };
-  };
-  // Reservation settings for multi-day events (optional)
-  reservationSettings?: {
-    dayPricing: Array<{
-      numberOfDays: number;
-      price: number;
-      label?: string;
-    }>;
-    dailyCapacity?: number;
   };
   createdAt: Date;
   updatedAt: Date;
@@ -197,70 +171,8 @@ const DiscountSchema = new Schema({
   description: {
     type: String,
   },
-  // Enhanced discount options for reservations
-  applicationType: {
-    type: String,
-    enum: ["total", "per_day", "per_participant_day"],
-    default: "total",
-  },
-  dayTiers: {
-    "3": { type: Number, min: 0 },
-    "5": { type: Number, min: 0 },
-    "7": { type: Number, min: 0 },
-    _id: false,
-  },
-  participantTiers: {
-    "10": { type: Number, min: 0 },
-    "20": { type: Number, min: 0 },
-    "30": { type: Number, min: 0 },
-    _id: false,
-  },
-  earlyBird: {
-    enabled: { type: Boolean, default: false },
-    daysBeforeEvent: { type: Number, min: 1 },
-    value: { type: Number, min: 0 },
-    _id: false,
-  },
 }, { _id: false });
 
-// Reservation settings schema for multi-day events
-const ReservationPricingTierSchema = new Schema({
-  numberOfDays: {
-    type: Number,
-    required: true,
-    min: 1,
-    max: 30,
-  },
-  price: {
-    type: Number,
-    required: true,
-    min: 0,
-  },
-  label: {
-    type: String,
-    required: false,
-  },
-}, { _id: false });
-
-const ReservationSettingsSchema = new Schema({
-  dayPricing: {
-    type: [ReservationPricingTierSchema],
-    required: true,
-    validate: {
-      validator: function(tiers: Array<{numberOfDays: number}>) {
-        // Ensure no duplicate day counts
-        const dayCounts = tiers.map(tier => tier.numberOfDays);
-        const uniqueDayCounts = new Set(dayCounts);
-        return uniqueDayCounts.size === dayCounts.length;
-      },
-      message: 'Duplicate day counts not allowed in pricing tiers'
-    }
-  },
-  dailyCapacity: {
-    type: Number,
-    min: 1,
-  },
-}, { _id: false });
 
 // Main Event schema
 const EventSchema = new Schema<IEvent>(
@@ -273,7 +185,7 @@ const EventSchema = new Schema<IEvent>(
     eventType: {
       type: String,
       required: true,
-      enum: ["class", "camp", "workshop", "artist", "reservation"],
+      enum: ["class", "camp", "workshop", "artist"],
     },
     description: {
       type: String,
@@ -310,35 +222,12 @@ const EventSchema = new Schema<IEvent>(
       type: DiscountSchema,
       required: false,
     },
-    reservationSettings: {
-      type: ReservationSettingsSchema,
-      required: false,
-    },
   },
   {
     timestamps: true,
   }
 );
 
-// Pre-validation middleware for reservation events
-EventSchema.pre("validate", function (next) {
-  // Validate that reservation events have required fields
-  if (this.eventType === "reservation") {
-    if (!this.reservationSettings) {
-      this.invalidate('reservationSettings', 'Reservation settings are required for reservation events');
-    }
-    if (!this.dates.endDate) {
-      this.invalidate('dates.endDate', 'End date is required for reservation events');
-    }
-    // Validate that reservation events have both start and end dates
-    if (this.dates.endDate && this.dates.startDate) {
-      if (this.dates.endDate <= this.dates.startDate) {
-        this.invalidate('dates.endDate', 'End date must be after start date for reservation events');
-      }
-    }
-  }
-  next();
-});
 
 // Index for efficient searching
 EventSchema.index({ "dates.startDate": 1, eventType: 1 });

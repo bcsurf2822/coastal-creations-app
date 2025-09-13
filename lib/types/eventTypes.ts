@@ -3,12 +3,10 @@
  * @module lib/types/eventTypes
  */
 
-import { ReservationSettings, PricingTier } from '../pricing/types';
-
 /**
  * Event type enumeration.
  */
-export type EventType = "class" | "workshop" | "camp" | "artist" | "reservation";
+export type EventType = "class" | "workshop" | "camp" | "artist";
 
 /**
  * Recurring pattern enumeration.
@@ -65,7 +63,7 @@ export interface EventFormData {
   // Optional fields for different event types
   price?: string; // String for form input
   numberOfParticipants?: string; // String for form input
-  
+
   // Recurring event fields
   isRecurring?: boolean;
   recurringPattern?: RecurringPattern;
@@ -79,19 +77,11 @@ export interface EventFormData {
   isDiscountAvailable?: boolean;
   discount?: DiscountData;
 
-  // Reservation-specific fields
-  endDate?: string; // YYYY-MM-DD format for reservations
-  isReservationEvent?: boolean;
-  reservationSettings?: ReservationSettings;
-
   // Image upload
   image?: File | null;
   imageUrl?: string;
 }
 
-/**
- * Customer booking participant interface.
- */
 export interface Participant {
   firstName: string;
   lastName: string;
@@ -126,14 +116,6 @@ export interface CustomerBookingData {
   isSigningUpForSelf: boolean;
   participants: Participant[];
   billingInfo: BillingInfo;
-  reservationDetails?: {
-    selectedDates: Date[];
-    numberOfDays: number;
-    appliedPriceTier: PricingTier;
-    isConsecutive: boolean;
-    checkInDate: Date;
-    checkOutDate?: Date;
-  };
 }
 
 /**
@@ -163,8 +145,11 @@ export interface ValidationResult<T = unknown> {
  * Simple validation helper functions.
  */
 export const validators = {
-  required: (value: string | undefined | null, fieldName: string): string | null => {
-    if (!value || value.trim() === '') {
+  required: (
+    value: string | undefined | null,
+    fieldName: string
+  ): string | null => {
+    if (!value || value.trim() === "") {
       return `${fieldName} is required`;
     }
     return null;
@@ -174,12 +159,16 @@ export const validators = {
     if (!value) return null;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(value)) {
-      return 'Invalid email address';
+      return "Invalid email address";
     }
     return null;
   },
 
-  minLength: (value: string | undefined, min: number, fieldName: string): string | null => {
+  minLength: (
+    value: string | undefined,
+    min: number,
+    fieldName: string
+  ): string | null => {
     if (!value) return null;
     if (value.length < min) {
       return `${fieldName} must be at least ${min} characters`;
@@ -187,7 +176,11 @@ export const validators = {
     return null;
   },
 
-  maxLength: (value: string | undefined, max: number, fieldName: string): string | null => {
+  maxLength: (
+    value: string | undefined,
+    max: number,
+    fieldName: string
+  ): string | null => {
     if (!value) return null;
     if (value.length > max) {
       return `${fieldName} cannot exceed ${max} characters`;
@@ -204,7 +197,10 @@ export const validators = {
     return null;
   },
 
-  positiveNumber: (value: string | undefined, fieldName: string): string | null => {
+  positiveNumber: (
+    value: string | undefined,
+    fieldName: string
+  ): string | null => {
     if (!value) return null;
     const num = parseFloat(value);
     if (isNaN(num) || num < 0) {
@@ -222,7 +218,12 @@ export const validators = {
     return null;
   },
 
-  range: (value: string | undefined, min: number, max: number, fieldName: string): string | null => {
+  range: (
+    value: string | undefined,
+    min: number,
+    max: number,
+    fieldName: string
+  ): string | null => {
     if (!value) return null;
     const num = parseFloat(value);
     if (isNaN(num) || num < min || num > max) {
@@ -262,9 +263,12 @@ export const validators = {
     return null;
   },
 
-  endTimeAfterStart: (startTime: string | undefined, endTime: string | undefined): string | null => {
+  endTimeAfterStart: (
+    startTime: string | undefined,
+    endTime: string | undefined
+  ): string | null => {
     if (!startTime || !endTime) return null;
-    
+
     const [startHour, startMinute] = startTime.split(":").map(Number);
     const [endHour, endMinute] = endTime.split(":").map(Number);
     const startMinutes = startHour * 60 + startMinute;
@@ -276,17 +280,20 @@ export const validators = {
     return null;
   },
 
-  endDateAfterStart: (startDate: string | undefined, endDate: string | undefined): string | null => {
+  endDateAfterStart: (
+    startDate: string | undefined,
+    endDate: string | undefined
+  ): string | null => {
     if (!startDate || !endDate) return null;
-    
+
     const start = new Date(startDate);
     const end = new Date(endDate);
-    
+
     if (end <= start) {
       return "End date must be after start date";
     }
     return null;
-  }
+  },
 };
 
 /**
@@ -325,29 +332,12 @@ export const defaultEventFormValues: Partial<EventFormData> = {
 };
 
 /**
- * Default values for reservation events.
- */
-export const defaultReservationEventFormValues: Partial<EventFormData> = {
-  ...defaultEventFormValues,
-  eventType: "reservation",
-  isReservationEvent: true,
-  isRecurring: false,
-  hasOptions: false,
-  isDiscountAvailable: false,
-  endDate: "",
-  reservationSettings: {
-    dayPricing: [{ numberOfDays: 1, price: 75 }],
-    dailyCapacity: undefined,
-  },
-};
-
-/**
  * Utility function to get default values based on event type.
  */
-export function getDefaultValuesForEventType(eventType: EventType): Partial<EventFormData> {
+export function getDefaultValuesForEventType(
+  eventType: EventType
+): Partial<EventFormData> {
   switch (eventType) {
-    case "reservation":
-      return defaultReservationEventFormValues;
     case "artist":
       return {
         ...defaultEventFormValues,
