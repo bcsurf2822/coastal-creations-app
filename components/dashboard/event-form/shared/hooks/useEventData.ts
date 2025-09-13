@@ -47,8 +47,12 @@ export const useEventData = (eventId: string | null): UseEventDataReturn => {
           description: event.description || "",
           price: event.price,
           numberOfParticipants: event.numberOfParticipants,
-          startDate: event.dates?.startDate ? formatDateForInput(event.dates.startDate) : "",
-          endDate: event.dates?.endDate ? formatDateForInput(event.dates.endDate) : undefined,
+          startDate: event.dates?.startDate
+            ? formatDateForInput(event.dates.startDate)
+            : "",
+          endDate: event.dates?.endDate
+            ? formatDateForInput(event.dates.endDate)
+            : undefined,
           startTime: null,
           endTime: null,
           isRecurring: event.dates?.isRecurring || false,
@@ -62,10 +66,6 @@ export const useEventData = (eventId: string | null): UseEventDataReturn => {
           discount: event.discount,
           image: undefined,
           imageUrl: event.image,
-          reservationSettings: event.reservationSettings ? {
-            dayPricing: event.reservationSettings.dayPricing || [{ numberOfDays: 1, price: 75 }],
-            dailyCapacity: event.reservationSettings.dailyCapacity,
-          } : undefined,
         };
 
         // Format time objects

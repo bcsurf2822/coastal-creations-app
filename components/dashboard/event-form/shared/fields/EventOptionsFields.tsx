@@ -13,8 +13,8 @@ const EventOptionsFields = ({
   actions,
   errors,
 }: EventOptionsFieldsProps): ReactElement => {
-  // Don't render for artist or reservation events
-  if (formData.eventType === "artist" || formData.eventType === "reservation") {
+  // Don't render for artist events
+  if (formData.eventType === "artist") {
     return <></>;
   }
 

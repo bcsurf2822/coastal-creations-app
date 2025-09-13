@@ -1,6 +1,8 @@
 import { EventFormState, EventFormErrors } from "../types/eventForm.types";
 
-export const validateEventForm = (formData: EventFormState): EventFormErrors => {
+export const validateEventForm = (
+  formData: EventFormState
+): EventFormErrors => {
   const newErrors: EventFormErrors = {};
 
   // Basic validations
@@ -39,10 +41,7 @@ export const validateEventForm = (formData: EventFormState): EventFormErrors => 
   }
 
   // Event type specific validations
-  if (
-    formData.eventType !== "artist" &&
-    formData.eventType !== "reservation"
-  ) {
+  if (formData.eventType !== "artist") {
     if (!formData.price || formData.price <= 0) {
       newErrors.price = "Price is required and must be greater than 0";
     }
@@ -57,25 +56,8 @@ export const validateEventForm = (formData: EventFormState): EventFormErrors => 
     }
   }
 
-  // Reservation specific validations
-  if (formData.eventType === "reservation") {
-    if (!formData.endDate) {
-      newErrors.endDate = "End date is required for reservation events";
-    } else {
-      const startDate = new Date(formData.startDate);
-      const endDate = new Date(formData.endDate);
-      if (endDate <= startDate) {
-        newErrors.endDate = "End date must be after start date";
-      }
-    }
-  }
-
   // Recurring event validations
-  if (
-    formData.eventType !== "artist" &&
-    formData.eventType !== "reservation" &&
-    formData.isRecurring
-  ) {
+  if (formData.eventType !== "artist" && formData.isRecurring) {
     if (!formData.recurringEndDate) {
       newErrors.recurringEndDate = "Recurring end date is required";
     } else {
@@ -89,11 +71,7 @@ export const validateEventForm = (formData: EventFormState): EventFormErrors => 
   }
 
   // Options validations
-  if (
-    formData.eventType !== "artist" &&
-    formData.eventType !== "reservation" &&
-    formData.hasOptions
-  ) {
+  if (formData.eventType !== "artist" && formData.hasOptions) {
     if (formData.optionCategories.length === 0) {
       newErrors.optionCategories =
         "At least one option category is required when options are enabled";
@@ -137,8 +115,7 @@ export const validateEventForm = (formData: EventFormState): EventFormErrors => 
         formData.discount.type === "percentage" &&
         formData.discount.value > 100
       ) {
-        newErrors["discount.value"] =
-          "Percentage discount cannot exceed 100%";
+        newErrors["discount.value"] = "Percentage discount cannot exceed 100%";
       }
       if (
         formData.discount.type === "fixed" &&

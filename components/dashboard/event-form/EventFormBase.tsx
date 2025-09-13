@@ -8,14 +8,13 @@ import EventPricingFields from "./shared/fields/EventPricingFields";
 import EventImageUpload from "./shared/fields/EventImageUpload";
 import EventOptionsFields from "./shared/fields/EventOptionsFields";
 import EventDiscountFields from "./shared/fields/EventDiscountFields";
-import EventReservationFields from "./shared/fields/EventReservationFields";
 
 interface EventFormBaseProps extends EventFormProps {
   title: string;
   existingImageUrl?: string | null;
   initialData?: EventFormState;
   onEventTypeChange?: (
-    eventType: "class" | "camp" | "workshop" | "artist" | "reservation"
+    eventType: "class" | "camp" | "workshop" | "artist"
   ) => void;
 }
 
@@ -34,7 +33,7 @@ const EventFormBase = ({
     useEventForm({ mode, eventId, initialData, onSuccess });
 
   const handleEventTypeChange = (
-    eventType: "class" | "camp" | "workshop" | "artist" | "reservation"
+    eventType: "class" | "camp" | "workshop" | "artist"
   ) => {
     if (onEventTypeChange) {
       onEventTypeChange(eventType);
@@ -94,11 +93,6 @@ const EventFormBase = ({
             errors={errors}
           />
 
-          <EventReservationFields
-            formData={formData}
-            actions={actions}
-            errors={errors}
-          />
 
           {/* Form Actions */}
           <div className="flex justify-end space-x-4 pt-6 border-t">

@@ -19,16 +19,10 @@ const EventDateTimeFields = ({
   const endDateInputRef = useRef<HTMLInputElement>(null);
   const recurringEndDateInputRef = useRef<HTMLInputElement>(null);
 
-  const isReservationEvent = formData.eventType === "reservation";
-
   return (
     <>
       {/* Date and Time */}
-      <div
-        className={`grid grid-cols-1 ${
-          isReservationEvent ? "md:grid-cols-2" : "md:grid-cols-3"
-        } gap-4`}
-      >
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Start Date <span className="text-red-500">*</span>
@@ -46,24 +40,6 @@ const EventDateTimeFields = ({
           )}
         </div>
 
-        {isReservationEvent && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              End Date <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="date"
-              value={formData.endDate || ""}
-              onChange={(e) => actions.handleInputChange("endDate", e.target.value)}
-              ref={endDateInputRef}
-              onClick={() => handleDateInputClick(endDateInputRef)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-            />
-            {errors.endDate && (
-              <p className="text-red-600 text-sm mt-1">{errors.endDate}</p>
-            )}
-          </div>
-        )}
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -109,9 +85,8 @@ const EventDateTimeFields = ({
         </div>
       </div>
 
-      {/* Recurring Events (not for artist or reservation events) */}
-      {formData.eventType !== "artist" &&
-        formData.eventType !== "reservation" && (
+      {/* Recurring Events (not for artist events) */}
+      {formData.eventType !== "artist" && (
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <input

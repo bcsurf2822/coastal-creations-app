@@ -48,7 +48,6 @@ const EventBasicFields = ({
           <option value="workshop">Workshop</option>
           <option value="camp">Camp</option>
           <option value="artist">Artist</option>
-          <option value="reservation">Reservation</option>
         </select>
         {errors.eventType && (
           <p className="text-red-600 text-sm mt-1">{errors.eventType}</p>

@@ -21,7 +21,7 @@ const getInitialFormState = (
   price: undefined,
   numberOfParticipants: undefined,
   startDate: "",
-  endDate: eventType === "reservation" ? "" : undefined,
+  endDate: undefined,
   startTime: null,
   endTime: null,
   isRecurring: false,
@@ -33,13 +33,6 @@ const getInitialFormState = (
   discount: undefined,
   image: undefined,
   imageUrl: undefined,
-  reservationSettings:
-    eventType === "reservation"
-      ? {
-          dayPricing: [{ numberOfDays: 1, price: 75 }],
-          dailyCapacity: undefined,
-        }
-      : undefined,
 });
 
 export const useEventForm = ({
@@ -271,16 +264,8 @@ export const useEventForm = ({
           image: formData.imageUrl || undefined,
           dates: {
             startDate: prepareDateForSubmit(formData.startDate)!,
-            isRecurring:
-              formData.eventType !== "reservation"
-                ? formData.isRecurring
-                : false,
-            ...(formData.eventType === "reservation" &&
-              formData.endDate && {
-                endDate: prepareDateForSubmit(formData.endDate)!,
-              }),
-            ...(formData.eventType !== "reservation" &&
-              formData.isRecurring && {
+            isRecurring: formData.isRecurring,
+            ...(formData.isRecurring && {
                 recurringPattern: formData.recurringPattern,
                 recurringEndDate: prepareDateForSubmit(
                   formData.recurringEndDate
@@ -306,15 +291,6 @@ export const useEventForm = ({
             formData.discount && {
               isDiscountAvailable: true,
               discount: formData.discount,
-            }),
-          ...(formData.eventType === "reservation" &&
-            formData.reservationSettings && {
-              reservationSettings: {
-                dayPricing: formData.reservationSettings.dayPricing || [
-                  { numberOfDays: 1, price: 75 }
-                ],
-                dailyCapacity: formData.reservationSettings.dailyCapacity,
-              },
             }),
         };
 

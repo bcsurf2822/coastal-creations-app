@@ -373,7 +373,7 @@ export default function EventCustomersPage(): ReactElement {
                   </div>
 
                   {/* Reservation Details for Multi-day Events */}
-                  {customer.reservationDetails && (
+                  {/* {customer.reservationDetails && (
                     <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
                       <h5 className="font-medium text-gray-900 dark:text-white mb-2">
                         Reservation Details
@@ -441,7 +441,7 @@ export default function EventCustomersPage(): ReactElement {
                         </div>
                       </div>
                     </div>
-                  )}
+                  )} */}
                 </div>
               ))}
             </div>

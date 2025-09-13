@@ -225,21 +225,6 @@ const EventDiscountFields = ({
         </div>
       )}
 
-      {/* Enhanced Reservation Discounts */}
-      {formData.eventType === "reservation" && formData.isDiscountAvailable && (
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-4">
-          <h4 className="text-md font-semibold text-blue-900">
-            Reservation Discount Options
-          </h4>
-          <p className="text-sm text-blue-700">
-            Configure advanced discount options for multi-day reservations
-          </p>
-          <p className="text-xs text-orange-600">
-            Note: These advanced options will be available in a future update.
-            For now, use the basic discount settings above.
-          </p>
-        </div>
-      )}
     </div>
   );
 };

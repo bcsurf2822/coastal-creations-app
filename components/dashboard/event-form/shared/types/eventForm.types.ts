@@ -14,18 +14,10 @@ export interface EventDiscount {
   description?: string;
 }
 
-export interface EventReservationSettings {
-  dayPricing: Array<{
-    numberOfDays: number;
-    price: number;
-    label?: string;
-  }>;
-  dailyCapacity?: number;
-}
 
 export interface EventFormState {
   eventName: string;
-  eventType: "class" | "camp" | "workshop" | "artist" | "reservation";
+  eventType: "class" | "camp" | "workshop" | "artist";
   description: string;
   price?: number;
   numberOfParticipants?: number;
@@ -42,7 +34,6 @@ export interface EventFormState {
   discount?: EventDiscount;
   image?: File;
   imageUrl?: string;
-  reservationSettings?: EventReservationSettings;
 }
 
 export interface EventFormProps {
