@@ -206,7 +206,7 @@ export default function NavBar() {
                     Classes & Workshops
                   </Link>
                   <Link
-                    href="/classes/birthday-parties"
+                    href="/classes/private-events"
                     className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
                   >
                     Private Events
@@ -426,7 +426,7 @@ export default function NavBar() {
                         </motion.div>
                         <motion.div variants={itemVariants} className="py-1">
                           <Link
-                            href="/classes/birthday-parties"
+                            href="/classes/private-events"
                             className="text-[#0f172a] hover:text-[#0369a1] font-normal py-1 block text-sm"
                             onClick={() => {
                               setIsMenuOpen(false);
