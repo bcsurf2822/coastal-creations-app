@@ -47,7 +47,7 @@ const ReservationOptionsFields = ({
 
           {formData.optionCategories.length === 0 && (
             <p className="text-gray-500 text-sm">
-              No option categories added yet. Click "Add Category" to get started.
+              No option categories added yet. Click &quot;Add Category&quot; to get started.
             </p>
           )}
 
@@ -119,7 +119,7 @@ const ReservationOptionsFields = ({
 
                 {category.choices.length === 0 && (
                   <p className="text-gray-500 text-sm">
-                    No choices added yet. Click "Add Choice" to get started.
+                    No choices added yet. Click &quot;Add Choice&quot; to get started.
                   </p>
                 )}
 
@@ -192,7 +192,6 @@ const ReservationOptionsFields = ({
           <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
             <p className="text-sm text-blue-700">
               <strong>Tip:</strong> Add-ons let customers customize their reservation experience.
-              For example: "Lunch Options" with choices like "Bring Own Lunch ($0)" and "Hot Lunch ($5)".
             </p>
           </div>
         </div>
