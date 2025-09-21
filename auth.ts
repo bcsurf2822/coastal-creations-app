@@ -13,7 +13,7 @@ export const authOptions: AuthOptions = {
     }),
   ],
   session: {
-    strategy: "jwt", // Now TypeScript knows this is valid
+    strategy: "jwt",
   },
   callbacks: {
     async signIn({ user }) {
@@ -22,9 +22,9 @@ export const authOptions: AuthOptions = {
         "ashley@coastalcreationsstudio.com",
       ];
       if (user.email && allowedEmails.includes(user.email)) {
-        return true; // allow sign in
+        return true;
       }
-      return false; // deny sign in
+      return false;
     },
   },
 };

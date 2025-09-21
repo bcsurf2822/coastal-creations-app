@@ -45,8 +45,8 @@ export interface ApiEvent {
   updatedAt: string;
 }
 
-// Define the type for Birthday parties
-export interface Birthday {
+
+export interface PrivateEvent {
   _id: string;
   title: string;
   description: string;
@@ -55,4 +55,81 @@ export interface Birthday {
   unit: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// Define the type for Dashboard Private Event display
+export interface DashboardPrivateEvent {
+  id: string;
+  title: string;
+  description?: string;
+  eventType: "private-event";
+  price: number;
+  minimum: number;
+  unit: string;
+  image?: string;
+  dates?: Date[];
+}
+
+// Define the type for Dashboard Event display
+export interface DashboardEvent {
+  id: string;
+  name: string;
+  description?: string;
+  eventType?: string;
+  price?: number;
+  numberOfParticipants?: number;
+  startDate?: Date;
+  endDate?: Date;
+  isRecurring?: boolean;
+  recurringEndDate?: Date;
+  startTime?: string;
+  endTime?: string;
+  image?: string;
+  options?: Array<{
+    categoryName: string;
+    categoryDescription?: string;
+    choices: Array<{
+      name: string;
+    }>;
+  }>;
+  isDiscountAvailable?: boolean;
+  discount?: {
+    type?: string;
+    value?: number;
+    description?: string;
+  };
+}
+
+// Define the type for Dashboard Reservation display
+export interface DashboardReservation {
+  id: string;
+  name: string;
+  description?: string;
+  eventType: "reservation";
+  pricePerDayPerParticipant: number;
+  maxParticipantsPerDay: number;
+  startDate?: Date;
+  endDate?: Date;
+  startTime?: string;
+  endTime?: string;
+  image?: string;
+  options?: Array<{
+    categoryName: string;
+    categoryDescription?: string;
+    choices: Array<{
+      name: string;
+    }>;
+  }>;
+  isDiscountAvailable?: boolean;
+  discount?: {
+    type?: string;
+    value?: number;
+    description?: string;
+  };
+  dailyAvailability: Array<{
+    date: Date;
+    maxParticipants: number;
+    currentBookings: number;
+    isAvailable: boolean;
+  }>;
 }

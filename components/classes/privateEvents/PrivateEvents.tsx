@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "@emotion/styled";
 import { Box, Container, Paper, CircularProgress, Alert } from "@mui/material";
-import { Birthday } from "@/types/interfaces";
+import { PrivateEvent } from "@/types/interfaces";
 import {
   FaBirthdayCake,
   FaGift,
@@ -284,32 +284,32 @@ const Description = styled("p")({
   fontWeight: "700",
 });
 
-const Birthdays = () => {
+const PrivateEvents = () => {
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
-  const [birthdays, setBirthdays] = useState<Birthday[]>([]);
+  const [privateEvents, setPrivateEvents] = useState<PrivateEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchBirthdays = async () => {
+    const fetchPrivateEvents = async () => {
       try {
-        const response = await fetch("/api/birthdays");
+        const response = await fetch("/api/private-events");
         const data = await response.json();
 
         if (data.success) {
-          setBirthdays(data.birthdays);
+          setPrivateEvents(data.privateEvents);
         } else {
-          setError(data.error || "Failed to fetch birthday parties");
+          setError(data.error || "Failed to fetch private events");
         }
       } catch (err) {
-        setError("Failed to fetch birthday parties");
-        console.error("Error fetching birthdays:", err);
+        setError("Failed to fetch private events");
+        console.error("Error fetching private events:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchBirthdays();
+    fetchPrivateEvents();
   }, []);
 
   const getRandomIcon = (index: number) => {
@@ -374,10 +374,10 @@ const Birthdays = () => {
       </Title>
 
       <GridContainer>
-        {birthdays.map((birthday, index) => {
+        {privateEvents.map((privateEvent, index) => {
           const IconComponent = getRandomIcon(index);
           return (
-            <GridItem key={birthday._id}>
+            <GridItem key={privateEvent._id}>
               <PartyCard
                 elevation={3}
                 isHovered={hoveredCard === index}
@@ -404,7 +404,7 @@ const Birthdays = () => {
                 </FloatingIcon>
 
                 <PriceTag>
-                  <FaGift />${birthday.price} per {birthday.unit}
+                  <FaGift />${privateEvent.price} per {privateEvent.unit}
                 </PriceTag>
 
                 <CardContent>
@@ -412,17 +412,17 @@ const Birthdays = () => {
                     <TitleIconSmall>
                       <IconComponent />
                     </TitleIconSmall>
-                    {birthday.title}
+                    {privateEvent.title}
                   </PartyTitle>
 
                   <MinimumNote>
                     <div className="font-bold">
-                      {birthday.minimum} {birthday.unit} minimum
+                      {privateEvent.minimum} {privateEvent.unit} minimum
                     </div>
                   </MinimumNote>
 
                   <Description className="text-lg">
-                    {birthday.description}
+                    {privateEvent.description}
                   </Description>
                 </CardContent>
               </PartyCard>
@@ -436,14 +436,29 @@ const Birthdays = () => {
           <FaEnvelope />
         </ContactIcon>
         <div>
-          To sign up please contact the studio at{" "}
-          <a href="mailto:info@coastalcreationsstudio.com">
-            info@coastalcreationsstudio.com
-          </a>
+          <div className="text-2xl font-bold text-black mb-4">
+            Please contact the studio to arrange a private event at{" "}
+            <a href="mailto:info@coastalcreationsstudio.com">
+              info@coastalcreationsstudio.com
+            </a>
+          </div>
+          <div
+            className="mb-4"
+            style={{
+              fontSize: "1.3rem",
+              fontWeight: "800",
+              color: "#1976D2",
+            }}
+          >
+            $100 minimum deposit required for all private events
+          </div>
+          {/* <div className="mb-4 text-md text-green-800">
+            Payment portal for private events available soon!
+          </div> */}
         </div>
       </ContactMessage>
     </StyledContainer>
   );
 };
 
-export default Birthdays;
+export default PrivateEvents;
