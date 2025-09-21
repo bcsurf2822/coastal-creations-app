@@ -436,10 +436,25 @@ const PrivateEvents = () => {
           <FaEnvelope />
         </ContactIcon>
         <div>
-          To sign up please contact the studio at{" "}
-          <a href="mailto:info@coastalcreationsstudio.com">
-            info@coastalcreationsstudio.com
-          </a>
+          <div className="text-2xl font-bold text-black mb-4">
+            Please contact the studio to arrange a private event at{" "}
+            <a href="mailto:info@coastalcreationsstudio.com">
+              info@coastalcreationsstudio.com
+            </a>
+          </div>
+          <div
+            className="mb-4"
+            style={{
+              fontSize: "1.3rem",
+              fontWeight: "800",
+              color: "#1976D2",
+            }}
+          >
+            $100 minimum deposit required for all private events
+          </div>
+          {/* <div className="mb-4 text-md text-green-800">
+            Payment portal for private events available soon!
+          </div> */}
         </div>
       </ContactMessage>
     </StyledContainer>

@@ -9,6 +9,8 @@ import {
   RiCalendarEventFill,
   RiPieChartLine,
   RiPieChartFill,
+  RiBookletLine,
+  RiBookletFill,
 } from "react-icons/ri";
 
 interface NavItem {
@@ -40,6 +42,19 @@ export default function Sidebar() {
       icon: <RiCalendarEventLine className="w-5 h-5" />,
       activeIcon: <RiCalendarEventFill className="w-5 h-5" />,
     },
+    {
+      path: "/admin/dashboard/add-private-event",
+      label: "Add Private Event",
+      icon: <RiCalendarEventLine className="w-5 h-5" />,
+      activeIcon: <RiCalendarEventFill className="w-5 h-5" />,
+    },
+    {
+      path: "/admin/dashboard/private-offerings",
+      label: "Private Offerings",
+      icon: <RiBookletLine className="w-5 h-5" />,
+      activeIcon: <RiBookletFill className="w-5 h-5" />,
+    },
+
 
     {
       path: "/admin/dashboard/error-logs",

@@ -57,6 +57,19 @@ export interface PrivateEvent {
   updatedAt: string;
 }
 
+// Define the type for Dashboard Private Event display
+export interface DashboardPrivateEvent {
+  id: string;
+  title: string;
+  description?: string;
+  eventType: "private-event";
+  price: number;
+  minimum: number;
+  unit: string;
+  image?: string;
+  dates?: Date[];
+}
+
 // Define the type for Dashboard Event display
 export interface DashboardEvent {
   id: string;
