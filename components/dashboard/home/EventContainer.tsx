@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { IEvent } from "@/lib/models/Event";
+import { DashboardEvent, DashboardReservation } from "@/types/interfaces";
 import {
   RiCalendarEventLine,
   RiTimeLine,
@@ -9,7 +10,6 @@ import {
   RiDeleteBinLine,
   RiSearchLine,
   RiFilterLine,
-  RiUserLine,
 } from "react-icons/ri";
 import Link from "next/link";
 import Dialog from "@mui/material/Dialog";
@@ -21,26 +21,27 @@ import imageUrlBuilder from "@sanity/image-url";
 import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import { client } from "@/sanity/client";
 
-interface Event {
-  id: string;
-  name: string;
+type DashboardItem = DashboardEvent | DashboardReservation;
+
+interface ReservationApiData {
+  _id: string;
+  eventName: string;
   description?: string;
-  eventType?: string;
-  price?: number;
-  numberOfParticipants?: number;
-  startDate?: Date;
-  endDate?: Date;
-  isRecurring?: boolean;
-  recurringEndDate?: Date;
-  startTime?: string;
-  endTime?: string;
+  pricePerDayPerParticipant: number;
+  maxParticipantsPerDay?: number;
+  dates?: {
+    startDate: string;
+    endDate: string;
+  };
+  time?: {
+    startTime: string;
+    endTime: string;
+  };
   image?: string;
   options?: Array<{
     categoryName: string;
     categoryDescription?: string;
-    choices: Array<{
-      name: string;
-    }>;
+    choices: Array<{ name: string }>;
   }>;
   isDiscountAvailable?: boolean;
   discount?: {
@@ -48,55 +49,55 @@ interface Event {
     value?: number;
     description?: string;
   };
+  dailyAvailability?: Array<{
+    date: Date;
+    maxParticipants: number;
+    currentBookings: number;
+    isAvailable: boolean;
+  }>;
 }
 
 // Define types for SimpleDialog props
 interface SimpleDialogProps {
   open: boolean;
   onClose: () => void;
-  eventDetails: {
-    id: string;
-    name: string;
-    description?: string;
-    startDate?: Date;
-  };
-  onDelete: (eventId: string, onSuccess?: () => void) => void;
+  itemDetails: DashboardItem;
+  onDelete: (itemId: string, onSuccess?: () => void) => void;
   isDeleting: boolean;
 }
 
-interface EventDetailsDialogProps {
-  eventDetails: {
-    id: string;
-    name: string;
-    description?: string;
-    startDate?: Date;
-  };
+interface ItemDetailsDialogProps {
+  itemDetails: DashboardItem;
   onClose: () => void;
-  onDelete: (eventId: string, onSuccess?: () => void) => void;
+  onDelete: (itemId: string, onSuccess?: () => void) => void;
   isDeleting: boolean;
 }
 
-function EventDetailsDialog({
-  eventDetails,
+function ItemDetailsDialog({
+  itemDetails,
   onClose,
   onDelete,
   isDeleting,
-}: EventDetailsDialogProps) {
-  if (!eventDetails) return null;
+}: ItemDetailsDialogProps) {
+  if (!itemDetails) return null;
+
+  const editUrl = itemDetails.eventType === "reservation"
+    ? `/admin/dashboard/edit-reservation?id=${itemDetails.id}`
+    : `/admin/dashboard/edit-event?id=${itemDetails.id}`;
 
   return (
     <div className="p-4">
-      <Typography variant="h6">{eventDetails.name}</Typography>
-      <Typography variant="body1">{eventDetails.description}</Typography>
+      <Typography variant="h6">{itemDetails.name}</Typography>
+      <Typography variant="body1">{itemDetails.description}</Typography>
       <Typography variant="body2" color="textSecondary">
         Date:{" "}
-        {eventDetails.startDate
-          ? new Date(eventDetails.startDate).toLocaleDateString()
+        {itemDetails.startDate
+          ? new Date(itemDetails.startDate).toLocaleDateString()
           : "N/A"}
       </Typography>
       <div className="flex space-x-2 mt-4">
         <Link
-          href={`/admin/dashboard/edit-event?id=${eventDetails.id}`}
+          href={editUrl}
           className="p-2 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-colors"
         >
           <RiEdit2Line className="w-5 h-5" />
@@ -107,7 +108,7 @@ function EventDetailsDialog({
               ? "opacity-50 cursor-not-allowed text-gray-400"
               : "text-gray-600 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-900/20 cursor-pointer"
           }`}
-          onClick={() => onDelete(eventDetails.id, onClose)}
+          onClick={() => onDelete(itemDetails.id, onClose)}
           disabled={isDeleting}
         >
           {isDeleting ? (
@@ -124,7 +125,7 @@ function EventDetailsDialog({
 function SimpleDialog({
   open,
   onClose,
-  eventDetails,
+  itemDetails,
   onDelete,
   isDeleting,
 }: SimpleDialogProps) {
@@ -139,8 +140,8 @@ function SimpleDialog({
           <CloseIcon />
         </IconButton>
       </div>
-      <EventDetailsDialog
-        eventDetails={eventDetails}
+      <ItemDetailsDialog
+        itemDetails={itemDetails}
         onClose={onClose}
         onDelete={onDelete}
         isDeleting={isDeleting}
@@ -149,23 +150,6 @@ function SimpleDialog({
   );
 }
 
-// Function to determine recurrence pattern
-const getRecurrencePattern = (event: Event) => {
-  if (!event.isRecurring) return "";
-
-  // Example logic to determine if the event is daily or weekly
-  // This can be adjusted based on actual data structure or requirements
-  const startDate = new Date(event.startDate!);
-  const recurringEndDate = new Date(event.recurringEndDate!);
-  const diffInDays =
-    (recurringEndDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24);
-
-  if (diffInDays <= 7) {
-    return "Daily";
-  } else {
-    return "Weekly";
-  }
-};
 
 const { projectId, dataset } = client.config();
 const urlFor = (source: SanityImageSource) =>
@@ -174,82 +158,109 @@ const urlFor = (source: SanityImageSource) =>
     : null;
 
 export default function EventContainer() {
-  const [events, setEvents] = useState<Event[]>([]);
+  const [items, setItems] = useState<DashboardItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [selectedItem, setSelectedItem] = useState<DashboardItem | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<string | null>(null);
-  const [deletingEventIds, setDeletingEventIds] = useState<Set<string>>(
+  const [deletingItemIds, setDeletingItemIds] = useState<Set<string>>(
     new Set()
   );
-  const [eventParticipantCounts, setEventParticipantCounts] = useState<
+  const [itemParticipantCounts, setItemParticipantCounts] = useState<
     Record<string, number>
   >({});
 
   useEffect(() => {
-    const fetchEvents = async () => {
+    const fetchItems = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch("/api/events", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
 
-        const responseText = await response.text();
+        // Fetch events and reservations in parallel
+        const [eventsResponse, reservationsResponse] = await Promise.all([
+          fetch("/api/events", {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          }),
+          fetch("/api/reservations", {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          })
+        ]);
 
-        let result;
-        try {
-          result = responseText ? JSON.parse(responseText) : {};
-        } catch (parseError) {
-          console.error("Failed to parse response as JSON:", parseError);
-          throw new Error("API returned invalid JSON response");
+        // Process events
+        let allItems: DashboardItem[] = [];
+
+        if (eventsResponse.ok) {
+          const eventsText = await eventsResponse.text();
+          const eventsResult = eventsText ? JSON.parse(eventsText) : {};
+          const eventsData = eventsResult.events || eventsResult;
+
+          if (Array.isArray(eventsData)) {
+            const transformedEvents: DashboardEvent[] = eventsData.map((event: IEvent) => ({
+              id: event._id,
+              name: event.eventName,
+              description: event.description,
+              eventType: event.eventType,
+              price: event.price,
+              numberOfParticipants: event.numberOfParticipants,
+              startDate: event.dates?.startDate,
+              endDate: event.dates?.endDate,
+              isRecurring: event.dates?.isRecurring,
+              recurringEndDate: event.dates?.recurringEndDate,
+              startTime: event.time?.startTime,
+              endTime: event.time?.endTime,
+              image: event.image,
+              options: event.options,
+              isDiscountAvailable: event.isDiscountAvailable,
+              discount: event.discount,
+            }));
+            allItems = [...allItems, ...transformedEvents];
+          }
         }
 
-        if (!response.ok) {
-          throw new Error(result.error || "Failed to fetch events");
+        // Process reservations
+        if (reservationsResponse.ok) {
+          const reservationsText = await reservationsResponse.text();
+          const reservationsResult = reservationsText ? JSON.parse(reservationsText) : {};
+          const reservationsData = reservationsResult.data || reservationsResult.reservations || reservationsResult;
+
+          if (Array.isArray(reservationsData)) {
+            const transformedReservations: DashboardReservation[] = reservationsData.map((reservation: ReservationApiData) => ({
+              id: reservation._id,
+              name: reservation.eventName,
+              description: reservation.description,
+              eventType: "reservation" as const,
+              pricePerDayPerParticipant: reservation.pricePerDayPerParticipant,
+              maxParticipantsPerDay: reservation.maxParticipantsPerDay ||
+                (reservation.dailyAvailability && reservation.dailyAvailability.length > 0
+                  ? reservation.dailyAvailability[0].maxParticipants
+                  : 10),
+              startDate: reservation.dates?.startDate ? new Date(reservation.dates.startDate) : undefined,
+              endDate: reservation.dates?.endDate ? new Date(reservation.dates.endDate) : undefined,
+              startTime: reservation.time?.startTime,
+              endTime: reservation.time?.endTime,
+              image: reservation.image,
+              options: reservation.options,
+              isDiscountAvailable: reservation.isDiscountAvailable,
+              discount: reservation.discount,
+              dailyAvailability: reservation.dailyAvailability || [],
+            }));
+            allItems = [...allItems, ...transformedReservations];
+          }
         }
 
-        // Check if result.events exists, otherwise try to use result directly
-        const eventsData = result.events || result;
-
-        if (!Array.isArray(eventsData)) {
-          throw new Error("API did not return an array of events");
-        }
-
-        // Transform the API data to match our Event interface
-        const transformedEvents = eventsData.map((event: IEvent) => ({
-          id: event._id,
-          name: event.eventName,
-          description: event.description,
-          eventType: event.eventType,
-          price: event.price,
-          numberOfParticipants: event.numberOfParticipants,
-          startDate: event.dates?.startDate,
-          endDate: event.dates?.endDate,
-          isRecurring: event.dates?.isRecurring,
-          recurringEndDate: event.dates?.recurringEndDate,
-          startTime: event.time?.startTime,
-          endTime: event.time?.endTime,
-          image: event.image,
-          options: event.options,
-          isDiscountAvailable: event.isDiscountAvailable,
-          discount: event.discount,
-        }));
-
-        // Sort events by start date - closest events first, furthest events last
-        const sortedEvents = transformedEvents.sort((a, b) => {
+        // Sort items by start date - closest items first, furthest items last
+        const sortedItems = allItems.sort((a, b) => {
           const dateA = new Date(a.startDate || 0);
           const dateB = new Date(b.startDate || 0);
           return dateA.getTime() - dateB.getTime();
         });
 
-        setEvents(sortedEvents);
+        setItems(sortedItems);
       } catch (error) {
-        console.error("Error fetching events:", error);
+        console.error("Error fetching items:", error);
         setError(typeof error === "string" ? error : (error as Error).message);
       } finally {
         setIsLoading(false);
@@ -301,13 +312,13 @@ export default function EventContainer() {
             }
           );
         }
-        setEventParticipantCounts(participantCounts);
+        setItemParticipantCounts(participantCounts);
       } catch (error) {
         console.error("Error fetching customers:", error);
       }
     };
 
-    fetchEvents();
+    fetchItems();
     fetchCustomers();
   }, []);
 
@@ -320,29 +331,35 @@ export default function EventContainer() {
     setIsDialogOpen(false);
   };
 
-  const handleDeleteEvent = async (eventId: string, onSuccess?: () => void) => {
-    if (!confirm("Are you sure you want to delete this event?")) {
+  const handleDeleteItem = async (itemId: string, onSuccess?: () => void) => {
+    if (!confirm("Are you sure you want to delete this item?")) {
       return;
     }
 
-    // Add event ID to deleting set
-    setDeletingEventIds((prev) => new Set(prev).add(eventId));
+    // Add item ID to deleting set
+    setDeletingItemIds((prev) => new Set(prev).add(itemId));
 
     try {
-      const response = await fetch(`/api/events?id=${eventId}`, {
+      // Determine the API endpoint based on item type
+      const item = items.find(i => i.id === itemId);
+      const endpoint = item?.eventType === "reservation"
+        ? `/api/reservations?id=${itemId}`
+        : `/api/events?id=${itemId}`;
+
+      const response = await fetch(endpoint, {
         method: "DELETE",
       });
 
       if (!response.ok) {
-        throw new Error("Failed to delete event");
+        throw new Error("Failed to delete item");
       }
 
-      // Remove event from local state immediately for real-time update
-      setEvents((prevEvents) => prevEvents.filter((e) => e.id !== eventId));
+      // Remove item from local state immediately for real-time update
+      setItems((prevItems) => prevItems.filter((i) => i.id !== itemId));
 
-      // Clear selected event if it was the one being deleted
-      if (selectedEvent?.id === eventId) {
-        setSelectedEvent(null);
+      // Clear selected item if it was the one being deleted
+      if (selectedItem?.id === itemId) {
+        setSelectedItem(null);
       }
 
       // Call success callback if provided (for dialog close)
@@ -350,13 +367,13 @@ export default function EventContainer() {
         onSuccess();
       }
     } catch (error) {
-      console.error("Error deleting event:", error);
-      alert("Failed to delete event. Please try again.");
+      console.error("Error deleting item:", error);
+      alert("Failed to delete item. Please try again.");
     } finally {
-      // Remove event ID from deleting set
-      setDeletingEventIds((prev) => {
+      // Remove item ID from deleting set
+      setDeletingItemIds((prev) => {
         const newSet = new Set(prev);
-        newSet.delete(eventId);
+        newSet.delete(itemId);
         return newSet;
       });
     }
@@ -385,20 +402,20 @@ export default function EventContainer() {
     return `${hours}:${minutes} ${ampm}`;
   };
 
-  // Filter events based on search term and type filter
-  const filteredEvents = events.filter((event) => {
+  // Filter items based on search term and type filter
+  const filteredItems = items.filter((item) => {
     const matchesSearch =
-      event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       false;
 
-    const matchesFilter = !filterType || event.eventType === filterType;
+    const matchesFilter = !filterType || item.eventType === filterType;
 
     return matchesSearch && matchesFilter;
   });
 
-  const eventTypes = Array.from(
-    new Set(events.map((event) => event.eventType))
+  const itemTypes = Array.from(
+    new Set(items.map((item) => item.eventType))
   );
 
   return (
@@ -428,7 +445,7 @@ export default function EventContainer() {
                 className="pl-10 pr-8 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none w-full sm:w-auto"
               >
                 <option value="">All Types</option>
-                {eventTypes.map(
+                {itemTypes.map(
                   (type) =>
                     type && (
                       <option key={type} value={type}>
@@ -460,29 +477,29 @@ export default function EventContainer() {
               Try Again
             </button>
           </div>
-        ) : filteredEvents.length === 0 ? (
+        ) : filteredItems.length === 0 ? (
           <div className="text-center py-10">
             <p className="text-gray-500 dark:text-gray-400">
-              No matching events found.
+              No matching items found.
             </p>
           </div>
         ) : (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              {filteredEvents.map((event) => (
+              {filteredItems.map((item) => (
                 <div
-                  key={event.id}
+                  key={item.id}
                   className={`bg-gray-50 dark:bg-gray-700/50 rounded-lg border ${
-                    selectedEvent?.id === event.id
+                    selectedItem?.id === item.id
                       ? "border-blue-500 dark:border-blue-400"
                       : "border-gray-200 dark:border-gray-700"
                   } p-4 transition-all hover:shadow-md ${
-                    deletingEventIds.has(event.id)
+                    deletingItemIds.has(item.id)
                       ? "opacity-50 pointer-events-none relative"
                       : ""
                   }`}
                 >
-                  {deletingEventIds.has(event.id) && (
+                  {deletingItemIds.has(item.id) && (
                     <div className="absolute inset-0 bg-white/75 dark:bg-gray-800/75 rounded-lg flex items-center justify-center z-10">
                       <div className="flex items-center space-x-2 text-red-600">
                         <div className="w-5 h-5 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin"></div>
@@ -492,11 +509,11 @@ export default function EventContainer() {
                   )}
                   <div className="flex justify-between items-start">
                     <div className="flex items-start space-x-3 flex-1">
-                      {event.image && (
+                      {item.image && (
                         <div className="flex-shrink-0">
                           <Image
-                            src={urlFor(event.image)?.width(80).height(60).url() || ''}
-                            alt={event.name}
+                            src={urlFor(item.image)?.width(80).height(60).url() || ''}
+                            alt={item.name}
                             width={80}
                             height={60}
                             className="rounded-lg object-cover"
@@ -505,20 +522,20 @@ export default function EventContainer() {
                       )}
                       <div className="flex-1">
                         <h4 className="font-semibold text-gray-900 dark:text-white text-lg">
-                          {event.name}
+                          {item.name}
                         </h4>
-                        {event.description && (
+                        {item.description && (
                           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-                            {event.description}
+                            {item.description}
                           </p>
                         )}
                         <div className="flex items-center mt-2 text-sm text-gray-500 dark:text-gray-400">
                           <RiCalendarEventLine className="mr-1" />
-                          <span>{formatDate(event.startDate)}</span>
-                          {event.startTime && (
+                          <span>{formatDate(item.startDate)}</span>
+                          {item.startTime && (
                             <>
                               <RiTimeLine className="ml-3 mr-1" />
-                              <span>{formatTime(event.startTime)}</span>
+                              <span>{formatTime(item.startTime)}</span>
                             </>
                           )}
                         </div>
@@ -527,16 +544,18 @@ export default function EventContainer() {
                     <div className="flex items-center space-x-2">
                       <span
                         className={`text-xs px-2 py-1 rounded-full ${
-                          event.eventType === "class"
+                          item.eventType === "class"
                             ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-                            : event.eventType === "workshop"
+                            : item.eventType === "workshop"
                               ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
-                              : "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                              : item.eventType === "reservation"
+                                ? "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300"
+                                : "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
                         }`}
                       >
-                        {event.eventType || "Event"}
+                        {item.eventType || "Event"}
                       </span>
-                      {event.isDiscountAvailable && (
+                      {item.isDiscountAvailable && (
                         <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 font-medium">
                           Discount
                         </span>
@@ -544,47 +563,63 @@ export default function EventContainer() {
                     </div>
                   </div>
                   <div className="mt-2 flex justify-between items-center">
-                    {event.price !== undefined && (
+                    {item.eventType === "reservation" ? (
                       <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        ${event.price}
+                        ${(item as DashboardReservation).pricePerDayPerParticipant}/day/participant
                       </div>
+                    ) : (
+                      (item as DashboardEvent).price !== undefined && (
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          ${(item as DashboardEvent).price}
+                        </div>
+                      )
                     )}
-                    {event.eventType !== "artist" && (
+                    {item.eventType !== "artist" && (
                       <div className="text-sm text-gray-600 dark:text-gray-400">
-                        {eventParticipantCounts[event.id] || 0} /{" "}
-                        {event.numberOfParticipants || 20} participants
+                        {itemParticipantCounts[item.id] || 0} /{" "}
+                        {item.eventType === "reservation"
+                          ? (item as DashboardReservation).maxParticipantsPerDay
+                          : (item as DashboardEvent).numberOfParticipants || 20
+                        } participants
                       </div>
                     )}
                   </div>
                   <div className="mt-4 flex justify-between items-center">
                     <div className="flex items-center space-x-2">
                       <Link
-                        href={`/admin/dashboard/events/${event.id}`}
+                        href={item.eventType === "reservation"
+                          ? `/admin/dashboard/reservations/${item.id}`
+                          : `/admin/dashboard/events/${item.id}`
+                        }
                         className="flex items-center space-x-1 px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm"
                       >
-
-                        <span>View Event</span>
+                        <span>
+                          {item.eventType === "reservation" ? "View Reservation" : "View Event"}
+                        </span>
                       </Link>
                       <Link
-                        href={`/admin/dashboard/edit-event?id=${event.id}`}
+                        href={item.eventType === "reservation"
+                          ? `/admin/dashboard/edit-reservation?id=${item.id}`
+                          : `/admin/dashboard/edit-event?id=${item.id}`
+                        }
                         className="flex items-center space-x-1 p-2 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-colors"
                       >
                         <RiEdit2Line className="w-4 h-4" />
                         <span className="text-sm">Edit</span>
                       </Link>
                     </div>
-                    
+
                     <button
                       className={`p-2 rounded-lg transition-colors ${
-                        deletingEventIds.has(event.id)
+                        deletingItemIds.has(item.id)
                           ? "opacity-50 cursor-not-allowed text-gray-400"
                           : "text-gray-600 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-900/20 cursor-pointer"
                       }`}
-                      onClick={() => handleDeleteEvent(event.id)}
-                      disabled={deletingEventIds.has(event.id)}
-                      title="Delete event"
+                      onClick={() => handleDeleteItem(item.id)}
+                      disabled={deletingItemIds.has(item.id)}
+                      title={`Delete ${item.eventType === "reservation" ? "reservation" : "event"}`}
                     >
-                      {deletingEventIds.has(event.id) ? (
+                      {deletingItemIds.has(item.id) ? (
                         <div className="w-4 h-4 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin"></div>
                       ) : (
                         <RiDeleteBinLine className="w-4 h-4" />
@@ -595,243 +630,19 @@ export default function EventContainer() {
               ))}
             </div>
 
-            {selectedEvent && (
-              <div
-                className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5 animate-fadeIn shadow-sm relative ${
-                  deletingEventIds.has(selectedEvent.id) ? "opacity-75" : ""
-                }`}
-              >
-                {deletingEventIds.has(selectedEvent.id) && (
-                  <div className="absolute inset-0 bg-white/75 dark:bg-gray-800/75 rounded-lg flex items-center justify-center z-10">
-                    <div className="flex items-center space-x-2 text-red-600">
-                      <div className="w-6 h-6 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin"></div>
-                      <span className="text-lg font-medium">
-                        Deleting Event...
-                      </span>
-                    </div>
-                  </div>
-                )}
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400">
-                    {selectedEvent.name}
-                  </h3>
-                  <div className="flex space-x-2">
-                    <Link
-                      href={`/admin/dashboard/edit-event?id=${selectedEvent.id}`}
-                      className="p-2 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-colors"
-                    >
-                      <RiEdit2Line className="w-5 h-5" />
-                    </Link>
-                    <button
-                      className={`p-2 rounded-lg transition-colors relative ${
-                        deletingEventIds.has(selectedEvent.id)
-                          ? "opacity-50 cursor-not-allowed text-gray-400"
-                          : "text-gray-600 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-900/20 cursor-pointer"
-                      }`}
-                      onClick={() => handleDeleteEvent(selectedEvent.id)}
-                      disabled={deletingEventIds.has(selectedEvent.id)}
-                    >
-                      {deletingEventIds.has(selectedEvent.id) ? (
-                        <div className="w-5 h-5 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin"></div>
-                      ) : (
-                        <RiDeleteBinLine className="w-5 h-5" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h4 className="font-medium text-gray-700 dark:text-gray-300 text-sm uppercase tracking-wider mb-3">
-                      Details
-                    </h4>
-
-                    <div className="space-y-3">
-                      {selectedEvent.description && (
-                        <div className="text-gray-700 dark:text-gray-300 mb-4">
-                          {selectedEvent.description}
-                        </div>
-                      )}
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Type
-                          </p>
-                          <div className="flex items-center space-x-2">
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {selectedEvent.eventType || "N/A"}
-                            </p>
-                            {selectedEvent.isDiscountAvailable && (
-                              <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 font-medium">
-                                Discount
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Price
-                          </p>
-                          <p className="font-medium text-gray-900 dark:text-white">
-                            {selectedEvent.price !== undefined
-                              ? `$${selectedEvent.price}`
-                              : "N/A"}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {selectedEvent.options &&
-                      selectedEvent.options.length > 0 && (
-                        <div className="mt-6">
-                          <h4 className="font-medium text-gray-700 dark:text-gray-300 text-sm uppercase tracking-wider mb-3">
-                            Options
-                          </h4>
-                          <div className="space-y-4">
-                            {selectedEvent.options.map((option, index) => (
-                              <div
-                                key={index}
-                                className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3"
-                              >
-                                <h5 className="font-semibold text-gray-900 dark:text-white">
-                                  {option.categoryName}
-                                </h5>
-                                {option.categoryDescription && (
-                                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 mb-2">
-                                    {option.categoryDescription}
-                                  </p>
-                                )}
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                  {option.choices.map((choice, choiceIndex) => (
-                                    <span
-                                      key={choiceIndex}
-                                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-                                    >
-                                      {choice.name}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                  </div>
-
-                  <div>
-                    <h4 className="font-medium text-gray-700 dark:text-gray-300 text-sm uppercase tracking-wider mb-3">
-                      Schedule
-                    </h4>
-                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Start Date
-                          </p>
-                          <p className="font-medium text-gray-900 dark:text-white">
-                            {formatDate(selectedEvent.startDate)}
-                          </p>
-                        </div>
-                        {selectedEvent.endDate && (
-                          <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              End Date
-                            </p>
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {formatDate(selectedEvent.endDate)}
-                            </p>
-                          </div>
-                        )}
-                        {selectedEvent.isRecurring &&
-                          selectedEvent.recurringEndDate && (
-                            <div>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
-                                Recurring Until
-                              </p>
-                              <p className="font-medium text-gray-900 dark:text-white">
-                                {formatDate(selectedEvent.recurringEndDate)}
-                              </p>
-                            </div>
-                          )}
-                        {selectedEvent.startTime && (
-                          <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              Time
-                            </p>
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {formatTime(selectedEvent.startTime)}
-                              {selectedEvent.endTime
-                                ? ` - ${formatTime(selectedEvent.endTime)}`
-                                : ""}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="mt-6 space-y-3">
-                      <Link
-                        href={`/admin/dashboard/events/${selectedEvent.id}`}
-                        className="flex items-center justify-center w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                      >
-                        <RiUserLine className="w-4 h-4 mr-2" />
-                        <span>View Customers</span>
-                      </Link>
-                      <Link
-                        href={`/admin/dashboard/edit-event?id=${selectedEvent.id}`}
-                        className="flex items-center justify-center w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
-                      >
-                        <RiEdit2Line className="w-4 h-4 mr-2" />
-                        <span>Edit Event Details</span>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-
-                {selectedEvent.isRecurring && (
-                  <div className="mt-6">
-                    <h4 className="font-medium text-gray-700 dark:text-gray-300 text-sm uppercase tracking-wider mb-3">
-                      Recurrence
-                    </h4>
-                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Pattern
-                      </p>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {getRecurrencePattern(selectedEvent)}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                        Recurring Until
-                      </p>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {formatDate(selectedEvent.recurringEndDate)}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         )}
       </div>
 
-      <SimpleDialog
-        open={isDialogOpen}
-        onClose={closeDialog}
-        eventDetails={
-          selectedEvent || {
-            id: "",
-            name: "",
-            description: "",
-            startDate: undefined,
-          }
-        }
-        onDelete={handleDeleteEvent}
-        isDeleting={
-          selectedEvent ? deletingEventIds.has(selectedEvent.id) : false
-        }
-      />
+      {selectedItem && (
+        <SimpleDialog
+          open={isDialogOpen}
+          onClose={closeDialog}
+          itemDetails={selectedItem}
+          onDelete={handleDeleteItem}
+          isDeleting={deletingItemIds.has(selectedItem.id)}
+        />
+      )}
     </div>
   );
 }

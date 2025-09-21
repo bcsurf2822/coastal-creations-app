@@ -34,6 +34,12 @@ export default function Sidebar() {
       icon: <RiCalendarEventLine className="w-5 h-5" />,
       activeIcon: <RiCalendarEventFill className="w-5 h-5" />,
     },
+    {
+      path: "/admin/dashboard/add-reservation",
+      label: "Add Reservation",
+      icon: <RiCalendarEventLine className="w-5 h-5" />,
+      activeIcon: <RiCalendarEventFill className="w-5 h-5" />,
+    },
 
     {
       path: "/admin/dashboard/error-logs",
