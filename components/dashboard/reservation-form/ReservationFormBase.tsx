@@ -9,7 +9,7 @@ import { useReservationForm } from "./shared/hooks/useReservationForm";
 import ReservationBasicFields from "./shared/fields/ReservationBasicFields";
 import ReservationDateTimeFields from "./shared/fields/ReservationDateTimeFields";
 import ReservationPricingFields from "./shared/fields/ReservationPricingFields";
-import ReservationImageUpload from "./shared/fields/ReservationImageUpload";
+// import ReservationImageUpload from "./shared/fields/ReservationImageUpload";
 import ReservationOptionsFields from "./shared/fields/ReservationOptionsFields";
 import ReservationDiscountFields from "./shared/fields/ReservationDiscountFields";
 
@@ -23,7 +23,7 @@ const ReservationFormBase = ({
   mode,
   reservationId,
   title,
-  existingImageUrl,
+  // existingImageUrl,
   initialData,
   onSuccess,
   onCancel,
@@ -64,12 +64,12 @@ const ReservationFormBase = ({
             errors={errors}
           />
 
-          <ReservationImageUpload
+          {/* <ReservationImageUpload
             formData={formData}
             actions={actions}
             errors={errors}
             existingImageUrl={existingImageUrl}
-          />
+          /> */}
 
           <ReservationOptionsFields
             formData={formData}
