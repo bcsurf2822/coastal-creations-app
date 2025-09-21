@@ -84,7 +84,7 @@ export const useReservationForm = ({
       setFormData((prev) => ({
         ...prev,
         [parentKey]: {
-          ...(prev[parentKey as keyof ReservationFormState] as Record<string, unknown>),
+          ...(prev[parentKey as keyof ReservationFormState] as unknown as Record<string, unknown>),
           [childKey]: value,
         },
       }));
@@ -169,7 +169,7 @@ export const useReservationForm = ({
   const updateOptionCategory = useCallback(
     (categoryIndex: number, field: string, value: string) => {
       const newCategories = [...formData.optionCategories];
-      (newCategories[categoryIndex] as Record<string, unknown>)[field] = value;
+      (newCategories[categoryIndex] as unknown as Record<string, unknown>)[field] = value;
       handleInputChange("optionCategories", newCategories);
     },
     [formData.optionCategories, handleInputChange]
@@ -183,7 +183,7 @@ export const useReservationForm = ({
       value: string | number | undefined
     ) => {
       const newCategories = [...formData.optionCategories];
-      (newCategories[categoryIndex].choices[choiceIndex] as Record<string, unknown>)[field] = value;
+      (newCategories[categoryIndex].choices[choiceIndex] as unknown as Record<string, unknown>)[field] = value;
       handleInputChange("optionCategories", newCategories);
     },
     [formData.optionCategories, handleInputChange]
