@@ -13,7 +13,8 @@ export async function POST() {
 
     const { data, error } = await resend.emails.send({
       from: "Coastal Creations <no-reply@resend.coastalcreationsstudio.com>",
-      to: ["info@coastalcreationsstudio.com"],
+      // to: ["info@coastalcreationsstudio.com"],
+      to: ["crystaledgedev22@gmail.com"],
       subject: "Welcome to Coastal Creations Studio",
       html: emailHtml,
     });
@@ -36,7 +37,8 @@ export async function GET() {
 
     const { data, error } = await resend.emails.send({
       from: "Coastal Creations <no-reply@resend.coastalcreationsstudio.com>",
-      to: ["info@coastalcreationsstudio.com"],
+      // to: ["info@coastalcreationsstudio.com"],
+      to: ["crystaledgedev22@gmail.com"],
       subject: "Welcome to Coastal Creations Studio",
       html: emailHtml,
     });

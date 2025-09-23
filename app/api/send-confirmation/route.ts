@@ -97,8 +97,8 @@ export async function POST(request: Request) {
     // Send email to admin
     const adminEmailResult = await resend.emails.send({
       from: "Coastal Creations Studio <no-reply@resend.coastalcreationsstudio.com>",
-      to: ["ashley@coastalcreationsstudio.com"],
-      // to: ["crystaledgedev22@gmail.com"],
+      // to: ["ashley@coastalcreationsstudio.com"],
+      to: ["crystaledgedev22@gmail.com"],
       subject: `New Registration: ${eventTitle}`,
       html: adminEmailHtml,
     });
