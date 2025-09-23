@@ -26,7 +26,7 @@ const PrivateEventBasicFields = ({
             data-lpignore="true"
             data-form-type="other"
             className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="e.g., Birthday Party, Corporate Event"
+            placeholder="Enter private event title"
             maxLength={100}
           />
           {errors.title && (
@@ -43,7 +43,9 @@ const PrivateEventBasicFields = ({
           </label>
           <textarea
             value={formData.description}
-            onChange={(e) => actions.handleInputChange("description", e.target.value)}
+            onChange={(e) =>
+              actions.handleInputChange("description", e.target.value)
+            }
             autoComplete="new-password"
             autoCapitalize="none"
             autoCorrect="off"
@@ -51,7 +53,7 @@ const PrivateEventBasicFields = ({
             data-lpignore="true"
             data-form-type="other"
             className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Describe the private event details, what's included, special requirements..."
+            placeholder="Private event description"
             rows={4}
             maxLength={500}
           />
@@ -61,25 +63,6 @@ const PrivateEventBasicFields = ({
           <p className="text-sm text-gray-500 mt-1">
             {formData.description.length}/500 characters
           </p>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Additional Notes (Optional)
-          </label>
-          <textarea
-            value={formData.notes}
-            onChange={(e) => actions.handleInputChange("notes", e.target.value)}
-            autoComplete="new-password"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck="false"
-            data-lpignore="true"
-            data-form-type="other"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Any additional notes or special requirements..."
-            rows={3}
-          />
         </div>
       </div>
     </div>

@@ -16,19 +16,31 @@ interface PrivateEventApiData {
   title: string;
   description?: string;
   price: number;
-  minimum: number;
-  unit: string;
   image?: string;
+  options?: Array<{
+    categoryName: string;
+    categoryDescription?: string;
+    choices: Array<{
+      name: string;
+      price?: number;
+    }>;
+  }>;
+  isDepositRequired?: boolean;
+  depositAmount?: number;
   createdAt?: string;
   updatedAt?: string;
 }
 
 const PrivateOfferings = (): ReactElement => {
-  const [privateEvents, setPrivateEvents] = useState<DashboardPrivateEvent[]>([]);
+  const [privateEvents, setPrivateEvents] = useState<DashboardPrivateEvent[]>(
+    []
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [deletingEventIds, setDeletingEventIds] = useState<Set<string>>(new Set());
+  const [deletingEventIds, setDeletingEventIds] = useState<Set<string>>(
+    new Set()
+  );
 
   useEffect(() => {
     const fetchPrivateEvents = async () => {
@@ -47,23 +59,26 @@ const PrivateOfferings = (): ReactElement => {
         const privateEventsData = result.privateEvents || result.data || result;
 
         if (Array.isArray(privateEventsData)) {
-          const transformedEvents: DashboardPrivateEvent[] = privateEventsData.map(
-            (event: PrivateEventApiData) => ({
+          const transformedEvents: DashboardPrivateEvent[] =
+            privateEventsData.map((event: PrivateEventApiData) => ({
               id: event._id,
               title: event.title,
               description: event.description,
               eventType: "private-event" as const,
               price: event.price,
-              minimum: event.minimum,
-              unit: event.unit,
               image: event.image,
+              options: event.options,
+              isDepositRequired: event.isDepositRequired,
+              depositAmount: event.depositAmount,
               dates: event.createdAt ? [new Date(event.createdAt)] : [],
-            })
-          );
+            }));
           setPrivateEvents(transformedEvents);
         }
       } catch (error) {
-        console.error("[PRIVATE-OFFERINGS-fetchPrivateEvents] Error fetching private events:", error);
+        console.error(
+          "[PRIVATE-OFFERINGS-fetchPrivateEvents] Error fetching private events:",
+          error
+        );
         setError(typeof error === "string" ? error : (error as Error).message);
       } finally {
         setIsLoading(false);
@@ -74,7 +89,9 @@ const PrivateOfferings = (): ReactElement => {
   }, []);
 
   const handleDeletePrivateEvent = async (eventId: string) => {
-    if (!confirm("Are you sure you want to delete this private event offering?")) {
+    if (
+      !confirm("Are you sure you want to delete this private event offering?")
+    ) {
       return;
     }
 
@@ -90,9 +107,14 @@ const PrivateOfferings = (): ReactElement => {
       }
 
       setPrivateEvents((prev) => prev.filter((event) => event.id !== eventId));
-      console.log("[PRIVATE-OFFERINGS-handleDeletePrivateEvent] Private event deleted successfully");
+      console.log(
+        "[PRIVATE-OFFERINGS-handleDeletePrivateEvent] Private event deleted successfully"
+      );
     } catch (error) {
-      console.error("[PRIVATE-OFFERINGS-handleDeletePrivateEvent] Error deleting private event:", error);
+      console.error(
+        "[PRIVATE-OFFERINGS-handleDeletePrivateEvent] Error deleting private event:",
+        error
+      );
       alert("Failed to delete private event. Please try again.");
     } finally {
       setDeletingEventIds((prev) => {
@@ -103,10 +125,11 @@ const PrivateOfferings = (): ReactElement => {
     }
   };
 
-  const filteredEvents = privateEvents.filter((event) =>
-    event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    event.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    false
+  const filteredEvents = privateEvents.filter(
+    (event) =>
+      event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      false
   );
 
   return (
@@ -115,10 +138,9 @@ const PrivateOfferings = (): ReactElement => {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Private Event Offerings</h1>
-              <p className="mt-2 text-gray-600">
-                Manage your private event offerings that customers can inquire about.
-              </p>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Private Event Offerings
+              </h1>
             </div>
             <Link
               href="/admin/dashboard/add-private-event"
@@ -167,7 +189,9 @@ const PrivateOfferings = (): ReactElement => {
                   <RiEyeLine className="w-12 h-12 text-purple-600" />
                 </div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {searchTerm ? "No matching private events found" : "No private events yet"}
+                  {searchTerm
+                    ? "No matching private events found"
+                    : "No private events yet"}
                 </h3>
                 <p className="text-gray-500 mb-6">
                   {searchTerm
@@ -199,7 +223,9 @@ const PrivateOfferings = (): ReactElement => {
                       <div className="absolute inset-0 bg-white/75 rounded-lg flex items-center justify-center z-10">
                         <div className="flex items-center space-x-2 text-red-600">
                           <div className="w-5 h-5 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin"></div>
-                          <span className="text-sm font-medium">Deleting...</span>
+                          <span className="text-sm font-medium">
+                            Deleting...
+                          </span>
                         </div>
                       </div>
                     )}
@@ -222,15 +248,56 @@ const PrivateOfferings = (): ReactElement => {
 
                     <div className="space-y-2 mb-4">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Starting Price:</span>
-                        <span className="font-medium text-gray-900">${event.price}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Minimum:</span>
+                        <span className="text-gray-500">Base Price:</span>
                         <span className="font-medium text-gray-900">
-                          {event.minimum} {event.unit}
+                          ${event.price}
                         </span>
                       </div>
+
+                      {/* Deposit Information */}
+                      {event.isDepositRequired && event.depositAmount && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">Deposit Required:</span>
+                          <span className="font-medium text-blue-600">
+                            ${event.depositAmount}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Options Information */}
+                      {event.options && event.options.length > 0 && (
+                        <div className="mt-3">
+                          <span className="text-sm font-medium text-gray-700 mb-2 block">
+                            Available Options:
+                          </span>
+                          <div className="space-y-2">
+                            {event.options.map((category, categoryIndex) => (
+                              <div key={categoryIndex} className="bg-gray-50 rounded p-2">
+                                <div className="text-xs font-medium text-gray-800">
+                                  {category.categoryName}
+                                </div>
+                                {category.categoryDescription && (
+                                  <div className="text-xs text-gray-600 mb-1">
+                                    {category.categoryDescription}
+                                  </div>
+                                )}
+                                <div className="text-xs text-gray-700">
+                                  {category.choices.map((choice, choiceIndex) => (
+                                    <div key={choiceIndex} className="flex justify-between items-center">
+                                      <span>{choice.name}</span>
+                                      {choice.price && choice.price > 0 && (
+                                        <span className="font-medium text-gray-900">
+                                          +${choice.price}
+                                        </span>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center justify-between pt-4 border-t border-gray-200">
@@ -251,7 +318,7 @@ const PrivateOfferings = (): ReactElement => {
                         className={`inline-flex items-center px-3 py-1.5 text-sm rounded-md transition-colors ${
                           deletingEventIds.has(event.id)
                             ? "text-gray-400 cursor-not-allowed"
-                            : "text-gray-600 hover:text-red-600 hover:bg-red-50"
+                            : "text-gray-600 hover:text-red-600 hover:bg-red-50 cursor-pointer"
                         }`}
                         title="Delete private event"
                       >

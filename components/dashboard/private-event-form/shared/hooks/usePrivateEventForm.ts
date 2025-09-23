@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import {
   PrivateEventFormState,
@@ -21,36 +22,14 @@ export const usePrivateEventForm = ({
   const [errors, setErrors] = useState<PrivateEventFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch existing private event data for edit mode
+  // Update form data when initialData changes
   useEffect(() => {
-    if (mode === "edit" && privateEventId && !initialData) {
-      const fetchPrivateEvent = async () => {
-        try {
-          const response = await fetch(`/api/private-events?id=${privateEventId}`);
-          const result: PrivateEventApiResponse = await response.json();
-
-          if (result.success && result.privateEvent) {
-            const privateEvent = result.privateEvent;
-            setFormData({
-              title: privateEvent.title || "",
-              description: privateEvent.description || "",
-              notes: privateEvent.notes || "",
-              price: privateEvent.price || 0,
-              minimum: privateEvent.minimum || 1,
-              unit: privateEvent.unit || "participants",
-              image: null,
-            });
-          }
-        } catch (error) {
-          console.error("[PRIVATE-EVENT-FORM-HOOK] Error fetching private event:", error);
-        }
-      };
-
-      fetchPrivateEvent();
+    if (initialData) {
+      setFormData(initialData);
     }
-  }, [mode, privateEventId, initialData]);
+  }, [initialData]);
 
-  const handleInputChange = useCallback((field: keyof PrivateEventFormState, value: string | number | File | null | undefined) => {
+  const handleInputChange = useCallback((field: keyof PrivateEventFormState, value: string | number | boolean | File | null | undefined) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -72,6 +51,101 @@ export const usePrivateEventForm = ({
       image: file
     }));
   }, []);
+
+  const addOptionCategory = useCallback(() => {
+    const newCategory = {
+      categoryName: "",
+      categoryDescription: "",
+      choices: [{ name: "", price: undefined as number | undefined }],
+    };
+
+    setFormData((prev) => ({
+      ...prev,
+      optionCategories: [...prev.optionCategories, newCategory],
+    }));
+  }, []);
+
+  const removeOptionCategory = useCallback((index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      optionCategories: prev.optionCategories.filter((_, i) => i !== index),
+    }));
+  }, []);
+
+  const addChoiceToCategory = useCallback((categoryIndex: number) => {
+    setFormData((prev) => {
+      const newCategories = [...prev.optionCategories];
+      newCategories[categoryIndex] = {
+        ...newCategories[categoryIndex],
+        choices: [
+          ...newCategories[categoryIndex].choices,
+          { name: "", price: undefined },
+        ],
+      };
+      return { ...prev, optionCategories: newCategories };
+    });
+  }, []);
+
+  const removeChoiceFromCategory = useCallback(
+    (categoryIndex: number, choiceIndex: number) => {
+      setFormData((prev) => {
+        const newCategories = [...prev.optionCategories];
+        newCategories[categoryIndex] = {
+          ...newCategories[categoryIndex],
+          choices: newCategories[categoryIndex].choices.filter(
+            (_, i) => i !== choiceIndex
+          ),
+        };
+        return { ...prev, optionCategories: newCategories };
+      });
+    },
+    []
+  );
+
+  const updateOptionCategory = useCallback(
+    (categoryIndex: number, field: string, value: string) => {
+      setFormData((prev) => {
+        const newCategories = [...prev.optionCategories];
+        newCategories[categoryIndex] = {
+          ...newCategories[categoryIndex],
+          [field]: value,
+        };
+        return { ...prev, optionCategories: newCategories };
+      });
+    },
+    []
+  );
+
+  const updateChoice = useCallback(
+    (
+      categoryIndex: number,
+      choiceIndex: number,
+      field: string,
+      value: string | number | undefined
+    ) => {
+      setFormData((prev) => {
+        const newCategories = [...prev.optionCategories];
+        newCategories[categoryIndex] = {
+          ...newCategories[categoryIndex],
+          choices: newCategories[categoryIndex].choices.map((choice, i) =>
+            i === choiceIndex
+              ? {
+                  ...choice,
+                  [field]:
+                    field === "price"
+                      ? value
+                        ? Number(value)
+                        : undefined
+                      : value,
+                }
+              : choice
+          ),
+        };
+        return { ...prev, optionCategories: newCategories };
+      });
+    },
+    []
+  );
 
   const resetForm = useCallback(() => {
     setFormData(getInitialPrivateEventFormState());
@@ -95,10 +169,10 @@ export const usePrivateEventForm = ({
       const submitData = {
         title: formData.title,
         description: formData.description,
-        notes: formData.notes,
         price: formData.price,
-        minimum: formData.minimum,
-        unit: formData.unit,
+        options: formData.hasOptions ? formData.optionCategories : undefined,
+        isDepositRequired: formData.isDepositRequired,
+        depositAmount: formData.isDepositRequired ? formData.depositAmount : undefined,
       };
 
       const url = mode === "edit" && privateEventId
@@ -138,6 +212,12 @@ export const usePrivateEventForm = ({
   const actions: PrivateEventFormActions = {
     handleInputChange,
     handleImageChange,
+    addOptionCategory,
+    removeOptionCategory,
+    addChoiceToCategory,
+    removeChoiceFromCategory,
+    updateOptionCategory,
+    updateChoice,
     resetForm,
   };
 

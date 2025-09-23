@@ -171,22 +171,6 @@ const TitleIconSmall = styled("span")({
   },
 });
 
-const MinimumNote = styled("div")({
-  position: "relative",
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "0.5rem",
-  color: "#666",
-  marginBottom: "1rem",
-  padding: "0.5rem 1rem",
-  fontSize: "1rem",
-  background:
-    "linear-gradient(135deg, rgba(25,118,210,0.1), rgba(66,165,245,0.1))",
-  borderRadius: "20px",
-  border: "2px solid rgba(25,118,210,0.2)",
-  fontWeight: "700",
-});
-
 const GridContainer = styled("div")({
   display: "grid",
   gridTemplateColumns: "repeat(1, 1fr)",
@@ -404,7 +388,7 @@ const PrivateEvents = () => {
                 </FloatingIcon>
 
                 <PriceTag>
-                  <FaGift />${privateEvent.price} per {privateEvent.unit}
+                  <FaGift />${privateEvent.price}
                 </PriceTag>
 
                 <CardContent>
@@ -415,15 +399,66 @@ const PrivateEvents = () => {
                     {privateEvent.title}
                   </PartyTitle>
 
-                  <MinimumNote>
-                    <div className="font-bold">
-                      {privateEvent.minimum} {privateEvent.unit} minimum
-                    </div>
-                  </MinimumNote>
-
                   <Description className="text-lg">
                     {privateEvent.description}
                   </Description>
+
+                  {/* Options Display */}
+                  {privateEvent.options && privateEvent.options.length > 0 && (
+                    <div className="mt-4 space-y-3">
+                      <h4 className="text-md font-semibold text-gray-800">
+                        Available Options:
+                      </h4>
+                      {privateEvent.options.map((category, categoryIndex) => (
+                        <div
+                          key={categoryIndex}
+                          className="bg-gray-50 rounded-lg p-3"
+                        >
+                          <h5 className="font-medium text-gray-900 mb-2">
+                            {category.categoryName}
+                          </h5>
+                          {category.categoryDescription && (
+                            <p className="text-sm text-gray-600 mb-2">
+                              {category.categoryDescription}
+                            </p>
+                          )}
+                          <div className="space-y-1">
+                            {category.choices.map((choice, choiceIndex) => (
+                              <div
+                                key={choiceIndex}
+                                className="flex justify-between items-center text-sm"
+                              >
+                                <span className="text-gray-700">
+                                  {choice.name}
+                                </span>
+                                {choice.price && choice.price > 0 && (
+                                  <span className="font-medium text-gray-900">
+                                    +${choice.price}
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Deposit Display */}
+                  {privateEvent.isDepositRequired &&
+                    privateEvent.depositAmount && (
+                      <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0"></div>
+                          <div className="ml-2">
+                            <p className="text-sm font-medium text-blue-800">
+                              <strong> Deposit Required: </strong>$
+                              {privateEvent.depositAmount}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                 </CardContent>
               </PartyCard>
             </GridItem>
@@ -442,16 +477,30 @@ const PrivateEvents = () => {
               info@coastalcreationsstudio.com
             </a>
           </div>
-          <div
-            className="mb-4"
-            style={{
-              fontSize: "1.3rem",
-              fontWeight: "800",
-              color: "#1976D2",
-            }}
-          >
-            $100 minimum deposit required for all private events
-          </div>
+          {privateEvents.some((event) => event.isDepositRequired) ? (
+            <div
+              className="mb-4"
+              style={{
+                fontSize: "1.3rem",
+                fontWeight: "800",
+                color: "#1976D2",
+              }}
+            >
+              Deposits may be required for some private events - see individual
+              event details
+            </div>
+          ) : (
+            <div
+              className="mb-4"
+              style={{
+                fontSize: "1.3rem",
+                fontWeight: "800",
+                color: "#1976D2",
+              }}
+            >
+              Contact us for custom pricing and availability
+            </div>
+          )}
           {/* <div className="mb-4 text-md text-green-800">
             Payment portal for private events available soon!
           </div> */}

@@ -5,11 +5,48 @@ export interface IPrivateEvent extends Document {
   title: string;
   description: string;
   price: number;
-  minimum: number;
-  unit: string;
+  options?: Array<{
+    categoryName: string;
+    categoryDescription?: string;
+    choices: Array<{
+      name: string;
+      price?: number;
+    }>;
+  }>;
+  isDepositRequired?: boolean;
+  depositAmount?: number;
+  image?: string;
   createdAt: Date;
   updatedAt: Date;
 }
+
+// Define subdocument schemas for options
+const OptionChoiceSchema = new Schema({
+  name: {
+    type: String,
+    required: true,
+  },
+  price: {
+    type: Number,
+    required: false,
+    default: 0,
+    min: 0,
+  },
+});
+
+const OptionSchema = new Schema({
+  categoryName: {
+    type: String,
+    required: true,
+  },
+  categoryDescription: {
+    type: String,
+  },
+  choices: {
+    type: [OptionChoiceSchema],
+    required: true,
+  },
+});
 
 const PrivateEventSchema = new Schema<IPrivateEvent>(
   {
@@ -27,15 +64,20 @@ const PrivateEventSchema = new Schema<IPrivateEvent>(
       required: true,
       min: 0,
     },
-    minimum: {
-      type: Number,
-      required: true,
-      min: 1,
+    options: {
+      type: [OptionSchema],
+      required: false,
     },
-    unit: {
+    isDepositRequired: {
+      type: Boolean,
+      default: false,
+    },
+    depositAmount: {
+      type: Number,
+      min: 0,
+    },
+    image: {
       type: String,
-      required: true,
-      trim: true,
     },
   },
   {
@@ -51,8 +93,11 @@ PrivateEventSchema.statics.testConnection = function () {
 };
 
 // Prevent duplicate models in development
-const PrivateEvent: Model<IPrivateEvent> =
-  mongoose.models.PrivateEvent ||
-  mongoose.model<IPrivateEvent>("PrivateEvent", PrivateEventSchema);
+// Clear the model if it exists to ensure we get the updated schema
+if (mongoose.models.PrivateEvent) {
+  delete mongoose.models.PrivateEvent;
+}
+
+const PrivateEvent: Model<IPrivateEvent> = mongoose.model<IPrivateEvent>("PrivateEvent", PrivateEventSchema);
 
 export default PrivateEvent;

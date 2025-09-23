@@ -1,10 +1,17 @@
+export interface PrivateEventOptionCategory {
+  categoryName: string;
+  categoryDescription?: string;
+  choices: Array<{ name: string; price?: number }>;
+}
+
 export interface PrivateEventFormState {
   title: string;
   description: string;
-  notes?: string;
   price: number;
-  minimum: number;
-  unit: string;
+  hasOptions: boolean;
+  optionCategories: PrivateEventOptionCategory[];
+  isDepositRequired: boolean;
+  depositAmount?: number;
   image?: File | null;
 }
 
@@ -13,8 +20,19 @@ export interface PrivateEventFormErrors {
 }
 
 export interface PrivateEventFormActions {
-  handleInputChange: (field: keyof PrivateEventFormState, value: string | number | File | null | undefined) => void;
+  handleInputChange: (field: keyof PrivateEventFormState, value: string | number | boolean | File | null | undefined) => void;
   handleImageChange: (file: File | null) => void;
+  addOptionCategory: () => void;
+  removeOptionCategory: (index: number) => void;
+  addChoiceToCategory: (categoryIndex: number) => void;
+  removeChoiceFromCategory: (categoryIndex: number, choiceIndex: number) => void;
+  updateOptionCategory: (categoryIndex: number, field: string, value: string) => void;
+  updateChoice: (
+    categoryIndex: number,
+    choiceIndex: number,
+    field: string,
+    value: string | number | undefined
+  ) => void;
   resetForm: () => void;
 }
 
@@ -37,10 +55,10 @@ export interface PrivateEventApiResponse {
     _id: string;
     title: string;
     description: string;
-    notes?: string;
     price: number;
-    minimum: number;
-    unit: string;
+    options?: PrivateEventOptionCategory[];
+    isDepositRequired?: boolean;
+    depositAmount?: number;
     image?: string;
     createdAt?: string;
     updatedAt?: string;
