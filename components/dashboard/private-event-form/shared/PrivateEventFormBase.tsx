@@ -2,6 +2,7 @@ import { ReactElement } from "react";
 import { UsePrivateEventFormReturn } from "./types/privateEventForm.types";
 import PrivateEventBasicFields from "./fields/PrivateEventBasicFields";
 import PrivateEventPricingFields from "./fields/PrivateEventPricingFields";
+import PrivateEventOptionsFields from "./fields/PrivateEventOptionsFields";
 // import PrivateEventImageUpload from "./fields/PrivateEventImageUpload";
 
 interface PrivateEventFormBaseProps {
@@ -21,13 +22,14 @@ const PrivateEventFormBase = ({
     <div className="max-w-4xl mx-auto bg-white shadow-sm rounded-lg">
       <div className="px-6 py-4 border-b border-gray-200">
         <h2 className="text-2xl font-semibold text-gray-900">
-          {mode === "add" ? "Create Private Event Offering" : "Edit Private Event Offering"}
+          {mode === "add"
+            ? "Create Private Event Offering"
+            : "Edit Private Event Offering"}
         </h2>
         <p className="mt-1 text-sm text-gray-600">
           {mode === "add"
-            ? "Create a new private event offering that customers can inquire about."
-            : "Update the details for this private event offering."
-          }
+            ? "Create a new private event offering."
+            : "Update the details for this private event offering."}
         </p>
       </div>
 
@@ -40,6 +42,12 @@ const PrivateEventFormBase = ({
           />
 
           <PrivateEventPricingFields
+            formData={formData}
+            actions={actions}
+            errors={errors}
+          />
+
+          <PrivateEventOptionsFields
             formData={formData}
             actions={actions}
             errors={errors}
@@ -69,7 +77,8 @@ const PrivateEventFormBase = ({
                 </div>
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-red-800">
-                    Error {mode === "add" ? "Creating" : "Updating"} Private Event
+                    Error {mode === "add" ? "Creating" : "Updating"} Private
+                    Event
                   </h3>
                   <div className="mt-2 text-sm text-red-700">
                     <p>{errors.submit}</p>
@@ -85,7 +94,7 @@ const PrivateEventFormBase = ({
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer"
             >
               Cancel
             </button>
@@ -93,16 +102,15 @@ const PrivateEventFormBase = ({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {isSubmitting
               ? mode === "add"
                 ? "Creating..."
                 : "Updating..."
               : mode === "add"
-              ? "Create Private Event"
-              : "Update Private Event"
-            }
+                ? "Create Private Event"
+                : "Update Private Event"}
           </button>
         </div>
       </form>

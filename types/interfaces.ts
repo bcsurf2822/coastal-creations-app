@@ -51,8 +51,17 @@ export interface PrivateEvent {
   title: string;
   description: string;
   price: number;
-  minimum: number;
-  unit: string;
+  options?: Array<{
+    categoryName: string;
+    categoryDescription?: string;
+    choices: Array<{
+      name: string;
+      price?: number;
+    }>;
+  }>;
+  isDepositRequired?: boolean;
+  depositAmount?: number;
+  image?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -64,10 +73,18 @@ export interface DashboardPrivateEvent {
   description?: string;
   eventType: "private-event";
   price: number;
-  minimum: number;
-  unit: string;
   image?: string;
   dates?: Date[];
+  options?: Array<{
+    categoryName: string;
+    categoryDescription?: string;
+    choices: Array<{
+      name: string;
+      price?: number;
+    }>;
+  }>;
+  isDepositRequired?: boolean;
+  depositAmount?: number;
 }
 
 // Define the type for Dashboard Event display

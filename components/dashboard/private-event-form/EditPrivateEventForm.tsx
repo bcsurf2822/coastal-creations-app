@@ -1,34 +1,86 @@
+"use client"
 import { ReactElement } from "react";
+import Link from "next/link";
 import { usePrivateEventForm } from "./shared/hooks/usePrivateEventForm";
+import { usePrivateEventData } from "./shared/hooks/usePrivateEventData";
 import PrivateEventFormBase from "./shared/PrivateEventFormBase";
-import { PrivateEventFormState } from "./shared/types/privateEventForm.types";
 
 interface EditPrivateEventFormProps {
   privateEventId: string;
-  initialData?: PrivateEventFormState;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
 const EditPrivateEventForm = ({
   privateEventId,
-  initialData,
   onSuccess,
   onCancel,
 }: EditPrivateEventFormProps): ReactElement => {
+  const { privateEventData, isLoading, error } = usePrivateEventData(privateEventId);
+
   const formHook = usePrivateEventForm({
     mode: "edit",
     privateEventId,
-    initialData,
+    initialData: privateEventData || undefined,
     onSuccess,
   });
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
+          <h1 className="text-2xl font-bold text-gray-800 mb-6">Loading...</h1>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
+          <h1 className="text-2xl font-bold text-gray-800 mb-6">Error</h1>
+          <p className="text-red-500">{error}</p>
+          <div className="mt-4">
+            <Link
+              href="/admin/dashboard"
+              className="text-blue-600 hover:underline"
+            >
+              Return to Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!privateEventId) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
+          <h1 className="text-2xl font-bold text-gray-800 mb-6">Error</h1>
+          <p className="text-red-500">No private event ID provided</p>
+          <div className="mt-4">
+            <Link
+              href="/admin/dashboard"
+              className="text-blue-600 hover:underline"
+            >
+              Return to Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <PrivateEventFormBase
-      formHook={formHook}
-      mode="edit"
-      onCancel={onCancel}
-    />
+    <div className="container mx-auto p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl shadow-lg">
+      <PrivateEventFormBase
+        formHook={formHook}
+        mode="edit"
+        onCancel={onCancel}
+      />
+    </div>
   );
 };
 

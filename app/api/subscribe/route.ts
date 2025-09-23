@@ -28,6 +28,7 @@ export async function POST(request: Request) {
     const { error } = await resend.emails.send({
       from: "Coastal Creations <no-reply@resend.coastalcreationsstudio.com>",
       to: ["info@coastalcreationsstudio.com"],
+      // to: ["crystaledgedev22@gmail.com"],
       subject: "New Newsletter Subscriber",
       html: emailHtml,
     });

@@ -26,12 +26,35 @@ export const validatePrivateEventForm = (
     errors.price = "Price must be greater than 0";
   }
 
-  if (!formData.minimum || formData.minimum < 1) {
-    errors.minimum = "Minimum participants must be at least 1";
+  // Options validation
+  if (formData.hasOptions && formData.optionCategories.length > 0) {
+    formData.optionCategories.forEach((category, categoryIndex) => {
+      if (!category.categoryName.trim()) {
+        errors[`optionCategories.${categoryIndex}.categoryName`] = "Category name is required";
+      }
+
+      if (category.choices.length === 0) {
+        errors[`optionCategories.${categoryIndex}.choices`] = "At least one choice is required";
+      } else {
+        category.choices.forEach((choice, choiceIndex) => {
+          if (!choice.name.trim()) {
+            errors[`optionCategories.${categoryIndex}.choices.${choiceIndex}.name`] = "Choice name is required";
+          }
+          if (choice.price !== undefined && choice.price < 0) {
+            errors[`optionCategories.${categoryIndex}.choices.${choiceIndex}.price`] = "Price cannot be negative";
+          }
+        });
+      }
+    });
   }
 
-  if (!formData.unit.trim()) {
-    errors.unit = "Unit is required (e.g., 'participants', 'hours', 'people')";
+  // Deposit validation
+  if (formData.isDepositRequired) {
+    if (!formData.depositAmount || formData.depositAmount <= 0) {
+      errors.depositAmount = "Deposit amount must be greater than 0 when deposit is required";
+    } else if (formData.depositAmount >= formData.price) {
+      errors.depositAmount = "Deposit amount must be less than the total price";
+    }
   }
 
   return errors;
@@ -40,9 +63,10 @@ export const validatePrivateEventForm = (
 export const getInitialPrivateEventFormState = (): PrivateEventFormState => ({
   title: "",
   description: "",
-  notes: "",
   price: 0,
-  minimum: 1,
-  unit: "participants",
+  hasOptions: false,
+  optionCategories: [],
+  isDepositRequired: false,
+  depositAmount: undefined,
   image: null,
 });
