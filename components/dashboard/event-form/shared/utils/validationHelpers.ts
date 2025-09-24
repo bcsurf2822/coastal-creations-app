@@ -137,5 +137,14 @@ export const validateEventForm = (
     }
   }
 
+  // Deposit validation - COMMENTED OUT
+  // if (formData.isDepositRequired) {
+  //   if (!formData.depositAmount || formData.depositAmount <= 0) {
+  //     newErrors.depositAmount = "Deposit amount must be greater than 0 when deposit is required";
+  //   } else if (formData.depositAmount >= formData.price) {
+  //     newErrors.depositAmount = "Deposit amount must be less than the total price";
+  //   }
+  // }
+
   return newErrors;
 };
