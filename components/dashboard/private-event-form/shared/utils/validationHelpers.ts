@@ -48,14 +48,14 @@ export const validatePrivateEventForm = (
     });
   }
 
-  // Deposit validation
-  if (formData.isDepositRequired) {
-    if (!formData.depositAmount || formData.depositAmount <= 0) {
-      errors.depositAmount = "Deposit amount must be greater than 0 when deposit is required";
-    } else if (formData.depositAmount >= formData.price) {
-      errors.depositAmount = "Deposit amount must be less than the total price";
-    }
-  }
+  // Deposit validation - COMMENTED OUT
+  // if (formData.isDepositRequired) {
+  //   if (!formData.depositAmount || formData.depositAmount <= 0) {
+  //     errors.depositAmount = "Deposit amount must be greater than 0 when deposit is required";
+  //   } else if (formData.depositAmount >= formData.price) {
+  //     errors.depositAmount = "Deposit amount must be less than the total price";
+  //   }
+  // }
 
   return errors;
 };
