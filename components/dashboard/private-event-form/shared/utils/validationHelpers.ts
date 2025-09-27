@@ -69,4 +69,5 @@ export const getInitialPrivateEventFormState = (): PrivateEventFormState => ({
   isDepositRequired: false,
   depositAmount: undefined,
   image: null,
+  imageUrl: "",
 });

@@ -2,12 +2,14 @@ import { ReactElement } from "react";
 import { useRouter } from "next/navigation";
 import { EventFormProps, EventFormState } from "./shared/types/eventForm.types";
 import { useEventForm } from "./shared/hooks/useEventForm";
+import { useImagePreview } from "./shared/hooks/useImagePreview";
 import EventBasicFields from "./shared/fields/EventBasicFields";
 import EventDateTimeFields from "./shared/fields/EventDateTimeFields";
 import EventPricingFields from "./shared/fields/EventPricingFields";
 import EventImageUpload from "./shared/fields/EventImageUpload";
 import EventOptionsFields from "./shared/fields/EventOptionsFields";
 import EventDiscountFields from "./shared/fields/EventDiscountFields";
+import EventCardPreview from "./shared/preview/EventCardPreview";
 
 interface EventFormBaseProps extends EventFormProps {
   title: string;
@@ -31,6 +33,9 @@ const EventFormBase = ({
   const router = useRouter();
   const { formData, errors, actions, isSubmitting, handleSubmit } =
     useEventForm({ mode, eventId, initialData, onSuccess });
+
+  // Get preview URL for newly selected images
+  const imagePreviewUrl = useImagePreview(formData.image);
 
   const handleEventTypeChange = (
     eventType: "class" | "camp" | "workshop" | "artist"
@@ -93,6 +98,13 @@ const EventFormBase = ({
             errors={errors}
           />
 
+          {/* Live Preview */}
+          <div className="space-y-4">
+            <EventCardPreview
+              formData={formData}
+              imagePreviewUrl={imagePreviewUrl || formData.imageUrl || existingImageUrl || undefined}
+            />
+          </div>
 
           {/* Form Actions */}
           <div className="flex justify-end space-x-4 pt-6 border-t">

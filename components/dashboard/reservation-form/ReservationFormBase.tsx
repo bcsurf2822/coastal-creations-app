@@ -94,8 +94,9 @@ const ReservationFormBase = ({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              // disabled={isSubmitting}
+              disabled={true}
+              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer disabled:cursor-not-allowed"
             >
               {isSubmitting
                 ? `${mode === "add" ? "Creating" : "Updating"}...`

@@ -194,12 +194,6 @@ export default function NavBar() {
               <div className="absolute top-full left-0 mt-2 w-56 bg-white/95 backdrop-blur-sm border border-gray-100 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
                 <div className="py-2">
                   <Link
-                    href="/classes/summer-camps"
-                    className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
-                  >
-                    Summer Camps
-                  </Link>
-                  <Link
                     href="/classes"
                     className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
                   >
@@ -216,6 +210,12 @@ export default function NavBar() {
                     className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
                   >
                     Live Artist Events
+                  </Link>
+                  <Link
+                    href="/classes/summer-camps"
+                    className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
+                  >
+                    Art Camps
                   </Link>
                 </div>
               </div>
@@ -402,18 +402,6 @@ export default function NavBar() {
                       >
                         <motion.div variants={itemVariants} className="py-1">
                           <Link
-                            href="/classes/summer-camps"
-                            className="text-[#0f172a] hover:text-[#0369a1] font-normal py-1 block text-sm"
-                            onClick={() => {
-                              setIsMenuOpen(false);
-                              setIsClassesDropdownOpen(false);
-                            }}
-                          >
-                            Summer Camps
-                          </Link>
-                        </motion.div>
-                        <motion.div variants={itemVariants} className="py-1">
-                          <Link
                             href="/classes"
                             className="text-[#0f172a] hover:text-[#0369a1] font-normal py-1 block text-sm"
                             onClick={() => {
@@ -446,6 +434,18 @@ export default function NavBar() {
                             }}
                           >
                             Live Artist Events
+                          </Link>
+                        </motion.div>
+                        <motion.div variants={itemVariants} className="py-1">
+                          <Link
+                            href="/classes/summer-camps"
+                            className="text-[#0f172a] hover:text-[#0369a1] font-normal py-1 block text-sm"
+                            onClick={() => {
+                              setIsMenuOpen(false);
+                              setIsClassesDropdownOpen(false);
+                            }}
+                          >
+                            Art Camps
                           </Link>
                         </motion.div>
                       </motion.div>

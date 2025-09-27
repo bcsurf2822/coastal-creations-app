@@ -14,7 +14,7 @@ const PrivateEventPricingFields = ({
     <div className="space-y-4">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Price <span className="text-red-500">*</span>
+          Price Per Person <span className="text-red-500">*</span>
         </label>
         <div className="relative">
           <span className="absolute left-3 top-2 text-gray-500">$</span>
@@ -117,7 +117,6 @@ const PrivateEventPricingFields = ({
             </h3>
             <div className="mt-2 text-sm text-purple-700">
               <p>
-         
                 {formData.isDepositRequired && formData.depositAmount && (
                   <>
                     {" "}

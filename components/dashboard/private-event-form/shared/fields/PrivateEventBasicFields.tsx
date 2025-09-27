@@ -8,7 +8,6 @@ const PrivateEventBasicFields = ({
 }: PrivateEventFieldsProps): ReactElement => {
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium text-gray-900">Basic Information</h3>
 
       <div className="grid grid-cols-1 gap-4">
         <div>

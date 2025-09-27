@@ -21,6 +21,7 @@ export const usePrivateEventForm = ({
   );
   const [errors, setErrors] = useState<PrivateEventFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isImageUploading, setIsImageUploading] = useState(false);
 
   // Update form data when initialData changes
   useEffect(() => {
@@ -173,6 +174,7 @@ export const usePrivateEventForm = ({
         options: formData.hasOptions ? formData.optionCategories : undefined,
         isDepositRequired: formData.isDepositRequired,
         depositAmount: formData.isDepositRequired ? formData.depositAmount : undefined,
+        image: formData.imageUrl, // Store the Sanity image URL in MongoDB
       };
 
       const url = mode === "edit" && privateEventId
@@ -226,6 +228,8 @@ export const usePrivateEventForm = ({
     errors,
     actions,
     isSubmitting,
+    isImageUploading,
     handleSubmit,
+    setIsImageUploading,
   };
 };

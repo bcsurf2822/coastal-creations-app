@@ -2,6 +2,10 @@
 
 import { ReactElement, useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import imageUrlBuilder from "@sanity/image-url";
+import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
+import { client } from "@/sanity/client";
 import { DashboardPrivateEvent } from "@/types/interfaces";
 import {
   RiAddLine,
@@ -10,6 +14,12 @@ import {
   RiSearchLine,
   RiEyeLine,
 } from "react-icons/ri";
+
+const { projectId, dataset } = client.config();
+const urlFor = (source: SanityImageSource) =>
+  projectId && dataset
+    ? imageUrlBuilder({ projectId, dataset }).image(source)
+    : null;
 
 interface PrivateEventApiData {
   _id: string;
@@ -230,6 +240,26 @@ const PrivateOfferings = (): ReactElement => {
                       </div>
                     )}
 
+                    {/* Image display */}
+                    {event.image && (
+                      <div className="mb-4">
+                        <div className="w-full h-32 rounded-lg overflow-hidden">
+                          <Image
+                            src={
+                              urlFor(event.image)
+                                ?.width(300)
+                                .height(128)
+                                .url() || ""
+                            }
+                            alt={event.title || "Private event image"}
+                            width={300}
+                            height={128}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -248,16 +278,18 @@ const PrivateOfferings = (): ReactElement => {
 
                     <div className="space-y-2 mb-4">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Base Price:</span>
+                        <span className="text-gray-500">Price:</span>
                         <span className="font-medium text-gray-900">
-                          ${event.price}
+                          ${event.price} / Per Person
                         </span>
                       </div>
 
                       {/* Deposit Information */}
                       {event.isDepositRequired && event.depositAmount && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-500">Deposit Required:</span>
+                          <span className="text-gray-500">
+                            Deposit Required:
+                          </span>
                           <span className="font-medium text-blue-600">
                             ${event.depositAmount}
                           </span>
@@ -272,7 +304,10 @@ const PrivateOfferings = (): ReactElement => {
                           </span>
                           <div className="space-y-2">
                             {event.options.map((category, categoryIndex) => (
-                              <div key={categoryIndex} className="bg-gray-50 rounded p-2">
+                              <div
+                                key={categoryIndex}
+                                className="bg-gray-50 rounded p-2"
+                              >
                                 <div className="text-xs font-medium text-gray-800">
                                   {category.categoryName}
                                 </div>
@@ -282,16 +317,21 @@ const PrivateOfferings = (): ReactElement => {
                                   </div>
                                 )}
                                 <div className="text-xs text-gray-700">
-                                  {category.choices.map((choice, choiceIndex) => (
-                                    <div key={choiceIndex} className="flex justify-between items-center">
-                                      <span>{choice.name}</span>
-                                      {choice.price && choice.price > 0 && (
-                                        <span className="font-medium text-gray-900">
-                                          +${choice.price}
-                                        </span>
-                                      )}
-                                    </div>
-                                  ))}
+                                  {category.choices.map(
+                                    (choice, choiceIndex) => (
+                                      <div
+                                        key={choiceIndex}
+                                        className="flex justify-between items-center"
+                                      >
+                                        <span>{choice.name}</span>
+                                        {choice.price && choice.price > 0 && (
+                                          <span className="font-medium text-gray-900">
+                                            +${choice.price}
+                                          </span>
+                                        )}
+                                      </div>
+                                    )
+                                  )}
                                 </div>
                               </div>
                             ))}

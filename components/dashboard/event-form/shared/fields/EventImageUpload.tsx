@@ -55,46 +55,64 @@ const EventImageUpload = ({
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-2">
-        Event Image
+        Event Image (Optional){" "}
       </label>
-      <div className="border-2 border-dashed border-gray-300 rounded-md p-6 text-center">
-        {displayImageUrl ? (
-          <div className="space-y-4">
-            <div className="relative inline-block">
+
+      <div className="flex items-center gap-4">
+        {/* Image thumbnail or placeholder */}
+        <div className="flex-shrink-0">
+          {displayImageUrl ? (
+            <div className="relative">
               <Image
                 src={displayImageUrl}
-                alt="Event preview"
-                width={400}
-                height={256}
-                className="max-w-full h-auto max-h-64 mx-auto rounded-md object-contain"
+                alt="Event thumbnail"
+                width={80}
+                height={80}
+                className="w-20 h-20 rounded-md object-cover border border-gray-300"
                 onLoad={() => setIsImageLoading(false)}
                 onLoadStart={() => setIsImageLoading(true)}
               />
               <button
                 type="button"
                 onClick={handleImageDelete}
-                className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold shadow-lg"
+                className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shadow-lg"
                 title="Delete image"
               >
                 ×
               </button>
               {isImageLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75 rounded-md">
-                  <div className="text-blue-600">Loading image...</div>
+                  <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                 </div>
               )}
             </div>
-          </div>
-        ) : (
-          <>
-            <div className="text-6xl text-gray-400 mb-4">📷</div>
-            <p className="text-gray-500 mb-4">Upload an image for your event</p>
-          </>
-        )}
+          ) : (
+            <div className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center bg-gray-50">
+              <svg
+                className="w-8 h-8 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+          )}
+        </div>
 
-        <div className="mt-4">
-          <label className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 cursor-pointer">
-            {isImageUploading ? "Uploading..." : "Choose File"}
+        {/* Upload button and status */}
+        <div className="flex-1">
+          <label className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 cursor-pointer">
+            {isImageUploading
+              ? "Uploading..."
+              : displayImageUrl
+                ? "Change Image"
+                : "Select Image"}
             <input
               type="file"
               className="hidden"
@@ -103,25 +121,25 @@ const EventImageUpload = ({
               disabled={isImageUploading}
             />
           </label>
+
+          {imageUploadStatus && (
+            <p
+              className={`text-sm mt-1 ${
+                imageUploadStatus.includes("successfully")
+                  ? "text-green-600"
+                  : imageUploadStatus.includes("Failed")
+                    ? "text-red-600"
+                    : "text-blue-600"
+              }`}
+            >
+              {imageUploadStatus}
+            </p>
+          )}
+
+          {errors.image && (
+            <p className="text-red-600 text-sm mt-1">{errors.image}</p>
+          )}
         </div>
-
-        {imageUploadStatus && (
-          <p
-            className={`text-sm mt-2 ${
-              imageUploadStatus.includes("successfully")
-                ? "text-green-600"
-                : imageUploadStatus.includes("Failed")
-                  ? "text-red-600"
-                  : "text-blue-600"
-            }`}
-          >
-            {imageUploadStatus}
-          </p>
-        )}
-
-        {errors.image && (
-          <p className="text-red-600 text-sm mt-2">{errors.image}</p>
-        )}
       </div>
     </div>
   );
