@@ -490,24 +490,33 @@ const SummerCamps = () => {
   };
 
   // Calculate discounted price
-  const calculateDiscountedPrice = (event: Event, currentParticipants: number): number => {
+  const calculateDiscountedPrice = (
+    event: Event,
+    currentParticipants: number
+  ): number => {
     if (!event.isDiscountAvailable || !event.discount) return event.price;
-    
+
     // Check if discount applies based on current participants
-    if (currentParticipants < event.discount.minParticipants) return event.price;
-    
+    if (currentParticipants < event.discount.minParticipants)
+      return event.price;
+
     if (event.discount.type === "percentage") {
-      return event.price - (event.price * event.discount.value / 100);
+      return event.price - (event.price * event.discount.value) / 100;
     } else {
       return event.price - event.discount.value;
     }
   };
 
   // Check if discount is active
-  const isDiscountActive = (event: Event, currentParticipants: number): boolean => {
-    return !!(event.isDiscountAvailable && 
-             event.discount && 
-             currentParticipants >= event.discount.minParticipants);
+  const isDiscountActive = (
+    event: Event,
+    currentParticipants: number
+  ): boolean => {
+    return !!(
+      event.isDiscountAvailable &&
+      event.discount &&
+      currentParticipants >= event.discount.minParticipants
+    );
   };
 
   if (isLoading) {
@@ -554,22 +563,21 @@ const SummerCamps = () => {
         <TitleIcon>
           <FaCampground />
         </TitleIcon>
-        Summer Camps
+        Art Camps
         <TitleIcon>
           <FaSun />
         </TitleIcon>
       </Title>
 
-      <Subtitle>Spend your Summer Creating at Coastal Creations!</Subtitle>
+      <Subtitle>Spend your time Creating at Coastal Creations!</Subtitle>
 
       {campEvents.length === 0 ? (
         <EmptyState>
           <FaMountain
             style={{ fontSize: "3rem", marginBottom: "1rem", color: "#42A5F5" }}
           />
-          <div>No summer camps found.</div>
           <div style={{ marginTop: "0.5rem", fontSize: "1rem" }}>
-            Check back soon for exciting summer adventures!
+            Check back soon for exciting art adventures!
           </div>
         </EmptyState>
       ) : (
@@ -578,7 +586,10 @@ const SummerCamps = () => {
             const IconComponent = getRandomIcon(index);
             const currentParticipants = eventParticipantCounts[event._id] || 0;
             const discountActive = isDiscountActive(event, currentParticipants);
-            const displayPrice = calculateDiscountedPrice(event, currentParticipants);
+            const displayPrice = calculateDiscountedPrice(
+              event,
+              currentParticipants
+            );
 
             return (
               <motion.div
@@ -597,11 +608,13 @@ const SummerCamps = () => {
                     <FaDollarSign />
                     {discountActive ? (
                       <>
-                        <OriginalPrice>${event.price}</OriginalPrice>
-                        ${displayPrice.toFixed(2)}
+                        <OriginalPrice>${event.price}</OriginalPrice>$
+                        {displayPrice.toFixed(2)}
                       </>
+                    ) : event.price ? (
+                      `$${event.price}`
                     ) : (
-                      event.price ? `$${event.price}` : "Free"
+                      "Free"
                     )}
                   </PriceTag>
 
@@ -629,12 +642,16 @@ const SummerCamps = () => {
 
                       <BottomSection>
                         {/* Show discount badge if available and active */}
-                        {discountActive && (event.discount?.name || event.discount?.description) && (
-                          <DiscountBadge>
-                            🎉 {event.discount.name || event.discount.description}
-                          </DiscountBadge>
-                        )}
-                        
+                        {discountActive &&
+                          (event.discount?.name ||
+                            event.discount?.description) && (
+                            <DiscountBadge>
+                              🎉{" "}
+                              {event.discount.name ||
+                                event.discount.description}
+                            </DiscountBadge>
+                          )}
+
                         <InfoItem>
                           <InfoIcon>
                             <FaCalendarAlt />

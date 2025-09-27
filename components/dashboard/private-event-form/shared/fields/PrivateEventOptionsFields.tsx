@@ -25,11 +25,10 @@ const PrivateEventOptionsFields = ({
           }
           className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
         />
-        <label className="text-sm font-medium text-gray-700">Add Options</label>
+        <label className="text-sm font-medium text-gray-700">
+          Add Options (Optional)
+        </label>
       </div>
-      <p className="text-sm text-gray-600 ml-6">
-        Add customizable options for your private event.
-      </p>
 
       {formData.hasOptions && (
         <div className="ml-6 space-y-6">

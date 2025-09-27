@@ -1,99 +1,163 @@
-// import { ReactElement, useRef } from "react";
-// import { PrivateEventFieldsProps } from "../types/privateEventForm.types";
+import { ReactElement, useRef, useEffect } from "react";
+import Image from "next/image";
+import { PrivateEventFieldsProps } from "../types/privateEventForm.types";
+import { usePrivateImageUpload } from "../hooks/usePrivateImageUpload";
 
-// const PrivateEventImageUpload = ({
-//   formData,
-//   actions,
-//   errors,
-// }: PrivateEventFieldsProps): ReactElement => {
-//   const fileInputRef = useRef<HTMLInputElement>(null);
+const PrivateEventImageUpload = ({
+  formData,
+  actions,
+  errors,
+  onImageUploadStatusChange,
+}: PrivateEventFieldsProps): ReactElement => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-//   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     const file = e.target.files?.[0] || null;
-//     actions.handleImageChange(file);
-//   };
+  const {
+    uploadedImageUrl,
+    isImageUploading,
+    isImageLoading,
+    imageUploadStatus,
+    handleImageUpload,
+    handleImageDelete,
+    setImageUrl,
+    setIsImageLoading,
+  } = usePrivateImageUpload({
+    eventName: formData.title,
+    onSuccess: (imageUrl) => {
+      // Store the uploaded image URL in the form data
+      actions.handleInputChange("imageUrl", imageUrl);
+    },
+    onError: () => {
+      // Error handling is done in the hook
+    },
+  });
 
-//   const handleRemoveImage = () => {
-//     actions.handleImageChange(null);
-//     if (fileInputRef.current) {
-//       fileInputRef.current.value = "";
-//     }
-//   };
+  // Set existing image URL if provided (for edit mode)
+  if (formData.imageUrl && !uploadedImageUrl) {
+    setImageUrl(formData.imageUrl);
+  }
 
-//   const handleUploadClick = () => {
-//     fileInputRef.current?.click();
-//   };
+  // Notify parent component of upload status changes
+  useEffect(() => {
+    if (onImageUploadStatusChange) {
+      onImageUploadStatusChange(isImageUploading);
+    }
+  }, [isImageUploading, onImageUploadStatusChange]);
 
-//   return (
-//     <div className="space-y-4">
-//       <h3 className="text-lg font-medium text-gray-900">Image (Optional)</h3>
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    if (file) {
+      actions.handleImageChange(file);
+      if (formData.title) {
+        handleImageUpload(file);
+      }
+    }
+  };
 
-//       <div className="flex items-center space-x-4">
-//         <div className="flex-shrink-0">
-//           {formData.image ? (
-//             <div className="relative">
-//               <img
-//                 src={URL.createObjectURL(formData.image)}
-//                 alt="Private event preview"
-//                 className="w-24 h-24 object-cover rounded-lg border-2 border-gray-300"
-//               />
-//               <button
-//                 type="button"
-//                 onClick={handleRemoveImage}
-//                 className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
-//                 title="Remove image"
-//               >
-//                 ×
-//               </button>
-//             </div>
-//           ) : (
-//             <div className="w-24 h-24 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
-//               <svg
-//                 className="w-8 h-8 text-gray-400"
-//                 fill="none"
-//                 stroke="currentColor"
-//                 viewBox="0 0 24 24"
-//               >
-//                 <path
-//                   strokeLinecap="round"
-//                   strokeLinejoin="round"
-//                   strokeWidth={2}
-//                   d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-//                 />
-//               </svg>
-//             </div>
-//           )}
-//         </div>
+  const handleRemoveImage = () => {
+    actions.handleImageChange(null);
+    actions.handleInputChange("imageUrl", "");
+    handleImageDelete();
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
-//         <div className="flex-1">
-//           <button
-//             type="button"
-//             onClick={handleUploadClick}
-//             className="bg-white border border-gray-300 rounded-md py-2 px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-//           >
-//             {formData.image ? "Change Image" : "Upload Image"}
-//           </button>
-//           <input
-//             ref={fileInputRef}
-//             type="file"
-//             accept="image/*"
-//             onChange={handleFileChange}
-//             className="hidden"
-//             autoComplete="new-password"
-//             data-lpignore="true"
-//             data-form-type="other"
-//           />
-//           <p className="text-sm text-gray-500 mt-1">
-//             Upload an image to help customers visualize this private event offering.
-//           </p>
-//         </div>
-//       </div>
+  // Determine which image to display (prioritize uploaded URL, then local preview)
+  const displayImageUrl = uploadedImageUrl || formData.imageUrl;
 
-//       {errors.image && (
-//         <p className="text-red-600 text-sm">{errors.image}</p>
-//       )}
-//     </div>
-//   );
-// };
 
-// export default PrivateEventImageUpload;
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        Event Image (Optional)
+      </label>
+
+      <div className="flex items-center gap-4">
+        {/* Image thumbnail or placeholder */}
+        <div className="flex-shrink-0">
+          {displayImageUrl || formData.image ? (
+            <div className="relative">
+              <Image
+                src={displayImageUrl || (formData.image ? URL.createObjectURL(formData.image) : '')}
+                alt="Private event thumbnail"
+                width={80}
+                height={80}
+                className="w-20 h-20 rounded-md object-cover border border-gray-300"
+                onLoad={() => setIsImageLoading(false)}
+                onLoadStart={() => setIsImageLoading(true)}
+              />
+              <button
+                type="button"
+                onClick={handleRemoveImage}
+                className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shadow-lg"
+                title="Delete image"
+              >
+                ×
+              </button>
+              {isImageLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75 rounded-md">
+                  <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center bg-gray-50">
+              <svg
+                className="w-8 h-8 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+          )}
+        </div>
+
+        {/* Upload button and status */}
+        <div className="flex-1">
+          <label className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 cursor-pointer">
+            {isImageUploading
+              ? "Uploading..."
+              : displayImageUrl || formData.image
+                ? "Change Image"
+                : "Select Image"}
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept="image/*"
+              onChange={handleFileChange}
+              disabled={isImageUploading}
+            />
+          </label>
+
+          {imageUploadStatus && (
+            <p
+              className={`text-sm mt-1 ${
+                imageUploadStatus.includes("successfully")
+                  ? "text-green-600"
+                  : imageUploadStatus.includes("Failed")
+                    ? "text-red-600"
+                    : "text-blue-600"
+              }`}
+            >
+              {imageUploadStatus}
+            </p>
+          )}
+
+          {errors.image && (
+            <p className="text-red-600 text-sm mt-1">{errors.image}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PrivateEventImageUpload;

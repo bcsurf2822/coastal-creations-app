@@ -4,6 +4,10 @@ import React, { useState, useEffect } from "react";
 import styled from "@emotion/styled";
 import { Box, Container, Paper, CircularProgress, Alert } from "@mui/material";
 import { PrivateEvent } from "@/types/interfaces";
+import Image from "next/image";
+import imageUrlBuilder from "@sanity/image-url";
+import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
+import { client } from "@/sanity/client";
 import {
   FaBirthdayCake,
   FaGift,
@@ -17,6 +21,13 @@ import {
   GiCupcake,
   GiPartyHat,
 } from "react-icons/gi";
+
+// Sanity image URL builder
+const { projectId, dataset } = client.config();
+const urlFor = (source: SanityImageSource) =>
+  projectId && dataset
+    ? imageUrlBuilder({ projectId, dataset }).image(source)
+    : null;
 
 // Create styled components
 const StyledContainer = styled(Container)({
@@ -268,6 +279,15 @@ const Description = styled("p")({
   fontWeight: "700",
 });
 
+const ImageContainer = styled("div")({
+  width: "100%",
+  height: "200px",
+  borderRadius: "12px",
+  marginBottom: "1rem",
+  overflow: "hidden",
+  position: "relative",
+});
+
 const PrivateEvents = () => {
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const [privateEvents, setPrivateEvents] = useState<PrivateEvent[]>([]);
@@ -388,10 +408,22 @@ const PrivateEvents = () => {
                 </FloatingIcon>
 
                 <PriceTag>
-                  <FaGift />${privateEvent.price}
+                  <FaGift />${privateEvent.price} / Per Person
                 </PriceTag>
 
                 <CardContent>
+                  {/* Image display */}
+                  {privateEvent.image && (
+                    <ImageContainer>
+                      <Image
+                        src={urlFor(privateEvent.image)?.width(400).height(200).url() || ''}
+                        alt={privateEvent.title || "Private event image"}
+                        fill
+                        style={{ objectFit: "cover" }}
+                      />
+                    </ImageContainer>
+                  )}
+
                   <PartyTitle>
                     <TitleIconSmall>
                       <IconComponent />
@@ -486,8 +518,7 @@ const PrivateEvents = () => {
                 color: "#1976D2",
               }}
             >
-              Deposits may be required for some private events - see individual
-              event details
+
             </div>
           ) : (
             <div

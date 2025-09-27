@@ -20,7 +20,7 @@ export const useTimeOptions = () => {
         startTimeHour = selectedStartTime.hour();
         startTimeMinute = selectedStartTime.minute();
       } else {
-        startTimeHour = 9;
+        startTimeHour = 8;
         startTimeMinute = 0;
       }
 
@@ -32,13 +32,14 @@ export const useTimeOptions = () => {
         minEndTimeMinute = 0;
       }
 
-      for (let hour = minEndTimeHour; hour <= 21; hour++) {
+      for (let hour = minEndTimeHour; hour <= 24; hour++) {
         for (const minute of [0, 30]) {
-          if (hour === 21 && minute > 0) continue;
+          if (hour === 24 && minute > 0) continue;
           if (hour === minEndTimeHour && minute < minEndTimeMinute) continue;
 
           const time = new Date();
-          time.setHours(hour, minute, 0);
+          const displayHour = hour === 24 ? 0 : hour;
+          time.setHours(displayHour, minute, 0);
 
           const timeStr = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
           const formattedTime = time.toLocaleTimeString([], {
@@ -55,12 +56,13 @@ export const useTimeOptions = () => {
         }
       }
     } else {
-      for (let hour = 9; hour <= 21; hour++) {
+      for (let hour = 8; hour <= 24; hour++) {
         for (const minute of [0, 30]) {
-          if (hour === 21 && minute > 0) continue;
+          if (hour === 24 && minute > 0) continue;
 
           const time = new Date();
-          time.setHours(hour, minute, 0);
+          const displayHour = hour === 24 ? 0 : hour;
+          time.setHours(displayHour, minute, 0);
 
           const timeStr = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
           const formattedTime = time.toLocaleTimeString([], {

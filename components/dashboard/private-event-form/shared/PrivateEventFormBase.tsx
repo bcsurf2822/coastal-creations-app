@@ -1,9 +1,11 @@
 import { ReactElement } from "react";
 import { UsePrivateEventFormReturn } from "./types/privateEventForm.types";
+import { usePrivateEventImagePreview } from "./hooks/usePrivateEventImagePreview";
 import PrivateEventBasicFields from "./fields/PrivateEventBasicFields";
 import PrivateEventPricingFields from "./fields/PrivateEventPricingFields";
 import PrivateEventOptionsFields from "./fields/PrivateEventOptionsFields";
-// import PrivateEventImageUpload from "./fields/PrivateEventImageUpload";
+import PrivateEventImageUpload from "./fields/PrivateEventImageUpload";
+import PrivateEventCardPreview from "./preview/PrivateEventCardPreview";
 
 interface PrivateEventFormBaseProps {
   formHook: UsePrivateEventFormReturn;
@@ -16,7 +18,10 @@ const PrivateEventFormBase = ({
   mode,
   onCancel,
 }: PrivateEventFormBaseProps): ReactElement => {
-  const { formData, errors, actions, isSubmitting, handleSubmit } = formHook;
+  const { formData, errors, actions, isSubmitting, isImageUploading, handleSubmit, setIsImageUploading } = formHook;
+
+  // Get preview URL for newly selected images
+  const imagePreviewUrl = usePrivateEventImagePreview(formData.image);
 
   return (
     <div className="max-w-4xl mx-auto bg-white shadow-sm rounded-lg">
@@ -53,11 +58,20 @@ const PrivateEventFormBase = ({
             errors={errors}
           />
 
-          {/* <PrivateEventImageUpload
+          <PrivateEventImageUpload
             formData={formData}
             actions={actions}
             errors={errors}
-          /> */}
+            onImageUploadStatusChange={setIsImageUploading}
+          />
+
+          {/* Live Preview */}
+          <div className="space-y-4">
+            <PrivateEventCardPreview
+              formData={formData}
+              imagePreviewUrl={imagePreviewUrl || undefined}
+            />
+          </div>
 
           {errors.submit && (
             <div className="bg-red-50 border border-red-200 rounded-md p-4">
@@ -101,16 +115,18 @@ const PrivateEventFormBase = ({
           )}
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isImageUploading}
             className="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
-            {isSubmitting
-              ? mode === "add"
-                ? "Creating..."
-                : "Updating..."
-              : mode === "add"
-                ? "Create Private Event"
-                : "Update Private Event"}
+            {isImageUploading
+              ? "Uploading Image..."
+              : isSubmitting
+                ? mode === "add"
+                  ? "Creating..."
+                  : "Updating..."
+                : mode === "add"
+                  ? "Create Private Event"
+                  : "Update Private Event"}
           </button>
         </div>
       </form>

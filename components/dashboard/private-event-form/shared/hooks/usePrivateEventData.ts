@@ -48,6 +48,7 @@ export const usePrivateEventData = (privateEventId: string | null): UsePrivateEv
           isDepositRequired: privateEvent.isDepositRequired || false,
           depositAmount: privateEvent.depositAmount,
           image: null, // File object is not stored in database
+          imageUrl: privateEvent.image || "", // Store the existing Sanity image URL
         };
 
         setPrivateEventData(formState);

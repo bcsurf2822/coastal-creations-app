@@ -13,6 +13,7 @@ export interface PrivateEventFormState {
   isDepositRequired: boolean;
   depositAmount?: number;
   image?: File | null;
+  imageUrl?: string;
 }
 
 export interface PrivateEventFormErrors {
@@ -47,6 +48,7 @@ export interface PrivateEventFieldsProps {
   formData: PrivateEventFormState;
   actions: PrivateEventFormActions;
   errors: PrivateEventFormErrors;
+  onImageUploadStatusChange?: (isUploading: boolean) => void;
 }
 
 export interface PrivateEventApiResponse {
@@ -78,5 +80,7 @@ export interface UsePrivateEventFormReturn {
   errors: PrivateEventFormErrors;
   actions: PrivateEventFormActions;
   isSubmitting: boolean;
+  isImageUploading: boolean;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
+  setIsImageUploading: (isUploading: boolean) => void;
 }

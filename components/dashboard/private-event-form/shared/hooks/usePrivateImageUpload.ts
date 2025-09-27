@@ -1,19 +1,19 @@
 import { useState, useCallback } from "react";
 import toast from "react-hot-toast";
 
-interface UseImageUploadOptions {
+interface UsePrivateImageUploadOptions {
   eventName: string;
   apiEndpoint?: string;
   onSuccess?: (imageUrl: string) => void;
   onError?: (error: string) => void;
 }
 
-export const useImageUpload = ({
+export const usePrivateImageUpload = ({
   eventName,
-  apiEndpoint = "/api/upload-image",
+  apiEndpoint = "/api/upload-private-image",
   onSuccess,
   onError,
-}: UseImageUploadOptions) => {
+}: UsePrivateImageUploadOptions) => {
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
   const [isImageUploading, setIsImageUploading] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
@@ -51,8 +51,8 @@ export const useImageUpload = ({
 
         setTimeout(() => setImageUploadStatus(null), 3000);
       } catch (error) {
-        console.error("[useImageUpload-handleImageUpload] Image upload failed:", error);
-        const errorMessage = "Failed to upload image. Please try again.";
+        console.error("[usePrivateImageUpload-handleImageUpload] Private image upload failed:", error);
+        const errorMessage = "Failed to upload private image. Please try again.";
         setImageUploadStatus("Failed to upload image");
         onError?.(errorMessage);
       } finally {
@@ -81,7 +81,7 @@ export const useImageUpload = ({
       toast.dismiss(loadingToastId);
       toast.success("Image deleted successfully!");
     } catch (error) {
-      console.error("[useImageUpload-handleImageDelete] Error deleting image:", error);
+      console.error("[usePrivateImageUpload-handleImageDelete] Error deleting private image:", error);
       toast.dismiss(loadingToastId);
       toast.error("Failed to delete image");
     }
