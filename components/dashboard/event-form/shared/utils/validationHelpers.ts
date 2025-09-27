@@ -22,8 +22,19 @@ export const validateEventForm = (
     const startDate = new Date(formData.startDate);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+
+    // Allow events on today's date if start time is in the future
     if (startDate < today) {
       newErrors.startDate = "Start date must be in the future";
+    } else if (startDate.getTime() === today.getTime() && formData.startTime) {
+      // If the date is today, check if the start time has already passed
+      const now = new Date();
+      const startDateTime = new Date(startDate);
+      startDateTime.setHours(formData.startTime.hour(), formData.startTime.minute(), 0, 0);
+
+      if (startDateTime <= now) {
+        newErrors.startDate = "Start time must be in the future";
+      }
     }
   }
 
@@ -33,11 +44,21 @@ export const validateEventForm = (
 
   if (!formData.endTime) {
     newErrors.endTime = "End time is required";
-  } else if (
-    formData.startTime &&
-    formData.endTime.isBefore(formData.startTime)
-  ) {
-    newErrors.endTime = "End time must be after start time";
+  } else if (formData.startTime) {
+    // Handle 12:00 AM (00:00) as next day for end time
+    const startTime = formData.startTime;
+    let endTime = formData.endTime;
+
+    // If end time is 12:00 AM (00:00) and start time is not 12:00 AM,
+    // treat end time as next day
+    if (endTime.hour() === 0 && endTime.minute() === 0 &&
+        !(startTime.hour() === 0 && startTime.minute() === 0)) {
+      endTime = endTime.add(1, 'day');
+    }
+
+    if (endTime.isBefore(startTime) || endTime.isSame(startTime)) {
+      newErrors.endTime = "End time must be after start time";
+    }
   }
 
   // Event type specific validations
