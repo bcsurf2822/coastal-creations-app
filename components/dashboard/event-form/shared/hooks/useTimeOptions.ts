@@ -41,7 +41,7 @@ export const useTimeOptions = () => {
           const displayHour = hour === 24 ? 0 : hour;
           time.setHours(displayHour, minute, 0);
 
-          const timeStr = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+          const timeStr = `${displayHour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
           const formattedTime = time.toLocaleTimeString([], {
             hour: "numeric",
             minute: "2-digit",
@@ -64,7 +64,7 @@ export const useTimeOptions = () => {
           const displayHour = hour === 24 ? 0 : hour;
           time.setHours(displayHour, minute, 0);
 
-          const timeStr = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+          const timeStr = `${displayHour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
           const formattedTime = time.toLocaleTimeString([], {
             hour: "numeric",
             minute: "2-digit",
