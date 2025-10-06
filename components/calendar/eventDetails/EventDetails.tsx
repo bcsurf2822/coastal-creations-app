@@ -610,7 +610,7 @@ export default function EventDetails({
 
                 {/* Price Display */}
                 {eventData.price !== undefined && (
-                  <PriceDisplay>${eventData.price} per person</PriceDisplay>
+                  <PriceDisplay>${eventData.price}</PriceDisplay>
                 )}
 
                 {/* Registration Button */}

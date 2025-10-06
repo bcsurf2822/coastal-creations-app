@@ -408,7 +408,7 @@ const PrivateEvents = () => {
                 </FloatingIcon>
 
                 <PriceTag>
-                  <FaGift />${privateEvent.price} / Per Person
+                  <FaGift />${privateEvent.price}
                 </PriceTag>
 
                 <CardContent>

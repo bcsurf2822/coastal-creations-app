@@ -280,7 +280,7 @@ const PrivateOfferings = (): ReactElement => {
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-500">Price:</span>
                         <span className="font-medium text-gray-900">
-                          ${event.price} / Per Person
+                          ${event.price}
                         </span>
                       </div>
 

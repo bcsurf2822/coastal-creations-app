@@ -14,7 +14,7 @@ const PrivateEventPricingFields = ({
     <div className="space-y-4">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Price Per Person <span className="text-red-500">*</span>
+          <span className="text-red-500">*</span>
         </label>
         <div className="relative">
           <span className="absolute left-3 top-2 text-gray-500">$</span>

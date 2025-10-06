@@ -35,7 +35,7 @@ interface ReservationSummaryProps {
 
 export default function ReservationSummary({
   reservationBooking,
-  eventDetails
+  eventDetails,
 }: ReservationSummaryProps): ReactElement {
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -77,10 +77,12 @@ export default function ReservationSummary({
         </h4>
         <div className="space-y-3">
           {reservationBooking.selectedDates
-            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+            .sort(
+              (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+            )
             .map((selectedDate) => (
-              <div 
-                key={selectedDate.date} 
+              <div
+                key={selectedDate.date}
                 className="bg-gray-50 rounded-lg p-4 border border-gray-200"
               >
                 <div className="flex justify-between items-start mb-3">
@@ -89,12 +91,17 @@ export default function ReservationSummary({
                       {formatDate(selectedDate.date)}
                     </h5>
                     <p className="text-sm text-gray-600">
-                      {selectedDate.participantCount} participant{selectedDate.participantCount > 1 ? 's' : ''}
+                      {selectedDate.participantCount} participant
+                      {selectedDate.participantCount > 1 ? "s" : ""}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="font-semibold text-gray-800">
-                      ${(selectedDate.participantCount * reservationBooking.appliedPriceTier.price).toFixed(2)}
+                      $
+                      {(
+                        selectedDate.participantCount *
+                        reservationBooking.appliedPriceTier.price
+                      ).toFixed(2)}
                     </p>
                     <p className="text-xs text-gray-500">
                       ${reservationBooking.appliedPriceTier.price} per person
@@ -105,18 +112,22 @@ export default function ReservationSummary({
                 {/* Participant List */}
                 {selectedDate.participants.length > 0 && (
                   <div>
-                    <p className="text-sm font-medium text-gray-700 mb-2">Participants:</p>
+                    <p className="text-sm font-medium text-gray-700 mb-2">
+                      Participants:
+                    </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {selectedDate.participants.slice(0, selectedDate.participantCount).map((participant, pIndex) => (
-                        <div 
-                          key={pIndex}
-                          className="bg-white rounded px-3 py-2 border border-gray-100"
-                        >
-                          <p className="text-sm font-medium text-gray-800">
-                            {participant.firstName} {participant.lastName}
-                          </p>
-                        </div>
-                      ))}
+                      {selectedDate.participants
+                        .slice(0, selectedDate.participantCount)
+                        .map((participant, pIndex) => (
+                          <div
+                            key={pIndex}
+                            className="bg-white rounded px-3 py-2 border border-gray-100"
+                          >
+                            <p className="text-sm font-medium text-gray-800">
+                              {participant.firstName} {participant.lastName}
+                            </p>
+                          </div>
+                        ))}
                     </div>
                   </div>
                 )}
@@ -128,11 +139,15 @@ export default function ReservationSummary({
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-blue-50 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-blue-600">{reservationBooking.totalDays}</p>
+          <p className="text-2xl font-bold text-blue-600">
+            {reservationBooking.totalDays}
+          </p>
           <p className="text-sm text-blue-700 font-medium">Total Days</p>
         </div>
         <div className="bg-green-50 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-green-600">{reservationBooking.totalParticipants}</p>
+          <p className="text-2xl font-bold text-green-600">
+            {reservationBooking.totalParticipants}
+          </p>
           <p className="text-sm text-green-700 font-medium">Participant-Days</p>
         </div>
         <div className="bg-purple-50 rounded-lg p-4 text-center">
@@ -156,22 +171,26 @@ export default function ReservationSummary({
           <div className="flex justify-between">
             <span className="text-gray-600">Pricing Tier Applied:</span>
             <span className="font-medium">
-              {reservationBooking.appliedPriceTier.numberOfDays} day{reservationBooking.appliedPriceTier.numberOfDays > 1 ? 's' : ''}: ${reservationBooking.appliedPriceTier.price}
-              {reservationBooking.appliedPriceTier.label && ` (${reservationBooking.appliedPriceTier.label})`}
+              {reservationBooking.appliedPriceTier.numberOfDays} day
+              {reservationBooking.appliedPriceTier.numberOfDays > 1 ? "s" : ""}:
+              ${reservationBooking.appliedPriceTier.price}
+              {reservationBooking.appliedPriceTier.label &&
+                ` (${reservationBooking.appliedPriceTier.label})`}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Selected Dates:</span>
             <span className="font-medium">
               {reservationBooking.selectedDates
-                .map(sd => formatShortDate(sd.date))
-                .join(', ')}
+                .map((sd) => formatShortDate(sd.date))
+                .join(", ")}
             </span>
           </div>
           <div className="flex justify-between pt-2 border-t border-gray-300">
             <span className="font-semibold text-gray-800">Calculation:</span>
             <span className="font-medium">
-              {reservationBooking.totalParticipants} participant-days × ${reservationBooking.appliedPriceTier.price}
+              {reservationBooking.totalParticipants} participant-days × $
+              {reservationBooking.appliedPriceTier.price}
             </span>
           </div>
           <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t border-gray-400">
@@ -186,7 +205,10 @@ export default function ReservationSummary({
         <h4 className="font-semibold text-blue-900 mb-2">📋 Important Notes</h4>
         <ul className="text-sm text-blue-800 space-y-1">
           <li>• Payment confirmation will be sent to your email address</li>
-          <li>• Participant details can be updated up to 24 hours before each event date</li>
+          <li>
+            • Participant details can be updated up to 24 hours before each
+            event date
+          </li>
           <li>• Each selected date is treated as an individual session</li>
           <li>• Cancellation policy applies to each date separately</li>
         </ul>

@@ -802,7 +802,7 @@ const BillingForm: React.FC<BillingFormProps> = ({
 
             <div className="flex justify-between items-center">
               <span className="text-lg font-medium text-gray-800">
-                Event price per person:
+                Event price:
               </span>
               <span className="text-lg font-semibold">
                 {isDiscountActive() ? (
