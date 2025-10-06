@@ -231,7 +231,7 @@ const PrivateEventCardPreview = ({
           </FloatingIcon>
 
           <PriceTag>
-            <FaGift />${formData.price || 0} / Per Person
+            <FaGift />${formData.price || 0}
           </PriceTag>
 
           <CardContent>

@@ -78,7 +78,7 @@ const RegistrationHeader: React.FC<RegistrationHeaderProps> = ({
                     ${formattedPrice}
                   </span>
                 )}
-                <span className="text-black font-medium"> / Per Person</span>
+                <span className="text-black font-medium"></span>
               </p>
 
               {/* Discount Information */}

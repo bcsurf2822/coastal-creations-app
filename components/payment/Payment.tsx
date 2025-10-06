@@ -787,8 +787,8 @@ export default function Payment() {
                   onClick={
                     () =>
                       (window.location.href =
-                        "mailto:info@coastalcreationsstudio.com")
-                    // "mailto:crystaledgedev22@gmail.com"
+                        // "mailto:info@coastalcreationsstudio.com")
+                    "mailto:crystaledgedev22@gmail.com")
                   }
                   className="px-6 py-3 bg-white text-black font-medium rounded-md hover:bg-gray-100 transition-colors border-2 border-black flex items-center justify-center"
                 >
