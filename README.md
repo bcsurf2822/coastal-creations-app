@@ -73,7 +73,7 @@ Visit at: [https://coastalcreationsstudio.com/](https://coastalcreationsstudio.c
 - **Hosting:** [Vercel](https://vercel.com/)
 - **Language:** TypeScript
 
-This is a private project for Coastal Creations Studio. For any inquiries or issues, please contact Benjamin Corbett at crystaledgedev22@gmail.com.
+This is a private project for Coastal Creations Studio. 
 
 ## License
 
