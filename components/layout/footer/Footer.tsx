@@ -293,7 +293,7 @@ export default function Footer() {
           <Link href="/" className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase">
             Home
           </Link>
-          <Link href="/classes" className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase">
+          <Link href="/events/classes-workshops" className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase">
             Classes
           </Link>
           <Link href="/calendar" className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase">

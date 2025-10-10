@@ -5,6 +5,7 @@ import styled from "@emotion/styled";
 import { Box, Container, Paper, CircularProgress, Alert } from "@mui/material";
 import { PrivateEvent } from "@/types/interfaces";
 import Image from "next/image";
+import Link from "next/link";
 import imageUrlBuilder from "@sanity/image-url";
 import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import { client } from "@/sanity/client";
@@ -33,7 +34,7 @@ const urlFor = (source: SanityImageSource) =>
 const StyledContainer = styled(Container)({
   padding: "4rem 2rem",
   maxWidth: "1200px",
-  fontFamily: "var(--font-eb-garamond)",
+  fontFamily: "var(--font-montserrat)",
 });
 
 const Title = styled("h1")({
@@ -288,6 +289,29 @@ const ImageContainer = styled("div")({
   position: "relative",
 });
 
+const BookNowButton = styled("button")({
+  marginTop: "1.5rem",
+  width: "100%",
+  padding: "1rem 2rem",
+  background: "linear-gradient(135deg, #1976D2, #42A5F5)",
+  color: "white",
+  fontSize: "1.125rem",
+  fontWeight: "700",
+  borderRadius: "12px",
+  border: "none",
+  cursor: "pointer",
+  transition: "all 0.3s ease",
+  boxShadow: "0 4px 15px rgba(25, 118, 210, 0.3)",
+  "&:hover": {
+    transform: "translateY(-2px)",
+    boxShadow: "0 6px 20px rgba(25, 118, 210, 0.4)",
+    background: "linear-gradient(135deg, #1565C0, #1976D2)",
+  },
+  "&:active": {
+    transform: "translateY(0)",
+  },
+});
+
 const PrivateEvents = () => {
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const [privateEvents, setPrivateEvents] = useState<PrivateEvent[]>([]);
@@ -416,7 +440,12 @@ const PrivateEvents = () => {
                   {privateEvent.image && (
                     <ImageContainer>
                       <Image
-                        src={urlFor(privateEvent.image)?.width(400).height(200).url() || ''}
+                        src={
+                          urlFor(privateEvent.image)
+                            ?.width(400)
+                            .height(200)
+                            .url() || ""
+                        }
                         alt={privateEvent.title || "Private event image"}
                         fill
                         style={{ objectFit: "cover" }}
@@ -491,6 +520,19 @@ const PrivateEvents = () => {
                         </div>
                       </div>
                     )}
+
+                  {/* Book Now Button */}
+                  {privateEvent.isDepositRequired &&
+                    privateEvent.depositAmount && (
+                      <Link
+                        href={`/payments?eventId=${privateEvent._id}&eventTitle=${encodeURIComponent(privateEvent.title)}&price=${privateEvent.depositAmount}&isPrivateEvent=true`}
+                        style={{ textDecoration: "none" }}
+                      >
+                        <BookNowButton>
+                          Pay Deposit - ${privateEvent.depositAmount}
+                        </BookNowButton>
+                      </Link>
+                    )}
                 </CardContent>
               </PartyCard>
             </GridItem>
@@ -517,9 +559,7 @@ const PrivateEvents = () => {
                 fontWeight: "800",
                 color: "#1976D2",
               }}
-            >
-
-            </div>
+            ></div>
           ) : (
             <div
               className="mb-4"

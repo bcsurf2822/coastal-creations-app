@@ -9,6 +9,7 @@ import {
   Anton,
   Abril_Fatface,
   EB_Garamond,
+  Montserrat,
 } from "next/font/google";
 import ConditionalLayout from "@/components/layout/ConditionalLayout";
 import AnalyticsEvents from "@/components/AnalyticsEvents";
@@ -43,6 +44,12 @@ const ebGaramond = EB_Garamond({
   weight: "400",
 });
 
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+});
+
 export const metadata: Metadata = {
   title: "Coastal Creations Studios",
   description: "Coastal Creations Studio, Ocean City, NJ",
@@ -56,7 +63,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${ebGaramond.variable} ${geistSans.variable} ${geistMono.variable} ${anton.variable} ${abrilFatface.variable} antialiased`}
+        className={`${ebGaramond.variable} ${geistSans.variable} ${geistMono.variable} ${anton.variable} ${abrilFatface.variable} ${montserrat.variable} antialiased`}
       >
         <Suspense fallback={null}>
           <AnalyticsEvents />

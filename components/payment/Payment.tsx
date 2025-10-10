@@ -108,6 +108,7 @@ export default function Payment() {
   const eventId = searchParams.get("eventId") || "";
   const eventTitle = searchParams.get("eventTitle") || "";
   const eventPrice = searchParams.get("price") || "";
+  const isPrivateEvent = searchParams.get("isPrivateEvent") === "true";
 
   const [formattedPrice, setFormattedPrice] = useState<string>("");
   const [isPriceAvailable, setIsPriceAvailable] = useState<boolean>(true);
@@ -315,13 +316,20 @@ export default function Payment() {
     if (eventId) {
       const fetchEventDetails = async () => {
         try {
-          const response = await fetch(`/api/event/${eventId}`);
+          // Use different API endpoint for private events
+          const apiUrl = isPrivateEvent
+            ? `/api/private-events/${eventId}`
+            : `/api/event/${eventId}`;
+
+          const response = await fetch(apiUrl);
           if (response.ok) {
             const data = await response.json();
-            if (data.event) {
+            const eventData = isPrivateEvent ? data.privateEvent : data.event;
+
+            if (eventData) {
               // Handle options
-              if (data.event.options && data.event.options.length > 0) {
-                const newOptions = data.event.options;
+              if (eventData.options && eventData.options.length > 0) {
+                const newOptions = eventData.options;
                 if (
                   JSON.stringify(newOptions) !== JSON.stringify(eventOptions)
                 ) {
@@ -338,11 +346,11 @@ export default function Payment() {
                 }
               }
 
-              // Handle discount information
-              if (data.event.isDiscountAvailable && data.event.discount) {
+              // Handle discount information (only for regular events)
+              if (!isPrivateEvent && eventData.isDiscountAvailable && eventData.discount) {
                 setDiscountInfo({
-                  isDiscountAvailable: data.event.isDiscountAvailable,
-                  discount: data.event.discount,
+                  isDiscountAvailable: eventData.isDiscountAvailable,
+                  discount: eventData.discount,
                 });
               }
             }
