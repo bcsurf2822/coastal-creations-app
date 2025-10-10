@@ -1,12 +1,13 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
 import { IEvent } from "./Event";
+import { IPrivateEvent } from "./PrivateEvent";
 
-// TypeScript interface for Customer document
 export interface ICustomer extends Document {
   _id: string;
-  event: IEvent | string; // Reference to Event model
+  event: IEvent | IPrivateEvent | string;
+  eventType: "Event" | "PrivateEvent";
   quantity: number;
-  total: number; // price x quantity
+  total: number;
   isSigningUpForSelf: boolean;
   participants: Array<{
     firstName: string;
@@ -105,18 +106,17 @@ const SelectedOptionSchema = new Schema(
   }
 );
 
-// Define the Participant schema
 const ParticipantSchema = new Schema(
   {
     firstName: {
       type: String,
-      required: false, // Make this optional
+      required: false,
       trim: true,
       default: "Participant",
     },
     lastName: {
       type: String,
-      required: false, // Make this optional
+      required: false,
       trim: true,
       default: "Unknown",
     },
@@ -124,13 +124,13 @@ const ParticipantSchema = new Schema(
       type: [SelectedOptionSchema],
       required: false,
       default: [],
-      _id: false, // Don't auto-generate IDs for nested array elements
+      _id: false,
     },
   },
   {
-    _id: false, // Don't auto-generate IDs for participants
-    strict: false, // Allow additional fields to be passed through
-    autoIndex: false, // Disable auto indexing
+    _id: false,
+    strict: false,
+    autoIndex: false,
   }
 );
 
@@ -139,8 +139,14 @@ const CustomerSchema = new Schema<ICustomer>(
   {
     event: {
       type: Schema.Types.ObjectId,
-      ref: "Event",
+      refPath: "eventType",
       required: true,
+    },
+    eventType: {
+      type: String,
+      enum: ["Event", "PrivateEvent"],
+      required: true,
+      default: "Event",
     },
     quantity: {
       type: Number,
@@ -162,7 +168,7 @@ const CustomerSchema = new Schema<ICustomer>(
       type: [ParticipantSchema],
       required: false,
       default: [],
-      _id: false, // Don't auto-generate IDs for array elements
+      _id: false,
       strictPopulate: false,
     },
     selectedOptions: {
@@ -186,21 +192,28 @@ CustomerSchema.pre("save", async function (next) {
 
   if (shouldCalculateTotal) {
     try {
-      let event: IEvent;
+      let event: IEvent | IPrivateEvent;
 
       if (typeof this.event !== "string") {
         event = this.event;
       } else {
-        const Event = mongoose.model("Event");
-        const foundEvent = await Event.findById(this.event);
+        const ModelToUse =
+          this.eventType === "PrivateEvent"
+            ? mongoose.model("PrivateEvent")
+            : mongoose.model("Event");
+
+        const foundEvent = await ModelToUse.findById(this.event);
         if (!foundEvent) {
-          next(new Error("Event not found"));
+          next(
+            new Error(
+              `${this.eventType === "PrivateEvent" ? "Private event" : "Event"} not found`
+            )
+          );
           return;
         }
-        event = foundEvent as IEvent;
+        event = foundEvent as IEvent | IPrivateEvent;
       }
 
-      // For regular events, use the event price
       const eventPrice = event.price || 0;
       this.total = this.quantity * eventPrice;
     } catch (error) {
@@ -211,7 +224,6 @@ CustomerSchema.pre("save", async function (next) {
   next();
 });
 
-// Custom validation to ensure either email or phone is provided
 CustomerSchema.path("billingInfo").validate(function (value: {
   emailAddress?: string;
   phoneNumber?: string;
@@ -219,7 +231,6 @@ CustomerSchema.path("billingInfo").validate(function (value: {
   return value.emailAddress || value.phoneNumber;
 }, "Either Email Address or Phone Number is required for contact purposes");
 
-// Validation to ensure participants are specified if not signing up for self
 CustomerSchema.pre("validate", function (next) {
   if (
     !this.isSigningUpForSelf &&
@@ -233,16 +244,12 @@ CustomerSchema.pre("validate", function (next) {
   next();
 });
 
-// Ensure participant count matches quantity for non-self registrations
 CustomerSchema.pre("validate", function (next) {
-  // Create empty array if participants is missing
   if (!this.participants) {
     this.participants = [];
   }
 
-  // For non-self registrations, ensure participants count matches quantity
   if (!this.isSigningUpForSelf && this.participants.length !== this.quantity) {
-    // Instead of invalidating, pad the participants array with placeholder data
     const currentLength = this.participants.length;
     for (let i = currentLength; i < this.quantity; i++) {
       this.participants.push({
@@ -251,23 +258,19 @@ CustomerSchema.pre("validate", function (next) {
         selectedOptions: [],
       });
     }
-    // If we have too many participants, trim the array
     if (this.participants.length > this.quantity) {
       this.participants = this.participants.slice(0, this.quantity);
     }
   }
 
-  // For self-registrations with multiple people, ensure participants = quantity - 1
   if (
     this.isSigningUpForSelf &&
     this.quantity > 1 &&
     this.participants.length !== this.quantity - 1
   ) {
-    // Instead of invalidating, adjust the participants array
     const targetLength = this.quantity - 1;
     const currentLength = this.participants.length;
 
-    // Add participants if needed
     for (let i = currentLength; i < targetLength; i++) {
       this.participants.push({
         firstName: `Additional Person ${i + 1}`,
@@ -276,7 +279,6 @@ CustomerSchema.pre("validate", function (next) {
       });
     }
 
-    // Remove extra participants if necessary
     if (this.participants.length > targetLength) {
       this.participants = this.participants.slice(0, targetLength);
     }
@@ -285,9 +287,13 @@ CustomerSchema.pre("validate", function (next) {
   next();
 });
 
-// Prevent duplicate models in development
-const Customer: Model<ICustomer> =
-  mongoose.models.Customer ||
-  mongoose.model<ICustomer>("Customer", CustomerSchema);
+if (mongoose.models.Customer) {
+  delete mongoose.models.Customer;
+}
+
+const Customer: Model<ICustomer> = mongoose.model<ICustomer>(
+  "Customer",
+  CustomerSchema
+);
 
 export default Customer;

@@ -170,7 +170,7 @@ export default function NavBar() {
               className="relative group"
             >
               <Link
-                href="/classes"
+                href="/events/classes-workshops"
                 className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold uppercase flex items-center gap-1"
               >
                 Classes
@@ -194,25 +194,25 @@ export default function NavBar() {
               <div className="absolute top-full left-0 mt-2 w-56 bg-white/95 backdrop-blur-sm border border-gray-100 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
                 <div className="py-2">
                   <Link
-                    href="/classes"
+                    href="/events/classes-workshops"
                     className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
                   >
                     Classes & Workshops
                   </Link>
                   <Link
-                    href="/classes/private-events"
+                    href="/events/private-events"
                     className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
                   >
                     Private Events
                   </Link>
                   <Link
-                    href="/classes/live-artist"
+                    href="/events/live-artist"
                     className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
                   >
                     Live Artist Events
                   </Link>
                   <Link
-                    href="/classes/summer-camps"
+                    href="/events/summer-camps"
                     className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
                   >
                     Art Camps
@@ -402,7 +402,7 @@ export default function NavBar() {
                       >
                         <motion.div variants={itemVariants} className="py-1">
                           <Link
-                            href="/classes"
+                            href="/events/classes-workshops"
                             className="text-[#0f172a] hover:text-[#0369a1] font-normal py-1 block text-sm"
                             onClick={() => {
                               setIsMenuOpen(false);
@@ -414,7 +414,7 @@ export default function NavBar() {
                         </motion.div>
                         <motion.div variants={itemVariants} className="py-1">
                           <Link
-                            href="/classes/private-events"
+                            href="/events/private-events"
                             className="text-[#0f172a] hover:text-[#0369a1] font-normal py-1 block text-sm"
                             onClick={() => {
                               setIsMenuOpen(false);
@@ -426,7 +426,7 @@ export default function NavBar() {
                         </motion.div>
                         <motion.div variants={itemVariants} className="py-1">
                           <Link
-                            href="/classes/live-artist"
+                            href="/events/live-artist"
                             className="text-[#0f172a] hover:text-[#0369a1] font-normal py-1 block text-sm"
                             onClick={() => {
                               setIsMenuOpen(false);
@@ -438,7 +438,7 @@ export default function NavBar() {
                         </motion.div>
                         <motion.div variants={itemVariants} className="py-1">
                           <Link
-                            href="/classes/summer-camps"
+                            href="/events/summer-camps"
                             className="text-[#0f172a] hover:text-[#0369a1] font-normal py-1 block text-sm"
                             onClick={() => {
                               setIsMenuOpen(false);

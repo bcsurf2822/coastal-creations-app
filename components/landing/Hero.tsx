@@ -172,7 +172,7 @@ export default function Hero() {
               Watch creativity unfold in real-time!
             </p>
             <Link
-              href="/classes/live-artist"
+              href="/events/live-artist"
               className="inline-block bg-white/20 hover:bg-white/30 backdrop-blur-sm px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 hover:scale-105 border border-white/30"
             >
               Learn More →
@@ -195,7 +195,7 @@ export default function Hero() {
 
           <div className="flex flex-wrap justify-center gap-6">
             <Link
-              href="/classes"
+              href="/events/classes-workshops"
               className="bg-slate-800 hover:bg-slate-700 text-white font-semibold px-6 sm:px-8 py-3 sm:py-3.5 rounded-lg transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg text-base sm:text-xl tracking-wide"
             >
               Explore Classes
