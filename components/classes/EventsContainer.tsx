@@ -7,7 +7,7 @@ import { type SanityDocument } from "next-sanity";
 import imageUrlBuilder from "@sanity/image-url";
 import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import { client } from "@/sanity/client";
-import UniversalEventCard, { UniversalEventData, CardConfig } from "./UniversalEventCard";
+import UniversalEventCard, { UniversalEventData, CardConfig } from "./EventCard";
 import { getRandomIcon } from "./eventUtils";
 
 const { projectId, dataset } = client.config();

@@ -247,8 +247,6 @@ export default function Footer() {
                     </Link>
                   </div>
                 </div>
-
-                {/* Newsletter - Moved to Contact container */}
                 <div className="mt-6 pt-4 border-t border-orange-200">
                   <h3 className="text-lg font-semibold mb-2 text-center">
                     Sign Up for our Newsletter
@@ -290,29 +288,50 @@ export default function Footer() {
         </div>
         {/* Navigation Links */}
         <nav className="mt-6 pt-4 border-t border-orange-200 flex flex-wrap justify-center gap-6 text-sm">
-          <Link href="/" className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase">
+          <Link
+            href="/"
+            className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase"
+          >
             Home
           </Link>
-          <Link href="/events/classes-workshops" className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase">
+          <Link
+            href="/events/classes-workshops"
+            className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase"
+          >
             Classes
           </Link>
-          <Link href="/calendar" className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase">
+          <Link
+            href="/calendar"
+            className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase"
+          >
             Calendar
           </Link>
-          <Link href="/gallery" className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase">
+          <Link
+            href="/gallery"
+            className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase"
+          >
             Gallery
           </Link>
-          <Link href="/blog" className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase">
+          <Link
+            href="/blog"
+            className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase"
+          >
             Blog
           </Link>
-          <Link href="/about" className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase">
+          <Link
+            href="/about"
+            className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase"
+          >
             About
           </Link>
-          <Link href="/contact-us" className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase">
+          <Link
+            href="/contact-us"
+            className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase"
+          >
             Contact
           </Link>
         </nav>
-        
+
         <div className="mt-4 pt-4 border-t border-orange-200 text-center text-black text-sm">
           <p>
             &copy; {new Date().getFullYear()} Coastal Creation Studios. All

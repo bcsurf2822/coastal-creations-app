@@ -289,29 +289,6 @@ const ImageContainer = styled("div")({
   position: "relative",
 });
 
-const BookNowButton = styled("button")({
-  marginTop: "1.5rem",
-  width: "100%",
-  padding: "1rem 2rem",
-  background: "linear-gradient(135deg, #1976D2, #42A5F5)",
-  color: "white",
-  fontSize: "1.125rem",
-  fontWeight: "700",
-  borderRadius: "12px",
-  border: "none",
-  cursor: "pointer",
-  transition: "all 0.3s ease",
-  boxShadow: "0 4px 15px rgba(25, 118, 210, 0.3)",
-  "&:hover": {
-    transform: "translateY(-2px)",
-    boxShadow: "0 6px 20px rgba(25, 118, 210, 0.4)",
-    background: "linear-gradient(135deg, #1565C0, #1976D2)",
-  },
-  "&:active": {
-    transform: "translateY(0)",
-  },
-});
-
 const PrivateEvents = () => {
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const [privateEvents, setPrivateEvents] = useState<PrivateEvent[]>([]);
@@ -509,29 +486,23 @@ const PrivateEvents = () => {
                   {privateEvent.isDepositRequired &&
                     privateEvent.depositAmount && (
                       <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0"></div>
-                          <div className="ml-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
                             <p className="text-sm font-medium text-blue-800">
-                              <strong> Deposit Required: </strong>$
+                              <strong>Deposit Required:</strong> $
                               {privateEvent.depositAmount}
                             </p>
                           </div>
+                          <Link
+                            href={`/payments?eventId=${privateEvent._id}&eventTitle=${encodeURIComponent(privateEvent.title)}&price=${privateEvent.depositAmount}&isPrivateEvent=true`}
+                            style={{ textDecoration: "none" }}
+                          >
+                            <button className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-full transition-all hover:shadow-md">
+                              Pay Deposit
+                            </button>
+                          </Link>
                         </div>
                       </div>
-                    )}
-
-                  {/* Book Now Button */}
-                  {privateEvent.isDepositRequired &&
-                    privateEvent.depositAmount && (
-                      <Link
-                        href={`/payments?eventId=${privateEvent._id}&eventTitle=${encodeURIComponent(privateEvent.title)}&price=${privateEvent.depositAmount}&isPrivateEvent=true`}
-                        style={{ textDecoration: "none" }}
-                      >
-                        <BookNowButton>
-                          Pay Deposit - ${privateEvent.depositAmount}
-                        </BookNowButton>
-                      </Link>
                     )}
                 </CardContent>
               </PartyCard>
@@ -546,7 +517,7 @@ const PrivateEvents = () => {
         </ContactIcon>
         <div>
           <div className="text-2xl font-bold text-black mb-4">
-            Please contact the studio to arrange a private event at{" "}
+            Please contact the studio to arrange a private event at:{" "}
             <a href="mailto:info@coastalcreationsstudio.com">
               info@coastalcreationsstudio.com
             </a>
@@ -568,9 +539,7 @@ const PrivateEvents = () => {
                 fontWeight: "800",
                 color: "#1976D2",
               }}
-            >
-              Contact us for custom pricing and availability
-            </div>
+            ></div>
           )}
           {/* <div className="mb-4 text-md text-green-800">
             Payment portal for private events available soon!

@@ -2,19 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectMongo } from "@/lib/mongoose";
 import Customer from "@/lib/models/Customer";
 import Event from "@/lib/models/Event";
+import PrivateEvent from "@/lib/models/PrivateEvent";
 import mongoose from "mongoose";
 
 export async function POST(request: NextRequest) {
   try {
-    // Connect to MongoDB
     await connectMongo();
-
-    // Parse the request body
     const data = await request.json();
 
-    // Extract and validate required fields
     const {
       event: eventId,
+      eventType = "Event",
       quantity,
       total,
       isSigningUpForSelf,
@@ -23,23 +21,36 @@ export async function POST(request: NextRequest) {
       billingInfo,
     } = data;
 
-    // Log the received total for debugging
-    console.log(`[CUSTOMER-API-POST] Received total: ${total}, type: ${typeof total}`);
+    console.log(
+      `[CUSTOMER-API-POST] Received eventType: ${eventType}, eventId: ${eventId}, total: ${total}`
+    );
 
-    // Verify event exists
-    const event = await Event.findById(eventId);
-    if (!event) {
-      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    let event;
+    if (eventType === "PrivateEvent") {
+      event = await PrivateEvent.findById(eventId);
+    } else {
+      event = await Event.findById(eventId);
     }
 
-    // Use the provided total, or calculate it if not provided
-    const customerTotal = total !== undefined ? total : (event.price || 0) * quantity;
+    if (!event) {
+      return NextResponse.json(
+        {
+          error: `${eventType === "PrivateEvent" ? "Private event" : "Event"} not found`,
+        },
+        { status: 404 }
+      );
+    }
 
-    console.log(`[CUSTOMER-API-POST] Using total: ${customerTotal} (provided: ${total}, calculated: ${(event.price || 0) * quantity})`);
+    const customerTotal =
+      total !== undefined ? total : (event.price || 0) * quantity;
 
-    // Create a new customer record
+    console.log(
+      `[CUSTOMER-API-POST] Using total: ${customerTotal} (provided: ${total}, calculated: ${(event.price || 0) * quantity})`
+    );
+
     const customer = new Customer({
       event: eventId,
+      eventType,
       quantity,
       total: customerTotal,
       isSigningUpForSelf,
@@ -48,10 +59,8 @@ export async function POST(request: NextRequest) {
       billingInfo,
     });
 
-    // Save the customer to the database
     const savedCustomer = await customer.save();
 
-    // Return success response with the created customer
     return NextResponse.json(
       {
         success: true,
@@ -63,11 +72,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Error registering customer:", error);
 
-    // Handle validation errors separately
     if (error instanceof mongoose.Error.ValidationError) {
       const validationErrors: Record<string, string> = {};
 
-      // Extract validation error messages
       for (const field in error.errors) {
         validationErrors[field] = error.errors[field].message;
       }
@@ -81,7 +88,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generic error response
     return NextResponse.json(
       {
         error: "Error registering customer",
@@ -94,27 +100,28 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    // Connect to MongoDB
     await connectMongo();
 
-    // Get query parameters
     const { searchParams } = new URL(request.url);
     const eventId = searchParams.get("eventId");
+    const eventType = searchParams.get("eventType");
 
-    // Build query filter
-    let query = {};
+    const query: { event?: string; eventType?: string } = {};
     if (eventId) {
-      query = { event: eventId };
+      query.event = eventId;
+    }
+    if (eventType) {
+      query.eventType = eventType;
     }
 
-    // Retrieve customers from the database with optional filtering
-    const customers = await Customer.find(query).populate("event").sort({ createdAt: -1 });
+    const customers = await Customer.find(query)
+      .populate("event")
+      .sort({ createdAt: -1 });
 
-    // Return success response with customers
     return NextResponse.json(
       {
         success: true,
-        message: eventId 
+        message: eventId
           ? `Customers for event ${eventId} retrieved successfully`
           : "Customers retrieved successfully",
         data: customers,
@@ -125,7 +132,6 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Error retrieving customers:", error);
 
-    // Generic error response
     return NextResponse.json(
       {
         error: "Error retrieving customers",

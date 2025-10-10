@@ -13,6 +13,7 @@ import {
   RiDeleteBinLine,
   RiSearchLine,
   RiEyeLine,
+  RiUserLine,
 } from "react-icons/ri";
 
 const { projectId, dataset } = client.config();
@@ -342,6 +343,14 @@ const PrivateOfferings = (): ReactElement => {
 
                     <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                       <div className="flex items-center space-x-2">
+                        <Link
+                          href={`/admin/dashboard/private-events/${event.id}/customers`}
+                          className="inline-flex items-center px-3 py-1.5 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                          title="View customers"
+                        >
+                          <RiUserLine className="w-4 h-4 mr-1" />
+                          Customers
+                        </Link>
                         <Link
                           href={`/admin/dashboard/edit-private-event?id=${event.id}`}
                           className="inline-flex items-center px-3 py-1.5 text-sm text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors"

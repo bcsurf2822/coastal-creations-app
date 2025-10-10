@@ -6,12 +6,7 @@ import { Box, Paper, Chip } from "@mui/material";
 import Link from "next/link";
 import { motion } from "motion/react";
 import Image from "next/image";
-import {
-  FaCalendarAlt,
-  FaClock,
-  FaDollarSign,
-  FaUsers,
-} from "react-icons/fa";
+import { FaCalendarAlt, FaClock, FaDollarSign, FaUsers } from "react-icons/fa";
 import { IconType } from "react-icons";
 
 // Event interfaces
@@ -92,61 +87,65 @@ interface CardStyledProps {
   layout?: "horizontal" | "vertical";
 }
 
-const Card = styled(Paper)<CardStyledProps>(({ isHovered, layout = "horizontal" }) => ({
-  borderRadius: "20px",
-  overflow: "hidden",
-  height: layout === "vertical" ? "100%" : "auto",
-  position: "relative",
-  display: "flex",
-  flexDirection: layout === "vertical" ? "column" : "row",
-  transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
-  boxShadow: isHovered
-    ? "0 20px 40px rgba(50, 108, 133, 0.25)"
-    : "0 8px 24px rgba(66, 165, 245, 0.15)",
-  transform: isHovered
-    ? layout === "vertical"
-      ? "translateY(-12px) scale(1.03) rotate(1deg)"
-      : "translateY(-8px) scale(1.02)"
-    : "translateY(0) scale(1) rotate(0deg)",
-  border: "2px solid transparent",
-  background: isHovered
-    ? "linear-gradient(white, white) padding-box, linear-gradient(135deg, #326C85, #42A5F5, #64B5F6) border-box"
-    : "white",
-  "&:before": {
-    content: '""',
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
+const Card = styled(Paper)<CardStyledProps>(
+  ({ isHovered, layout = "horizontal" }) => ({
+    borderRadius: "20px",
+    overflow: "hidden",
+    height: layout === "vertical" ? "100%" : "auto",
+    position: "relative",
+    display: "flex",
+    flexDirection: layout === "vertical" ? "column" : "row",
+    transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+    boxShadow: isHovered
+      ? "0 20px 40px rgba(50, 108, 133, 0.25)"
+      : "0 8px 24px rgba(66, 165, 245, 0.15)",
+    transform: isHovered
+      ? layout === "vertical"
+        ? "translateY(-12px) scale(1.03) rotate(1deg)"
+        : "translateY(-8px) scale(1.02)"
+      : "translateY(0) scale(1) rotate(0deg)",
+    border: "2px solid transparent",
     background: isHovered
-      ? "linear-gradient(135deg, rgba(50,108,133,0.03), rgba(66,165,245,0.03))"
-      : "transparent",
-    opacity: 1,
-    transition: "all 0.4s ease",
-    zIndex: 0,
-  },
-}));
+      ? "linear-gradient(white, white) padding-box, linear-gradient(135deg, #326C85, #42A5F5, #64B5F6) border-box"
+      : "white",
+    "&:before": {
+      content: '""',
+      position: "absolute",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      background: isHovered
+        ? "linear-gradient(135deg, rgba(50,108,133,0.03), rgba(66,165,245,0.03))"
+        : "transparent",
+      opacity: 1,
+      transition: "all 0.4s ease",
+      zIndex: 0,
+    },
+  })
+);
 
-const ImageContainer = styled("div")<{ layout?: "horizontal" | "vertical" }>(({ layout = "horizontal" }) => ({
-  position: "relative",
-  height: layout === "vertical" ? "200px" : "auto",
-  width: layout === "vertical" ? "100%" : "180px",
-  overflow: "hidden",
-  flex: layout === "vertical" ? "0 0 auto" : "0 0 180px",
-  "@media (max-width: 600px)": {
-    width: layout === "horizontal" ? "120px" : "100%",
-    flex: layout === "horizontal" ? "0 0 120px" : "0 0 auto",
-  },
-  "@media (min-width: 601px)": {
-    width: layout === "horizontal" ? "140px" : "100%",
-    flex: layout === "horizontal" ? "0 0 140px" : "0 0 auto",
-  },
-  "@media (min-width: 768px)": {
-    width: layout === "horizontal" ? "180px" : "100%",
-    flex: layout === "horizontal" ? "0 0 180px" : "0 0 auto",
-  },
-}));
+const ImageContainer = styled("div")<{ layout?: "horizontal" | "vertical" }>(
+  ({ layout = "horizontal" }) => ({
+    position: "relative",
+    height: layout === "vertical" ? "200px" : "auto",
+    width: layout === "vertical" ? "100%" : "180px",
+    overflow: "hidden",
+    flex: layout === "vertical" ? "0 0 auto" : "0 0 180px",
+    "@media (max-width: 600px)": {
+      width: layout === "horizontal" ? "120px" : "100%",
+      flex: layout === "horizontal" ? "0 0 120px" : "0 0 auto",
+    },
+    "@media (min-width: 601px)": {
+      width: layout === "horizontal" ? "140px" : "100%",
+      flex: layout === "horizontal" ? "0 0 140px" : "0 0 auto",
+    },
+    "@media (min-width: 768px)": {
+      width: layout === "horizontal" ? "180px" : "100%",
+      flex: layout === "horizontal" ? "0 0 180px" : "0 0 auto",
+    },
+  })
+);
 
 const StyledImage = styled(Image)({
   objectFit: "cover",
@@ -157,15 +156,17 @@ const StyledImage = styled(Image)({
   },
 });
 
-const CardContent = styled(Box)<{ layout?: "horizontal" | "vertical" }>(({ layout = "horizontal" }) => ({
-  padding: "2rem",
-  display: "flex",
-  flexDirection: "column",
-  flex: "1 1 auto",
-  position: "relative",
-  zIndex: 2,
-  justifyContent: layout === "vertical" ? "space-between" : "flex-start",
-}));
+const CardContent = styled(Box)<{ layout?: "horizontal" | "vertical" }>(
+  ({ layout = "horizontal" }) => ({
+    padding: "2rem",
+    display: "flex",
+    flexDirection: "column",
+    flex: "1 1 auto",
+    position: "relative",
+    zIndex: 2,
+    justifyContent: layout === "vertical" ? "space-between" : "flex-start",
+  })
+);
 
 const EventTitle = styled("h3")({
   fontSize: "1.5rem",
@@ -424,11 +425,13 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
   };
 
   const calculateDiscountedPrice = (): number => {
-    if (!event.isDiscountAvailable || !event.discount || !event.price) return event.price || 0;
-    if (currentParticipants < event.discount.minParticipants) return event.price;
+    if (!event.isDiscountAvailable || !event.discount || !event.price)
+      return event.price || 0;
+    if (currentParticipants < event.discount.minParticipants)
+      return event.price;
 
     if (event.discount.type === "percentage") {
-      return event.price - (event.price * event.discount.value / 100);
+      return event.price - (event.price * event.discount.value) / 100;
     } else {
       return event.price - event.discount.value;
     }
@@ -471,8 +474,8 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
             <FaDollarSign />
             {discountActive ? (
               <>
-                <OriginalPrice>${event.price}</OriginalPrice>
-                ${displayPrice.toFixed(2)}
+                <OriginalPrice>${event.price}</OriginalPrice>$
+                {displayPrice.toFixed(2)}
               </>
             ) : (
               `$${event.price}`
@@ -503,32 +506,39 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
             <Description>{event.description}</Description>
 
             {/* Discount Badge */}
-            {discountActive && (event.discount?.name || event.discount?.description) && (
-              <DiscountBadge>
-                {event.discount.name || event.discount.description}
-              </DiscountBadge>
-            )}
+            {discountActive &&
+              (event.discount?.name || event.discount?.description) && (
+                <DiscountBadge>
+                  {event.discount.name || event.discount.description}
+                </DiscountBadge>
+              )}
 
             {/* Potential Discount Info */}
-            {event.isDiscountAvailable && !discountActive && event.discount && (event.discount.name || event.discount.description) && (
-              <div style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                padding: "0.5rem 1rem",
-                background: "linear-gradient(135deg, #81c784, #a5d6a7)",
-                color: "black",
-                borderRadius: "15px",
-                fontSize: "0.875rem",
-                fontWeight: "700",
-                boxShadow: "0 2px 8px rgba(129, 199, 132, 0.3)",
-                marginBottom: "1rem",
-                width: "fit-content",
-                maxWidth: "50%"
-              }}>
-                Discount Available: {event.discount.name || event.discount.description}
-              </div>
-            )}
+            {event.isDiscountAvailable &&
+              !discountActive &&
+              event.discount &&
+              (event.discount.name || event.discount.description) && (
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    padding: "0.5rem 1rem",
+                    background: "linear-gradient(135deg, #81c784, #a5d6a7)",
+                    color: "black",
+                    borderRadius: "15px",
+                    fontSize: "0.875rem",
+                    fontWeight: "700",
+                    boxShadow: "0 2px 8px rgba(129, 199, 132, 0.3)",
+                    marginBottom: "1rem",
+                    width: "fit-content",
+                    maxWidth: "50%",
+                  }}
+                >
+                  Discount Available:{" "}
+                  {event.discount.name || event.discount.description}
+                </div>
+              )}
 
             <InfoGrid>
               <InfoItem>
@@ -541,7 +551,8 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
                 <InfoIcon>
                   <FaClock />
                 </InfoIcon>
-                {formatTime(event.time.startTime)} - {formatTime(event.time.endTime)}
+                {formatTime(event.time.startTime)} -{" "}
+                {formatTime(event.time.endTime)}
               </InfoItem>
 
               {/* Participant Count */}
@@ -550,7 +561,8 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
                   <InfoIcon>
                     <FaUsers />
                   </InfoIcon>
-                  {currentParticipants} / {event.numberOfParticipants || 20} signed up
+                  {currentParticipants} / {event.numberOfParticipants || 20}{" "}
+                  signed up
                 </InfoItem>
               )}
             </InfoGrid>
@@ -585,8 +597,8 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
           </div>
 
           {/* Action Button */}
-          {showSignupButton && (
-            isSoldOut ? (
+          {showSignupButton &&
+            (isSoldOut ? (
               <div
                 style={{
                   display: "inline-block",
@@ -609,8 +621,7 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
               >
                 <ActionButton>{buttonText}</ActionButton>
               </Link>
-            )
-          )}
+            ))}
         </CardContent>
       </Card>
     </motion.div>

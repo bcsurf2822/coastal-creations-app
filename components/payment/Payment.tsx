@@ -43,7 +43,6 @@ interface EventOption {
   }>;
 }
 
-// Define the expected PaymentSubmitData interface based on PaymentProcessor's requirements
 type PaymentSubmitData = {
   addressLine1: string;
   addressLine2: string;
@@ -61,7 +60,6 @@ type PaymentSubmitData = {
   eventPrice: string;
 };
 
-// Define the expected PaymentResult interface based on PaymentProcessor's requirements
 type PaymentResult = {
   result?: {
     payment?: {
@@ -94,7 +92,6 @@ export default function Payment() {
     redirectUrl: "",
   });
 
-  // Reservation booking state
   const [reservationBooking, setReservationBooking] =
     useState<ReservationBooking | null>(null);
   const [isReservationBooking, setIsReservationBooking] = useState(false);
@@ -117,7 +114,6 @@ export default function Payment() {
     Array<{ categoryName: string; choiceName: string }>
   >([]);
 
-  // State for handling participants
   const [isSigningUpForSelf, setIsSigningUpForSelf] = useState(true);
   const [participants, setParticipants] = useState<
     Array<{
@@ -130,7 +126,6 @@ export default function Payment() {
     }>
   >([]);
 
-  // State for discount information
   const [discountInfo, setDiscountInfo] = useState<{
     isDiscountAvailable: boolean;
     discount?: {
@@ -159,10 +154,8 @@ export default function Payment() {
     numberOfPeople: 1,
   });
 
-  // Calculate total price based on number of people
   const [totalPrice, setTotalPrice] = useState<string>("");
 
-  // Helper functions for discount calculations
   const calculateDiscountedPrice = (
     basePrice: number,
     participantCount: number
@@ -170,7 +163,6 @@ export default function Payment() {
     if (!discountInfo.isDiscountAvailable || !discountInfo.discount)
       return basePrice;
 
-    // Check if discount applies based on participant count
     if (participantCount < discountInfo.discount.minParticipants)
       return basePrice;
 
@@ -181,7 +173,6 @@ export default function Payment() {
     }
   };
 
-  // Helper function to get choice price by name
   const getChoicePrice = (categoryName: string, choiceName: string): number => {
     const option = eventOptions.find(
       (opt) => opt.categoryName === categoryName
@@ -190,11 +181,9 @@ export default function Payment() {
     return choice?.price || 0;
   };
 
-  // Calculate total option costs for all participants
   const calculateTotalOptionCosts = (): number => {
     let totalOptionCost = 0;
 
-    // Primary customer options (when signing up for self)
     if (isSigningUpForSelf && selectedOptions.length > 0) {
       selectedOptions.forEach((selectedOption) => {
         totalOptionCost += getChoicePrice(
@@ -204,7 +193,6 @@ export default function Payment() {
       });
     }
 
-    // Additional participants' options
     participants.forEach((participant) => {
       if (participant.selectedOptions) {
         participant.selectedOptions.forEach((selectedOption) => {
@@ -218,14 +206,7 @@ export default function Payment() {
 
     return totalOptionCost;
   };
-
-  // const isDiscountActive = (participantCount: number): boolean => {
-  //   return !!(discountInfo.isDiscountAvailable &&
-  //            discountInfo.discount &&
-  //            participantCount >= discountInfo.discount.minParticipants);
-  // };
-
-  // Adapter function to match the expected signature for PaymentProcessor
+    
   const handleSubmitPayment = async (
     token: string,
     paymentData: PaymentSubmitData
@@ -258,13 +239,11 @@ export default function Payment() {
         };
       }
 
-      // If payment is successful, submit customer details and send confirmation email
       if (result.result?.payment?.status === "COMPLETED") {
         const customerData = await submitCustomerDetails(
           paymentData.eventPrice
         );
 
-        // Send confirmation email if customer data was successfully saved
         if (customerData && customerData.data && customerData.data._id) {
           try {
             await fetch("/api/send-confirmation", {
@@ -311,12 +290,10 @@ export default function Payment() {
     }
   };
 
-  // Fetch event details including options and discount info
   useEffect(() => {
     if (eventId) {
       const fetchEventDetails = async () => {
         try {
-          // Use different API endpoint for private events
           const apiUrl = isPrivateEvent
             ? `/api/private-events/${eventId}`
             : `/api/event/${eventId}`;
@@ -327,7 +304,6 @@ export default function Payment() {
             const eventData = isPrivateEvent ? data.privateEvent : data.event;
 
             if (eventData) {
-              // Handle options
               if (eventData.options && eventData.options.length > 0) {
                 const newOptions = eventData.options;
                 if (
@@ -335,7 +311,6 @@ export default function Payment() {
                 ) {
                   setEventOptions(newOptions);
 
-                  // Initialize selectedOptions with the first choice of each category
                   const initialSelectedOptions = newOptions.map(
                     (option: EventOption) => ({
                       categoryName: option.categoryName,
@@ -346,7 +321,6 @@ export default function Payment() {
                 }
               }
 
-              // Handle discount information (only for regular events)
               if (!isPrivateEvent && eventData.isDiscountAvailable && eventData.discount) {
                 setDiscountInfo({
                   isDiscountAvailable: eventData.isDiscountAvailable,
@@ -382,7 +356,6 @@ export default function Payment() {
           }
 
           if (response.ok && result.data && Array.isArray(result.data)) {
-            // Calculate participant count for this specific event
             const participantCount = result.data
               .filter(
                 (customer: { event?: { _id: string }; quantity: number }) =>
@@ -406,7 +379,6 @@ export default function Payment() {
     }
   }, [eventId, eventOptions]);
 
-  // Check for reservation booking data from sessionStorage
   useEffect(() => {
     const reservationData = sessionStorage.getItem("reservationBooking");
     if (reservationData) {
@@ -415,7 +387,6 @@ export default function Payment() {
         setReservationBooking(booking);
         setIsReservationBooking(true);
 
-        // Fetch event details for reservation
         const fetchReservationEventDetails = async () => {
           try {
             const response = await fetch(`/api/events/${booking.eventId}`);
@@ -442,7 +413,6 @@ export default function Payment() {
     }
   }, []);
 
-  // Format price for display and ensure it's a valid number
   useEffect(() => {
     try {
       if (!eventPrice) {
@@ -450,21 +420,17 @@ export default function Payment() {
         return;
       }
 
-      // Remove any non-numeric characters except decimal point
       const cleanPrice = eventPrice.replace(/[^\d.]/g, "");
       const basePrice = parseFloat(cleanPrice);
 
       if (!isNaN(basePrice)) {
-        // Apply discount if applicable - only based on current registration
         const discountedPrice = calculateDiscountedPrice(
           basePrice,
           billingDetails.numberOfPeople
         );
 
-        // Format to 2 decimal places
         setFormattedPrice(discountedPrice.toFixed(2));
 
-        // Calculate total price including option costs
         const baseTotalPrice = discountedPrice * billingDetails.numberOfPeople;
         const optionCosts = calculateTotalOptionCosts();
         const totalWithOptions = baseTotalPrice + optionCosts;
@@ -489,7 +455,6 @@ export default function Payment() {
     calculateTotalOptionCosts,
   ]);
 
-  // Validate form fields
   useEffect(() => {
     const isContactProvided =
       billingDetails.email.trim() !== "" ||
@@ -504,7 +469,6 @@ export default function Payment() {
       billingDetails.postalCode.trim() !== "" &&
       isContactProvided;
 
-    // Validate participant names are filled when required
     const areParticipantNamesFilled = participants.every(
       (participant) =>
         participant.firstName.trim() !== "" &&
@@ -514,7 +478,6 @@ export default function Payment() {
     setFormValid(areRequiredFieldsFilled && areParticipantNamesFilled);
   }, [billingDetails, participants]);
 
-  // Create validation error message for participants
   const getParticipantValidationError = (): string | null => {
     const missingNames = participants.filter(
       (participant) =>
@@ -535,9 +498,7 @@ export default function Payment() {
     }
   };
 
-  // Update participants when numberOfPeople changes or isSigningUpForSelf changes
   useEffect(() => {
-    // If signing up for self with multiple people, we need (numberOfPeople - 1) additional participants
     if (isSigningUpForSelf) {
       const additionalPeople = Math.max(0, billingDetails.numberOfPeople - 1);
       const newParticipants = Array(additionalPeople)
@@ -552,7 +513,6 @@ export default function Payment() {
         }));
       setParticipants(newParticipants);
     } else {
-      // If signing up for others, we need numberOfPeople participants
       const newParticipants = Array(billingDetails.numberOfPeople)
         .fill(null)
         .map(() => ({
@@ -567,7 +527,6 @@ export default function Payment() {
     }
   }, [billingDetails.numberOfPeople, isSigningUpForSelf, eventOptions]);
 
-  // Fetch payment configuration from API
   useEffect(() => {
     async function fetchConfig() {
       try {
@@ -624,7 +583,6 @@ export default function Payment() {
     }
 
     try {
-      // Use the exact amount that was charged, or fall back to calculated totalPrice
       const actualTotal = chargedAmount
         ? Math.round(parseFloat(chargedAmount) * 100) / 100
         : Math.round(parseFloat(totalPrice) * 100) / 100;
@@ -636,6 +594,7 @@ export default function Payment() {
         },
         body: JSON.stringify({
           event: eventId,
+          eventType: isPrivateEvent ? "PrivateEvent" : "Event",
           quantity: billingDetails.numberOfPeople,
           total: actualTotal,
           isSigningUpForSelf: isSigningUpForSelf,
@@ -659,7 +618,7 @@ export default function Payment() {
       const result = await response.json();
 
       if (response.ok) {
-        return result; // Return the result with customer data
+        return result;
       } else {
         console.error(`Customer details submission failed: ${result.error}`);
         return null;
@@ -673,7 +632,6 @@ export default function Payment() {
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
       {isReservationBooking && reservationBooking ? (
-        // Reservation Booking Flow
         <div className="space-y-6">
           {/* Reservation Header */}
           <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white rounded-xl p-6">
@@ -685,13 +643,11 @@ export default function Payment() {
             </p>
           </div>
 
-          {/* Reservation Summary */}
           <ReservationSummary
             reservationBooking={reservationBooking}
             eventDetails={eventDetails}
           />
 
-          {/* Billing and Payment for Reservation */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-6">
               Billing Information
@@ -732,7 +688,6 @@ export default function Payment() {
           </div>
         </div>
       ) : (
-        // Regular Event Flow
         <div className="bg-white rounded-xl shadow-2xl overflow-hidden">
           {/* Event Header */}
           {eventTitle && (
@@ -748,9 +703,7 @@ export default function Payment() {
           )}
 
           {isPriceAvailable ? (
-            // Only show billing and payment form if price is available
             <div className="p-6 sm:p-10">
-              {/* Billing Section */}
               <BillingForm
                 billingDetails={billingDetails}
                 handleInputChange={handleInputChange}
@@ -768,7 +721,6 @@ export default function Payment() {
                 currentParticipantCount={currentParticipantCount}
               />
 
-              {/* Payment Section */}
               <PaymentProcessor
                 error={error}
                 setError={setError}
