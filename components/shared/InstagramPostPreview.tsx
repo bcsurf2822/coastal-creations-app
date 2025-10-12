@@ -64,7 +64,7 @@ const InstagramPostPreview = ({
 
   // Process embeds after the blockquote is definitely in the DOM
   useEffect(() => {
-    if (!embedCode || !containerRef.current || typeof window === "undefined") return;
+    if (!embedCode || typeof window === "undefined") return;
 
     // Wait for React to finish rendering the blockquote
     const timer = setTimeout(() => {
@@ -125,7 +125,7 @@ const InstagramPostPreview = ({
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [embedCode, containerRef]);
+  }, [embedCode]);
 
   if (!embedCode) return null;
 
