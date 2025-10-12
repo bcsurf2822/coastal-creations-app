@@ -18,7 +18,6 @@ export async function POST(request: Request) {
     const { name, email, phone, subject, description }: ContactFormData =
       await request.json();
 
-    // Validate required fields
     if (!name || typeof name !== "string") {
       return Response.json({ error: "Name is required" }, { status: 400 });
     }
@@ -35,13 +34,11 @@ export async function POST(request: Request) {
       return Response.json({ error: "Message is required" }, { status: 400 });
     }
 
-    // Validate email format using regex
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return Response.json({ error: "Invalid email format" }, { status: 400 });
     }
 
-    // Validate name length
     if (name.length < 2 || name.length > 100) {
       return Response.json(
         { error: "Name must be between 2 and 100 characters" },
@@ -49,7 +46,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate subject length
     if (subject.length < 2 || subject.length > 200) {
       return Response.json(
         { error: "Subject must be between 2 and 200 characters" },
@@ -57,7 +53,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate description length
     if (description.length < 10 || description.length > 2000) {
       return Response.json(
         { error: "Message must be between 10 and 2000 characters" },
@@ -65,7 +60,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate phone if provided
     if (phone && phone.trim() !== "") {
       const phoneRegex = /^[\d\s\-\(\)\+\.]{10,20}$/;
       if (!phoneRegex.test(phone)) {
@@ -82,8 +76,6 @@ export async function POST(request: Request) {
       subject,
     });
 
-    // Render email template
-    // const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
     const emailHtml = await render(
       React.createElement(CustomerContactTemplate, {
         name: name.trim(),
@@ -98,8 +90,7 @@ export async function POST(request: Request) {
     // Send notification email to owner
     const { error } = await resend.emails.send({
       from: "Coastal Creations <no-reply@resend.coastalcreationsstudio.com>",
-      to: ["info@coastalcreationsstudio.com"],
-      // to: ["crystaledgedev22@gmail.com"],
+      to: [process.env.STUDIO_EMAIL || "info@coastalcreationsstudio.com"],
       subject: `New Contact Message: ${subject.trim()}`,
       html: emailHtml,
       replyTo: email.trim(),

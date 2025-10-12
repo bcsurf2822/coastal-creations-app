@@ -77,10 +77,10 @@ export const NewsletterEmailTemplate: React.FC<
       </Text>
       <Text style={styles.footerText}>
         <Link
-          href="mailto:info@coastalcreationsstudio.com"
+          href={`mailto:${process.env.STUDIO_EMAIL || "info@coastalcreationsstudio.com"}`}
           style={styles.footerLink}
         >
-          info@coastalcreationsstudio.com
+          {process.env.STUDIO_EMAIL || "info@coastalcreationsstudio.com"}
         </Link>
       </Text>
     </Section>

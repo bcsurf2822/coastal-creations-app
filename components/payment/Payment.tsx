@@ -241,7 +241,8 @@ export default function Payment() {
 
       if (result.result?.payment?.status === "COMPLETED") {
         const customerData = await submitCustomerDetails(
-          paymentData.eventPrice
+          paymentData.eventPrice,
+          result.result.payment.id
         );
 
         if (customerData && customerData.data && customerData.data._id) {
@@ -576,7 +577,7 @@ export default function Payment() {
     });
   };
 
-  const submitCustomerDetails = async (chargedAmount?: string) => {
+  const submitCustomerDetails = async (chargedAmount?: string, squarePaymentId?: string) => {
     if (!formValid) {
       setError("Please complete all required fields before submitting");
       return null;
@@ -612,6 +613,7 @@ export default function Payment() {
             emailAddress: billingDetails.email,
             phoneNumber: billingDetails.phoneNumber,
           },
+          squarePaymentId,
         }),
       });
 
@@ -744,11 +746,8 @@ export default function Payment() {
               </p>
               <div className="flex justify-center gap-4 mb-8">
                 <button
-                  onClick={
-                    () =>
-                      (window.location.href =
-                        "mailto:info@coastalcreationsstudio.com")
-                    // "mailto:crystaledgedev22@gmail.com")
+                  onClick={() =>
+                    (window.location.href = `mailto:${process.env.NEXT_PUBLIC_STUDIO_EMAIL || "info@coastalcreationsstudio.com"}`)
                   }
                   className="px-6 py-3 bg-white text-black font-medium rounded-md hover:bg-gray-100 transition-colors border-2 border-black flex items-center justify-center"
                 >

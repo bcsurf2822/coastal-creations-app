@@ -46,7 +46,7 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
       <p style={{ fontWeight: "bold" }}>
         Phone: (609) 399-0030
         <br />
-        Email: info@coastalcreationsstudio.com
+        Email: {process.env.STUDIO_EMAIL || "info@coastalcreationsstudio.com"}
       </p>
     </div>
     <div

@@ -10,7 +10,7 @@ import { connectMongo } from "@/lib/mongoose";
 import PaymentError, { SquareErrorCode } from "@/lib/models/PaymentError";
 
 const { paymentsApi } = new Client({
-  accessToken: process.env.PRODUCTION_ACCESS_TOKEN,
+  accessToken: process.env.ACCESS_TOKEN,
   environment: process.env.SQUARE_ENVIRONMENT === 'sandbox' 
     ? Environment.Sandbox 
     : Environment.Production,

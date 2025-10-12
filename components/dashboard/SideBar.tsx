@@ -11,6 +11,8 @@ import {
   RiPieChartFill,
   RiBookletLine,
   RiBookletFill,
+  RiTeamLine,
+  RiTeamFill,
 } from "react-icons/ri";
 
 interface NavItem {
@@ -54,8 +56,12 @@ export default function Sidebar() {
       icon: <RiBookletLine className="w-5 h-5" />,
       activeIcon: <RiBookletFill className="w-5 h-5" />,
     },
-
-
+    {
+      path: "/admin/dashboard/customers",
+      label: "Customers",
+      icon: <RiTeamLine className="w-5 h-5" />,
+      activeIcon: <RiTeamFill className="w-5 h-5" />,
+    },
     {
       path: "/admin/dashboard/error-logs",
       label: "Error Logs",
