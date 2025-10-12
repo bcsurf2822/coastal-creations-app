@@ -240,10 +240,10 @@ export default function Footer() {
                   <div>
                     <p className="font-bold">Email:</p>
                     <Link
-                      href="mailto:info@coastalcreationsstudio.com"
+                      href={`mailto:${process.env.NEXT_PUBLIC_STUDIO_EMAIL || "info@coastalcreationsstudio.com"}`}
                       className="hover:underline text-sm break-words"
                     >
-                      info@coastalcreationsstudio.com
+                      {process.env.NEXT_PUBLIC_STUDIO_EMAIL || "info@coastalcreationsstudio.com"}
                     </Link>
                   </div>
                 </div>

@@ -33,6 +33,11 @@ export interface ICustomer extends Document {
     emailAddress?: string;
     phoneNumber?: string;
   };
+  squarePaymentId?: string;
+  squareCustomerId?: string;
+  refundStatus?: "none" | "partial" | "full";
+  refundAmount?: number;
+  refundedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -178,6 +183,30 @@ const CustomerSchema = new Schema<ICustomer>(
     billingInfo: {
       type: BillingInfoSchema,
       required: true,
+    },
+    squarePaymentId: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    squareCustomerId: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    refundStatus: {
+      type: String,
+      enum: ["none", "partial", "full"],
+      default: "none",
+    },
+    refundAmount: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    refundedAt: {
+      type: Date,
+      required: false,
     },
   },
   {

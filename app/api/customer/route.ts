@@ -19,6 +19,8 @@ export async function POST(request: NextRequest) {
       participants,
       selectedOptions,
       billingInfo,
+      squarePaymentId,
+      squareCustomerId,
     } = data;
 
     console.log(
@@ -57,6 +59,9 @@ export async function POST(request: NextRequest) {
       participants: participants || [],
       selectedOptions: selectedOptions || [],
       billingInfo,
+      squarePaymentId,
+      squareCustomerId,
+      refundStatus: "none",
     });
 
     const savedCustomer = await customer.save();

@@ -102,7 +102,12 @@ const EventFormBase = ({
           <div className="space-y-4">
             <EventCardPreview
               formData={formData}
-              imagePreviewUrl={imagePreviewUrl || formData.imageUrl || existingImageUrl || undefined}
+              imagePreviewUrl={
+                imagePreviewUrl ||
+                formData.imageUrl ||
+                existingImageUrl ||
+                undefined
+              }
             />
           </div>
 
@@ -111,14 +116,14 @@ const EventFormBase = ({
             <button
               type="button"
               onClick={handleCancel}
-              className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 cursor-pointer hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-100"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting
                 ? `${mode === "add" ? "Creating" : "Updating"}...`

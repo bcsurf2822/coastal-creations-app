@@ -497,7 +497,7 @@ const PrivateEvents = () => {
                             href={`/payments?eventId=${privateEvent._id}&eventTitle=${encodeURIComponent(privateEvent.title)}&price=${privateEvent.depositAmount}&isPrivateEvent=true`}
                             style={{ textDecoration: "none" }}
                           >
-                            <button className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-full transition-all hover:shadow-md">
+                            <button className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-full transition-all cursor-pointer hover:shadow-md">
                               Pay Deposit
                             </button>
                           </Link>
@@ -518,8 +518,8 @@ const PrivateEvents = () => {
         <div>
           <div className="text-2xl font-bold text-black mb-4">
             Please contact the studio to arrange a private event at:{" "}
-            <a href="mailto:info@coastalcreationsstudio.com">
-              info@coastalcreationsstudio.com
+            <a href={`mailto:${process.env.NEXT_PUBLIC_STUDIO_EMAIL || "info@coastalcreationsstudio.com"}`}>
+              {process.env.NEXT_PUBLIC_STUDIO_EMAIL || "info@coastalcreationsstudio.com"}
             </a>
           </div>
           {privateEvents.some((event) => event.isDepositRequired) ? (
