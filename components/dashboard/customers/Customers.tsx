@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import toast from "react-hot-toast";
 import {
   RiArrowDownSLine,
   RiArrowUpSLine,
@@ -36,7 +37,8 @@ interface BillingInfo {
 
 interface Event {
   _id: string;
-  eventName: string;
+  eventName?: string; // For regular events
+  title?: string; // For private events
   eventType: string;
   price: number;
 }
@@ -79,11 +81,22 @@ export default function Customers() {
   const [endDate, setEndDate] = useState("");
 
   // Refund states
-  const [refundingCustomer, setRefundingCustomer] = useState<string | null>(null);
+  const [refundingCustomer, setRefundingCustomer] = useState<string | null>(
+    null
+  );
   const [showRefundModal, setShowRefundModal] = useState(false);
-  const [selectedCustomerForRefund, setSelectedCustomerForRefund] = useState<Customer | null>(null);
+  const [selectedCustomerForRefund, setSelectedCustomerForRefund] =
+    useState<Customer | null>(null);
   const [refundAmount, setRefundAmount] = useState("");
   const [refundReason, setRefundReason] = useState("");
+
+  // Helper function to get event name based on event type
+  const getEventName = (customer: Customer): string => {
+    if (customer.eventType === "PrivateEvent") {
+      return customer.event?.title || "Unknown Private Event";
+    }
+    return customer.event?.eventName || "Unknown Event";
+  };
 
   useEffect(() => {
     fetchCustomers();
@@ -96,10 +109,11 @@ export default function Customers() {
     // Filter by customer name or email
     if (searchTerm.trim()) {
       filtered = filtered.filter((customer) => {
-        const billingName = `${customer.billingInfo.firstName} ${customer.billingInfo.lastName}`.toLowerCase();
+        const billingName =
+          `${customer.billingInfo.firstName} ${customer.billingInfo.lastName}`.toLowerCase();
         const email = customer.billingInfo.emailAddress?.toLowerCase() || "";
         const phone = customer.billingInfo.phoneNumber || "";
-        const eventName = customer.event?.eventName?.toLowerCase() || "";
+        const eventName = getEventName(customer).toLowerCase();
 
         return (
           billingName.includes(searchTerm.toLowerCase()) ||
@@ -174,15 +188,19 @@ export default function Customers() {
 
   const processRefund = async () => {
     if (!selectedCustomerForRefund || !refundAmount) {
-      alert("Please provide a refund amount");
+      toast.error("Please provide a refund amount");
       return;
     }
 
     const refundAmountNum = parseFloat(refundAmount);
-    const remainingAmount = selectedCustomerForRefund.total - (selectedCustomerForRefund.refundAmount || 0);
+    const remainingAmount =
+      selectedCustomerForRefund.total -
+      (selectedCustomerForRefund.refundAmount || 0);
 
     if (refundAmountNum <= 0 || refundAmountNum > remainingAmount) {
-      alert(`Refund amount must be between $0.01 and $${remainingAmount.toFixed(2)}`);
+      toast.error(
+        `Refund amount must be between $0.01 and $${remainingAmount.toFixed(2)}`
+      );
       return;
     }
 
@@ -204,15 +222,15 @@ export default function Customers() {
       const data = await response.json();
 
       if (data.success) {
-        alert(`Refund processed successfully for ${formatCurrency(refundAmountNum)}`);
+        toast.success(`Refund provided: ${formatCurrency(refundAmountNum)}`);
         closeRefundModal();
         fetchCustomers();
       } else {
-        alert(`Refund failed: ${data.error || "Unknown error"}`);
+        toast.error(`Refund failed: ${data.error || "Unknown error"}`);
       }
     } catch (error) {
       console.error("[CUSTOMERS-REFUND] Error processing refund:", error);
-      alert("An error occurred while processing the refund");
+      toast.error("An error occurred while processing the refund");
     } finally {
       setRefundingCustomer(null);
     }
@@ -421,7 +439,7 @@ export default function Customers() {
                     {/* Event */}
                     <div className="col-span-3">
                       <div className="text-sm text-gray-600 truncate">
-                        {customer.event?.eventName || "Unknown Event"}
+                        {getEventName(customer)}
                       </div>
                     </div>
 
@@ -527,7 +545,7 @@ export default function Customers() {
                               <span className="font-medium text-gray-700">
                                 Event Name:
                               </span>{" "}
-                              {customer.event?.eventName || "Unknown Event"}
+                              {getEventName(customer)}
                             </div>
                             <div>
                               <span className="font-medium text-gray-700">
@@ -668,25 +686,25 @@ export default function Customers() {
                                   customer.refundStatus === "full"
                                     ? "bg-red-100 text-red-800"
                                     : customer.refundStatus === "partial"
-                                    ? "bg-yellow-100 text-yellow-800"
-                                    : "bg-green-100 text-green-800"
+                                      ? "bg-yellow-100 text-yellow-800"
+                                      : "bg-green-100 text-green-800"
                                 }`}
                               >
                                 {customer.refundStatus === "full"
                                   ? "Fully Refunded"
                                   : customer.refundStatus === "partial"
-                                  ? "Partially Refunded"
-                                  : "Not Refunded"}
+                                    ? "Partially Refunded"
+                                    : "Not Refunded"}
                               </span>
                             </div>
-                            {customer.refundAmount && customer.refundAmount > 0 && (
+                            {(customer.refundAmount ?? 0) > 0 && (
                               <>
                                 <div>
                                   <span className="font-medium text-gray-700">
                                     Refund Amount:
                                   </span>{" "}
                                   <span className="text-red-600 font-semibold">
-                                    {formatCurrency(customer.refundAmount)}
+                                    {formatCurrency(customer.refundAmount ?? 0)}
                                   </span>
                                 </div>
                                 <div>
@@ -695,7 +713,8 @@ export default function Customers() {
                                   </span>{" "}
                                   <span className="text-green-600 font-semibold">
                                     {formatCurrency(
-                                      customer.total - customer.refundAmount
+                                      customer.total -
+                                        (customer.refundAmount ?? 0)
                                     )}
                                   </span>
                                 </div>
@@ -717,8 +736,10 @@ export default function Customers() {
                                       e.stopPropagation();
                                       openRefundModal(customer);
                                     }}
-                                    disabled={refundingCustomer === customer._id}
-                                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled={
+                                      refundingCustomer === customer._id
+                                    }
+                                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-400 text-white rounded-lg hover:bg-red-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                   >
                                     {refundingCustomer === customer._id ? (
                                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -733,8 +754,9 @@ export default function Customers() {
                               )}
                             {!customer.squarePaymentId && (
                               <div className="mt-2 text-xs text-gray-500 italic">
-                                No payment ID available. This booking may have been
-                                created before payment tracking was implemented.
+                                No payment ID available. This booking may have
+                                been created before payment tracking was
+                                implemented.
                               </div>
                             )}
                           </div>
@@ -802,15 +824,16 @@ export default function Customers() {
                     </span>{" "}
                     {formatCurrency(selectedCustomerForRefund.total)}
                   </div>
-                  {selectedCustomerForRefund.refundAmount &&
-                    selectedCustomerForRefund.refundAmount > 0 && (
-                      <div>
-                        <span className="font-medium text-gray-700">
-                          Previously Refunded:
-                        </span>{" "}
-                        {formatCurrency(selectedCustomerForRefund.refundAmount)}
-                      </div>
-                    )}
+                  {(selectedCustomerForRefund.refundAmount ?? 0) > 0 && (
+                    <div>
+                      <span className="font-medium text-gray-700">
+                        Previously Refunded:
+                      </span>{" "}
+                      {formatCurrency(
+                        selectedCustomerForRefund.refundAmount ?? 0
+                      )}
+                    </div>
+                  )}
                   <div>
                     <span className="font-medium text-gray-700">
                       Remaining Balance:
@@ -843,7 +866,7 @@ export default function Customers() {
                     (selectedCustomerForRefund.refundAmount || 0)
                   ).toFixed(2)}
                   step="0.01"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
 
@@ -868,14 +891,14 @@ export default function Customers() {
                 <button
                   onClick={closeRefundModal}
                   disabled={refundingCustomer === selectedCustomerForRefund._id}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={processRefund}
                   disabled={refundingCustomer === selectedCustomerForRefund._id}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 bg-red-400 text-white rounded-lg hover:bg-red-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {refundingCustomer === selectedCustomerForRefund._id
                     ? "Processing..."

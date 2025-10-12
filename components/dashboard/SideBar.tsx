@@ -28,19 +28,19 @@ export default function Sidebar() {
   const navItems: NavItem[] = [
     {
       path: "/admin/dashboard",
-      label: "Dashboard",
+      label: "Events Dashboard",
       icon: <RiHome4Line className="w-5 h-5" />,
       activeIcon: <RiHome4Fill className="w-5 h-5" />,
     },
     {
-      path: "/admin/dashboard/add-event",
-      label: "Add Event",
-      icon: <RiCalendarEventLine className="w-5 h-5" />,
-      activeIcon: <RiCalendarEventFill className="w-5 h-5" />,
+      path: "/admin/dashboard/private-offerings",
+      label: "Private Offerings",
+      icon: <RiBookletLine className="w-5 h-5" />,
+      activeIcon: <RiBookletFill className="w-5 h-5" />,
     },
     {
-      path: "/admin/dashboard/add-reservation",
-      label: "Add Reservation",
+      path: "/admin/dashboard/add-event",
+      label: "Add Event",
       icon: <RiCalendarEventLine className="w-5 h-5" />,
       activeIcon: <RiCalendarEventFill className="w-5 h-5" />,
     },
@@ -51,11 +51,12 @@ export default function Sidebar() {
       activeIcon: <RiCalendarEventFill className="w-5 h-5" />,
     },
     {
-      path: "/admin/dashboard/private-offerings",
-      label: "Private Offerings",
-      icon: <RiBookletLine className="w-5 h-5" />,
-      activeIcon: <RiBookletFill className="w-5 h-5" />,
+      path: "/admin/dashboard/add-reservation",
+      label: "Add Reservation",
+      icon: <RiCalendarEventLine className="w-5 h-5" />,
+      activeIcon: <RiCalendarEventFill className="w-5 h-5" />,
     },
+
     {
       path: "/admin/dashboard/customers",
       label: "Customers",
@@ -72,8 +73,6 @@ export default function Sidebar() {
 
   return (
     <div className="w-full md:w-64 md:min-h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shadow-sm">
-
-
       <nav className="px-2">
         <ul className="space-y-1">
           {navItems.map((item) => {

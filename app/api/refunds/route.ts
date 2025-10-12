@@ -84,12 +84,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       customer.refundedAt = new Date();
       await customer.save();
 
+      // Convert refund object to JSON-serializable format (avoiding BigInt issues)
+      const refundData = JSON.parse(
+        JSON.stringify(refundResult.result.refund, (key, value) =>
+          typeof value === "bigint" ? value.toString() : value
+        )
+      );
+
       return NextResponse.json(
         {
           success: true,
           message: "Refund processed successfully",
           data: {
-            refund: refundResult.result.refund,
+            refund: refundData,
             customer: {
               _id: customer._id,
               refundStatus: customer.refundStatus,
