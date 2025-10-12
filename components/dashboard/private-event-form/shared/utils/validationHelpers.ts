@@ -70,4 +70,5 @@ export const getInitialPrivateEventFormState = (): PrivateEventFormState => ({
   depositAmount: undefined,
   image: null,
   imageUrl: "",
+  instagramEmbedCode: undefined,
 });

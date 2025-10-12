@@ -5,6 +5,7 @@ import PrivateEventBasicFields from "./fields/PrivateEventBasicFields";
 import PrivateEventPricingFields from "./fields/PrivateEventPricingFields";
 import PrivateEventOptionsFields from "./fields/PrivateEventOptionsFields";
 import PrivateEventImageUpload from "./fields/PrivateEventImageUpload";
+import PrivateEventInstagramField from "./fields/PrivateEventInstagramField";
 import PrivateEventCardPreview from "./preview/PrivateEventCardPreview";
 
 interface PrivateEventFormBaseProps {
@@ -18,7 +19,15 @@ const PrivateEventFormBase = ({
   mode,
   onCancel,
 }: PrivateEventFormBaseProps): ReactElement => {
-  const { formData, errors, actions, isSubmitting, isImageUploading, handleSubmit, setIsImageUploading } = formHook;
+  const {
+    formData,
+    errors,
+    actions,
+    isSubmitting,
+    isImageUploading,
+    handleSubmit,
+    setIsImageUploading,
+  } = formHook;
 
   // Get preview URL for newly selected images
   const imagePreviewUrl = usePrivateEventImagePreview(formData.image);
@@ -65,7 +74,12 @@ const PrivateEventFormBase = ({
             onImageUploadStatusChange={setIsImageUploading}
           />
 
-          {/* Live Preview */}
+          <PrivateEventInstagramField
+            formData={formData}
+            actions={actions}
+            errors={errors}
+          />
+
           <div className="space-y-4">
             <PrivateEventCardPreview
               formData={formData}

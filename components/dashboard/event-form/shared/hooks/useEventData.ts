@@ -66,6 +66,7 @@ export const useEventData = (eventId: string | null): UseEventDataReturn => {
           discount: event.discount,
           image: undefined,
           imageUrl: event.image,
+          instagramEmbedCode: event.instagramEmbedCode || undefined,
         };
 
         // Format time objects

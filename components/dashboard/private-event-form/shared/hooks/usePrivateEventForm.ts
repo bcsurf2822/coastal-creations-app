@@ -175,6 +175,7 @@ export const usePrivateEventForm = ({
         isDepositRequired: formData.isDepositRequired,
         depositAmount: formData.isDepositRequired ? formData.depositAmount : undefined,
         image: formData.imageUrl, // Store the Sanity image URL in MongoDB
+        instagramEmbedCode: formData.instagramEmbedCode || undefined,
       };
 
       const url = mode === "edit" && privateEventId

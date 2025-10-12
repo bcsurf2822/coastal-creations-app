@@ -49,6 +49,7 @@ export const usePrivateEventData = (privateEventId: string | null): UsePrivateEv
           depositAmount: privateEvent.depositAmount,
           image: null, // File object is not stored in database
           imageUrl: privateEvent.image || "", // Store the existing Sanity image URL
+          instagramEmbedCode: privateEvent.instagramEmbedCode || undefined,
         };
 
         setPrivateEventData(formState);

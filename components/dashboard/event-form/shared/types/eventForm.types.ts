@@ -34,6 +34,7 @@ export interface EventFormState {
   discount?: EventDiscount;
   image?: File;
   imageUrl?: string;
+  instagramEmbedCode?: string;
 }
 
 export interface EventFormProps {

@@ -16,6 +16,7 @@ import {
   FaHeart,
   FaEnvelope,
 } from "react-icons/fa";
+import InstagramPostPreview from "@/components/shared/InstagramPostPreview";
 import {
   GiBalloons,
   GiPartyPopper,
@@ -105,7 +106,9 @@ interface PartyCardProps {
   isHovered: boolean;
 }
 
-const PartyCard = styled(Paper)<PartyCardProps>(({ isHovered }) => ({
+const PartyCard = styled(Paper, {
+  shouldForwardProp: (prop) => prop !== "isHovered",
+})<PartyCardProps>(({ isHovered }) => ({
   borderRadius: "20px",
   overflow: "hidden",
   height: "100%",
@@ -479,6 +482,15 @@ const PrivateEvents = () => {
                           </div>
                         </div>
                       ))}
+                    </div>
+                  )}
+
+                  {/* Instagram Post Preview */}
+                  {privateEvent.instagramEmbedCode && (
+                    <div className="mt-4">
+                      <InstagramPostPreview
+                        embedCode={privateEvent.instagramEmbedCode}
+                      />
                     </div>
                   )}
 

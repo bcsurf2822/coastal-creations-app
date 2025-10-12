@@ -33,6 +33,7 @@ const getInitialFormState = (
   discount: undefined,
   image: undefined,
   imageUrl: undefined,
+  instagramEmbedCode: undefined,
 });
 
 export const useEventForm = ({
@@ -262,6 +263,7 @@ export const useEventForm = ({
           price: formData.price,
           numberOfParticipants: formData.numberOfParticipants,
           image: formData.imageUrl || undefined,
+          instagramEmbedCode: formData.instagramEmbedCode || undefined,
           dates: {
             startDate: prepareDateForSubmit(formData.startDate)!,
             isRecurring: formData.isRecurring,
