@@ -2,11 +2,7 @@
 
 import { ReactElement, useState } from "react";
 import styled from "@emotion/styled";
-import {
-  Box,
-  Paper,
-  Chip,
-} from "@mui/material";
+import { Box, Paper, Chip } from "@mui/material";
 import { motion } from "motion/react";
 import Image from "next/image";
 import {
@@ -33,7 +29,7 @@ interface ClassCardProps {
 }
 
 const ClassCard = styled(Paper, {
-  shouldForwardProp: (prop) => prop !== 'isHovered',
+  shouldForwardProp: (prop) => prop !== "isHovered",
 })<ClassCardProps>(({ isHovered }) => ({
   borderRadius: "20px",
   overflow: "hidden",
@@ -331,7 +327,8 @@ const InstagramThumbnail = styled("div")({
   cursor: "pointer",
   position: "relative",
   border: "2px solid #E1306C",
-  background: "linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)",
+  background:
+    "linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)",
   transition: "all 0.3s ease",
   display: "flex",
   alignItems: "center",
@@ -430,13 +427,23 @@ const CloseButton = styled("button")({
  * Mirrors the styling and layout from the Classes.tsx component to provide an accurate
  * preview of the final result for administrators creating events.
  */
-const EventCardPreview = ({ formData, imagePreviewUrl }: EventCardPreviewProps): ReactElement => {
+const EventCardPreview = ({
+  formData,
+  imagePreviewUrl,
+}: EventCardPreviewProps): ReactElement => {
   const [hoveredCard, setHoveredCard] = useState<boolean>(false);
-  const [showInstagramPreview, setShowInstagramPreview] = useState<boolean>(false);
+  const [showInstagramPreview, setShowInstagramPreview] =
+    useState<boolean>(false);
 
   // Helper functions
   const getRandomIcon = () => {
-    const icons = [FaPalette, GiPaintBrush, GiPaintRoller, FaGraduationCap, GiMagicHat];
+    const icons = [
+      FaPalette,
+      GiPaintBrush,
+      GiPaintRoller,
+      FaGraduationCap,
+      GiMagicHat,
+    ];
     return icons[0]; // Always use first icon for consistency in preview
   };
 
@@ -455,12 +462,17 @@ const EventCardPreview = ({ formData, imagePreviewUrl }: EventCardPreviewProps):
     if (!time) return "TBD";
 
     // Handle Dayjs object
-    if (time && typeof time === 'object' && 'format' in time && typeof time.format === 'function') {
-      return time.format('h:mm A');
+    if (
+      time &&
+      typeof time === "object" &&
+      "format" in time &&
+      typeof time.format === "function"
+    ) {
+      return time.format("h:mm A");
     }
 
     // Handle string format
-    if (typeof time === 'string') {
+    if (typeof time === "string") {
       const [hours, minutes] = time.split(":");
       const hour = parseInt(hours, 10);
       const ampm = hour >= 12 ? "PM" : "AM";
@@ -472,7 +484,11 @@ const EventCardPreview = ({ formData, imagePreviewUrl }: EventCardPreviewProps):
   };
 
   const getDateInfo = (): string => {
-    if (formData.isRecurring && formData.recurringPattern && formData.recurringEndDate) {
+    if (
+      formData.isRecurring &&
+      formData.recurringPattern &&
+      formData.recurringEndDate
+    ) {
       return `${formatDate(formData.startDate)} to ${formatDate(formData.recurringEndDate)} (${formData.recurringPattern})`;
     } else {
       return formatDate(formData.startDate);
@@ -480,11 +496,10 @@ const EventCardPreview = ({ formData, imagePreviewUrl }: EventCardPreviewProps):
   };
 
   const calculateDiscountedPrice = (): number => {
-    if (!formData.isDiscountAvailable || !formData.discount || !formData.price) return formData.price || 0;
-
-    // For preview, assume discount is active
+    if (!formData.isDiscountAvailable || !formData.discount || !formData.price)
+      return formData.price || 0;
     if (formData.discount.type === "percentage") {
-      return formData.price - (formData.price * formData.discount.value / 100);
+      return formData.price - (formData.price * formData.discount.value) / 100;
     } else {
       return formData.price - formData.discount.value;
     }
@@ -513,8 +528,8 @@ const EventCardPreview = ({ formData, imagePreviewUrl }: EventCardPreviewProps):
             <FaDollarSign />
             {hasDiscount && formData.price ? (
               <>
-                <OriginalPrice>${formData.price}</OriginalPrice>
-                ${displayPrice.toFixed(2)}
+                <OriginalPrice>${formData.price}</OriginalPrice>$
+                {displayPrice.toFixed(2)}
               </>
             ) : (
               `$${formData.price || 0}`
@@ -554,7 +569,8 @@ const EventCardPreview = ({ formData, imagePreviewUrl }: EventCardPreviewProps):
                     <InfoIcon>
                       <FaClock />
                     </InfoIcon>
-                    {formatTime(formData.startTime)} - {formatTime(formData.endTime)}
+                    {formatTime(formData.startTime)} -{" "}
+                    {formatTime(formData.endTime)}
                   </InfoItem>
                 </InfoGrid>
 
@@ -589,7 +605,10 @@ const EventCardPreview = ({ formData, imagePreviewUrl }: EventCardPreviewProps):
                 )}
               </div>
 
-              <Description>{formData.description || "Event description will appear here..."}</Description>
+              <Description>
+                {formData.description ||
+                  "Event description will appear here..."}
+              </Description>
 
               {/* Instagram Post Thumbnail */}
               {formData.instagramEmbedCode && (
@@ -602,26 +621,28 @@ const EventCardPreview = ({ formData, imagePreviewUrl }: EventCardPreviewProps):
                       <FaInstagram />
                     </InstagramIcon>
                     <InstagramText>
-                      Instagram Post<br />Click to Preview
+                      Instagram Post
+                      <br />
+                      Click to Preview
                     </InstagramText>
                   </InstagramThumbnail>
-                  <p style={{ fontSize: "0.75rem", color: "#666", marginTop: "0.5rem" }}>
-                    Instagram embed added! It will display properly on the live site.
-                  </p>
-                  <p style={{ fontSize: "0.65rem", color: "#999", marginTop: "0.25rem", fontStyle: "italic" }}>
-                    (Embeds may not load in localhost development)
+                  <p
+                    style={{
+                      fontSize: "0.75rem",
+                      color: "#666",
+                      marginTop: "0.5rem",
+                    }}
+                  >
+                    Instagram embed added!
                   </p>
                 </div>
               )}
-
-              {/* Show discount badge if available */}
-              {hasDiscount && (formData.discount?.name || formData.discount?.description) && (
-                <DiscountBadge>
-                  {formData.discount.name || formData.discount.description}
-                </DiscountBadge>
-              )}
-
-              {/* Show participant count if specified */}
+              {hasDiscount &&
+                (formData.discount?.name || formData.discount?.description) && (
+                  <DiscountBadge>
+                    {formData.discount.name || formData.discount.description}
+                  </DiscountBadge>
+                )}
               {formData.numberOfParticipants && (
                 <InfoItem style={{ marginBottom: "1rem" }}>
                   <InfoIcon>
@@ -635,7 +656,9 @@ const EventCardPreview = ({ formData, imagePreviewUrl }: EventCardPreviewProps):
                 <OptionsContainer>
                   {formData.optionCategories.map((option, index) => (
                     <OptionCategory key={index}>
-                      <OptionLabel>{option.categoryName || "Category"}:</OptionLabel>
+                      <OptionLabel>
+                        {option.categoryName || "Category"}:
+                      </OptionLabel>
                       <OptionChips>
                         {option.choices.map((choice, choiceIndex) => (
                           <Chip
