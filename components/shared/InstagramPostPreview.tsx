@@ -30,6 +30,16 @@ const InstagramPostPreview = ({
 }: InstagramPostPreviewProps): ReactElement | null => {
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Extract and clean the blockquote (must be before hooks for early return)
+  const cleanEmbedCode = embedCode ? extractBlockquote(embedCode) : "";
+
+  // Debug: log the cleaned embed code
+  useEffect(() => {
+    if (cleanEmbedCode) {
+      console.log("[InstagramPostPreview] Cleaned embed code:", cleanEmbedCode.substring(0, 200));
+    }
+  }, [cleanEmbedCode]);
+
   // Load script and process embeds when component mounts
   useEffect(() => {
     if (!embedCode || typeof window === "undefined") return;
@@ -118,14 +128,6 @@ const InstagramPostPreview = ({
   }, [embedCode, containerRef]);
 
   if (!embedCode) return null;
-
-  // Extract and clean the blockquote
-  const cleanEmbedCode = extractBlockquote(embedCode);
-
-  // Debug: log the cleaned embed code
-  useEffect(() => {
-    console.log("[InstagramPostPreview] Cleaned embed code:", cleanEmbedCode.substring(0, 200));
-  }, [cleanEmbedCode]);
 
   return (
     <div
