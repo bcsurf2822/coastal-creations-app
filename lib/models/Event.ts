@@ -38,6 +38,7 @@ export interface IEvent extends Document {
     }>;
   }>;
   image?: string;
+  instagramEmbedCode?: string;
   isDiscountAvailable?: boolean;
   discount?: {
     type: "percentage" | "fixed";
@@ -213,6 +214,10 @@ const EventSchema = new Schema<IEvent>(
     },
     image: {
       type: String,
+    },
+    instagramEmbedCode: {
+      type: String,
+      required: false,
     },
     isDiscountAvailable: {
       type: Boolean,

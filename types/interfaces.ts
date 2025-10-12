@@ -62,6 +62,7 @@ export interface PrivateEvent {
   isDepositRequired?: boolean;
   depositAmount?: number;
   image?: string;
+  instagramEmbedCode?: string;
   createdAt: string;
   updatedAt: string;
 }

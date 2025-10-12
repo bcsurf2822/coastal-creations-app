@@ -14,6 +14,7 @@ export interface PrivateEventFormState {
   depositAmount?: number;
   image?: File | null;
   imageUrl?: string;
+  instagramEmbedCode?: string;
 }
 
 export interface PrivateEventFormErrors {
@@ -62,6 +63,7 @@ export interface PrivateEventApiResponse {
     isDepositRequired?: boolean;
     depositAmount?: number;
     image?: string;
+    instagramEmbedCode?: string;
     createdAt?: string;
     updatedAt?: string;
   };

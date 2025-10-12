@@ -16,6 +16,7 @@ export interface IPrivateEvent extends Document {
   isDepositRequired?: boolean;
   depositAmount?: number;
   image?: string;
+  instagramEmbedCode?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -78,6 +79,10 @@ const PrivateEventSchema = new Schema<IPrivateEvent>(
     },
     image: {
       type: String,
+    },
+    instagramEmbedCode: {
+      type: String,
+      required: false,
     },
   },
   {
