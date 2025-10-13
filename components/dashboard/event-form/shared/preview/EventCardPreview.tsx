@@ -421,7 +421,6 @@ const PreviewTitle = styled("h3")({
 //   },
 // });
 
-
 const EventCardPreview = ({
   formData,
   imagePreviewUrl,
