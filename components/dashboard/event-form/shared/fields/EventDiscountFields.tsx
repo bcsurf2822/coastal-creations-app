@@ -94,7 +94,7 @@ const EventDiscountFields = ({
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="percentage">Percentage</option>
-              <option value="fixed">Fixed Amount</option>
+              <option value="fixed">Fixed</option>
             </select>
             {getFieldError("discount.type") && (
               <p className="text-red-600 text-sm mt-1">
@@ -105,7 +105,7 @@ const EventDiscountFields = ({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Discount Value <span className="text-red-500">*</span>
+              Discount Amount / Percentage <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -194,10 +194,10 @@ const EventDiscountFields = ({
           {formData.price && formData.discount?.value && (
             <div className="md:col-span-2 mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
               <div className="text-sm text-blue-800">
-                <span className="font-medium">Original Price:</span> $
+                <span className="font-medium">Current Price:</span> $
                 {formData.price}
                 <br />
-                <span className="font-medium">Discounted Price:</span>{" "}
+                <span className="font-medium">Total Price after discount:</span>{" "}
                 {(() => {
                   const price = formData.price || 0;
                   const discountValue = formData.discount?.value || 0;
@@ -216,7 +216,7 @@ const EventDiscountFields = ({
                 })()}
                 <br />
                 <span className="text-xs">
-                  (Applies when {formData.discount?.minParticipants || 2} or more
+                  (Discount applied when {formData.discount?.minParticipants || 2} or more
                   participants sign up)
                 </span>
               </div>
