@@ -22,7 +22,7 @@ import {
 import { Description, Settings } from "@mui/icons-material";
 import { motion } from "motion/react";
 import { FaCalendarAlt, FaClock } from "react-icons/fa";
-import InstagramPostPreview from "@/components/shared/InstagramPostPreview";
+// import InstagramPostPreview from "@/components/shared/InstagramPostPreview";
 
 interface EventOption {
   categoryName: string;
@@ -610,12 +610,11 @@ export default function EventDetails({
                   </InfoSection>
                 )}
 
-                {/* Instagram Post Preview */}
-                {eventData.instagramEmbedCode && (
+                {/* {eventData.instagramEmbedCode && (
                   <div style={{ marginTop: "1.5rem", marginBottom: "1.5rem" }}>
                     <InstagramPostPreview embedCode={eventData.instagramEmbedCode} />
                   </div>
-                )}
+                )} */}
 
                 {/* Price Display */}
                 {eventData.price !== undefined && (

@@ -6,9 +6,15 @@ import { Box, Paper, Chip } from "@mui/material";
 import Link from "next/link";
 import { motion } from "motion/react";
 import Image from "next/image";
-import { FaCalendarAlt, FaClock, FaDollarSign, FaUsers, FaInstagram } from "react-icons/fa";
+import {
+  FaCalendarAlt,
+  FaClock,
+  FaDollarSign,
+  FaUsers,
+  FaInstagram,
+} from "react-icons/fa";
 import { IconType } from "react-icons";
-import InstagramPostPreview from "@/components/shared/InstagramPostPreview";
+// import InstagramPostPreview from "@/components/shared/InstagramPostPreview";
 
 // Event interfaces
 interface EventOption {
@@ -92,41 +98,40 @@ interface CardStyledProps {
 const Card = styled(Paper, {
   shouldForwardProp: (prop) => prop !== "isHovered" && prop !== "layout",
 })<CardStyledProps>(({ isHovered, layout = "horizontal" }) => ({
-    borderRadius: "20px",
-    overflow: "hidden",
-    height: layout === "vertical" ? "100%" : "auto",
-    position: "relative",
-    display: "flex",
-    flexDirection: layout === "vertical" ? "column" : "row",
-    transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
-    boxShadow: isHovered
-      ? "0 20px 40px rgba(50, 108, 133, 0.25)"
-      : "0 8px 24px rgba(66, 165, 245, 0.15)",
-    transform: isHovered
-      ? layout === "vertical"
-        ? "translateY(-12px) scale(1.03) rotate(1deg)"
-        : "translateY(-8px) scale(1.02)"
-      : "translateY(0) scale(1) rotate(0deg)",
-    border: "2px solid transparent",
+  borderRadius: "20px",
+  overflow: "hidden",
+  height: layout === "vertical" ? "100%" : "auto",
+  position: "relative",
+  display: "flex",
+  flexDirection: layout === "vertical" ? "column" : "row",
+  transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+  boxShadow: isHovered
+    ? "0 20px 40px rgba(50, 108, 133, 0.25)"
+    : "0 8px 24px rgba(66, 165, 245, 0.15)",
+  transform: isHovered
+    ? layout === "vertical"
+      ? "translateY(-12px) scale(1.03) rotate(1deg)"
+      : "translateY(-8px) scale(1.02)"
+    : "translateY(0) scale(1) rotate(0deg)",
+  border: "2px solid transparent",
+  background: isHovered
+    ? "linear-gradient(white, white) padding-box, linear-gradient(135deg, #326C85, #42A5F5, #64B5F6) border-box"
+    : "white",
+  "&:before": {
+    content: '""',
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
     background: isHovered
-      ? "linear-gradient(white, white) padding-box, linear-gradient(135deg, #326C85, #42A5F5, #64B5F6) border-box"
-      : "white",
-    "&:before": {
-      content: '""',
-      position: "absolute",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      background: isHovered
-        ? "linear-gradient(135deg, rgba(50,108,133,0.03), rgba(66,165,245,0.03))"
-        : "transparent",
-      opacity: 1,
-      transition: "all 0.4s ease",
-      zIndex: 0,
-    },
-  })
-);
+      ? "linear-gradient(135deg, rgba(50,108,133,0.03), rgba(66,165,245,0.03))"
+      : "transparent",
+    opacity: 1,
+    transition: "all 0.4s ease",
+    zIndex: 0,
+  },
+}));
 
 const ImageContainer = styled("div")<{ layout?: "horizontal" | "vertical" }>(
   ({ layout = "horizontal" }) => ({
@@ -376,99 +381,99 @@ const OriginalPrice = styled("span")({
   marginRight: "0.5rem",
 });
 
-const InstagramThumbnailWrapper = styled("div")({
-  position: "absolute",
-  bottom: "10px",
-  right: "10px",
-  zIndex: 5,
-});
+// const InstagramThumbnailWrapper = styled("div")({
+//   position: "absolute",
+//   bottom: "10px",
+//   right: "10px",
+//   zIndex: 5,
+// });
 
-const InstagramThumbnail = styled("div")({
-  width: "40px",
-  height: "40px",
-  borderRadius: "50%",
-  background: "linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  cursor: "pointer",
-  boxShadow: "0 4px 12px rgba(225, 48, 108, 0.4)",
-  transition: "all 0.3s ease",
-  "&:hover": {
-    transform: "scale(1.15)",
-    boxShadow: "0 6px 18px rgba(225, 48, 108, 0.6)",
-  },
-});
+// const InstagramThumbnail = styled("div")({
+//   width: "40px",
+//   height: "40px",
+//   borderRadius: "50%",
+//   background: "linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)",
+//   display: "flex",
+//   alignItems: "center",
+//   justifyContent: "center",
+//   cursor: "pointer",
+//   boxShadow: "0 4px 12px rgba(225, 48, 108, 0.4)",
+//   transition: "all 0.3s ease",
+//   "&:hover": {
+//     transform: "scale(1.15)",
+//     boxShadow: "0 6px 18px rgba(225, 48, 108, 0.6)",
+//   },
+// });
 
-const InstagramIcon = styled("div")({
-  color: "white",
-  fontSize: "1.25rem",
-  filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.3))",
-});
+// const InstagramIcon = styled("div")({
+//   color: "white",
+//   fontSize: "1.25rem",
+//   filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.3))",
+// });
 
-const InstagramPreviewOverlay = styled("div", {
-  shouldForwardProp: (prop) => prop !== "show",
-})<{ show: boolean }>(({ show }) => ({
-  position: "fixed",
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: "rgba(0, 0, 0, 0.85)",
-  display: show ? "flex" : "none",
-  alignItems: "center",
-  justifyContent: "center",
-  zIndex: 9999,
-  padding: "2rem",
-  animation: show ? "fadeIn 0.3s ease" : "none",
-  "@keyframes fadeIn": {
-    from: { opacity: 0 },
-    to: { opacity: 1 },
-  },
-}));
+// const InstagramPreviewOverlay = styled("div", {
+//   shouldForwardProp: (prop) => prop !== "show",
+// })<{ show: boolean }>(({ show }) => ({
+//   position: "fixed",
+//   top: 0,
+//   left: 0,
+//   right: 0,
+//   bottom: 0,
+//   backgroundColor: "rgba(0, 0, 0, 0.85)",
+//   display: show ? "flex" : "none",
+//   alignItems: "center",
+//   justifyContent: "center",
+//   zIndex: 9999,
+//   padding: "2rem",
+//   animation: show ? "fadeIn 0.3s ease" : "none",
+//   "@keyframes fadeIn": {
+//     from: { opacity: 0 },
+//     to: { opacity: 1 },
+//   },
+// }));
 
-const InstagramPreviewContent = styled("div")({
-  maxWidth: "540px",
-  width: "100%",
-  maxHeight: "90vh",
-  overflowY: "auto",
-  position: "relative",
-  animation: "slideIn 0.3s ease",
-  "@keyframes slideIn": {
-    from: {
-      transform: "scale(0.8)",
-      opacity: 0,
-    },
-    to: {
-      transform: "scale(1)",
-      opacity: 1,
-    },
-  },
-});
+// const InstagramPreviewContent = styled("div")({
+//   maxWidth: "540px",
+//   width: "100%",
+//   maxHeight: "90vh",
+//   overflowY: "auto",
+//   position: "relative",
+//   animation: "slideIn 0.3s ease",
+//   "@keyframes slideIn": {
+//     from: {
+//       transform: "scale(0.8)",
+//       opacity: 0,
+//     },
+//     to: {
+//       transform: "scale(1)",
+//       opacity: 1,
+//     },
+//   },
+// });
 
-const CloseButton = styled("button")({
-  position: "absolute",
-  top: "-50px",
-  right: "0",
-  background: "white",
-  border: "none",
-  borderRadius: "50%",
-  width: "40px",
-  height: "40px",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  cursor: "pointer",
-  fontSize: "1.5rem",
-  color: "#326C85",
-  transition: "all 0.3s ease",
-  fontWeight: "bold",
-  "&:hover": {
-    background: "#326C85",
-    color: "white",
-    transform: "rotate(90deg)",
-  },
-});
+// const CloseButton = styled("button")({
+//   position: "absolute",
+//   top: "-50px",
+//   right: "0",
+//   background: "white",
+//   border: "none",
+//   borderRadius: "50%",
+//   width: "40px",
+//   height: "40px",
+//   display: "flex",
+//   alignItems: "center",
+//   justifyContent: "center",
+//   cursor: "pointer",
+//   fontSize: "1.5rem",
+//   color: "#326C85",
+//   transition: "all 0.3s ease",
+//   fontWeight: "bold",
+//   "&:hover": {
+//     background: "#326C85",
+//     color: "white",
+//     transform: "rotate(90deg)",
+//   },
+// });
 
 const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
   event,
@@ -481,7 +486,8 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
   currentParticipants = 0,
   config = {},
 }) => {
-  const [showInstagramPreview, setShowInstagramPreview] = useState<boolean>(false);
+  const [showInstagramPreview, setShowInstagramPreview] =
+    useState<boolean>(false);
 
   const {
     layout = "horizontal",
@@ -591,7 +597,7 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
               fill
             />
             {/* Instagram Thumbnail on Image */}
-            {event.instagramEmbedCode && (
+            {/* {event.instagramEmbedCode && (
               <InstagramThumbnailWrapper>
                 <InstagramThumbnail
                   onClick={(e) => {
@@ -605,12 +611,12 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
                   </InstagramIcon>
                 </InstagramThumbnail>
               </InstagramThumbnailWrapper>
-            )}
+            )} */}
           </ImageContainer>
         )}
 
         {/* Instagram Thumbnail when no image */}
-        {!showImage || (!imageUrl && !event.image) && event.instagramEmbedCode && (
+        {/* {!showImage || (!imageUrl && !event.image) && event.instagramEmbedCode && (
           <div style={{ position: "absolute", top: "70px", right: "15px", zIndex: 4 }}>
             <InstagramThumbnail
               onClick={(e) => {
@@ -624,7 +630,7 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
               </InstagramIcon>
             </InstagramThumbnail>
           </div>
-        )}
+        )} */}
 
         <CardContent layout={layout}>
           <div>
@@ -758,7 +764,7 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
       </Card>
 
       {/* Instagram Preview Modal */}
-      {event.instagramEmbedCode && (
+      {/* {event.instagramEmbedCode && (
         <InstagramPreviewOverlay
           show={showInstagramPreview}
           onClick={() => setShowInstagramPreview(false)}
@@ -770,7 +776,7 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
             <InstagramPostPreview embedCode={event.instagramEmbedCode} />
           </InstagramPreviewContent>
         </InstagramPreviewOverlay>
-      )}
+      )} */}
     </motion.div>
   );
 };

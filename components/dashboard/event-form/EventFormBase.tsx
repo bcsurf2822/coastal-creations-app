@@ -7,7 +7,7 @@ import EventBasicFields from "./shared/fields/EventBasicFields";
 import EventDateTimeFields from "./shared/fields/EventDateTimeFields";
 import EventPricingFields from "./shared/fields/EventPricingFields";
 import EventImageUpload from "./shared/fields/EventImageUpload";
-import EventInstagramField from "./shared/fields/EventInstagramField";
+// import EventInstagramField from "./shared/fields/EventInstagramField";
 import EventOptionsFields from "./shared/fields/EventOptionsFields";
 import EventDiscountFields from "./shared/fields/EventDiscountFields";
 import EventCardPreview from "./shared/preview/EventCardPreview";
@@ -87,11 +87,11 @@ const EventFormBase = ({
             existingImageUrl={existingImageUrl}
           />
 
-          <EventInstagramField
+          {/* <EventInstagramField
             formData={formData}
             actions={actions}
             errors={errors}
-          />
+          /> */}
 
           <EventOptionsFields
             formData={formData}

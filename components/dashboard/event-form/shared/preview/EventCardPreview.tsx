@@ -12,11 +12,11 @@ import {
   FaPalette,
   FaUsers,
   FaGraduationCap,
-  FaInstagram,
+  // FaInstagram,
 } from "react-icons/fa";
 import { GiPaintBrush, GiPaintRoller, GiMagicHat } from "react-icons/gi";
 import { EventFormState } from "../types/eventForm.types";
-import InstagramPostPreview from "@/components/shared/InstagramPostPreview";
+// import InstagramPostPreview from "@/components/shared/InstagramPostPreview";
 
 interface EventCardPreviewProps {
   formData: EventFormState;
@@ -611,7 +611,7 @@ const EventCardPreview = ({
               </Description>
 
               {/* Instagram Post Thumbnail */}
-              {formData.instagramEmbedCode && (
+              {/* {formData.instagramEmbedCode && (
                 <div style={{ marginTop: "1rem", marginBottom: "1rem" }}>
                   <InstagramThumbnail
                     onClick={() => setShowInstagramPreview(true)}
@@ -636,7 +636,7 @@ const EventCardPreview = ({
                     Instagram embed added!
                   </p>
                 </div>
-              )}
+              )} */}
               {hasDiscount &&
                 (formData.discount?.name || formData.discount?.description) && (
                   <DiscountBadge>
@@ -688,7 +688,7 @@ const EventCardPreview = ({
       </motion.div>
 
       {/* Instagram Preview Modal */}
-      {formData.instagramEmbedCode && (
+      {/* {formData.instagramEmbedCode && (
         <InstagramPreviewOverlay
           show={showInstagramPreview}
           onClick={() => setShowInstagramPreview(false)}
@@ -700,7 +700,7 @@ const EventCardPreview = ({
             <InstagramPostPreview embedCode={formData.instagramEmbedCode} />
           </InstagramPreviewContent>
         </InstagramPreviewOverlay>
-      )}
+      )} */}
     </PreviewContainer>
   );
 };
