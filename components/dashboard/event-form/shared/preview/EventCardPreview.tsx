@@ -427,8 +427,8 @@ const EventCardPreview = ({
   imagePreviewUrl,
 }: EventCardPreviewProps): ReactElement => {
   const [hoveredCard, setHoveredCard] = useState<boolean>(false);
-  const [showInstagramPreview, setShowInstagramPreview] =
-    useState<boolean>(false);
+  // const [showInstagramPreview, setShowInstagramPreview] =
+  //   useState<boolean>(false);
 
   // Helper functions
   const getRandomIcon = () => {

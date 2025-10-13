@@ -11,7 +11,7 @@ import {
   FaClock,
   FaDollarSign,
   FaUsers,
-  FaInstagram,
+  // FaInstagram,
 } from "react-icons/fa";
 import { IconType } from "react-icons";
 // import InstagramPostPreview from "@/components/shared/InstagramPostPreview";
@@ -486,8 +486,8 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
   currentParticipants = 0,
   config = {},
 }) => {
-  const [showInstagramPreview, setShowInstagramPreview] =
-    useState<boolean>(false);
+  // const [showInstagramPreview, setShowInstagramPreview] =
+  //   useState<boolean>(false);
 
   const {
     layout = "horizontal",
