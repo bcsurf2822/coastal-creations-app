@@ -211,7 +211,7 @@ const EventDiscountFields = ({
                   }
 
                   return discountedPrice > 0
-                    ? `$${discountedPrice.toFixed(2)}`
+                    ? `${discountedPrice.toFixed(2)}`
                     : "$0.00";
                 })()}
                 <br />
