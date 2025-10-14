@@ -5,7 +5,7 @@ import PrivateEventBasicFields from "./fields/PrivateEventBasicFields";
 import PrivateEventPricingFields from "./fields/PrivateEventPricingFields";
 import PrivateEventOptionsFields from "./fields/PrivateEventOptionsFields";
 import PrivateEventImageUpload from "./fields/PrivateEventImageUpload";
-// import PrivateEventInstagramField from "./fields/PrivateEventInstagramField";
+import PrivateEventInstagramField from "./fields/PrivateEventInstagramField";
 import PrivateEventCardPreview from "./preview/PrivateEventCardPreview";
 
 interface PrivateEventFormBaseProps {
@@ -74,11 +74,11 @@ const PrivateEventFormBase = ({
             onImageUploadStatusChange={setIsImageUploading}
           />
 
-          {/* <PrivateEventInstagramField
+          <PrivateEventInstagramField
             formData={formData}
             actions={actions}
             errors={errors}
-          /> */}
+          />
 
           <div className="space-y-4">
             <PrivateEventCardPreview
