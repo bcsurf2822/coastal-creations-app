@@ -21,8 +21,7 @@ import {
 } from "@mui/material";
 import { Description, Settings } from "@mui/icons-material";
 import { motion } from "motion/react";
-import { FaCalendarAlt, FaClock } from "react-icons/fa";
-// import InstagramPostPreview from "@/components/shared/InstagramPostPreview";
+import { FaCalendarAlt, FaClock, FaInstagram } from "react-icons/fa";
 
 interface EventOption {
   categoryName: string;
@@ -59,6 +58,7 @@ interface EventData {
   dates: EventDates;
   time: EventTime;
   options: EventOption[];
+  image?: string;
   instagramEmbedCode?: string;
   createdAt: string;
   updatedAt: string;
@@ -70,6 +70,9 @@ const urlFor = (source: SanityImageSource) =>
   projectId && dataset
     ? imageUrlBuilder({ projectId, dataset }).image(source)
     : null;
+
+// Placeholder image
+const PLACEHOLDER_IMAGE = '/assets/logos/coastalLogoFull.png';
 
 // Styled Components
 const StyledContainer = styled(Container)({
@@ -324,19 +327,22 @@ const RegisterButton = styled(Button)({
   },
 });
 
-const StyledImage = styled(Image)({
+const StyledImage = styled(Image, {
+  shouldForwardProp: (prop) => prop !== "isPlaceholder",
+})<{ isPlaceholder?: boolean }>(({ isPlaceholder }) => ({
   borderRadius: "15px",
-  objectFit: "cover",
+  objectFit: isPlaceholder ? "contain" : "cover",
   width: "100%",
   maxWidth: "300px",
   height: "250px",
+  padding: isPlaceholder ? "1rem" : "0",
   transition: "all 0.3s ease",
   boxShadow: "0 6px 20px rgba(0,0,0,0.12)",
   "&:hover": {
     transform: "scale(1.02)",
     boxShadow: "0 8px 25px rgba(0,0,0,0.18)",
   },
-});
+}));
 
 const LoadingContainer = styled("div")({
   display: "flex",
@@ -355,6 +361,30 @@ const LoadingText = styled(Typography)({
   "@keyframes colorChange": {
     "0%, 100%": { color: "#326C85" },
     "50%": { color: "#42A5F5" },
+  },
+});
+
+const InstagramIcon = styled("div")({
+  position: "absolute",
+  bottom: "15px",
+  right: "15px",
+  fontSize: "1.5rem",
+  color: "#E1306C",
+  cursor: "pointer",
+  transition: "all 0.3s ease",
+  zIndex: 3,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "40px",
+  height: "40px",
+  borderRadius: "50%",
+  background: "rgba(255, 255, 255, 0.9)",
+  boxShadow: "0 2px 8px rgba(225, 48, 108, 0.3)",
+  "&:hover": {
+    transform: "scale(1.1) rotate(5deg)",
+    boxShadow: "0 4px 12px rgba(225, 48, 108, 0.5)",
+    color: "#C13584",
   },
 });
 
@@ -491,9 +521,13 @@ export default function EventDetails({
 
   // Find the matching image for this event
   const matchingPicture = findMatchingEventPicture(eventData.eventName);
-  const imageUrl = matchingPicture?.image
+  const sanityImageUrl = matchingPicture?.image
     ? urlFor(matchingPicture.image)?.width(800).height(600).url()
     : null;
+
+  // Determine which image to display (check event.image first, then Sanity, then placeholder)
+  const displayImage = eventData.image || sanityImageUrl || PLACEHOLDER_IMAGE;
+  const isPlaceholder = !eventData.image && !sanityImageUrl;
 
   return (
     <StyledContainer>
@@ -507,7 +541,7 @@ export default function EventDetails({
 
           <CardContentStyled>
             <ContentWrapper>
-              <MainContent hasImage={!!imageUrl}>
+              <MainContent hasImage={true}>
                 <EventTitle>
                   <TitleIcon></TitleIcon>
                   {eventData.eventName || "Event Details"}
@@ -610,12 +644,6 @@ export default function EventDetails({
                   </InfoSection>
                 )}
 
-                {/* {eventData.instagramEmbedCode && (
-                  <div style={{ marginTop: "1.5rem", marginBottom: "1.5rem" }}>
-                    <InstagramPostPreview embedCode={eventData.instagramEmbedCode} />
-                  </div>
-                )} */}
-
                 {/* Price Display */}
                 {eventData.price !== undefined && (
                   <PriceDisplay>${eventData.price}</PriceDisplay>
@@ -639,24 +667,37 @@ export default function EventDetails({
               </MainContent>
 
               {/* Image Section */}
-              {imageUrl && (
-                <ImageSection>
-                  <motion.div
-                    initial={{ opacity: 0, x: 15 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
-                  >
-                    <StyledImage
-                      src={imageUrl}
-                      alt={eventData.eventName}
-                      width={300}
-                      height={250}
-                    />
-                  </motion.div>
-                </ImageSection>
-              )}
+              <ImageSection>
+                <motion.div
+                  initial={{ opacity: 0, x: 15 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                >
+                  <StyledImage
+                    src={displayImage}
+                    alt={eventData.eventName}
+                    width={300}
+                    height={250}
+                    isPlaceholder={isPlaceholder}
+                  />
+                </motion.div>
+              </ImageSection>
             </ContentWrapper>
           </CardContentStyled>
+
+          {/* Instagram Icon */}
+          {eventData.instagramEmbedCode && eventData.instagramEmbedCode.trim() && (
+            <a
+              href={eventData.instagramEmbedCode}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ textDecoration: "none" }}
+            >
+              <InstagramIcon>
+                <FaInstagram />
+              </InstagramIcon>
+            </a>
+          )}
         </EventCard>
       </motion.div>
     </StyledContainer>

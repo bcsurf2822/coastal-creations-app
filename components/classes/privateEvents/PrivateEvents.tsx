@@ -15,8 +15,8 @@ import {
   FaStar,
   FaHeart,
   FaEnvelope,
+  FaInstagram,
 } from "react-icons/fa";
-import InstagramPostPreview from "@/components/shared/InstagramPostPreview";
 import {
   GiBalloons,
   GiPartyPopper,
@@ -292,6 +292,30 @@ const ImageContainer = styled("div")({
   position: "relative",
 });
 
+const InstagramIcon = styled("div")({
+  position: "absolute",
+  bottom: "15px",
+  right: "15px",
+  fontSize: "1.5rem",
+  color: "#E1306C",
+  cursor: "pointer",
+  transition: "all 0.3s ease",
+  zIndex: 3,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "40px",
+  height: "40px",
+  borderRadius: "50%",
+  background: "rgba(255, 255, 255, 0.9)",
+  boxShadow: "0 2px 8px rgba(225, 48, 108, 0.3)",
+  "&:hover": {
+    transform: "scale(1.1) rotate(5deg)",
+    boxShadow: "0 4px 12px rgba(225, 48, 108, 0.5)",
+    color: "#C13584",
+  },
+});
+
 const PrivateEvents = () => {
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const [privateEvents, setPrivateEvents] = useState<PrivateEvent[]>([]);
@@ -485,15 +509,6 @@ const PrivateEvents = () => {
                     </div>
                   )}
 
-                  {/* Instagram Post Preview */}
-                  {privateEvent.instagramEmbedCode && (
-                    <div className="mt-4">
-                      <InstagramPostPreview
-                        embedCode={privateEvent.instagramEmbedCode}
-                      />
-                    </div>
-                  )}
-
                   {/* Deposit Display */}
                   {privateEvent.isDepositRequired &&
                     privateEvent.depositAmount && (
@@ -517,6 +532,20 @@ const PrivateEvents = () => {
                       </div>
                     )}
                 </CardContent>
+
+                {/* Instagram Icon */}
+                {privateEvent.instagramEmbedCode && privateEvent.instagramEmbedCode.trim() && (
+                  <a
+                    href={privateEvent.instagramEmbedCode}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ textDecoration: "none" }}
+                  >
+                    <InstagramIcon>
+                      <FaInstagram />
+                    </InstagramIcon>
+                  </a>
+                )}
               </PartyCard>
             </GridItem>
           );
