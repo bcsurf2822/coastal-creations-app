@@ -13,7 +13,6 @@ import {
   GiPartyHat,
 } from "react-icons/gi";
 import { PrivateEventFormState } from "../types/privateEventForm.types";
-import InstagramPostPreview from "@/components/shared/InstagramPostPreview";
 
 interface PrivateEventCardPreviewProps {
   formData: PrivateEventFormState;
@@ -258,13 +257,6 @@ const PrivateEventCardPreview = ({
             <Description>
               {formData.description || "Event description will appear here..."}
             </Description>
-
-            {/* Instagram Post Preview */}
-            {formData.instagramEmbedCode && (
-              <div className="mt-4">
-                <InstagramPostPreview embedCode={formData.instagramEmbedCode} />
-              </div>
-            )}
 
             {/* Options Display */}
             {formData.hasOptions && formData.optionCategories.length > 0 && (

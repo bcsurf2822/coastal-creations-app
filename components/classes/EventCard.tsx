@@ -6,15 +6,8 @@ import { Box, Paper, Chip } from "@mui/material";
 import Link from "next/link";
 import { motion } from "motion/react";
 import Image from "next/image";
-import {
-  FaCalendarAlt,
-  FaClock,
-  FaDollarSign,
-  FaUsers,
-  // FaInstagram,
-} from "react-icons/fa";
+import { FaCalendarAlt, FaClock, FaUsers, FaInstagram } from "react-icons/fa";
 import { IconType } from "react-icons";
-// import InstagramPostPreview from "@/components/shared/InstagramPostPreview";
 
 // Event interfaces
 interface EventOption {
@@ -155,14 +148,17 @@ const ImageContainer = styled("div")<{ layout?: "horizontal" | "vertical" }>(
   })
 );
 
-const StyledImage = styled(Image)({
-  objectFit: "cover",
+const StyledImage = styled(Image, {
+  shouldForwardProp: (prop) => prop !== "isPlaceholder",
+})<{ isPlaceholder?: boolean }>(({ isPlaceholder }) => ({
+  objectFit: isPlaceholder ? "contain" : "cover",
   transition: "all 0.3s ease",
   borderRadius: "12px",
+  padding: isPlaceholder ? "1rem" : "0",
   "&:hover": {
     transform: "scale(1.05)",
   },
-});
+}));
 
 const CardContent = styled(Box)<{ layout?: "horizontal" | "vertical" }>(
   ({ layout = "horizontal" }) => ({
@@ -381,99 +377,31 @@ const OriginalPrice = styled("span")({
   marginRight: "0.5rem",
 });
 
-// const InstagramThumbnailWrapper = styled("div")({
-//   position: "absolute",
-//   bottom: "10px",
-//   right: "10px",
-//   zIndex: 5,
-// });
+const InstagramIcon = styled("div")({
+  position: "absolute",
+  bottom: "15px",
+  right: "15px",
+  fontSize: "1.5rem",
+  color: "#E1306C",
+  cursor: "pointer",
+  transition: "all 0.3s ease",
+  zIndex: 3,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "40px",
+  height: "40px",
+  borderRadius: "50%",
+  background: "rgba(255, 255, 255, 0.9)",
+  boxShadow: "0 2px 8px rgba(225, 48, 108, 0.3)",
+  "&:hover": {
+    transform: "scale(1.1) rotate(5deg)",
+    boxShadow: "0 4px 12px rgba(225, 48, 108, 0.5)",
+    color: "#C13584",
+  },
+});
 
-// const InstagramThumbnail = styled("div")({
-//   width: "40px",
-//   height: "40px",
-//   borderRadius: "50%",
-//   background: "linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)",
-//   display: "flex",
-//   alignItems: "center",
-//   justifyContent: "center",
-//   cursor: "pointer",
-//   boxShadow: "0 4px 12px rgba(225, 48, 108, 0.4)",
-//   transition: "all 0.3s ease",
-//   "&:hover": {
-//     transform: "scale(1.15)",
-//     boxShadow: "0 6px 18px rgba(225, 48, 108, 0.6)",
-//   },
-// });
-
-// const InstagramIcon = styled("div")({
-//   color: "white",
-//   fontSize: "1.25rem",
-//   filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.3))",
-// });
-
-// const InstagramPreviewOverlay = styled("div", {
-//   shouldForwardProp: (prop) => prop !== "show",
-// })<{ show: boolean }>(({ show }) => ({
-//   position: "fixed",
-//   top: 0,
-//   left: 0,
-//   right: 0,
-//   bottom: 0,
-//   backgroundColor: "rgba(0, 0, 0, 0.85)",
-//   display: show ? "flex" : "none",
-//   alignItems: "center",
-//   justifyContent: "center",
-//   zIndex: 9999,
-//   padding: "2rem",
-//   animation: show ? "fadeIn 0.3s ease" : "none",
-//   "@keyframes fadeIn": {
-//     from: { opacity: 0 },
-//     to: { opacity: 1 },
-//   },
-// }));
-
-// const InstagramPreviewContent = styled("div")({
-//   maxWidth: "540px",
-//   width: "100%",
-//   maxHeight: "90vh",
-//   overflowY: "auto",
-//   position: "relative",
-//   animation: "slideIn 0.3s ease",
-//   "@keyframes slideIn": {
-//     from: {
-//       transform: "scale(0.8)",
-//       opacity: 0,
-//     },
-//     to: {
-//       transform: "scale(1)",
-//       opacity: 1,
-//     },
-//   },
-// });
-
-// const CloseButton = styled("button")({
-//   position: "absolute",
-//   top: "-50px",
-//   right: "0",
-//   background: "white",
-//   border: "none",
-//   borderRadius: "50%",
-//   width: "40px",
-//   height: "40px",
-//   display: "flex",
-//   alignItems: "center",
-//   justifyContent: "center",
-//   cursor: "pointer",
-//   fontSize: "1.5rem",
-//   color: "#326C85",
-//   transition: "all 0.3s ease",
-//   fontWeight: "bold",
-//   "&:hover": {
-//     background: "#326C85",
-//     color: "white",
-//     transform: "rotate(90deg)",
-//   },
-// });
+const PLACEHOLDER_IMAGE = '/assets/logos/coastalLogoFull.png';
 
 const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
   event,
@@ -486,9 +414,6 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
   currentParticipants = 0,
   config = {},
 }) => {
-  // const [showInstagramPreview, setShowInstagramPreview] =
-  //   useState<boolean>(false);
-
   const {
     layout = "horizontal",
     showPrice = true,
@@ -576,7 +501,6 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
           </Badge>
         ) : showPrice && event.price !== undefined ? (
           <PriceTag>
-            <FaDollarSign />
             {discountActive ? (
               <>
                 <OriginalPrice>${event.price}</OriginalPrice>$
@@ -589,48 +513,16 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
         ) : null}
 
         {/* Image Section */}
-        {showImage && (imageUrl || event.image) && (
+        {showImage && (
           <ImageContainer layout={layout}>
             <StyledImage
-              src={imageUrl || event.image || ""}
+              src={imageUrl || event.image || PLACEHOLDER_IMAGE}
               alt={event.eventName}
               fill
+              isPlaceholder={!imageUrl && !event.image}
             />
-            {/* Instagram Thumbnail on Image */}
-            {/* {event.instagramEmbedCode && (
-              <InstagramThumbnailWrapper>
-                <InstagramThumbnail
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowInstagramPreview(true);
-                  }}
-                  title="View Instagram post"
-                >
-                  <InstagramIcon>
-                    <FaInstagram />
-                  </InstagramIcon>
-                </InstagramThumbnail>
-              </InstagramThumbnailWrapper>
-            )} */}
           </ImageContainer>
         )}
-
-        {/* Instagram Thumbnail when no image */}
-        {/* {!showImage || (!imageUrl && !event.image) && event.instagramEmbedCode && (
-          <div style={{ position: "absolute", top: "70px", right: "15px", zIndex: 4 }}>
-            <InstagramThumbnail
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowInstagramPreview(true);
-              }}
-              title="View Instagram post"
-            >
-              <InstagramIcon>
-                <FaInstagram />
-              </InstagramIcon>
-            </InstagramThumbnail>
-          </div>
-        )} */}
 
         <CardContent layout={layout}>
           <div>
@@ -761,22 +653,21 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
               </Link>
             ))}
         </CardContent>
-      </Card>
 
-      {/* Instagram Preview Modal */}
-      {/* {event.instagramEmbedCode && (
-        <InstagramPreviewOverlay
-          show={showInstagramPreview}
-          onClick={() => setShowInstagramPreview(false)}
-        >
-          <InstagramPreviewContent onClick={(e) => e.stopPropagation()}>
-            <CloseButton onClick={() => setShowInstagramPreview(false)}>
-              ✕
-            </CloseButton>
-            <InstagramPostPreview embedCode={event.instagramEmbedCode} />
-          </InstagramPreviewContent>
-        </InstagramPreviewOverlay>
-      )} */}
+        {/* Instagram Icon */}
+        {event.instagramEmbedCode && event.instagramEmbedCode.trim() && (
+          <a
+            href={event.instagramEmbedCode}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ textDecoration: "none" }}
+          >
+            <InstagramIcon>
+              <FaInstagram />
+            </InstagramIcon>
+          </a>
+        )}
+      </Card>
     </motion.div>
   );
 };
