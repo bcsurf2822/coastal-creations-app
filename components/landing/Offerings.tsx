@@ -131,7 +131,7 @@ export default function Offerings() {
               opportunities for artists of all ages and skill levels!&quot;
             </p>
           </div>
-          
+
           {/* Gallery Slideshow */}
           <div className="mb-16">
             <GallerySlideshow />
@@ -141,123 +141,123 @@ export default function Offerings() {
           {(nextArtistEvent || isLoading) && (
             <div className="mb-12">
               <div className="group p-8 border border-neutral-100 bg-white/80 rounded-lg hover:border-primary shadow-[-8px_8px_15px_rgba(0,0,0,0.15)] hover:shadow-lg transition duration-300">
-              <div className="flex flex-col lg:flex-row gap-8 items-center">
-                <div className="relative w-full lg:w-1/3 h-64 rounded-lg overflow-hidden flex-shrink-0">
-                  <Image
-                    src={
-                      nextArtistEvent && nextArtistEvent.image
-                        ? nextArtistEvent.image
-                        : "/assets/images/live_add.png"
-                    }
-                    alt="Live Artist Painting"
-                    fill
-                    sizes="(max-width: 1024px) 100vw, 33vw"
-                    className="object-contain"
-                  />
-                  {isLoading && (
-                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                      <p
-                        className={`${ebGaramond.className} text-white font-bold`}
-                      >
-                        Loading...
-                      </p>
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 flex flex-col">
-                  <div className="flex items-center mb-6">
-                    <div className="w-12 h-12 bg-light rounded-lg flex items-center justify-center mr-4 group-hover:bg-primary transition duration-300">
-                      <i
-                        data-lucide="palette"
-                        className="w-6 h-6 text-primary group-hover:text-white transition duration-300"
-                      ></i>
-                    </div>
-                    <div className="flex-1">
-                      {nextArtistEvent ? (
-                        <div>
-                          <h4
-                            className={`${ebGaramond.className} text-2xl font-semibold text-primary mb-1`}
-                          >
-                            {nextArtistEvent.eventName}
-                          </h4>
-                          <div className="flex items-center space-x-4 text-sm">
-                            <div className="flex items-center text-gray-600 text-lg font-bold">
-                              <i
-                                data-lucide="calendar"
-                                className="w-4 h-4 mr-1"
-                              ></i>
-                              <span
-                                className={`${ebGaramond.className} font-medium`}
-                              >
-                                {formatEventDate(
-                                  nextArtistEvent.dates.startDate
-                                )}
-                              </span>
-                            </div>
-                            <div className="flex items-center text-lg text-gray-600">
-                              <i
-                                data-lucide="clock"
-                                className="w-4 h-4 mr-1"
-                              ></i>
-                              <span
-                                className={`${ebGaramond.className} font-medium text-lg font-bold`}
-                              >
-                                {formatEventTime(
-                                  nextArtistEvent.time.startTime
-                                )}
-                              </span>
+                <div className="flex flex-col lg:flex-row gap-8 items-center">
+                  <div className="relative w-full lg:w-1/3 h-64 rounded-lg overflow-hidden flex-shrink-0">
+                    <Image
+                      src={
+                        nextArtistEvent && nextArtistEvent.image
+                          ? nextArtistEvent.image
+                          : "/assets/images/live_add.png"
+                      }
+                      alt="Live Artist Painting"
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 33vw"
+                      className="object-contain"
+                    />
+                    {isLoading && (
+                      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                        <p
+                          className={`${ebGaramond.className} text-white font-bold`}
+                        >
+                          Loading...
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 flex flex-col">
+                    <div className="flex items-center mb-6">
+                      <div className="w-12 h-12 bg-light rounded-lg flex items-center justify-center mr-4 group-hover:bg-primary transition duration-300">
+                        <i
+                          data-lucide="palette"
+                          className="w-6 h-6 text-primary group-hover:text-white transition duration-300"
+                        ></i>
+                      </div>
+                      <div className="flex-1">
+                        {nextArtistEvent ? (
+                          <div>
+                            <h4
+                              className={`${ebGaramond.className} text-2xl font-semibold text-primary mb-1`}
+                            >
+                              {nextArtistEvent.eventName}
+                            </h4>
+                            <div className="flex items-center space-x-4 text-sm">
+                              <div className="flex items-center text-gray-600 text-lg font-bold">
+                                <i
+                                  data-lucide="calendar"
+                                  className="w-4 h-4 mr-1"
+                                ></i>
+                                <span
+                                  className={`${ebGaramond.className} font-medium`}
+                                >
+                                  {formatEventDate(
+                                    nextArtistEvent.dates.startDate
+                                  )}
+                                </span>
+                              </div>
+                              <div className="flex items-center text-lg text-gray-600">
+                                <i
+                                  data-lucide="clock"
+                                  className="w-4 h-4 mr-1"
+                                ></i>
+                                <span
+                                  className={`${ebGaramond.className} font-medium text-lg font-bold`}
+                                >
+                                  {formatEventTime(
+                                    nextArtistEvent.time.startTime
+                                  )}
+                                </span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ) : (
-                        <h4
-                          className={`${ebGaramond.className} text-3xl font-semibold text-primary`}
+                        ) : (
+                          <h4
+                            className={`${ebGaramond.className} text-3xl font-semibold text-primary`}
+                          >
+                            Next Live Artist Event
+                          </h4>
+                        )}
+                      </div>
+                    </div>
+                    {nextArtistEvent ? (
+                      <div className="mb-6 flex-1">
+                        <p
+                          className={`${ebGaramond.className} text-gray-600 group-hover:text-gray-800 transition duration-300 text-justify font-bold text-xl`}
                         >
-                          Next Live Artist Event
-                        </h4>
+                          {nextArtistEvent.description}
+                        </p>
+                      </div>
+                    ) : (
+                      <p
+                        className={`${ebGaramond.className} text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300 text-justify font-bold text-lg flex-1`}
+                      >
+                        Watch talented artists create beautiful works live!
+                        Check back for upcoming painting sessions where you can
+                        observe the creative process and learn new techniques.
+                      </p>
+                    )}
+                    <div className="flex justify-end">
+                      {nextArtistEvent ? (
+                        <Link
+                          href={"/events/live-artist"}
+                          className={`${ebGaramond.className} inline-flex items-center justify-center px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg border-2 border-gray-200 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:bg-gray-300 hover:border-gray-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.25)] transform hover:scale-105 transition-all duration-300`}
+                        >
+                          <span className="mr-2">View Live Events</span>
+                          <i data-lucide="arrow-right" className="w-4 h-4"></i>
+                        </Link>
+                      ) : (
+                        <Link
+                          href="/calendar"
+                          className={`${ebGaramond.className} inline-flex items-center justify-center px-8 py-4 bg-gray-200 text-gray-800 font-semibold rounded-lg border-2 border-gray-200 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:bg-gray-300 hover:border-gray-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.25)] transform hover:scale-105 transition-all duration-300`}
+                        >
+                          <span className="mr-2">View Calendar</span>
+                          <i data-lucide="arrow-right" className="w-4 h-4"></i>
+                        </Link>
                       )}
                     </div>
-                  </div>
-                  {nextArtistEvent ? (
-                    <div className="mb-6 flex-1">
-                      <p
-                        className={`${ebGaramond.className} text-gray-600 group-hover:text-gray-800 transition duration-300 text-justify font-bold text-xl`}
-                      >
-                        {nextArtistEvent.description}
-                      </p>
-                    </div>
-                  ) : (
-                    <p
-                      className={`${ebGaramond.className} text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300 text-justify font-bold text-lg flex-1`}
-                    >
-                      Watch talented artists create beautiful works live! Check
-                      back for upcoming painting sessions where you can observe
-                      the creative process and learn new techniques.
-                    </p>
-                  )}
-                  <div className="flex justify-end">
-                    {nextArtistEvent ? (
-                      <Link
-                        href={"/events/live-artist"}
-                        className={`${ebGaramond.className} inline-flex items-center justify-center px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg border-2 border-gray-200 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:bg-gray-300 hover:border-gray-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.25)] transform hover:scale-105 transition-all duration-300`}
-                      >
-                        <span className="mr-2">View Live Events</span>
-                        <i data-lucide="arrow-right" className="w-4 h-4"></i>
-                      </Link>
-                    ) : (
-                      <Link
-                        href="/calendar"
-                        className={`${ebGaramond.className} inline-flex items-center justify-center px-8 py-4 bg-gray-200 text-gray-800 font-semibold rounded-lg border-2 border-gray-200 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:bg-gray-300 hover:border-gray-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.25)] transform hover:scale-105 transition-all duration-300`}
-                      >
-                        <span className="mr-2">View Calendar</span>
-                        <i data-lucide="arrow-right" className="w-4 h-4"></i>
-                      </Link>
-                    )}
                   </div>
                 </div>
               </div>
             </div>
-          </div>
           )}
 
           {/* Original Three Offerings */}
@@ -291,7 +291,7 @@ export default function Offerings() {
               </p>
               <div className="mt-auto flex justify-end">
                 <Link
-                  href={"/events/summer-camps"}
+                  href={"/events/art-camps"}
                   className={`${ebGaramond.className} inline-flex items-center justify-center px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg border-2 border-gray-200 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:bg-gray-300 hover:border-gray-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.25)] text-md transform hover:scale-105 transition-all duration-300`}
                 >
                   <span className="mr-2">Upcoming Camps</span>

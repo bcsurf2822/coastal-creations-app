@@ -81,6 +81,7 @@ export interface UniversalEventCardProps {
   imageUrl?: string | null;
   currentParticipants?: number;
   config?: CardConfig;
+  baseUrl?: string;
 }
 
 interface CardStyledProps {
@@ -401,7 +402,7 @@ const InstagramIcon = styled("div")({
   },
 });
 
-const PLACEHOLDER_IMAGE = '/assets/logos/coastalLogoFull.png';
+const PLACEHOLDER_IMAGE = "/assets/logos/coastalLogoFull.png";
 
 const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
   event,
@@ -413,6 +414,7 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
   imageUrl,
   currentParticipants = 0,
   config = {},
+  baseUrl = "/calendar",
 }) => {
   const {
     layout = "horizontal",
@@ -646,7 +648,7 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
               </div>
             ) : (
               <Link
-                href={`/calendar/${event._id}`}
+                href={`${baseUrl}/${event._id}`}
                 style={{ textDecoration: "none", alignSelf: "flex-start" }}
               >
                 <ActionButton>{buttonText}</ActionButton>

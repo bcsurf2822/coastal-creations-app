@@ -35,6 +35,7 @@ export default function ClassesPage() {
         loadingMessage: "Loading creative classes...",
         fetchParticipantCounts: true,
         useEventPictures: true,
+        baseUrl: "/events/classes-workshops",
       }}
     />
   );
