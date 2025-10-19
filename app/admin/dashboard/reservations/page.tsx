@@ -1,7 +1,6 @@
 "use client";
 
 import { ReactElement, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import imageUrlBuilder from "@sanity/image-url";
@@ -86,7 +85,6 @@ const urlFor = (source: SanityImageSource) =>
     : null;
 
 export default function ReservationsPage(): ReactElement {
-  const router = useRouter();
   const [reservations, setReservations] = useState<DashboardReservation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactElement, ChangeEvent } from "react";
-import { ParticipantInfo, SelectedDate } from "./types";
+import { ParticipantInfo } from "./types";
 
 interface ParticipantsByDate {
   date: Date;
@@ -11,13 +11,11 @@ interface ParticipantsByDate {
 interface ParticipantFieldsProps {
   participantsByDate: ParticipantsByDate[];
   setParticipantsByDate: (participantsByDate: ParticipantsByDate[]) => void;
-  selectedDates?: SelectedDate[]; // Optional, not currently used
 }
 
 export default function ParticipantFields({
   participantsByDate,
   setParticipantsByDate,
-  selectedDates,
 }: ParticipantFieldsProps): ReactElement {
   const handleParticipantChange = (
     dateIndex: number,

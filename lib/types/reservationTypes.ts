@@ -5,7 +5,7 @@ export interface ReservationDates {
 }
 
 export interface ReservationTime {
-  startTime: string;
+  startTime?: string;
   endTime?: string;
 }
 

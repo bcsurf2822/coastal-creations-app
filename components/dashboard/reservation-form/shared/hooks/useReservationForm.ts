@@ -143,8 +143,18 @@ export const useReservationForm = ({
       }
 
       handleInputChange("customTimes", newCustomTimes);
+
+      // Clear the specific error for this field
+      const errorKey = `customTimes.${dayIndex}.${field}`;
+      if (errors[errorKey]) {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[errorKey];
+          return newErrors;
+        });
+      }
     },
-    [formData.customTimes, handleInputChange]
+    [formData.customTimes, handleInputChange, errors]
   );
 
   const handleFileChange = useCallback(

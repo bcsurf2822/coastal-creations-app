@@ -199,22 +199,40 @@ const ReservationDateTimeFields = ({
                     <select
                       value={dayTime.startTime?.format("HH:mm") || ""}
                       onChange={(e) => actions.handleCustomTimeChange(index, "startTime", e)}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={`w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        errors[`customTimes.${index}.startTime`]
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
                     >
                       <option value="">Start time</option>
                       {dayStartTimeOptions}
                     </select>
+                    {errors[`customTimes.${index}.startTime`] && (
+                      <p className="text-red-600 text-xs mt-1">
+                        {errors[`customTimes.${index}.startTime`]}
+                      </p>
+                    )}
                   </div>
 
                   <div>
                     <select
                       value={dayTime.endTime?.format("HH:mm") || ""}
                       onChange={(e) => actions.handleCustomTimeChange(index, "endTime", e)}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={`w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        errors[`customTimes.${index}.endTime`]
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
                     >
                       <option value="">End time</option>
                       {dayEndTimeOptions}
                     </select>
+                    {errors[`customTimes.${index}.endTime`] && (
+                      <p className="text-red-600 text-xs mt-1">
+                        {errors[`customTimes.${index}.endTime`]}
+                      </p>
+                    )}
                   </div>
                 </div>
               );

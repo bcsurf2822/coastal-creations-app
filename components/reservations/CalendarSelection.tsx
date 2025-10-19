@@ -247,11 +247,13 @@ export function CalendarSelection({
               <p className={`${ebGaramond.className} text-gray-600`}>
                 {reservation.timeType === "custom"
                   ? "Custom times per day (see calendar)"
-                  : `${formatTime(reservation.time.startTime)}${
-                      reservation.time.endTime
-                        ? ` - ${formatTime(reservation.time.endTime)}`
-                        : ""
-                    }`}
+                  : reservation.time.startTime
+                    ? `${formatTime(reservation.time.startTime)}${
+                        reservation.time.endTime
+                          ? ` - ${formatTime(reservation.time.endTime)}`
+                          : ""
+                      }`
+                    : "Time not specified"}
               </p>
             </div>
             <div>

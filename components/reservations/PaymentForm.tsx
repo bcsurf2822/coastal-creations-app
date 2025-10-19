@@ -208,8 +208,7 @@ export default function PaymentForm({
   };
 
   const handleCardTokenizeResponse = async (
-    token: { token?: string; status?: string },
-    buyer?: unknown
+    token: { token?: string; status?: string }
   ): Promise<void> => {
     console.log("[PaymentForm-handleCardTokenizeResponse] Tokenization response received");
     setErrors("");
@@ -352,7 +351,6 @@ export default function PaymentForm({
           <ParticipantFields
             participantsByDate={participantsByDate}
             setParticipantsByDate={setParticipantsByDate}
-            selectedDates={selectedDates}
           />
 
           {reservation.options && reservation.options.length > 0 && (
