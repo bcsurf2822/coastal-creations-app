@@ -1,5 +1,8 @@
 import { ReactElement, useEffect } from "react";
-import { ReservationFormState, ReservationFormActions } from "../types/reservationForm.types";
+import {
+  ReservationFormState,
+  ReservationFormActions,
+} from "../types/reservationForm.types";
 import { useTimeOptions } from "../../../event-form/shared/hooks/useTimeOptions";
 import dayjs from "dayjs";
 
@@ -19,7 +22,9 @@ const ReservationDateTimeFields = ({
   const endTimeOptions = generateTimeOptions(true, formData.startTime);
 
   const handleExcludeDateAdd = () => {
-    const dateInput = document.getElementById("exclude-date-input") as HTMLInputElement;
+    const dateInput = document.getElementById(
+      "exclude-date-input"
+    ) as HTMLInputElement;
     if (dateInput?.value) {
       actions.addExcludeDate(dateInput.value);
       dateInput.value = "";
@@ -28,10 +33,18 @@ const ReservationDateTimeFields = ({
 
   // Generate days array when dates change
   useEffect(() => {
-    if (formData.startDate && formData.endDate && formData.timeType === "custom") {
+    if (
+      formData.startDate &&
+      formData.endDate &&
+      formData.timeType === "custom"
+    ) {
       const start = dayjs(formData.startDate);
       const end = dayjs(formData.endDate);
-      const days: { date: string; startTime: dayjs.Dayjs | null; endTime: dayjs.Dayjs | null }[] = [];
+      const days: {
+        date: string;
+        startTime: dayjs.Dayjs | null;
+        endTime: dayjs.Dayjs | null;
+      }[] = [];
 
       let current = start;
       while (current.isBefore(end.add(1, "day"))) {
@@ -40,7 +53,9 @@ const ReservationDateTimeFields = ({
         // Check if this date is excluded
         if (!formData.excludeDates.includes(dateStr)) {
           // Find existing custom time for this date
-          const existing = formData.customTimes.find((ct) => ct.date === dateStr);
+          const existing = formData.customTimes.find(
+            (ct) => ct.date === dateStr
+          );
           days.push({
             date: dateStr,
             startTime: existing?.startTime || null,
@@ -52,11 +67,21 @@ const ReservationDateTimeFields = ({
       }
 
       // Only update if the days array is different
-      if (JSON.stringify(days.map(d => d.date)) !== JSON.stringify(formData.customTimes.map(ct => ct.date))) {
+      if (
+        JSON.stringify(days.map((d) => d.date)) !==
+        JSON.stringify(formData.customTimes.map((ct) => ct.date))
+      ) {
         actions.handleInputChange("customTimes", days);
       }
     }
-  }, [formData.startDate, formData.endDate, formData.timeType, formData.excludeDates, actions, formData.customTimes]);
+  }, [
+    formData.startDate,
+    formData.endDate,
+    formData.timeType,
+    formData.excludeDates,
+    actions,
+    formData.customTimes,
+  ]);
 
   return (
     <div className="space-y-4">
@@ -71,7 +96,9 @@ const ReservationDateTimeFields = ({
           <input
             type="date"
             value={formData.startDate}
-            onChange={(e) => actions.handleInputChange("startDate", e.target.value)}
+            onChange={(e) =>
+              actions.handleInputChange("startDate", e.target.value)
+            }
             className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {errors.startDate && (
@@ -86,7 +113,9 @@ const ReservationDateTimeFields = ({
           <input
             type="date"
             value={formData.endDate || ""}
-            onChange={(e) => actions.handleInputChange("endDate", e.target.value || undefined)}
+            onChange={(e) =>
+              actions.handleInputChange("endDate", e.target.value || undefined)
+            }
             min={formData.startDate}
             className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
@@ -107,7 +136,9 @@ const ReservationDateTimeFields = ({
               type="radio"
               value="same"
               checked={formData.timeType === "same"}
-              onChange={(e) => actions.handleInputChange("timeType", e.target.value)}
+              onChange={(e) =>
+                actions.handleInputChange("timeType", e.target.value)
+              }
               className="mr-2"
             />
             <span className="text-sm text-gray-700">
@@ -119,7 +150,9 @@ const ReservationDateTimeFields = ({
               type="radio"
               value="custom"
               checked={formData.timeType === "custom"}
-              onChange={(e) => actions.handleInputChange("timeType", e.target.value)}
+              onChange={(e) =>
+                actions.handleInputChange("timeType", e.target.value)
+              }
               className="mr-2"
             />
             <span className="text-sm text-gray-700">
@@ -182,7 +215,10 @@ const ReservationDateTimeFields = ({
           <div className="space-y-3 max-h-96 overflow-y-auto border border-gray-200 rounded-md p-4">
             {formData.customTimes.map((dayTime, index) => {
               const dayStartTimeOptions = generateTimeOptions();
-              const dayEndTimeOptions = generateTimeOptions(true, dayTime.startTime);
+              const dayEndTimeOptions = generateTimeOptions(
+                true,
+                dayTime.startTime
+              );
 
               return (
                 <div
@@ -198,7 +234,9 @@ const ReservationDateTimeFields = ({
                   <div>
                     <select
                       value={dayTime.startTime?.format("HH:mm") || ""}
-                      onChange={(e) => actions.handleCustomTimeChange(index, "startTime", e)}
+                      onChange={(e) =>
+                        actions.handleCustomTimeChange(index, "startTime", e)
+                      }
                       className={`w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         errors[`customTimes.${index}.startTime`]
                           ? "border-red-500"
@@ -218,7 +256,9 @@ const ReservationDateTimeFields = ({
                   <div>
                     <select
                       value={dayTime.endTime?.format("HH:mm") || ""}
-                      onChange={(e) => actions.handleCustomTimeChange(index, "endTime", e)}
+                      onChange={(e) =>
+                        actions.handleCustomTimeChange(index, "endTime", e)
+                      }
                       className={`w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         errors[`customTimes.${index}.endTime`]
                           ? "border-red-500"
@@ -238,17 +278,16 @@ const ReservationDateTimeFields = ({
               );
             })}
           </div>
-          <p className="text-sm text-gray-500 mt-1">
-            Times are shown in 12-hour format (AM/PM)
-          </p>
         </div>
       )}
 
-      {formData.timeType === "custom" && (!formData.startDate || !formData.endDate) && (
-        <p className="text-sm text-gray-500 bg-blue-50 p-3 rounded-md">
-          Please select start and end dates to configure custom times for each day.
-        </p>
-      )}
+      {formData.timeType === "custom" &&
+        (!formData.startDate || !formData.endDate) && (
+          <p className="text-sm text-gray-500 bg-blue-50 p-3 rounded-md">
+            Please select start and end dates to configure custom times for each
+            day.
+          </p>
+        )}
 
       {/* Exclude Dates */}
       <div>
@@ -277,8 +316,13 @@ const ReservationDateTimeFields = ({
             <div className="space-y-1">
               <p className="text-sm text-gray-600">Excluded dates:</p>
               {formData.excludeDates.map((date, index) => (
-                <div key={index} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded">
-                  <span className="text-sm">{new Date(date).toLocaleDateString()}</span>
+                <div
+                  key={index}
+                  className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded"
+                >
+                  <span className="text-sm">
+                    {new Date(date).toLocaleDateString()}
+                  </span>
                   <button
                     type="button"
                     onClick={() => actions.removeExcludeDate(index)}
@@ -292,7 +336,7 @@ const ReservationDateTimeFields = ({
           )}
         </div>
         <p className="text-sm text-gray-500 mt-1">
-          Add dates when the program will not be available (holidays, breaks, etc.)
+          Dates to exclude from the current date range.
         </p>
       </div>
     </div>
