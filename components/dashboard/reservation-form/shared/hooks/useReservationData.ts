@@ -11,6 +11,17 @@ interface UseReservationDataReturn {
 }
 
 const transformReservationToFormState = (reservation: Reservation): ReservationFormState => {
+  // Build custom times from dailyAvailability if timeType is custom
+  const customTimes = reservation.timeType === "custom"
+    ? reservation.dailyAvailability
+        .filter(day => day.startTime || day.endTime)
+        .map(day => ({
+          date: dayjs(day.date).format("YYYY-MM-DD"),
+          startTime: day.startTime ? dayjs(day.startTime, "HH:mm") : null,
+          endTime: day.endTime ? dayjs(day.endTime, "HH:mm") : null,
+        }))
+    : [];
+
   return {
     eventName: reservation.eventName,
     eventType: "reservation",
@@ -23,8 +34,10 @@ const transformReservationToFormState = (reservation: Reservation): ReservationF
     endDate: reservation.dates.endDate
       ? dayjs(reservation.dates.endDate).format("YYYY-MM-DD")
       : undefined,
+    timeType: reservation.timeType || "same",
     startTime: dayjs(reservation.time.startTime, "HH:mm"),
     endTime: reservation.time.endTime ? dayjs(reservation.time.endTime, "HH:mm") : null,
+    customTimes,
     excludeDates: reservation.dates.excludeDates
       ? reservation.dates.excludeDates.map(date => dayjs(date).format("YYYY-MM-DD"))
       : [],

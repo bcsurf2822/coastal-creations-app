@@ -5,7 +5,7 @@ export interface ReservationDates {
 }
 
 export interface ReservationTime {
-  startTime: string;
+  startTime?: string;
   endTime?: string;
 }
 
@@ -14,6 +14,8 @@ export interface DailyAvailability {
   maxParticipants: number;
   currentBookings: number;
   isAvailable: boolean;
+  startTime?: string;
+  endTime?: string;
 }
 
 export interface ReservationOption {
@@ -40,6 +42,7 @@ export interface Reservation {
   description: string;
   pricePerDayPerParticipant: number;
   dates: ReservationDates;
+  timeType?: "same" | "custom";
   time: ReservationTime;
   dailyAvailability: DailyAvailability[];
   options?: ReservationOption[];

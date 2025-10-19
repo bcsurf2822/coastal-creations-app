@@ -23,40 +23,6 @@ import { client } from "@/sanity/client";
 
 type DashboardItem = DashboardEvent | DashboardReservation;
 
-interface ReservationApiData {
-  _id: string;
-  eventName: string;
-  description?: string;
-  pricePerDayPerParticipant: number;
-  maxParticipantsPerDay?: number;
-  dates?: {
-    startDate: string;
-    endDate: string;
-  };
-  time?: {
-    startTime: string;
-    endTime: string;
-  };
-  image?: string;
-  options?: Array<{
-    categoryName: string;
-    categoryDescription?: string;
-    choices: Array<{ name: string }>;
-  }>;
-  isDiscountAvailable?: boolean;
-  discount?: {
-    type?: string;
-    value?: number;
-    description?: string;
-  };
-  dailyAvailability?: Array<{
-    date: Date;
-    maxParticipants: number;
-    currentBookings: number;
-    isAvailable: boolean;
-  }>;
-}
-
 // Define types for SimpleDialog props
 interface SimpleDialogProps {
   open: boolean;
@@ -177,17 +143,11 @@ export default function EventContainer() {
       try {
         setIsLoading(true);
 
-        // Fetch events and reservations in parallel
-        const [eventsResponse, reservationsResponse] = await Promise.all([
-          fetch("/api/events", {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-          }),
-          fetch("/api/reservations", {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-          })
-        ]);
+        // Fetch events only (reservations are shown in dedicated page)
+        const eventsResponse = await fetch("/api/events", {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
 
         // Process events
         let allItems: DashboardItem[] = [];
@@ -220,36 +180,8 @@ export default function EventContainer() {
           }
         }
 
-        // Process reservations
-        if (reservationsResponse.ok) {
-          const reservationsText = await reservationsResponse.text();
-          const reservationsResult = reservationsText ? JSON.parse(reservationsText) : {};
-          const reservationsData = reservationsResult.data || reservationsResult.reservations || reservationsResult;
-
-          if (Array.isArray(reservationsData)) {
-            const transformedReservations: DashboardReservation[] = reservationsData.map((reservation: ReservationApiData) => ({
-              id: reservation._id,
-              name: reservation.eventName,
-              description: reservation.description,
-              eventType: "reservation" as const,
-              pricePerDayPerParticipant: reservation.pricePerDayPerParticipant,
-              maxParticipantsPerDay: reservation.maxParticipantsPerDay ||
-                (reservation.dailyAvailability && reservation.dailyAvailability.length > 0
-                  ? reservation.dailyAvailability[0].maxParticipants
-                  : 10),
-              startDate: reservation.dates?.startDate ? new Date(reservation.dates.startDate) : undefined,
-              endDate: reservation.dates?.endDate ? new Date(reservation.dates.endDate) : undefined,
-              startTime: reservation.time?.startTime,
-              endTime: reservation.time?.endTime,
-              image: reservation.image,
-              options: reservation.options,
-              isDiscountAvailable: reservation.isDiscountAvailable,
-              discount: reservation.discount,
-              dailyAvailability: reservation.dailyAvailability || [],
-            }));
-            allItems = [...allItems, ...transformedReservations];
-          }
-        }
+        // Skip processing reservations - they are shown in dedicated Reservations page
+        // Reservations are not displayed in the main Events Dashboard
 
         // Sort items by start date - closest items first, furthest items last
         const sortedItems = allItems.sort((a, b) => {

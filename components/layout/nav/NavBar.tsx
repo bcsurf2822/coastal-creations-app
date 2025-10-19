@@ -212,7 +212,7 @@ export default function NavBar() {
                     Live Artist Events
                   </Link>
                   <Link
-                    href="/events/summer-camps"
+                    href="/events/art-camps"
                     className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
                   >
                     Art Camps
@@ -227,6 +227,15 @@ export default function NavBar() {
                 className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold uppercase"
               >
                 Calendar
+              </Link>
+            </motion.div>
+
+            <motion.div variants={itemVariants} whileHover="hover">
+              <Link
+                href="/reservations"
+                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold uppercase"
+              >
+                Reservations
               </Link>
             </motion.div>
           </motion.nav>
@@ -438,7 +447,7 @@ export default function NavBar() {
                         </motion.div>
                         <motion.div variants={itemVariants} className="py-1">
                           <Link
-                            href="/events/summer-camps"
+                            href="/events/art-camps"
                             className="text-[#0f172a] hover:text-[#0369a1] font-normal py-1 block text-sm"
                             onClick={() => {
                               setIsMenuOpen(false);
@@ -463,6 +472,19 @@ export default function NavBar() {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Calendar
+                  </Link>
+                </motion.div>
+                <motion.div
+                  variants={itemVariants}
+                  whileHover="hover"
+                  className="border-b border-gray-100 pb-2"
+                >
+                  <Link
+                    href="/reservations"
+                    className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block uppercase"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Reservations
                   </Link>
                 </motion.div>
                 <motion.div variants={itemVariants} whileHover="hover">

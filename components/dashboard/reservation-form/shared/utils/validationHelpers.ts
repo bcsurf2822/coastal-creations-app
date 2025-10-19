@@ -58,18 +58,40 @@ export const validateReservationForm = (formData: ReservationFormState): Reserva
     });
   }
 
-  // Time validation
-  if (!formData.startTime) {
-    errors.startTime = "Start time is required";
-  }
+  // Time validation - depends on timeType
+  if (formData.timeType === "same") {
+    // Validate same time for all days
+    if (!formData.startTime) {
+      errors.startTime = "Start time is required";
+    }
 
-  if (!formData.endTime) {
-    errors.endTime = "End time is required";
-  }
+    if (!formData.endTime) {
+      errors.endTime = "End time is required";
+    }
 
-  if (formData.startTime && formData.endTime) {
-    if (formData.endTime.isSameOrBefore(formData.startTime)) {
-      errors.endTime = "End time must be after start time";
+    if (formData.startTime && formData.endTime) {
+      if (formData.endTime.isSameOrBefore(formData.startTime)) {
+        errors.endTime = "End time must be after start time";
+      }
+    }
+  } else if (formData.timeType === "custom") {
+    // Validate custom times for each day
+    if (formData.customTimes.length === 0) {
+      errors.customTimes = "Please set start and end dates to configure custom times";
+    } else {
+      formData.customTimes.forEach((dayTime, index) => {
+        if (!dayTime.startTime) {
+          errors[`customTimes.${index}.startTime`] = "Start time is required for all days";
+        }
+        if (!dayTime.endTime) {
+          errors[`customTimes.${index}.endTime`] = "End time is required for all days";
+        }
+        if (dayTime.startTime && dayTime.endTime) {
+          if (dayTime.endTime.isSameOrBefore(dayTime.startTime)) {
+            errors[`customTimes.${index}.endTime`] = "End time must be after start time";
+          }
+        }
+      });
     }
   }
 

@@ -3,6 +3,7 @@ import { connectMongo } from "@/lib/mongoose";
 import Customer from "@/lib/models/Customer";
 import Event from "@/lib/models/Event";
 import PrivateEvent from "@/lib/models/PrivateEvent";
+import Reservation from "@/lib/models/Reservations";
 import mongoose from "mongoose";
 
 export async function POST(request: NextRequest) {
@@ -18,6 +19,7 @@ export async function POST(request: NextRequest) {
       isSigningUpForSelf,
       participants,
       selectedOptions,
+      selectedDates,
       billingInfo,
       squarePaymentId,
       squareCustomerId,
@@ -27,6 +29,175 @@ export async function POST(request: NextRequest) {
       `[CUSTOMER-API-POST] Received eventType: ${eventType}, eventId: ${eventId}, total: ${total}`
     );
 
+    // Handle Reservation eventType
+    if (eventType === "Reservation") {
+      console.log("[CUSTOMER-API-POST] Processing Reservation booking");
+
+      // 1. Validate reservation exists
+      const reservation = await Reservation.findById(eventId);
+      if (!reservation) {
+        console.error("[CUSTOMER-API-POST] Reservation not found:", eventId);
+        return NextResponse.json(
+          { error: "Reservation not found" },
+          { status: 404 }
+        );
+      }
+
+      // 2. Validate selectedDates provided
+      if (
+        !selectedDates ||
+        !Array.isArray(selectedDates) ||
+        selectedDates.length === 0
+      ) {
+        console.error(
+          "[CUSTOMER-API-POST] selectedDates is required for Reservation"
+        );
+        return NextResponse.json(
+          { error: "selectedDates is required for reservation bookings" },
+          { status: 400 }
+        );
+      }
+
+      console.log(
+        "[CUSTOMER-API-POST] Validating availability for",
+        selectedDates.length,
+        "dates"
+      );
+
+      // 3. Validate availability for each selected date
+      for (const selectedDate of selectedDates) {
+        const dailyAvail = reservation.dailyAvailability.find(
+          (day: {
+            date: Date;
+            maxParticipants: number;
+            currentBookings: number;
+          }) =>
+            new Date(day.date).toISOString().split("T")[0] ===
+            new Date(selectedDate.date).toISOString().split("T")[0]
+        );
+
+        if (!dailyAvail) {
+          console.error(
+            "[CUSTOMER-API-POST] Date not available:",
+            selectedDate.date
+          );
+          return NextResponse.json(
+            { error: `Date ${selectedDate.date} is not available` },
+            { status: 400 }
+          );
+        }
+
+        const availableSpots =
+          dailyAvail.maxParticipants - dailyAvail.currentBookings;
+        if (selectedDate.numberOfParticipants > availableSpots) {
+          console.error(
+            `[CUSTOMER-API-POST] Not enough spots on ${selectedDate.date}. Requested: ${selectedDate.numberOfParticipants}, Available: ${availableSpots}`
+          );
+          return NextResponse.json(
+            {
+              error: `Not enough spots available on ${selectedDate.date}. Only ${availableSpots} spots left.`,
+            },
+            { status: 400 }
+          );
+        }
+      }
+
+      console.log(
+        "[CUSTOMER-API-POST] Availability validated, creating customer booking"
+      );
+
+      // 4. Create customer booking
+      const customer = new Customer({
+        event: eventId,
+        eventType,
+        selectedDates,
+        quantity,
+        total,
+        isSigningUpForSelf,
+        participants: participants || [],
+        selectedOptions: selectedOptions || [],
+        billingInfo,
+        squarePaymentId,
+        squareCustomerId,
+        refundStatus: "none",
+      });
+
+      const savedCustomer = await customer.save();
+      console.log("[CUSTOMER-API-POST] Customer created:", savedCustomer._id);
+
+      // 5. Update availability atomically for each date
+      console.log(
+        "[CUSTOMER-API-POST] Updating availability for",
+        selectedDates.length,
+        "dates"
+      );
+      for (const selectedDate of selectedDates) {
+        // Normalize both dates to YYYY-MM-DD for comparison
+        const selectedDateStr = new Date(selectedDate.date)
+          .toISOString()
+          .split("T")[0];
+        console.log(
+          `[CUSTOMER-API-POST] Looking for date: ${selectedDateStr} in dailyAvailability`
+        );
+
+        // Find the reservation to get the exact date object from dailyAvailability
+        const reservation = await Reservation.findById(eventId);
+        const matchingDay = reservation?.dailyAvailability.find(
+          (day: { date: Date }) => {
+            const dayDateStr = new Date(day.date).toISOString().split("T")[0];
+            return dayDateStr === selectedDateStr;
+          }
+        );
+
+        if (!matchingDay) {
+          console.error(
+            `[CUSTOMER-API-POST] Could not find matching date in dailyAvailability for ${selectedDateStr}`
+          );
+          continue;
+        }
+
+        // Use the exact date object from dailyAvailability for the update
+        const updateResult = await Reservation.findOneAndUpdate(
+          {
+            _id: eventId,
+            "dailyAvailability.date": matchingDay.date,
+          },
+          {
+            $inc: {
+              "dailyAvailability.$.currentBookings":
+                selectedDate.numberOfParticipants,
+            },
+          },
+          { new: true }
+        );
+
+        if (!updateResult) {
+          console.error(
+            "[CUSTOMER-API-POST] Failed to update availability for date:",
+            selectedDate.date
+          );
+        } else {
+          console.log(
+            `[CUSTOMER-API-POST] Updated availability for ${selectedDateStr}: +${selectedDate.numberOfParticipants} bookings`
+          );
+        }
+      }
+
+      console.log(
+        "[CUSTOMER-API-POST] Reservation booking completed successfully"
+      );
+
+      return NextResponse.json(
+        {
+          success: true,
+          message: "Reservation booking successful",
+          data: savedCustomer,
+        },
+        { status: 201 }
+      );
+    }
+
+    // Handle Event and PrivateEvent eventTypes (existing logic)
     let event;
     if (eventType === "PrivateEvent") {
       event = await PrivateEvent.findById(eventId);
@@ -75,7 +246,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error registering customer:", error);
+    console.error("[CUSTOMER-API-POST] Error registering customer:", error);
 
     if (error instanceof mongoose.Error.ValidationError) {
       const validationErrors: Record<string, string> = {};

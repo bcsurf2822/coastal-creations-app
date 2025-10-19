@@ -33,6 +33,12 @@ export default function Sidebar() {
       activeIcon: <RiHome4Fill className="w-5 h-5" />,
     },
     {
+      path: "/admin/dashboard/reservations",
+      label: "Reservations",
+      icon: <RiCalendarEventLine className="w-5 h-5" />,
+      activeIcon: <RiCalendarEventFill className="w-5 h-5" />,
+    },
+    {
       path: "/admin/dashboard/private-offerings",
       label: "Private Offerings",
       icon: <RiBookletLine className="w-5 h-5" />,

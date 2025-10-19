@@ -19,8 +19,9 @@ export interface IReservation extends Document {
     endDate?: Date;
     excludeDates?: Date[];
   };
+  timeType: "same" | "custom";
   time: {
-    startTime: string;
+    startTime?: string;
     endTime?: string;
   };
   dailyAvailability: Array<{
@@ -28,6 +29,8 @@ export interface IReservation extends Document {
     maxParticipants: number;
     currentBookings: number;
     isAvailable: boolean;
+    startTime?: string;
+    endTime?: string;
   }>;
   options?: Array<{
     categoryName: string;
@@ -113,15 +116,24 @@ const DailyAvailabilitySchema = new Schema({
     type: Boolean,
     default: true,
   },
+  startTime: {
+    type: String,
+    required: false,
+  },
+  endTime: {
+    type: String,
+    required: false,
+  },
 });
 
 const ReservationTimeSchema = new Schema({
   startTime: {
     type: String,
-    required: true,
+    required: false,
   },
   endTime: {
     type: String,
+    required: false,
   },
 });
 
@@ -206,6 +218,12 @@ const ReservationSchema = new Schema<IReservation>(
       type: ReservationDatesSchema,
       required: true,
     },
+    timeType: {
+      type: String,
+      enum: ["same", "custom"],
+      default: "same",
+      required: true,
+    },
     time: {
       type: ReservationTimeSchema,
       required: true,
@@ -234,6 +252,24 @@ const ReservationSchema = new Schema<IReservation>(
 
 ReservationSchema.index({ "dates.startDate": 1, eventType: 1 });
 ReservationSchema.index({ "dailyAvailability.date": 1, "dailyAvailability.isAvailable": 1 });
+
+// Pre-save validation for time fields based on timeType
+ReservationSchema.pre("save", function (next) {
+  if (this.timeType === "same") {
+    if (!this.time.startTime) {
+      return next(new Error("Start time is required when using same time for all days"));
+    }
+  } else if (this.timeType === "custom") {
+    // When using custom times, ensure dailyAvailability has times set
+    const missingTimes = this.dailyAvailability.some(
+      (day) => !day.startTime || !day.endTime
+    );
+    if (missingTimes) {
+      return next(new Error("All days must have start and end times when using custom times"));
+    }
+  }
+  next();
+});
 
 ReservationSchema.statics.testConnection = function () {
   return this.findOne().limit(1);

@@ -14,6 +14,12 @@ export interface ReservationDiscount {
   description?: string;
 }
 
+export interface DayCustomTime {
+  date: string;
+  startTime: Dayjs | null;
+  endTime: Dayjs | null;
+}
+
 export interface ReservationFormState {
   eventName: string;
   eventType: "reservation";
@@ -22,8 +28,10 @@ export interface ReservationFormState {
   maxParticipantsPerDay: number;
   startDate: string;
   endDate?: string;
+  timeType: "same" | "custom";
   startTime: Dayjs | null;
   endTime: Dayjs | null;
+  customTimes: DayCustomTime[];
   excludeDates: string[];
   hasOptions: boolean;
   optionCategories: ReservationOptionCategory[];
@@ -51,6 +59,11 @@ export interface ReservationFormActions {
   handleTimeChange: (
     event: React.ChangeEvent<HTMLSelectElement>,
     field: "startTime" | "endTime"
+  ) => void;
+  handleCustomTimeChange: (
+    dayIndex: number,
+    field: "startTime" | "endTime",
+    event: React.ChangeEvent<HTMLSelectElement>
   ) => void;
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   addOptionCategory: () => void;

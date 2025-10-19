@@ -10,12 +10,20 @@ dayjs.extend(timezone);
 
 const LOCAL_TIMEZONE = "America/New_York";
 
+interface CustomTime {
+  date: string;
+  startTime: string;
+  endTime: string;
+}
+
 function generateDailyAvailability(
   startDate: Date,
   endDate: Date,
   excludeDates: Date[] = [],
   maxParticipantsPerDay: number,
-  existingAvailability: { date: Date; currentBookings: number; isAvailable: boolean }[] = []
+  existingAvailability: { date: Date; currentBookings: number; isAvailable: boolean; startTime?: string; endTime?: string }[] = [],
+  timeType: "same" | "custom" = "same",
+  customTimes?: CustomTime[]
 ) {
   const dailyAvailability = [];
   const start = dayjs(startDate).tz(LOCAL_TIMEZONE);
@@ -30,8 +38,18 @@ function generateDailyAvailability(
     existingBookings.set(dateKey, {
       currentBookings: avail.currentBookings || 0,
       isAvailable: avail.isAvailable !== false,
+      startTime: avail.startTime,
+      endTime: avail.endTime,
     });
   });
+
+  // Create a map of custom times by date for quick lookup
+  const customTimesMap = new Map<string, CustomTime>();
+  if (timeType === "custom" && customTimes) {
+    customTimes.forEach(ct => {
+      customTimesMap.set(ct.date, ct);
+    });
+  }
 
   let currentDate = start;
   while (currentDate.isBefore(end.add(1, 'day'))) {
@@ -40,12 +58,30 @@ function generateDailyAvailability(
     if (!excludeSet.has(dateStr)) {
       const existing = existingBookings.get(dateStr);
 
-      dailyAvailability.push({
+      const dayEntry: {
+        date: Date;
+        maxParticipants: number;
+        currentBookings: number;
+        isAvailable: boolean;
+        startTime?: string;
+        endTime?: string;
+      } = {
         date: currentDate.toDate(),
         maxParticipants: maxParticipantsPerDay,
         currentBookings: existing?.currentBookings || 0,
         isAvailable: existing?.isAvailable !== false,
-      });
+      };
+
+      // Add custom times if this day has them
+      if (timeType === "custom") {
+        const customTime = customTimesMap.get(dateStr);
+        if (customTime) {
+          dayEntry.startTime = customTime.startTime;
+          dayEntry.endTime = customTime.endTime;
+        }
+      }
+
+      dailyAvailability.push(dayEntry);
     }
 
     currentDate = currentDate.add(1, 'day');
@@ -135,12 +171,17 @@ export async function PUT(
           ? existingReservation.dailyAvailability[0].maxParticipants
           : 10);
 
+      const timeType = data.timeType || existingReservation.timeType || "same";
+      const customTimes = data.customTimes || undefined;
+
       const newDailyAvailability = generateDailyAvailability(
         startDate,
         endDate,
         excludeDates,
         maxParticipantsPerDay,
-        existingReservation.dailyAvailability
+        existingReservation.dailyAvailability,
+        timeType,
+        customTimes
       );
 
       updateData = {
@@ -150,6 +191,7 @@ export async function PUT(
           endDate: data.dates.endDate ? endDate : undefined,
           excludeDates: excludeDates.length > 0 ? excludeDates : undefined,
         },
+        timeType,
         dailyAvailability: newDailyAvailability,
       };
 

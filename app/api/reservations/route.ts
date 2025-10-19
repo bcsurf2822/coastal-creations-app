@@ -12,11 +12,19 @@ dayjs.extend(isSameOrBefore);
 
 const LOCAL_TIMEZONE = "America/New_York";
 
+interface CustomTime {
+  date: string;
+  startTime: string;
+  endTime: string;
+}
+
 function generateDailyAvailability(
   startDate: Date,
   endDate: Date,
   excludeDates: Date[] = [],
-  maxParticipantsPerDay: number
+  maxParticipantsPerDay: number,
+  timeType: "same" | "custom" = "same",
+  customTimes?: CustomTime[]
 ) {
   const dailyAvailability = [];
   const start = dayjs(startDate).tz(LOCAL_TIMEZONE);
@@ -25,17 +33,43 @@ function generateDailyAvailability(
     excludeDates.map(date => dayjs(date).tz(LOCAL_TIMEZONE).format('YYYY-MM-DD'))
   );
 
+  // Create a map of custom times by date for quick lookup
+  const customTimesMap = new Map<string, CustomTime>();
+  if (timeType === "custom" && customTimes) {
+    customTimes.forEach(ct => {
+      customTimesMap.set(ct.date, ct);
+    });
+  }
+
   let currentDate = start;
   while (currentDate.isSameOrBefore(end, 'day')) {
     const dateStr = currentDate.format('YYYY-MM-DD');
 
     if (!excludeSet.has(dateStr)) {
-      dailyAvailability.push({
+      const dayEntry: {
+        date: Date;
+        maxParticipants: number;
+        currentBookings: number;
+        isAvailable: boolean;
+        startTime?: string;
+        endTime?: string;
+      } = {
         date: currentDate.toDate(),
         maxParticipants: maxParticipantsPerDay,
         currentBookings: 0,
         isAvailable: true,
-      });
+      };
+
+      // Add custom times if this day has them
+      if (timeType === "custom") {
+        const customTime = customTimesMap.get(dateStr);
+        if (customTime) {
+          dayEntry.startTime = customTime.startTime;
+          dayEntry.endTime = customTime.endTime;
+        }
+      }
+
+      dailyAvailability.push(dayEntry);
     }
 
     currentDate = currentDate.add(1, 'day');
@@ -101,7 +135,9 @@ export async function POST(request: Request) {
       startDate,
       endDate,
       excludeDates,
-      data.maxParticipantsPerDay
+      data.maxParticipantsPerDay,
+      data.timeType || "same",
+      data.customTimes
     );
 
     const reservationData = {
@@ -114,6 +150,7 @@ export async function POST(request: Request) {
         endDate: data.dates.endDate ? endDate : undefined,
         excludeDates: excludeDates.length > 0 ? excludeDates : undefined,
       },
+      timeType: data.timeType || "same",
       time: data.time,
       dailyAvailability,
       options: data.options,

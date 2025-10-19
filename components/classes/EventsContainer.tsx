@@ -39,6 +39,7 @@ interface PageConfig {
   loadingMessage?: string;
   fetchParticipantCounts?: boolean;
   useEventPictures?: boolean;
+  baseUrl?: string;
 }
 
 export interface EventsContainerProps {
@@ -269,6 +270,7 @@ const EventsContainer: React.FC<EventsContainerProps> = ({ config }) => {
           imageUrl={imageUrl}
           currentParticipants={eventParticipantCounts[event._id] || 0}
           config={config.cardConfig}
+          baseUrl={config.baseUrl}
         />
       );
     });

@@ -1,11 +1,16 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
 import { IEvent } from "./Event";
 import { IPrivateEvent } from "./PrivateEvent";
+import { IReservation } from "./Reservations";
 
 export interface ICustomer extends Document {
   _id: string;
-  event: IEvent | IPrivateEvent | string;
-  eventType: "Event" | "PrivateEvent";
+  event: IEvent | IPrivateEvent | IReservation | string;
+  eventType: "Event" | "PrivateEvent" | "Reservation";
+  selectedDates?: Array<{
+    date: Date;
+    numberOfParticipants: number;
+  }>;
   quantity: number;
   total: number;
   isSigningUpForSelf: boolean;
@@ -149,9 +154,19 @@ const CustomerSchema = new Schema<ICustomer>(
     },
     eventType: {
       type: String,
-      enum: ["Event", "PrivateEvent"],
+      enum: ["Event", "PrivateEvent", "Reservation"],
       required: true,
       default: "Event",
+    },
+    selectedDates: {
+      type: [
+        {
+          date: { type: Date, required: true },
+          numberOfParticipants: { type: Number, required: true, min: 1 },
+        },
+      ],
+      required: false,
+      _id: false,
     },
     quantity: {
       type: Number,
@@ -221,30 +236,57 @@ CustomerSchema.pre("save", async function (next) {
 
   if (shouldCalculateTotal) {
     try {
-      let event: IEvent | IPrivateEvent;
-
-      if (typeof this.event !== "string") {
-        event = this.event;
-      } else {
-        const ModelToUse =
-          this.eventType === "PrivateEvent"
-            ? mongoose.model("PrivateEvent")
-            : mongoose.model("Event");
-
-        const foundEvent = await ModelToUse.findById(this.event);
-        if (!foundEvent) {
-          next(
-            new Error(
-              `${this.eventType === "PrivateEvent" ? "Private event" : "Event"} not found`
-            )
-          );
+      if (this.eventType === "Reservation") {
+        // Handle Reservation pricing logic
+        const Reservation = mongoose.model("Reservation");
+        const reservation = await Reservation.findById(this.event);
+        if (!reservation) {
+          next(new Error("Reservation not found"));
           return;
         }
-        event = foundEvent as IEvent | IPrivateEvent;
-      }
 
-      const eventPrice = event.price || 0;
-      this.total = this.quantity * eventPrice;
+        if (!this.selectedDates || this.selectedDates.length === 0) {
+          next(new Error("selectedDates is required for Reservation eventType"));
+          return;
+        }
+
+        // Calculate total participants across all selected dates
+        const totalParticipants = this.selectedDates.reduce(
+          (sum: number, day: { date: Date; numberOfParticipants: number }) =>
+            sum + day.numberOfParticipants,
+          0
+        );
+
+        // Total = participants × price per day per participant
+        this.total = totalParticipants * reservation.pricePerDayPerParticipant;
+        this.quantity = totalParticipants;
+      } else {
+        // Handle Event and PrivateEvent pricing logic
+        let event: IEvent | IPrivateEvent | IReservation;
+
+        if (typeof this.event !== "string") {
+          event = this.event;
+        } else {
+          const ModelToUse =
+            this.eventType === "PrivateEvent"
+              ? mongoose.model("PrivateEvent")
+              : mongoose.model("Event");
+
+          const foundEvent = await ModelToUse.findById(this.event);
+          if (!foundEvent) {
+            next(
+              new Error(
+                `${this.eventType === "PrivateEvent" ? "Private event" : "Event"} not found`
+              )
+            );
+            return;
+          }
+          event = foundEvent as IEvent | IPrivateEvent | IReservation;
+        }
+
+        const eventPrice = (event as IEvent | IPrivateEvent).price || 0;
+        this.total = this.quantity * eventPrice;
+      }
     } catch (error) {
       next(error as Error);
       return;
