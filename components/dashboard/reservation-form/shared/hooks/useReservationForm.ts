@@ -19,8 +19,10 @@ const getInitialFormState = (): ReservationFormState => ({
   maxParticipantsPerDay: 0,
   startDate: "",
   endDate: undefined,
+  timeType: "same",
   startTime: null,
   endTime: null,
+  customTimes: [],
   excludeDates: [],
   hasOptions: false,
   optionCategories: [],
@@ -115,6 +117,34 @@ export const useReservationForm = ({
       }
     },
     [handleInputChange]
+  );
+
+  const handleCustomTimeChange = useCallback(
+    (
+      dayIndex: number,
+      field: "startTime" | "endTime",
+      event: React.ChangeEvent<HTMLSelectElement>
+    ) => {
+      const value = event.target.value;
+      const newCustomTimes = [...formData.customTimes];
+
+      if (value) {
+        const [hours, minutes] = value.split(":");
+        const timeObj = dayjs().hour(parseInt(hours)).minute(parseInt(minutes));
+        newCustomTimes[dayIndex] = {
+          ...newCustomTimes[dayIndex],
+          [field]: timeObj,
+        };
+      } else {
+        newCustomTimes[dayIndex] = {
+          ...newCustomTimes[dayIndex],
+          [field]: null,
+        };
+      }
+
+      handleInputChange("customTimes", newCustomTimes);
+    },
+    [formData.customTimes, handleInputChange]
   );
 
   const handleFileChange = useCallback(
@@ -220,10 +250,18 @@ export const useReservationForm = ({
           ? formData.excludeDates.map(prepareDateForSubmit)
           : undefined,
       },
+      timeType: formData.timeType,
       time: {
         startTime: formData.startTime?.format("HH:mm") || "",
         endTime: formData.endTime?.format("HH:mm") || "",
       },
+      customTimes: formData.timeType === "custom"
+        ? formData.customTimes.map((ct) => ({
+            date: ct.date,
+            startTime: ct.startTime?.format("HH:mm") || "",
+            endTime: ct.endTime?.format("HH:mm") || "",
+          }))
+        : undefined,
       options: formData.hasOptions && formData.optionCategories.length > 0
         ? formData.optionCategories
         : undefined,
@@ -299,6 +337,7 @@ export const useReservationForm = ({
     handleInputChange,
     handleNestedChange,
     handleTimeChange,
+    handleCustomTimeChange,
     handleFileChange,
     addOptionCategory,
     removeOptionCategory,

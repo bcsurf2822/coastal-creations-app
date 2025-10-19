@@ -19,6 +19,7 @@ export interface IReservation extends Document {
     endDate?: Date;
     excludeDates?: Date[];
   };
+  timeType: "same" | "custom";
   time: {
     startTime: string;
     endTime?: string;
@@ -28,6 +29,8 @@ export interface IReservation extends Document {
     maxParticipants: number;
     currentBookings: number;
     isAvailable: boolean;
+    startTime?: string;
+    endTime?: string;
   }>;
   options?: Array<{
     categoryName: string;
@@ -112,6 +115,14 @@ const DailyAvailabilitySchema = new Schema({
   isAvailable: {
     type: Boolean,
     default: true,
+  },
+  startTime: {
+    type: String,
+    required: false,
+  },
+  endTime: {
+    type: String,
+    required: false,
   },
 });
 
@@ -204,6 +215,12 @@ const ReservationSchema = new Schema<IReservation>(
     },
     dates: {
       type: ReservationDatesSchema,
+      required: true,
+    },
+    timeType: {
+      type: String,
+      enum: ["same", "custom"],
+      default: "same",
       required: true,
     },
     time: {
