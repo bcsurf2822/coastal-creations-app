@@ -114,8 +114,7 @@ const ReservationPricingFields = ({
             <div className="mt-2 text-sm text-blue-700">
               <p>
                 Customers will pay the daily rate multiplied by the number of
-                days they select. You can offer discounts for booking multiple
-                days in the discount section below.
+                days they select.
               </p>
             </div>
           </div>
