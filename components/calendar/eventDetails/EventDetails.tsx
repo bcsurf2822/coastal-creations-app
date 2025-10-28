@@ -644,26 +644,28 @@ export default function EventDetails({
                   </InfoSection>
                 )}
 
-                {/* Price Display */}
-                {eventData.price !== undefined && (
+                {/* Price Display - Don't show for artist events */}
+                {eventData.price !== undefined && eventData.eventType !== "artist" && (
                   <PriceDisplay>${eventData.price}</PriceDisplay>
                 )}
 
-                {/* Registration Button */}
-                <div style={{ textAlign: "center", marginTop: "1.5rem" }}>
-                  <Link
-                    href={`/payments?eventId=${encodeURIComponent(
-                      eventData._id
-                    )}&eventTitle=${encodeURIComponent(eventData.eventName)}${
-                      eventData.price !== undefined
-                        ? `&price=${encodeURIComponent(eventData.price)}`
-                        : ""
-                    }`}
-                    style={{ textDecoration: "none" }}
-                  >
-                    <RegisterButton>Register for this Event</RegisterButton>
-                  </Link>
-                </div>
+                {/* Registration Button - Don't show for artist events */}
+                {eventData.eventType !== "artist" && (
+                  <div style={{ textAlign: "center", marginTop: "1.5rem" }}>
+                    <Link
+                      href={`/payments?eventId=${encodeURIComponent(
+                        eventData._id
+                      )}&eventTitle=${encodeURIComponent(eventData.eventName)}${
+                        eventData.price !== undefined
+                          ? `&price=${encodeURIComponent(eventData.price)}`
+                          : ""
+                      }`}
+                      style={{ textDecoration: "none" }}
+                    >
+                      <RegisterButton>Register for this Event</RegisterButton>
+                    </Link>
+                  </div>
+                )}
               </MainContent>
 
               {/* Image Section */}

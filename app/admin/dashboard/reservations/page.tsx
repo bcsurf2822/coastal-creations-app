@@ -13,6 +13,7 @@ import {
   RiDeleteBinLine,
   RiSearchLine,
 } from "react-icons/ri";
+import AddButton from "@/components/dashboard/shared/AddButton";
 
 interface ReservationApiData {
   _id: string;
@@ -268,12 +269,10 @@ export default function ReservationsPage(): ReactElement {
             Manage all reservation offerings
           </p>
         </div>
-        <Link
+        <AddButton
           href="/admin/dashboard/add-reservation"
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-        >
-          Add Reservation
-        </Link>
+          label="Add Reservation"
+        />
       </div>
 
       {/* Search Bar */}

@@ -28,7 +28,7 @@ export default function Sidebar() {
   const navItems: NavItem[] = [
     {
       path: "/admin/dashboard",
-      label: "Events Dashboard",
+      label: "Classes | Camps | Events",
       icon: <RiHome4Line className="w-5 h-5" />,
       activeIcon: <RiHome4Fill className="w-5 h-5" />,
     },

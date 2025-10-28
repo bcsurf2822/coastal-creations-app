@@ -17,7 +17,7 @@ export interface EventDiscount {
 
 export interface EventFormState {
   eventName: string;
-  eventType: "class" | "camp" | "workshop" | "artist";
+  eventType: "adult-class" | "kid-class" | "event" | "camp" | "artist";
   description: string;
   price?: number;
   numberOfParticipants?: number;

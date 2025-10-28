@@ -8,13 +8,13 @@ import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import { client } from "@/sanity/client";
 import { DashboardPrivateEvent } from "@/types/interfaces";
 import {
-  RiAddLine,
   RiEdit2Line,
   RiDeleteBinLine,
   RiSearchLine,
   RiEyeLine,
   RiUserLine,
 } from "react-icons/ri";
+import AddButton from "@/components/dashboard/shared/AddButton";
 
 const { projectId, dataset } = client.config();
 const urlFor = (source: SanityImageSource) =>
@@ -153,13 +153,10 @@ const PrivateOfferings = (): ReactElement => {
                 Private Event Offerings
               </h1>
             </div>
-            <Link
+            <AddButton
               href="/admin/dashboard/add-private-event"
-              className="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
-            >
-              <RiAddLine className="w-4 h-4 mr-2" />
-              Add Private Event
-            </Link>
+              label="Add Private Event"
+            />
           </div>
         </div>
 
@@ -210,13 +207,10 @@ const PrivateOfferings = (): ReactElement => {
                     : "Get started by creating your first private event offering."}
                 </p>
                 {!searchTerm && (
-                  <Link
+                  <AddButton
                     href="/admin/dashboard/add-private-event"
-                    className="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
-                  >
-                    <RiAddLine className="w-4 h-4 mr-2" />
-                    Create First Private Event
-                  </Link>
+                    label="Create First Private Event"
+                  />
                 )}
               </div>
             ) : (

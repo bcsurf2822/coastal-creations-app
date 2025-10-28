@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { EB_Garamond } from "next/font/google";
+import { createEventSlug } from "@/lib/utils/slugify";
 
 const ebGaramond = EB_Garamond({
   subsets: ["latin"],
@@ -322,7 +323,7 @@ export default function Calendar() {
                                       </div>
                                     ) : (
                                       <Link
-                                        href={`/calendar/${event._id}`}
+                                        href={`/calendar/${createEventSlug(event.eventName, event._id)}`}
                                         className={`${ebGaramond.className} text-xs font-bold px-3 py-1.5 bg-blue-500 text-white rounded-md shadow-sm hover:bg-blue-600 transition-all duration-300 transform hover:-translate-y-0.5`}
                                       >
                                         Sign Up

@@ -4,20 +4,20 @@ import EventsContainer from "@/components/classes/EventsContainer";
 import { FaPalette, FaUsers } from "react-icons/fa";
 import { GiPaintBrush } from "react-icons/gi";
 
-export default function AllEventsPage() {
+export default function AdultClassesPage() {
   return (
     <EventsContainer
       config={{
-        title: "All Events",
+        title: "Adult Classes",
         titleIcons: {
           left: <FaPalette />,
           right: <GiPaintBrush />,
         },
-        subtitle: "Browse all our classes, workshops, events, and camps.\nFind your perfect creative experience!",
-        sectionTitle: "All Upcoming Events",
-        eventTypeFilter: () => {
-          // Show all events regardless of type
-          return true;
+        subtitle: "Unleash your creativity with our adult art classes.\nNo experience necessary — just bring your passion!",
+        sectionTitle: "Upcoming Adult Classes",
+        eventTypeFilter: (eventType) => {
+          // Only show events explicitly marked as "adult-class"
+          return eventType === "adult-class";
         },
         layout: "list",
         cardConfig: {
@@ -27,15 +27,15 @@ export default function AllEventsPage() {
           showParticipantCount: true,
           showOptions: true,
           showImage: true,
-          buttonText: "Register",
+          buttonText: "Sign Up for Class",
         },
-        emptyStateMessage: "No events currently scheduled.",
+        emptyStateMessage: "No adult classes currently scheduled.",
         emptyStateSubmessage: "Check back soon for new creative opportunities!",
         emptyStateIcon: <FaUsers style={{ color: "black" }} />,
-        loadingMessage: "Loading all events...",
+        loadingMessage: "Loading adult classes...",
         fetchParticipantCounts: true,
         useEventPictures: true,
-        baseUrl: "/events/classes-workshops",
+        baseUrl: "/events/adult-classes",
       }}
     />
   );

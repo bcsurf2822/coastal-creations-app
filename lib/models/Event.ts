@@ -12,7 +12,7 @@ const LOCAL_TIMEZONE = "America/New_York";
 export interface IEvent extends Document {
   _id: string;
   eventName: string;
-  eventType: "class" | "camp" | "workshop" | "artist";
+  eventType: "adult-class" | "kid-class" | "event" | "camp" | "artist" | "class" | "workshop"; // Temporarily allow old values
   description: string;
   price?: number;
   numberOfParticipants?: number;
@@ -186,7 +186,7 @@ const EventSchema = new Schema<IEvent>(
     eventType: {
       type: String,
       required: true,
-      enum: ["class", "camp", "workshop", "artist"],
+      enum: ["adult-class", "kid-class", "event", "camp", "artist", "class", "workshop"], // Temporarily allow old values for migration
     },
     description: {
       type: String,
