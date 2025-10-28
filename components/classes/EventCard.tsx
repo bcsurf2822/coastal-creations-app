@@ -8,6 +8,7 @@ import { motion } from "motion/react";
 import Image from "next/image";
 import { FaCalendarAlt, FaClock, FaUsers, FaInstagram } from "react-icons/fa";
 import { IconType } from "react-icons";
+import { createEventSlug } from "@/lib/utils/slugify";
 
 // Event interfaces
 interface EventOption {
@@ -427,6 +428,15 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
     buttonText = "Sign Up for Class",
   } = config;
 
+  // Check if this is an artist event
+  const isArtistEvent = event.eventType === "artist";
+
+  // Override button text for artist events
+  const finalButtonText = isArtistEvent ? "Get More Information" : buttonText;
+
+  // Override baseUrl for artist events
+  const finalBaseUrl = isArtistEvent ? "/events/live-artist" : baseUrl;
+
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
@@ -501,7 +511,7 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
             {badge.icon && <badge.icon />}
             {badge.text}
           </Badge>
-        ) : showPrice && event.price !== undefined ? (
+        ) : showPrice && event.price !== undefined && !isArtistEvent ? (
           <PriceTag>
             {discountActive ? (
               <>
@@ -648,10 +658,10 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
               </div>
             ) : (
               <Link
-                href={`${baseUrl}/${event._id}`}
+                href={`${finalBaseUrl}/${createEventSlug(event.eventName, event._id)}`}
                 style={{ textDecoration: "none", alignSelf: "flex-start" }}
               >
-                <ActionButton>{buttonText}</ActionButton>
+                <ActionButton>{finalButtonText}</ActionButton>
               </Link>
             ))}
         </CardContent>

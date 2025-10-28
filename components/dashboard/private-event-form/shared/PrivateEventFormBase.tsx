@@ -36,14 +36,12 @@ const PrivateEventFormBase = ({
     <div className="max-w-4xl mx-auto bg-white shadow-sm rounded-lg">
       <div className="px-6 py-4 border-b border-gray-200">
         <h2 className="text-2xl font-semibold text-gray-900">
-          {mode === "add"
-            ? "Create Private Event Offering"
-            : "Edit Private Event Offering"}
+          {mode === "add" ? "Create Private Event" : "Edit Private Event"}
         </h2>
         <p className="mt-1 text-sm text-gray-600">
           {mode === "add"
-            ? "Create a new private event offering."
-            : "Update the details for this private event offering."}
+            ? "Create a new private event."
+            : "Update the details for this private event."}
         </p>
       </div>
 

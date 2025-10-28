@@ -238,7 +238,7 @@ export default function Offerings() {
                     <div className="flex justify-end">
                       {nextArtistEvent ? (
                         <Link
-                          href={"/events/live-artist"}
+                          href={"/events/events"}
                           className={`${ebGaramond.className} inline-flex items-center justify-center px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg border-2 border-gray-200 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:bg-gray-300 hover:border-gray-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.25)] transform hover:scale-105 transition-all duration-300`}
                         >
                           <span className="mr-2">View Live Events</span>
@@ -291,7 +291,7 @@ export default function Offerings() {
               </p>
               <div className="mt-auto flex justify-end">
                 <Link
-                  href={"/events/art-camps"}
+                  href={"/events/camps"}
                   className={`${ebGaramond.className} inline-flex items-center justify-center px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg border-2 border-gray-200 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:bg-gray-300 hover:border-gray-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.25)] text-md transform hover:scale-105 transition-all duration-300`}
                 >
                   <span className="mr-2">Upcoming Camps</span>

@@ -4,20 +4,20 @@ import EventsContainer from "@/components/classes/EventsContainer";
 import { FaPalette, FaUsers } from "react-icons/fa";
 import { GiPaintBrush } from "react-icons/gi";
 
-export default function AllEventsPage() {
+export default function EventsPage() {
   return (
     <EventsContainer
       config={{
-        title: "All Events",
+        title: "Events",
         titleIcons: {
           left: <FaPalette />,
           right: <GiPaintBrush />,
         },
-        subtitle: "Browse all our classes, workshops, events, and camps.\nFind your perfect creative experience!",
-        sectionTitle: "All Upcoming Events",
-        eventTypeFilter: () => {
-          // Show all events regardless of type
-          return true;
+        subtitle: "Join us for special art events and workshops.\nExperience creativity in action!",
+        sectionTitle: "Upcoming Events",
+        eventTypeFilter: (eventType) => {
+          // Show both "event" and "artist" event types
+          return eventType === "event" || eventType === "artist";
         },
         layout: "list",
         cardConfig: {
@@ -27,15 +27,15 @@ export default function AllEventsPage() {
           showParticipantCount: true,
           showOptions: true,
           showImage: true,
-          buttonText: "Register",
+          buttonText: "Register for Event",
         },
         emptyStateMessage: "No events currently scheduled.",
-        emptyStateSubmessage: "Check back soon for new creative opportunities!",
+        emptyStateSubmessage: "Check back soon for upcoming special events!",
         emptyStateIcon: <FaUsers style={{ color: "black" }} />,
-        loadingMessage: "Loading all events...",
+        loadingMessage: "Loading events...",
         fetchParticipantCounts: true,
         useEventPictures: true,
-        baseUrl: "/events/classes-workshops",
+        baseUrl: "/events/events",
       }}
     />
   );

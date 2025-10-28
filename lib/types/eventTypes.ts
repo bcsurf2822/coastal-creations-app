@@ -6,7 +6,7 @@
 /**
  * Event type enumeration.
  */
-export type EventType = "class" | "workshop" | "camp" | "artist";
+export type EventType = "adult-class" | "kid-class" | "event" | "camp" | "artist";
 
 /**
  * Recurring pattern enumeration.
@@ -301,7 +301,7 @@ export const validators = {
  */
 export const defaultEventFormValues: Partial<EventFormData> = {
   eventName: "",
-  eventType: "class",
+  eventType: "adult-class",
   description: "",
   price: "",
   numberOfParticipants: "",
@@ -348,15 +348,20 @@ export function getDefaultValuesForEventType(
         hasOptions: false,
         isDiscountAvailable: false,
       };
-    case "class":
+    case "adult-class":
       return {
         ...defaultEventFormValues,
-        eventType: "class" as const,
+        eventType: "adult-class" as const,
       };
-    case "workshop":
+    case "kid-class":
       return {
         ...defaultEventFormValues,
-        eventType: "workshop" as const,
+        eventType: "kid-class" as const,
+      };
+    case "event":
+      return {
+        ...defaultEventFormValues,
+        eventType: "event" as const,
       };
     case "camp":
       return {

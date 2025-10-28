@@ -34,7 +34,7 @@ export default function SummerCampsPage() {
         loadingMessage: "Loading summer adventures...",
         fetchParticipantCounts: true,
         useEventPictures: false,
-        baseUrl: "/events/art-camps",
+        baseUrl: "/events/camps",
       }}
     />
   );

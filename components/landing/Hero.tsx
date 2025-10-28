@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 // import { Abril_Fatface } from "next/font/google";
 import WaveText from "./WaveText";
 import SeaCreatures from "./SeaCreatures";
+import { createEventSlug } from "@/lib/utils/slugify";
 
 interface CalendarEvent {
   _id: string;
@@ -37,9 +38,9 @@ interface CalendarEvent {
 
 export default function Hero() {
   const [showLiveEventPopup, setShowLiveEventPopup] = useState(false);
+  const [upcomingArtistEvent, setUpcomingArtistEvent] = useState<CalendarEvent | null>(null);
 
   useEffect(() => {
-
     // Check for live artist events
     const checkLiveArtistEvents = async () => {
       try {
@@ -64,6 +65,9 @@ export default function Hero() {
 
           // Only show popup if there are live artist events
           if (hasUpcomingEvents) {
+            // Store the first upcoming artist event
+            setUpcomingArtistEvent(upcomingArtistEvents[0]);
+
             // Show the live event popup after 1 second
             const popupTimer = setTimeout(() => {
               setShowLiveEventPopup(true);
@@ -81,18 +85,19 @@ export default function Hero() {
           }
         }
       } catch (err) {
-        console.error("[Hero-checkLiveArtistEvents] Error fetching artist events:", err);
+        console.error(
+          "[Hero-checkLiveArtistEvents] Error fetching artist events:",
+          err
+        );
       }
     };
 
     checkLiveArtistEvents();
   }, []);
 
-
   return (
     <section className="relative -mt-4 md:-mt-6 pb-16 md:pb-20">
-      <div className="absolute inset-0 z-0 bg-white/90 backdrop-blur-sm">
-      </div>
+      <div className="absolute inset-0 z-0 bg-white/90 backdrop-blur-sm"></div>
 
       {/* Live Artist Event Popup */}
       <motion.div
@@ -172,7 +177,7 @@ export default function Hero() {
               Watch creativity unfold in real-time!
             </p>
             <Link
-              href="/events/live-artist"
+              href={upcomingArtistEvent ? `/events/live-artist/${createEventSlug(upcomingArtistEvent.eventName, upcomingArtistEvent._id)}` : "/events/events"}
               className="inline-block bg-white/20 hover:bg-white/30 backdrop-blur-sm px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 hover:scale-105 border border-white/30"
             >
               Learn More →

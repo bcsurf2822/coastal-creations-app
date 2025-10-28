@@ -13,7 +13,7 @@ import { validateEventForm } from "../utils/validationHelpers";
 import { prepareDateForSubmit } from "../utils/dateHelpers";
 
 const getInitialFormState = (
-  eventType: EventFormState["eventType"] = "class"
+  eventType: EventFormState["eventType"] = "adult-class"
 ): EventFormState => ({
   eventName: "",
   eventType,

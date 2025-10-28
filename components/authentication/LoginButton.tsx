@@ -10,7 +10,7 @@ export default function LoginButton() {
       onClick={() => {
         signIn("google", { callbackUrl: dashURL });
       }}
-      className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium rounded-lg shadow-sm transition-all duration-200 hover:shadow"
+      className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium rounded-lg shadow-sm transition-all duration-200 hover:shadow cursor-pointer"
     >
       <FaGoogle className="text-red-500" size={18} />
       <span>Sign In With Google</span>

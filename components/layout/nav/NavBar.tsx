@@ -15,8 +15,6 @@ export default function NavBar() {
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-
-      // Check for MainSection intersection
       const mainSection =
         document.querySelector("main") ||
         document.getElementById("main-section");
@@ -169,10 +167,7 @@ export default function NavBar() {
               whileHover="hover"
               className="relative group"
             >
-              <Link
-                href="/events/classes-workshops"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold uppercase flex items-center gap-1"
-              >
+              <div className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold uppercase flex items-center gap-1 cursor-pointer">
                 Classes
                 <motion.svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -188,34 +183,40 @@ export default function NavBar() {
                 >
                   <polyline points="6,9 12,15 18,9"></polyline>
                 </motion.svg>
-              </Link>
+              </div>
 
               {/* Desktop Dropdown */}
               <div className="absolute top-full left-0 mt-2 w-56 bg-white/95 backdrop-blur-sm border border-gray-100 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
                 <div className="py-2">
                   <Link
+                    href="/events/adult-classes"
+                    className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
+                  >
+                    Adult Classes
+                  </Link>
+                  <Link
+                    href="/events/kid-classes"
+                    className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
+                  >
+                    Kid Classes
+                  </Link>
+                  <Link
+                    href="/events/events"
+                    className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
+                  >
+                    Events
+                  </Link>
+                  <Link
+                    href="/events/camps"
+                    className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
+                  >
+                    Camps
+                  </Link>
+                  <Link
                     href="/events/classes-workshops"
-                    className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
+                    className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium border-t border-gray-100"
                   >
-                    Classes & Workshops
-                  </Link>
-                  <Link
-                    href="/events/private-events"
-                    className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
-                  >
-                    Private Events
-                  </Link>
-                  <Link
-                    href="/events/live-artist"
-                    className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
-                  >
-                    Live Artist Events
-                  </Link>
-                  <Link
-                    href="/events/art-camps"
-                    className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
-                  >
-                    Art Camps
+                    All Events
                   </Link>
                 </div>
               </div>
@@ -232,10 +233,10 @@ export default function NavBar() {
 
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
-                href="/reservations"
+                href="/events/private-events"
                 className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold uppercase"
               >
-                Reservations
+                Private Events
               </Link>
             </motion.div>
           </motion.nav>
@@ -268,6 +269,15 @@ export default function NavBar() {
             initial="hidden"
             animate="visible"
           >
+            <motion.div variants={itemVariants} whileHover="hover">
+              <Link
+                href="/reservations"
+                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold uppercase"
+              >
+                Reservations
+              </Link>
+            </motion.div>
+
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/gallery"
@@ -411,50 +421,65 @@ export default function NavBar() {
                       >
                         <motion.div variants={itemVariants} className="py-1">
                           <Link
+                            href="/events/adult-classes"
+                            className="text-[#0f172a] hover:text-[#0369a1] font-normal py-1 block text-sm"
+                            onClick={() => {
+                              setIsMenuOpen(false);
+                              setIsClassesDropdownOpen(false);
+                            }}
+                          >
+                            Adult Classes
+                          </Link>
+                        </motion.div>
+                        <motion.div variants={itemVariants} className="py-1">
+                          <Link
+                            href="/events/kid-classes"
+                            className="text-[#0f172a] hover:text-[#0369a1] font-normal py-1 block text-sm"
+                            onClick={() => {
+                              setIsMenuOpen(false);
+                              setIsClassesDropdownOpen(false);
+                            }}
+                          >
+                            Kid Classes
+                          </Link>
+                        </motion.div>
+                        <motion.div variants={itemVariants} className="py-1">
+                          <Link
+                            href="/events/events"
+                            className="text-[#0f172a] hover:text-[#0369a1] font-normal py-1 block text-sm"
+                            onClick={() => {
+                              setIsMenuOpen(false);
+                              setIsClassesDropdownOpen(false);
+                            }}
+                          >
+                            Events
+                          </Link>
+                        </motion.div>
+                        <motion.div variants={itemVariants} className="py-1">
+                          <Link
+                            href="/events/camps"
+                            className="text-[#0f172a] hover:text-[#0369a1] font-normal py-1 block text-sm"
+                            onClick={() => {
+                              setIsMenuOpen(false);
+                              setIsClassesDropdownOpen(false);
+                            }}
+                          >
+                            Camps
+                          </Link>
+                        </motion.div>
+                        <motion.div
+                          variants={itemVariants}
+                          className="py-1 border-t border-gray-100 pt-2 mt-2"
+                        >
+                          <Link
                             href="/events/classes-workshops"
-                            className="text-[#0f172a] hover:text-[#0369a1] font-normal py-1 block text-sm"
+                            className="text-[#0f172a] hover:text-[#0369a1] font-semibold py-1 block text-sm"
                             onClick={() => {
                               setIsMenuOpen(false);
                               setIsClassesDropdownOpen(false);
                             }}
                           >
-                            Classes & Workshops
-                          </Link>
-                        </motion.div>
-                        <motion.div variants={itemVariants} className="py-1">
-                          <Link
-                            href="/events/private-events"
-                            className="text-[#0f172a] hover:text-[#0369a1] font-normal py-1 block text-sm"
-                            onClick={() => {
-                              setIsMenuOpen(false);
-                              setIsClassesDropdownOpen(false);
-                            }}
-                          >
-                            Private Events
-                          </Link>
-                        </motion.div>
-                        <motion.div variants={itemVariants} className="py-1">
-                          <Link
-                            href="/events/live-artist"
-                            className="text-[#0f172a] hover:text-[#0369a1] font-normal py-1 block text-sm"
-                            onClick={() => {
-                              setIsMenuOpen(false);
-                              setIsClassesDropdownOpen(false);
-                            }}
-                          >
-                            Live Artist Events
-                          </Link>
-                        </motion.div>
-                        <motion.div variants={itemVariants} className="py-1">
-                          <Link
-                            href="/events/art-camps"
-                            className="text-[#0f172a] hover:text-[#0369a1] font-normal py-1 block text-sm"
-                            onClick={() => {
-                              setIsMenuOpen(false);
-                              setIsClassesDropdownOpen(false);
-                            }}
-                          >
-                            Art Camps
+                            All Events
                           </Link>
                         </motion.div>
                       </motion.div>
@@ -480,6 +505,19 @@ export default function NavBar() {
                   className="border-b border-gray-100 pb-2"
                 >
                   <Link
+                    href="/events/private-events"
+                    className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block uppercase"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Private Events
+                  </Link>
+                </motion.div>
+                <motion.div
+                  variants={itemVariants}
+                  whileHover="hover"
+                  className="border-b border-gray-100 pb-2"
+                >
+                  <Link
                     href="/reservations"
                     className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block uppercase"
                     onClick={() => setIsMenuOpen(false)}
@@ -487,7 +525,24 @@ export default function NavBar() {
                     Reservations
                   </Link>
                 </motion.div>
-                <motion.div variants={itemVariants} whileHover="hover">
+                <motion.div
+                  variants={itemVariants}
+                  whileHover="hover"
+                  className="border-b border-gray-100 pb-2"
+                >
+                  <Link
+                    href="/gallery"
+                    className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block uppercase"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Gallery
+                  </Link>
+                </motion.div>
+                <motion.div
+                  variants={itemVariants}
+                  whileHover="hover"
+                  className="border-b border-gray-100 pb-2"
+                >
                   <Link
                     href="/about"
                     className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block uppercase"

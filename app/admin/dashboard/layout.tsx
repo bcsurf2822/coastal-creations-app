@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { authOptions } from "@/auth";
 import LogoutButton from "@/components/authentication/LogoutButton";
 import Sidebar from "@/components/dashboard/SideBar";
@@ -44,14 +45,19 @@ export default async function AdminDashboardLayout({
       <header className="sticky top-0 z-30 w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm">
         <div className="px-4 sm:px-6 lg:px-8 mx-auto">
           <div className="flex justify-between h-16 items-center">
-            <Link href="/" className="hover:opacity-80 transition-opacity">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight cursor-pointer">
-                Coastal Creations Studio
-              </h1>
+            <Link href="/" className="hover:opacity-80 transition-opacity flex items-center">
+              <Image
+                src="/assets/logos/coastalLogoFull.png"
+                alt="Coastal Creations Studio"
+                width={180}
+                height={50}
+                className="h-10 w-auto object-contain"
+                priority
+              />
             </Link>
             <div className="flex items-center space-x-4">
-              <Link 
-                href="/" 
+              <Link
+                href="/"
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium"
               >
                 Home Page

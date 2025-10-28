@@ -5,7 +5,7 @@ interface EventBasicFieldsProps {
   formData: EventFormState;
   actions: EventFormActions;
   errors: { [key: string]: string };
-  onEventTypeChange: (eventType: EventFormState["eventType"]) => void;
+  onEventTypeChange: (eventType: "adult-class" | "kid-class" | "event" | "camp" | "artist") => void;
 }
 
 const EventBasicFields = ({
@@ -44,10 +44,11 @@ const EventBasicFields = ({
           spellCheck="false"
           className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="class">Class</option>
-          <option value="workshop">Workshop</option>
+          <option value="adult-class">Adult Class</option>
+          <option value="kid-class">Kid Class</option>
+          <option value="event">Event</option>
           <option value="camp">Camp</option>
-          <option value="artist">Artist</option>
+          <option value="artist">Live Artist Event</option>
         </select>
         {errors.eventType && (
           <p className="text-red-600 text-sm mt-1">{errors.eventType}</p>
