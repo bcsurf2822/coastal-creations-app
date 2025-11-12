@@ -113,7 +113,7 @@ export function getUniqueDestinationsFromItems<T extends { destination?: string[
 
   const allDestinations = items
     .filter((item) => item && item.destination && Array.isArray(item.destination))
-    .flatMap((item) => item.destination);
+    .flatMap((item) => item.destination || []);
   return Array.from(new Set(allDestinations)).sort();
 }
 
