@@ -68,9 +68,9 @@ const convertToLocalDate = (
     return dayjs.tz(value, LOCAL_TIMEZONE).startOf("day").toDate();
   }
 
-  // For other string formats, try to parse normally
+  // For other string formats, parse with timezone awareness
   if (typeof value === "string") {
-    return dayjs(value).toDate();
+    return dayjs.tz(value, LOCAL_TIMEZONE).toDate();
   }
 
   // This should never happen given our input types, but TypeScript needs it
