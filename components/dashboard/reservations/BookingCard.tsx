@@ -6,7 +6,7 @@ import {
   RiPhoneLine,
   RiMapPinLine,
   RiCalendarEventLine,
-  RiUserLine,
+  // RiUserLine,
 } from "react-icons/ri";
 import { Customer } from "./types";
 
@@ -55,7 +55,8 @@ export default function BookingCard({
               <span>
                 {customer.billingInfo.addressLine1}
                 <br />
-                {customer.billingInfo.city}, {customer.billingInfo.stateProvince}{" "}
+                {customer.billingInfo.city},{" "}
+                {customer.billingInfo.stateProvince}{" "}
                 {customer.billingInfo.postalCode}
               </span>
             </div>
