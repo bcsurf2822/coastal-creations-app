@@ -43,7 +43,7 @@ export default function UploadImagesPage(): ReactElement {
         (img) =>
           img.title.toLowerCase().includes(query) ||
           img.description?.toLowerCase().includes(query) ||
-          img.destination.some((dest) => dest.toLowerCase().includes(query))
+          img.destination?.some((dest) => dest.toLowerCase().includes(query))
       );
     }
 
