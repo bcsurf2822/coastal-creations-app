@@ -7,6 +7,7 @@ import imageUrlBuilder from "@sanity/image-url";
 import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import { client } from "@/sanity/client";
 import { motion } from "motion/react";
+import type { GalleryDestination } from "@/types/interfaces";
 
 // Setup Sanity image URL builder
 const { projectId, dataset } = client.config();
@@ -25,7 +26,12 @@ const BREAKPOINTS = {
   lg: 1024,
 };
 
-export default function GallerySlideshow() {
+interface GallerySlideshowProps {
+  destination?: GalleryDestination;
+  height?: number;
+}
+
+export default function GallerySlideshow({ destination, height = IMAGE_HEIGHT }: GallerySlideshowProps) {
   const [images, setImages] = useState<SanityDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [offset, setOffset] = useState(0);
@@ -35,12 +41,15 @@ export default function GallerySlideshow() {
   useEffect(() => {
     const fetchGalleryImages = async () => {
       try {
-        const response = await fetch("/api/gallery");
+        const url = destination
+          ? `/api/gallery?destination=${destination}`
+          : "/api/gallery";
+        const response = await fetch(url);
         if (!response.ok) {
           throw new Error("Failed to fetch gallery images");
         }
-        const data = await response.json();
-        setImages(data);
+        const result = await response.json();
+        setImages(result.data || []);
       } catch (err) {
         console.error("[GallerySlideshow-fetchGalleryImages] Error fetching gallery images:", err);
       } finally {
@@ -49,7 +58,7 @@ export default function GallerySlideshow() {
     };
 
     fetchGalleryImages();
-  }, []);
+  }, [destination]);
 
   useEffect(() => {
     const updateWidth = () => {
@@ -111,7 +120,7 @@ export default function GallerySlideshow() {
                 className="relative shrink-0 cursor-pointer rounded-2xl bg-white shadow-md transition-all hover:scale-[1.015] hover:shadow-xl overflow-hidden"
                 style={{
                   width: IMAGE_WIDTH,
-                  height: IMAGE_HEIGHT,
+                  height: height,
                   marginRight: MARGIN,
                 }}
               >

@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { EB_Garamond } from "next/font/google";
-import GallerySlideshow from "./GallerySlideshow";
+import GalleryCarousel from "@/components/gallery/GalleryCarousel";
 
 const ebGaramond = EB_Garamond({
   subsets: ["latin"],
@@ -132,9 +132,15 @@ export default function Offerings() {
             </p>
           </div>
 
-          {/* Gallery Slideshow */}
+          {/* Gallery Carousel */}
           <div className="mb-16">
-            <GallerySlideshow />
+            <GalleryCarousel
+              destination="home-page"
+              // title="Gallery"
+              autoPlay={true}
+              autoPlayInterval={4000}
+              height="h-[32rem]"
+            />
           </div>
 
           {/* Live Artist Painting - Full Width Row - Only show if there are upcoming events */}

@@ -11,12 +11,10 @@ const EditPrivateEventPage = (): ReactElement => {
   const privateEventId = searchParams.get("id");
 
   const handleSuccess = () => {
-    console.log("[EDIT-PRIVATE-EVENT-PAGE-handleSuccess] Private event updated successfully, redirecting to dashboard");
     router.push("/admin/dashboard");
   };
 
   const handleCancel = () => {
-    console.log("[EDIT-PRIVATE-EVENT-PAGE-handleCancel] User cancelled, redirecting to dashboard");
     router.push("/admin/dashboard");
   };
 

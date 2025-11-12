@@ -28,10 +28,14 @@ export function DayCard({
   const formatMonth = (d: Date): string =>
     d.toLocaleDateString("en-US", { month: "short" });
 
-  const formatTime = (time24: string): string => {
-    if (!time24) return "";
-    const [hours, minutes] = time24.split(":");
-    const hour = parseInt(hours);
+  const formatTime = (time24: string | undefined): string => {
+    if (!time24 || time24.trim() === "") return "";
+    const parts = time24.split(":");
+    if (parts.length !== 2) return "";
+    const [hours, minutes] = parts;
+    if (!hours || !minutes) return "";
+    const hour = parseInt(hours, 10);
+    if (isNaN(hour)) return "";
     const ampm = hour >= 12 ? "PM" : "AM";
     const hour12 = hour % 12 || 12;
     return `${hour12}:${minutes} ${ampm}`;
@@ -40,18 +44,17 @@ export function DayCard({
   const availableSpots = availability.max - availability.current;
   const isSoldOut = availableSpots <= 0;
 
-  const handleParticipantInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>
+  const handleParticipantSelectChange = (
+    e: React.ChangeEvent<HTMLSelectElement>
   ): void => {
     e.stopPropagation();
     const value = parseInt(e.target.value);
     if (!isNaN(value) && onParticipantChange) {
-      const validValue = Math.max(1, Math.min(value, availableSpots));
-      onParticipantChange(validValue);
+      onParticipantChange(value);
     }
   };
 
-  const handleInputClick = (e: React.MouseEvent<HTMLInputElement>): void => {
+  const handleSelectClick = (e: React.MouseEvent<HTMLSelectElement>): void => {
     e.stopPropagation();
   };
 
@@ -62,10 +65,14 @@ export function DayCard({
       className={`
         min-w-[240px] max-w-[240px] h-[380px]
         border-2 rounded-lg flex flex-col
-        transition-all duration-300
+        transition-all duration-300 overflow-hidden
         ${isToday ? "bg-blue-300" : "bg-gray-100"}
-        ${isSelected ? "ring-4 ring-blue-500 border-blue-500" : "border-gray-200"}
-        ${isDisabled || isExcluded || isSoldOut ? "opacity-50 cursor-not-allowed" : "hover:shadow-lg cursor-pointer"}
+        ${isSelected ? "ring-4 ring-blue-300 border-blue-300" : "border-gray-200"}
+        ${
+          isDisabled || isExcluded || isSoldOut
+            ? "opacity-50 cursor-not-allowed"
+            : "hover:shadow-lg hover:border-blue-300 hover:scale-[1.02] cursor-pointer"
+        }
       `}
     >
       {/* Header */}
@@ -140,7 +147,7 @@ export function DayCard({
           )}
         </div>
 
-        {/* Participant input if selected */}
+        {/* Participant select if selected */}
         {isSelected && onParticipantChange && !isSoldOut && (
           <div className="mt-4">
             <label
@@ -148,15 +155,20 @@ export function DayCard({
             >
               Participants:
             </label>
-            <input
-              type="number"
-              min="1"
-              max={availableSpots}
+            <select
               value={participantCount}
-              onChange={handleParticipantInputChange}
-              onClick={handleInputClick}
-              className={`${ebGaramond.className} w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium`}
-            />
+              onChange={handleParticipantSelectChange}
+              onClick={handleSelectClick}
+              className={`${ebGaramond.className} w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium bg-white cursor-pointer`}
+            >
+              {Array.from({ length: availableSpots }, (_, i) => i + 1).map(
+                (num) => (
+                  <option key={num} value={num}>
+                    {num} {num === 1 ? "participant" : "participants"}
+                  </option>
+                )
+              )}
+            </select>
             <p
               className={`${ebGaramond.className} text-xs text-gray-500 mt-1`}
             >

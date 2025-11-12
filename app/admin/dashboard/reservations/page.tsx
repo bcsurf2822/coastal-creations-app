@@ -91,15 +91,14 @@ export default function ReservationsPage(): ReactElement {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
-  const [participantCounts, setParticipantCounts] = useState<Record<string, number>>({});
+  const [participantCounts, setParticipantCounts] = useState<
+    Record<string, number>
+  >({});
 
   useEffect(() => {
     const fetchReservations = async (): Promise<void> => {
       try {
         setIsLoading(true);
-
-        console.log("[RESERVATIONS-PAGE] Fetching reservations");
-
         const response = await fetch("/api/reservations", {
           method: "GET",
           headers: { "Content-Type": "application/json" },
@@ -116,7 +115,8 @@ export default function ReservationsPage(): ReactElement {
                 id: reservation._id,
                 name: reservation.eventName,
                 description: reservation.description,
-                pricePerDayPerParticipant: reservation.pricePerDayPerParticipant,
+                pricePerDayPerParticipant:
+                  reservation.pricePerDayPerParticipant,
                 maxParticipantsPerDay:
                   reservation.maxParticipantsPerDay ||
                   (reservation.dailyAvailability &&
@@ -146,15 +146,15 @@ export default function ReservationsPage(): ReactElement {
               return dateA.getTime() - dateB.getTime();
             });
 
-            console.log(`[RESERVATIONS-PAGE] Loaded ${sorted.length} reservations`);
             setReservations(sorted);
           }
         }
       } catch (error) {
-        console.error("[RESERVATIONS-PAGE] Error fetching reservations:", error);
-        setError(
-          typeof error === "string" ? error : (error as Error).message
+        console.error(
+          "[RESERVATIONS-PAGE] Error fetching reservations:",
+          error
         );
+        setError(typeof error === "string" ? error : (error as Error).message);
       } finally {
         setIsLoading(false);
       }
@@ -205,7 +205,6 @@ export default function ReservationsPage(): ReactElement {
     setDeletingIds((prev) => new Set(prev).add(id));
 
     try {
-      console.log(`[RESERVATIONS-PAGE] Deleting reservation ${id}`);
 
       const response = await fetch(`/api/reservations?id=${id}`, {
         method: "DELETE",
@@ -215,7 +214,6 @@ export default function ReservationsPage(): ReactElement {
         throw new Error("Failed to delete reservation");
       }
 
-      console.log(`[RESERVATIONS-PAGE] Reservation ${id} deleted successfully`);
       setReservations((prev) => prev.filter((r) => r.id !== id));
     } catch (error) {
       console.error("[RESERVATIONS-PAGE] Error deleting reservation:", error);
@@ -235,23 +233,29 @@ export default function ReservationsPage(): ReactElement {
   };
 
   const formatTime = (timeString: string | undefined): string => {
-    if (!timeString) return "N/A";
+    if (!timeString || timeString.trim() === "") return "N/A";
 
     const timeParts = timeString.split(":");
-    let hours = parseInt(timeParts[0], 10);
-    const minutes = timeParts[1];
+    if (timeParts.length !== 2) return "N/A";
+
+    const [hoursStr, minutes] = timeParts;
+    if (!hoursStr || !minutes) return "N/A";
+
+    const hours = parseInt(hoursStr, 10);
+    if (isNaN(hours)) return "N/A";
+
     const ampm = hours >= 12 ? "PM" : "AM";
+    const hours12 = hours % 12 || 12;
 
-    hours = hours % 12;
-    hours = hours ? hours : 12;
-
-    return `${hours}:${minutes} ${ampm}`;
+    return `${hours12}:${minutes} ${ampm}`;
   };
 
   const filteredReservations = reservations.filter((reservation) => {
     const matchesSearch =
       reservation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reservation.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      reservation.description
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
       false;
 
     return matchesSearch;
@@ -340,7 +344,12 @@ export default function ReservationsPage(): ReactElement {
                       {reservation.image && (
                         <div className="flex-shrink-0">
                           <Image
-                            src={urlFor(reservation.image)?.width(80).height(60).url() || ""}
+                            src={
+                              urlFor(reservation.image)
+                                ?.width(80)
+                                .height(60)
+                                .url() || ""
+                            }
                             alt={reservation.name}
                             width={80}
                             height={60}

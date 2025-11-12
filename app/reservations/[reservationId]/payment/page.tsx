@@ -30,15 +30,14 @@ export default async function ReservationPaymentPage({
   const { reservationId } = await params;
   const search = await searchParams;
 
-  console.log(`[ReservationPaymentPage] Loading payment for reservation ${reservationId}`);
-
   const selectedDatesParam = search.selectedDates;
   if (!selectedDatesParam || typeof selectedDatesParam !== "string") {
     return (
       <div className="max-w-4xl mx-auto py-16 px-4 text-center">
         <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
         <p className="text-gray-700">
-          No dates selected. Please return to the calendar and select your dates.
+          No dates selected. Please return to the calendar and select your
+          dates.
         </p>
         <Link
           href={`/reservations/${reservationId}`}
@@ -58,7 +57,10 @@ export default async function ReservationPaymentPage({
       date: new Date(sd.date),
     }));
   } catch (error) {
-    console.error("[ReservationPaymentPage] Error parsing selectedDates:", error);
+    console.error(
+      "[ReservationPaymentPage] Error parsing selectedDates:",
+      error
+    );
     return (
       <div className="max-w-4xl mx-auto py-16 px-4 text-center">
         <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
@@ -76,12 +78,17 @@ export default async function ReservationPaymentPage({
   let reservation: Reservation;
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
-    const response = await fetch(`${apiUrl}/api/reservations/${reservationId}`, {
-      cache: "no-store",
-    });
+    const response = await fetch(
+      `${apiUrl}/api/reservations/${reservationId}`,
+      {
+        cache: "no-store",
+      }
+    );
 
     if (!response.ok) {
-      console.error(`[ReservationPaymentPage] Failed to fetch reservation: ${response.status}`);
+      console.error(
+        `[ReservationPaymentPage] Failed to fetch reservation: ${response.status}`
+      );
       return (
         <div className="max-w-4xl mx-auto py-16 px-4 text-center">
           <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
@@ -102,7 +109,10 @@ export default async function ReservationPaymentPage({
     }
     reservation = result.data;
   } catch (error) {
-    console.error("[ReservationPaymentPage] Error fetching reservation:", error);
+    console.error(
+      "[ReservationPaymentPage] Error fetching reservation:",
+      error
+    );
     return (
       <div className="max-w-4xl mx-auto py-16 px-4 text-center">
         <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
@@ -117,5 +127,7 @@ export default async function ReservationPaymentPage({
     );
   }
 
-  return <PaymentForm reservation={reservation} selectedDates={selectedDates} />;
+  return (
+    <PaymentForm reservation={reservation} selectedDates={selectedDates} />
+  );
 }

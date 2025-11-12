@@ -30,8 +30,8 @@ export default function ImageGallery() {
         if (!response.ok) {
           throw new Error("Failed to fetch gallery images");
         }
-        const data = await response.json();
-        setImages(data);
+        const result = await response.json();
+        setImages(result.data || []);
       } catch (err) {
         if (err instanceof Error) {
           setError(err.message);

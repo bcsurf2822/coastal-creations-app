@@ -118,9 +118,6 @@ const PrivateOfferings = (): ReactElement => {
       }
 
       setPrivateEvents((prev) => prev.filter((event) => event.id !== eventId));
-      console.log(
-        "[PRIVATE-OFFERINGS-handleDeletePrivateEvent] Private event deleted successfully"
-      );
     } catch (error) {
       console.error(
         "[PRIVATE-OFFERINGS-handleDeletePrivateEvent] Error deleting private event:",

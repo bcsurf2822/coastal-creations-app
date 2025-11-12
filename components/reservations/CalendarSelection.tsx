@@ -7,6 +7,19 @@ import { DayCard } from "./DayCard";
 import { BookingSummary } from "./BookingSummary";
 import { IReservation } from "@/lib/models/Reservations";
 import { EB_Garamond } from "next/font/google";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const LOCAL_TIMEZONE = "America/New_York";
+
+// Helper function to normalize dates to YYYY-MM-DD strings for comparison
+const normalizeDateString = (date: string | Date): string => {
+  return dayjs.tz(date, LOCAL_TIMEZONE).format("YYYY-MM-DD");
+};
 
 const ebGaramond = EB_Garamond({
   subsets: ["latin"],
@@ -20,8 +33,6 @@ interface CalendarSelectionProps {
 export function CalendarSelection({
   reservation,
 }: CalendarSelectionProps): ReactElement {
-  console.log("[CalendarSelection] Rendering with reservation:", reservation);
-
   const router = useRouter();
   const [selectedDates, setSelectedDates] = useState<SelectedDate[]>([]);
   const [currentMonth, setCurrentMonth] = useState<Date>(() => {
@@ -42,7 +53,7 @@ export function CalendarSelection({
       }
     >();
     reservation.dailyAvailability.forEach((day) => {
-      const dateKey = new Date(day.date).toISOString().split("T")[0];
+      const dateKey = normalizeDateString(day.date);
       map.set(dateKey, {
         available: day.maxParticipants - day.currentBookings,
         max: day.maxParticipants,
@@ -59,7 +70,7 @@ export function CalendarSelection({
     const set = new Set<string>();
     if (reservation.dates.excludeDates) {
       reservation.dates.excludeDates.forEach((date) => {
-        const dateKey = new Date(date).toISOString().split("T")[0];
+        const dateKey = normalizeDateString(date);
         set.add(dateKey);
       });
     }
@@ -91,11 +102,10 @@ export function CalendarSelection({
   }, [currentMonth, reservation.dates]);
 
   const handleDateToggle = (date: Date): void => {
-    const dateKey = date.toISOString().split("T")[0];
-    console.log("[CalendarSelection-handleDateToggle] Toggling date:", dateKey);
+    const dateKey = normalizeDateString(date);
 
     const existing = selectedDates.find(
-      (sd) => new Date(sd.date).toISOString().split("T")[0] === dateKey
+      (sd) => normalizeDateString(sd.date) === dateKey
     );
 
     if (existing) {
@@ -108,17 +118,11 @@ export function CalendarSelection({
   };
 
   const handleParticipantChange = (date: Date, count: number): void => {
-    const dateKey = date.toISOString().split("T")[0];
-    console.log(
-      "[CalendarSelection-handleParticipantChange] Date:",
-      dateKey,
-      "Count:",
-      count
-    );
+    const dateKey = normalizeDateString(date);
 
     setSelectedDates(
       selectedDates.map((sd) =>
-        new Date(sd.date).toISOString().split("T")[0] === dateKey
+        normalizeDateString(sd.date) === dateKey
           ? { ...sd, participants: count }
           : sd
       )
@@ -126,12 +130,6 @@ export function CalendarSelection({
   };
 
   const handleContinue = (): void => {
-    console.log(
-      "[CalendarSelection-handleContinue] Selected dates:",
-      selectedDates
-    );
-
-    // Serialize selectedDates for URL parameter
     const selectedDatesData = selectedDates.map((sd) => ({
       date: sd.date.toISOString(),
       participants: sd.participants,
@@ -159,17 +157,21 @@ export function CalendarSelection({
     });
   };
 
-  const today = new Date();
-  const todayKey = today.toISOString().split("T")[0];
+  const today = dayjs().tz(LOCAL_TIMEZONE);
+  const todayKey = today.format("YYYY-MM-DD");
 
   const formatMonthYear = (date: Date): string => {
     return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
   };
 
-  const formatTime = (time24: string): string => {
-    if (!time24) return "";
-    const [hours, minutes] = time24.split(":");
-    const hour = parseInt(hours);
+  const formatTime = (time24: string | undefined): string => {
+    if (!time24 || time24.trim() === "") return "";
+    const parts = time24.split(":");
+    if (parts.length !== 2) return "";
+    const [hours, minutes] = parts;
+    if (!hours || !minutes) return "";
+    const hour = parseInt(hours, 10);
+    if (isNaN(hour)) return "";
     const ampm = hour >= 12 ? "PM" : "AM";
     const hour12 = hour % 12 || 12;
     return `${hour12}:${minutes} ${ampm}`;
@@ -199,13 +201,21 @@ export function CalendarSelection({
 
   // Check if we can navigate to previous/next month
   const canNavigatePrev = useMemo(() => {
-    const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+    const firstDay = new Date(
+      currentMonth.getFullYear(),
+      currentMonth.getMonth(),
+      1
+    );
     const reservationStart = new Date(reservation.dates.startDate);
     return firstDay > reservationStart;
   }, [currentMonth, reservation.dates.startDate]);
 
   const canNavigateNext = useMemo(() => {
-    const lastDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+    const lastDay = new Date(
+      currentMonth.getFullYear(),
+      currentMonth.getMonth() + 1,
+      0
+    );
     const reservationEnd = reservation.dates.endDate
       ? new Date(reservation.dates.endDate)
       : new Date(reservation.dates.startDate);
@@ -222,12 +232,10 @@ export function CalendarSelection({
           >
             {reservation.eventName}
           </h1>
-          <p
-            className={`${ebGaramond.className} text-gray-600 mb-4 text-base`}
-          >
+          <p className={`${ebGaramond.className} text-gray-600 mb-4 text-base`}>
             {reservation.description}
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-6">
             <div>
               <span
                 className={`${ebGaramond.className} font-bold text-gray-700`}
@@ -268,6 +276,26 @@ export function CalendarSelection({
               </p>
             </div>
           </div>
+
+          {/* Booking Instructions */}
+          <div className="bg-blue-50  border-blue-500 p-4 rounded-r-lg">
+            <h2
+              className={`${ebGaramond.className} text-lg font-bold text-blue-900 mb-2`}
+            >
+              How to Book:
+            </h2>
+            <ol
+              className={`${ebGaramond.className} text-sm text-blue-800 space-y-1.5 list-decimal list-inside`}
+            >
+              <li>Click on any available date below to select it</li>
+              <li>Choose the number of participants from the dropdown menu</li>
+              <li>Select additional dates if needed</li>
+              <li>
+                Review your selections in the booking summary on the right
+              </li>
+              <li>Click &quot;Continue to Checkout&quot; when ready</li>
+            </ol>
+          </div>
         </div>
 
         {/* Calendar Navigation */}
@@ -302,24 +330,23 @@ export function CalendarSelection({
 
           {/* Calendar Grid */}
           <div className="overflow-x-auto pb-4">
-            <div className="flex space-x-6 min-w-max">
+            <div className="flex space-x-6 min-w-max pt-2">
               {monthDates.map((date, index) => {
-                const dateKey = date.toISOString().split("T")[0];
+                const dateKey = normalizeDateString(date);
                 const isToday = dateKey === todayKey;
                 const isExcluded = excludedDatesSet.has(dateKey);
                 const availabilityData = availableDatesMap.get(dateKey);
                 const isSelected = selectedDates.some(
-                  (sd) =>
-                    new Date(sd.date).toISOString().split("T")[0] === dateKey
+                  (sd) => normalizeDateString(sd.date) === dateKey
                 );
                 const selectedDate = selectedDates.find(
-                  (sd) =>
-                    new Date(sd.date).toISOString().split("T")[0] === dateKey
+                  (sd) => normalizeDateString(sd.date) === dateKey
                 );
 
                 const availability = availabilityData
                   ? {
-                      current: availabilityData.max - availabilityData.available,
+                      current:
+                        availabilityData.max - availabilityData.available,
                       max: availabilityData.max,
                     }
                   : { current: 0, max: 0 };
@@ -353,8 +380,11 @@ export function CalendarSelection({
 
           {monthDates.length === 0 && (
             <div className="text-center py-10">
-              <p className={`${ebGaramond.className} text-gray-500 font-medium`}>
-                No available dates in this month. Try navigating to another month.
+              <p
+                className={`${ebGaramond.className} text-gray-500 font-medium`}
+              >
+                No available dates in this month. Try navigating to another
+                month.
               </p>
             </div>
           )}

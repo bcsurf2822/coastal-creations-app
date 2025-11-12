@@ -70,12 +70,6 @@ export async function POST(request: Request) {
       }
     }
 
-    console.log("[ContactAPI-POST] Processing contact form submission", {
-      name,
-      email,
-      subject,
-    });
-
     const emailHtml = await render(
       React.createElement(CustomerContactTemplate, {
         name: name.trim(),
@@ -87,7 +81,6 @@ export async function POST(request: Request) {
       })
     );
 
-    // Send notification email to owner
     const { error } = await resend.emails.send({
       from: "Coastal Creations <no-reply@resend.coastalcreationsstudio.com>",
       to: [process.env.STUDIO_EMAIL || "info@coastalcreationsstudio.com"],
@@ -103,8 +96,6 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
-
-    console.log("[ContactAPI-POST] Contact message sent successfully");
 
     return Response.json({
       success: true,

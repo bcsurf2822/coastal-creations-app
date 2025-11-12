@@ -54,8 +54,8 @@ export default function Footer() {
     const fetchHours = async () => {
       try {
         const response = await fetch("/api/hours");
-        const data = await response.json();
-        setHoursData(data);
+        const result = await response.json();
+        setHoursData(result.data || result);
       } catch (error) {
         console.error("Error fetching hours:", error);
       } finally {

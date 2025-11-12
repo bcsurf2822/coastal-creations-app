@@ -42,54 +42,134 @@ export default function NewCalendar() {
   }, []);
 
   // Transform API events to FullCalendar format
-  const transformEvents = useCallback((apiEvents: ApiEvent[]): CalendarEvent[] => {
-    let calendarEvents: CalendarEvent[] = [];
+  const transformEvents = useCallback(
+    (apiEvents: ApiEvent[]): CalendarEvent[] => {
+      let calendarEvents: CalendarEvent[] = [];
 
-    apiEvents.forEach((event) => {
-      // Format time display with 12-hour conversion
-      const startTime12h = convertTo12Hour(event.time.startTime);
-      const endTime12h = event.time.endTime
-        ? convertTo12Hour(event.time.endTime)
-        : "";
-      const timeDisplay = `${startTime12h}${endTime12h ? ` - ${endTime12h}` : ""}`;
+      apiEvents.forEach((event) => {
+        // Format time display with 12-hour conversion
+        const startTime12h = convertTo12Hour(event.time.startTime);
+        const endTime12h = event.time.endTime
+          ? convertTo12Hour(event.time.endTime)
+          : "";
+        const timeDisplay = `${startTime12h}${endTime12h ? ` - ${endTime12h}` : ""}`;
 
-      // Handle non-recurring events
-      if (!event.dates.isRecurring) {
-        const startDate = new Date(event.dates.startDate);
-        const endDate = event.dates.endDate
-          ? new Date(event.dates.endDate)
-          : null;
+        // Handle non-recurring events
+        if (!event.dates.isRecurring) {
+          const startDate = new Date(event.dates.startDate);
+          const endDate = event.dates.endDate
+            ? new Date(event.dates.endDate)
+            : null;
 
-        // If event spans multiple days, create individual instances for each day
-        // Compare only the date parts, not time
-        const startDateOnly = new Date(
-          startDate.getFullYear(),
-          startDate.getMonth(),
-          startDate.getDate()
-        );
-        const endDateOnly = endDate
-          ? new Date(
-              endDate.getFullYear(),
-              endDate.getMonth(),
-              endDate.getDate()
-            )
-          : null;
+          // If event spans multiple days, create individual instances for each day
+          // Compare only the date parts, not time
+          const startDateOnly = new Date(
+            startDate.getFullYear(),
+            startDate.getMonth(),
+            startDate.getDate()
+          );
+          const endDateOnly = endDate
+            ? new Date(
+                endDate.getFullYear(),
+                endDate.getMonth(),
+                endDate.getDate()
+              )
+            : null;
 
-        if (
-          endDate &&
-          endDateOnly &&
-          endDateOnly.getTime() !== startDateOnly.getTime()
-        ) {
-          // Generate individual instances for each day in the range
+          if (
+            endDate &&
+            endDateOnly &&
+            endDateOnly.getTime() !== startDateOnly.getTime()
+          ) {
+            // Generate individual instances for each day in the range
+            const instances = generateRecurringEvents(
+              event._id,
+              event.eventName,
+              startDateOnly,
+              endDateOnly!, // We know endDateOnly is not null here due to the if condition
+              "daily", // Treat as daily to create individual instances
+              event.time.startTime,
+              event.time.endTime,
+              []
+            );
+
+            // Add extended props to each instance
+            instances.forEach((instance) => {
+              instance.resourceId = event.eventType;
+              instance.extendedProps = {
+                ...instance.extendedProps,
+                _id: event._id,
+                description: event.description,
+                eventType: event.eventType,
+                price: event.price,
+                timeDisplay,
+                isRecurring: false,
+                isMultiDay: true,
+              };
+            });
+
+            calendarEvents = [...calendarEvents, ...instances];
+          } else {
+            // Single day event - handle normally
+            const startTime = event.time.startTime;
+
+            // Create start datetime by combining date and time
+            let start = startDate;
+            if (startTime) {
+              const [hours, minutes] = startTime.split(":").map(Number);
+              start = new Date(startDate);
+              start.setHours(hours || 0, minutes || 0);
+            }
+
+            // Create end datetime if endTime exists
+            let end = undefined;
+            if (event.time.endTime) {
+              const [hours, minutes] = event.time.endTime
+                .split(":")
+                .map(Number);
+              end = new Date(startDate);
+              end.setHours(hours || 0, minutes || 0);
+            }
+
+            calendarEvents.push({
+              id: event._id,
+              title: event.eventName,
+              start,
+              end,
+              resourceId: event.eventType,
+              extendedProps: {
+                _id: event._id,
+                description: event.description,
+                eventType: event.eventType,
+                price: event.price,
+                timeDisplay,
+                isRecurring: false,
+              },
+            });
+          }
+        }
+        // Handle recurring events
+        else if (event.dates.isRecurring && event.dates.recurringPattern) {
+          const startDate = new Date(event.dates.startDate);
+          const recurringEndDate = event.dates.recurringEndDate
+            ? new Date(event.dates.recurringEndDate)
+            : null;
+
+          // If there's no end date, use a reasonable default (e.g., 3 months from start)
+          const endDate =
+            recurringEndDate ||
+            new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1000);
+
+          // Generate recurring event instances
           const instances = generateRecurringEvents(
             event._id,
             event.eventName,
-            startDateOnly,
-            endDateOnly!, // We know endDateOnly is not null here due to the if condition
-            "daily", // Treat as daily to create individual instances
+            startDate,
+            endDate,
+            event.dates.recurringPattern,
             event.time.startTime,
             event.time.endTime,
-            []
+            event.dates.excludeDates || []
           );
 
           // Add extended props to each instance
@@ -102,95 +182,20 @@ export default function NewCalendar() {
               eventType: event.eventType,
               price: event.price,
               timeDisplay,
-              isRecurring: false,
-              isMultiDay: true,
+              isRecurring: true,
+              recurringPattern: event.dates.recurringPattern,
+              recurringEndDate: event.dates.recurringEndDate,
             };
           });
 
           calendarEvents = [...calendarEvents, ...instances];
-        } else {
-          // Single day event - handle normally
-          const startTime = event.time.startTime;
-
-          // Create start datetime by combining date and time
-          let start = startDate;
-          if (startTime) {
-            const [hours, minutes] = startTime.split(":").map(Number);
-            start = new Date(startDate);
-            start.setHours(hours || 0, minutes || 0);
-          }
-
-          // Create end datetime if endTime exists
-          let end = undefined;
-          if (event.time.endTime) {
-            const [hours, minutes] = event.time.endTime.split(":").map(Number);
-            end = new Date(startDate);
-            end.setHours(hours || 0, minutes || 0);
-          }
-
-          calendarEvents.push({
-            id: event._id,
-            title: event.eventName,
-            start,
-            end,
-            resourceId: event.eventType,
-            extendedProps: {
-              _id: event._id,
-              description: event.description,
-              eventType: event.eventType,
-              price: event.price,
-              timeDisplay,
-              isRecurring: false,
-            },
-          });
         }
-      }
-      // Handle recurring events
-      else if (event.dates.isRecurring && event.dates.recurringPattern) {
-        const startDate = new Date(event.dates.startDate);
-        const recurringEndDate = event.dates.recurringEndDate
-          ? new Date(event.dates.recurringEndDate)
-          : null;
+      });
 
-        // If there's no end date, use a reasonable default (e.g., 3 months from start)
-        const endDate =
-          recurringEndDate ||
-          new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1000);
-
-        // Generate recurring event instances
-        const instances = generateRecurringEvents(
-          event._id,
-          event.eventName,
-          startDate,
-          endDate,
-          event.dates.recurringPattern,
-          event.time.startTime,
-          event.time.endTime,
-          event.dates.excludeDates || []
-        );
-
-        // Add extended props to each instance
-        instances.forEach((instance) => {
-          instance.resourceId = event.eventType;
-          instance.extendedProps = {
-            ...instance.extendedProps,
-            _id: event._id,
-            description: event.description,
-            eventType: event.eventType,
-            price: event.price,
-            timeDisplay,
-            isRecurring: true,
-            recurringPattern: event.dates.recurringPattern,
-            recurringEndDate: event.dates.recurringEndDate,
-          };
-        });
-
-        calendarEvents = [...calendarEvents, ...instances];
-      }
-    });
-
-    return calendarEvents;
-  }, [convertTo12Hour]);
+      return calendarEvents;
+    },
+    [convertTo12Hour]
+  );
 
   // Helper function to generate recurring event instances
   const generateRecurringEvents = (
@@ -372,13 +377,10 @@ export default function NewCalendar() {
     }
   };
 
-  // Add a handler for event signup
   const navigateToEvent = (eventId: string) => {
-    // console.log(`Navigating to event: ${eventTitle} (ID: ${eventId})`);
     router.push(`/calendar/${eventId}`);
   };
 
-  // Cleanup function for tooltips
   useEffect(() => {
     return () => {
       // Remove any tooltips when component unmounts

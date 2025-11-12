@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import {
   PrivateEventFormState,
@@ -6,15 +5,18 @@ import {
   PrivateEventFormActions,
   UsePrivateEventFormProps,
   UsePrivateEventFormReturn,
-  PrivateEventApiResponse
+  PrivateEventApiResponse,
 } from "../types/privateEventForm.types";
-import { validatePrivateEventForm, getInitialPrivateEventFormState } from "../utils/validationHelpers";
+import {
+  validatePrivateEventForm,
+  getInitialPrivateEventFormState,
+} from "../utils/validationHelpers";
 
 export const usePrivateEventForm = ({
   mode,
   privateEventId,
   initialData,
-  onSuccess
+  onSuccess,
 }: UsePrivateEventFormProps): UsePrivateEventFormReturn => {
   const [formData, setFormData] = useState<PrivateEventFormState>(
     initialData || getInitialPrivateEventFormState()
@@ -30,26 +32,32 @@ export const usePrivateEventForm = ({
     }
   }, [initialData]);
 
-  const handleInputChange = useCallback((field: keyof PrivateEventFormState, value: string | number | boolean | File | null | undefined) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  const handleInputChange = useCallback(
+    (
+      field: keyof PrivateEventFormState,
+      value: string | number | boolean | File | null | undefined
+    ) => {
+      setFormData((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
 
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
-    }
-  }, [errors]);
+      // Clear error when user starts typing
+      if (errors[field]) {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[field];
+          return newErrors;
+        });
+      }
+    },
+    [errors]
+  );
 
   const handleImageChange = useCallback((file: File | null) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      image: file
+      image: file,
     }));
   }, []);
 
@@ -173,14 +181,17 @@ export const usePrivateEventForm = ({
         price: formData.price,
         options: formData.hasOptions ? formData.optionCategories : undefined,
         isDepositRequired: formData.isDepositRequired,
-        depositAmount: formData.isDepositRequired ? formData.depositAmount : undefined,
+        depositAmount: formData.isDepositRequired
+          ? formData.depositAmount
+          : undefined,
         image: formData.imageUrl, // Store the Sanity image URL in MongoDB
         instagramEmbedCode: formData.instagramEmbedCode || undefined,
       };
 
-      const url = mode === "edit" && privateEventId
-        ? `/api/private-events?id=${privateEventId}`
-        : "/api/private-events";
+      const url =
+        mode === "edit" && privateEventId
+          ? `/api/private-events?id=${privateEventId}`
+          : "/api/private-events";
 
       const method = mode === "edit" ? "PUT" : "POST";
 
@@ -195,7 +206,6 @@ export const usePrivateEventForm = ({
       const result: PrivateEventApiResponse = await response.json();
 
       if (result.success) {
-        console.log(`[PRIVATE-EVENT-FORM-HOOK] Private event ${mode === "edit" ? "updated" : "created"} successfully`);
         if (onSuccess) {
           onSuccess();
         }
@@ -203,9 +213,15 @@ export const usePrivateEventForm = ({
         throw new Error(result.error || `Failed to ${mode} private event`);
       }
     } catch (error) {
-      console.error(`[PRIVATE-EVENT-FORM-HOOK] Error ${mode === "edit" ? "updating" : "creating"} private event:`, error);
+      console.error(
+        `[PRIVATE-EVENT-FORM-HOOK] Error ${mode === "edit" ? "updating" : "creating"} private event:`,
+        error
+      );
       setErrors({
-        submit: error instanceof Error ? error.message : `Failed to ${mode} private event`
+        submit:
+          error instanceof Error
+            ? error.message
+            : `Failed to ${mode} private event`,
       });
     } finally {
       setIsSubmitting(false);

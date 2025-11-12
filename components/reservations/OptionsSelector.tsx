@@ -45,7 +45,6 @@ export default function OptionsSelector({
     categoryName: string,
     choiceName: string
   ): void => {
-    console.log(`[OptionsSelector-handleChange] Selected ${choiceName} for ${categoryName}`);
     const price = getChoicePrice(categoryName, choiceName);
     onOptionChange(categoryName, choiceName, price);
   };

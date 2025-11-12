@@ -2,6 +2,7 @@
 
 import { ReactElement } from "react";
 import ReservationList from "@/components/reservations/ReservationList";
+import GalleryCarousel from "@/components/gallery/GalleryCarousel";
 
 export default function ReservationsPage(): ReactElement {
   return (
@@ -15,6 +16,10 @@ export default function ReservationsPage(): ReactElement {
             Browse our available reservation programs and book your spot for
             multi-day creative experiences.
           </p>
+        </div>
+
+        <div className="mb-12 px-4">
+          <GalleryCarousel destination="reservation" height="h-64" />
         </div>
 
         <ReservationList baseUrl="/reservations" />
