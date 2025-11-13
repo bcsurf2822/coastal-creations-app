@@ -21,7 +21,13 @@ function generateDailyAvailability(
   endDate: Date,
   excludeDates: Date[] = [],
   maxParticipantsPerDay: number,
-  existingAvailability: { date: Date; currentBookings: number; isAvailable: boolean; startTime?: string; endTime?: string }[] = [],
+  existingAvailability: {
+    date: Date;
+    currentBookings: number;
+    isAvailable: boolean;
+    startTime?: string;
+    endTime?: string;
+  }[] = [],
   timeType: "same" | "custom" = "same",
   customTimes?: CustomTime[]
 ) {
@@ -29,12 +35,14 @@ function generateDailyAvailability(
   const start = dayjs(startDate).tz(LOCAL_TIMEZONE);
   const end = dayjs(endDate).tz(LOCAL_TIMEZONE);
   const excludeSet = new Set(
-    excludeDates.map(date => dayjs(date).tz(LOCAL_TIMEZONE).format('YYYY-MM-DD'))
+    excludeDates.map((date) =>
+      dayjs(date).tz(LOCAL_TIMEZONE).format("YYYY-MM-DD")
+    )
   );
 
   const existingBookings = new Map();
-  existingAvailability.forEach(avail => {
-    const dateKey = dayjs(avail.date).format('YYYY-MM-DD');
+  existingAvailability.forEach((avail) => {
+    const dateKey = dayjs(avail.date).format("YYYY-MM-DD");
     existingBookings.set(dateKey, {
       currentBookings: avail.currentBookings || 0,
       isAvailable: avail.isAvailable !== false,
@@ -46,14 +54,14 @@ function generateDailyAvailability(
   // Create a map of custom times by date for quick lookup
   const customTimesMap = new Map<string, CustomTime>();
   if (timeType === "custom" && customTimes) {
-    customTimes.forEach(ct => {
+    customTimes.forEach((ct) => {
       customTimesMap.set(ct.date, ct);
     });
   }
 
   let currentDate = start;
-  while (currentDate.isBefore(end.add(1, 'day'))) {
-    const dateStr = currentDate.format('YYYY-MM-DD');
+  while (currentDate.isBefore(end.add(1, "day"))) {
+    const dateStr = currentDate.format("YYYY-MM-DD");
 
     if (!excludeSet.has(dateStr)) {
       const existing = existingBookings.get(dateStr);
@@ -84,7 +92,7 @@ function generateDailyAvailability(
       dailyAvailability.push(dayEntry);
     }
 
-    currentDate = currentDate.add(1, 'day');
+    currentDate = currentDate.add(1, "day");
   }
 
   return dailyAvailability;
@@ -106,8 +114,6 @@ export async function GET(
       );
     }
 
-    console.log("[RESERVATIONS-GET-ID] Fetching reservation:", id);
-
     const reservation = await Reservation.findById(id);
 
     if (!reservation) {
@@ -116,8 +122,6 @@ export async function GET(
         { status: 404 }
       );
     }
-
-    console.log("[RESERVATIONS-GET-ID] Reservation found:", reservation._id);
 
     return NextResponse.json({ success: true, data: reservation });
   } catch (error) {
@@ -145,9 +149,6 @@ export async function PUT(
         { status: 400 }
       );
     }
-
-    console.log("[RESERVATIONS-PUT] Updating reservation:", id, "with data:", data);
-
     const existingReservation = await Reservation.findById(id);
     if (!existingReservation) {
       return NextResponse.json(
@@ -158,15 +159,24 @@ export async function PUT(
 
     let updateData = { ...data };
 
-    if (data.dates && (data.dates.startDate || data.dates.endDate || data.maxParticipantsPerDay)) {
-      const startDate = new Date(data.dates.startDate || existingReservation.dates.startDate);
+    if (
+      data.dates &&
+      (data.dates.startDate || data.dates.endDate || data.maxParticipantsPerDay)
+    ) {
+      const startDate = dayjs
+        .tz(data.dates.startDate || existingReservation.dates.startDate, LOCAL_TIMEZONE)
+        .startOf("day")
+        .toDate();
       const endDate = data.dates.endDate
-        ? new Date(data.dates.endDate)
-        : (existingReservation.dates.endDate || startDate);
+        ? dayjs.tz(data.dates.endDate, LOCAL_TIMEZONE).startOf("day").toDate()
+        : existingReservation.dates.endDate || startDate;
       const excludeDates = data.dates.excludeDates
-        ? data.dates.excludeDates.map((d: string) => new Date(d))
+        ? data.dates.excludeDates.map((d: string) =>
+            dayjs.tz(d, LOCAL_TIMEZONE).startOf("day").toDate()
+          )
         : existingReservation.dates.excludeDates || [];
-      const maxParticipantsPerDay = data.maxParticipantsPerDay ||
+      const maxParticipantsPerDay =
+        data.maxParticipantsPerDay ||
         (existingReservation.dailyAvailability.length > 0
           ? existingReservation.dailyAvailability[0].maxParticipants
           : 10);
@@ -198,10 +208,14 @@ export async function PUT(
       delete updateData.maxParticipantsPerDay;
     }
 
-    const updatedReservation = await Reservation.findByIdAndUpdate(id, updateData, {
-      new: true,
-      runValidators: true,
-    });
+    const updatedReservation = await Reservation.findByIdAndUpdate(
+      id,
+      updateData,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
     if (!updatedReservation) {
       return NextResponse.json(
@@ -209,8 +223,6 @@ export async function PUT(
         { status: 404 }
       );
     }
-
-    console.log("[RESERVATIONS-PUT] Reservation updated successfully:", updatedReservation._id);
 
     return NextResponse.json({ success: true, data: updatedReservation });
   } catch (error) {

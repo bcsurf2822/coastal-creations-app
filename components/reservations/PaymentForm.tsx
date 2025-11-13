@@ -6,10 +6,8 @@ import { PiSquareLogoFill } from "react-icons/pi";
 import dynamic from "next/dynamic";
 import { ParticipantInfo, BillingInfo, SelectedDate } from "./types";
 import ParticipantFields from "./ParticipantFields";
-import OptionsSelector from "./OptionsSelector";
 import BillingFields from "./BillingFields";
 
-// Dynamically import Square payment components with SSR disabled
 const DynamicPaymentForm = dynamic(
   async () => {
     const { PaymentForm } = await import("react-square-web-payments-sdk");
@@ -61,7 +59,9 @@ export default function PaymentForm({
   selectedDates,
 }: PaymentFormProps): ReactElement {
   const router = useRouter();
-  const [paymentStatus, setPaymentStatus] = useState<"idle" | "processing" | "success" | "error">("idle");
+  const [paymentStatus, setPaymentStatus] = useState<
+    "idle" | "processing" | "success" | "error"
+  >("idle");
   const [errors, setErrors] = useState<string>("");
   const [applicationId, setApplicationId] = useState<string>("");
   const [locationId, setLocationId] = useState<string>("");
@@ -71,7 +71,9 @@ export default function PaymentForm({
     participants: ParticipantInfo[];
   }
 
-  const [participantsByDate, setParticipantsByDate] = useState<ParticipantsByDate[]>(
+  const [participantsByDate, setParticipantsByDate] = useState<
+    ParticipantsByDate[]
+  >(
     selectedDates.map((sd) => ({
       date: sd.date,
       participants: Array(sd.participants)
@@ -83,10 +85,29 @@ export default function PaymentForm({
     }))
   );
 
-  const [selectedOptions, setSelectedOptions] = useState<
-    Array<{ categoryName: string; choiceName: string }>
-  >([]);
-  const [optionsTotal, setOptionsTotal] = useState<number>(0);
+  const calculateOptionsTotal = (): number => {
+    let total = 0;
+    participantsByDate.forEach((dayData) => {
+      dayData.participants.forEach((participant) => {
+        if (participant.selectedOptions) {
+          participant.selectedOptions.forEach((selectedOption) => {
+            const option = reservation.options?.find(
+              (o) => o.categoryName === selectedOption.categoryName
+            );
+            const choice = option?.choices.find(
+              (c) => c.name === selectedOption.choiceName
+            );
+            if (choice?.price) {
+              total += choice.price;
+            }
+          });
+        }
+      });
+    });
+    return total;
+  };
+
+  const optionsTotal = calculateOptionsTotal();
 
   const [billingInfo, setBillingInfo] = useState<BillingInfo>({
     firstName: "",
@@ -109,7 +130,6 @@ export default function PaymentForm({
   const grandTotal = baseTotal + optionsTotal;
 
   useEffect(() => {
-    console.log("[PaymentForm-useEffect] Fetching Square payment configuration");
     const loadConfig = async (): Promise<void> => {
       try {
         const response = await fetch("/api/payment-config");
@@ -119,7 +139,6 @@ export default function PaymentForm({
         const config = await response.json();
         setApplicationId(config.applicationId);
         setLocationId(config.locationId);
-        console.log("[PaymentForm-loadConfig] Payment config loaded");
       } catch (error) {
         console.error("[PaymentForm-loadConfig] Error loading config:", error);
         setErrors("Failed to load payment system. Please refresh the page.");
@@ -128,16 +147,6 @@ export default function PaymentForm({
 
     loadConfig();
   }, []);
-
-  useEffect(() => {
-    if (reservation.options && reservation.options.length > 0) {
-      const initialOptions = reservation.options.map((option) => ({
-        categoryName: option.categoryName,
-        choiceName: option.choices[0]?.name || "",
-      }));
-      setSelectedOptions(initialOptions);
-    }
-  }, [reservation.options]);
 
   const handleBillingInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -149,41 +158,27 @@ export default function PaymentForm({
     }));
   };
 
-  const handleOptionChange = (
-    categoryName: string,
-    choiceName: string,
-    price: number
-  ): void => {
-    console.log(`[PaymentForm-handleOptionChange] Option changed: ${categoryName} = ${choiceName}`);
-    setSelectedOptions((prev) => {
-      const newOptions = [...prev];
-      const existingIndex = newOptions.findIndex(
-        (opt) => opt.categoryName === categoryName
-      );
-      if (existingIndex !== -1) {
-        newOptions[existingIndex] = { categoryName, choiceName };
-      } else {
-        newOptions.push({ categoryName, choiceName });
-      }
-      return newOptions;
-    });
+  const isFormValid = (): boolean => {
+    const participantsValid = participantsByDate.every((dayData) =>
+      dayData.participants.every((p) => p.firstName && p.lastName)
+    );
+    const billingValid =
+      !!billingInfo.firstName &&
+      !!billingInfo.lastName &&
+      !!billingInfo.emailAddress &&
+      !!billingInfo.phoneNumber &&
+      !!billingInfo.addressLine1 &&
+      !!billingInfo.city &&
+      !!billingInfo.stateProvince &&
+      !!billingInfo.postalCode &&
+      !!billingInfo.country;
 
-    const totalOptionsPrice = selectedOptions.reduce((sum, opt) => {
-      const option = reservation.options?.find(
-        (o) => o.categoryName === opt.categoryName
-      );
-      const choice = option?.choices.find((c) => c.name === opt.choiceName);
-      return sum + (choice?.price || 0);
-    }, 0);
-    setOptionsTotal(totalOptionsPrice + price);
+    return participantsValid && billingValid;
   };
 
   const validateForm = (): boolean => {
-    // Check all participants across all dates (only names required)
     const participantsValid = participantsByDate.every((dayData) =>
-      dayData.participants.every(
-        (p) => p.firstName && p.lastName
-      )
+      dayData.participants.every((p) => p.firstName && p.lastName)
     );
     const billingValid =
       billingInfo.firstName &&
@@ -207,10 +202,10 @@ export default function PaymentForm({
     return true;
   };
 
-  const handleCardTokenizeResponse = async (
-    token: { token?: string; status?: string }
-  ): Promise<void> => {
-    console.log("[PaymentForm-handleCardTokenizeResponse] Tokenization response received");
+  const handleCardTokenizeResponse = async (token: {
+    token?: string;
+    status?: string;
+  }): Promise<void> => {
     setErrors("");
 
     if (!validateForm()) {
@@ -219,7 +214,9 @@ export default function PaymentForm({
     }
 
     if (!token.token) {
-      console.error("[PaymentForm-handleCardTokenizeResponse] No token received");
+      console.error(
+        "[PaymentForm-handleCardTokenizeResponse] No token received"
+      );
       setErrors("Payment processing failed. Please check your card details.");
       setPaymentStatus("error");
       return;
@@ -229,8 +226,9 @@ export default function PaymentForm({
 
     try {
       // Flatten all participants from all dates into a single array
-      const allParticipants = participantsByDate.flatMap((dayData) =>
-        dayData.participants
+      // Each participant already has their selectedOptions attached
+      const allParticipants = participantsByDate.flatMap(
+        (dayData) => dayData.participants
       );
 
       // Calculate total participants
@@ -249,13 +247,10 @@ export default function PaymentForm({
         quantity: totalParticipants,
         total: grandTotal,
         isSigningUpForSelf: false,
-        participants: allParticipants,
-        selectedOptions,
+        participants: allParticipants, // Each participant has their own selectedOptions
         billingInfo,
         squarePaymentId: token.token,
       };
-
-      console.log("[PaymentForm-handleSubmit] Creating booking with data:", bookingData);
 
       const response = await fetch("/api/customer", {
         method: "POST",
@@ -266,7 +261,10 @@ export default function PaymentForm({
       const result = await response.json();
 
       if (!response.ok) {
-        console.error("[PaymentForm-handleSubmit] Booking creation failed:", result);
+        console.error(
+          "[PaymentForm-handleSubmit] Booking creation failed:",
+          result
+        );
         await fetch("/api/payment-errors", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -282,17 +280,22 @@ export default function PaymentForm({
         return;
       }
 
-      console.log("[PaymentForm-handleSubmit] Booking created successfully:", result.data._id);
       setPaymentStatus("success");
-      router.push(`/reservations/confirmation?bookingId=${result.data._id}&total=${grandTotal}&name=${encodeURIComponent(reservation.eventName)}`);
+      router.push(
+        `/reservations/confirmation?bookingId=${result.data._id}&total=${grandTotal}&name=${encodeURIComponent(reservation.eventName)}`
+      );
     } catch (error) {
-      console.error("[PaymentForm-handleSubmit] Error processing payment:", error);
+      console.error(
+        "[PaymentForm-handleSubmit] Error processing payment:",
+        error
+      );
       await fetch("/api/payment-errors", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           errorType: "payment_exception",
-          errorMessage: error instanceof Error ? error.message : "Unknown error",
+          errorMessage:
+            error instanceof Error ? error.message : "Unknown error",
           reservationId: reservation._id,
           totalAmount: grandTotal,
         }),
@@ -303,47 +306,79 @@ export default function PaymentForm({
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4">
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white p-6">
-          <h1 className="text-2xl font-bold mb-2">Complete Your Reservation</h1>
-          <p className="text-blue-100">Review booking details and complete payment</p>
+    <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="bg-white rounded-xl shadow-2xl overflow-hidden">
+        {/* Header Section - Styled like regular payment portal */}
+        <div className="bg-primary text-black p-6 sm:p-10 mb-6 text-center relative overflow-hidden">
+          <div className="relative z-10">
+            <h1 className="text-3xl font-bold mb-2 text-black">Registration</h1>
+            <p className="text-xl mb-2 font-medium text-black">
+              You&apos;re registering for:{" "}
+              <span className="font-bold text-black">
+                {reservation.eventName}
+              </span>
+            </p>
+            <div className="mt-4">
+              <div className="bg-white/70 py-3 px-8 rounded-full inline-block shadow-md">
+                <p className="text-xl">
+                  <span className="font-medium text-black">Price:</span>{" "}
+                  <span className="font-bold text-black">
+                    ${grandTotal.toFixed(2)}
+                  </span>
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/30 rounded-full -mr-32 -mt-32 z-0"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/40 rounded-full -ml-24 -mb-24 z-0"></div>
         </div>
 
-        <div className="p-6">
-          <div className="mb-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <h2 className="text-xl font-bold mb-4">Booking Summary</h2>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="font-medium">Reservation:</span>
-                <span>{reservation.eventName}</span>
+        <div className="p-6 sm:p-10">
+          {/* Booking Summary Section */}
+          <div className="mb-8 p-6 bg-gray-50 rounded-xl border border-gray-200">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              Booking Summary
+            </h2>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-gray-700">
+                  Selected Dates:
+                </span>
+                <span className="font-semibold text-gray-900">
+                  {selectedDates.length}{" "}
+                  {selectedDates.length === 1 ? "day" : "days"}
+                </span>
               </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Selected Dates:</span>
-                <span>{selectedDates.length} days</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Total Participant Slots:</span>
-                <span>
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-gray-700">
+                  Total Participants:
+                </span>
+                <span className="font-semibold text-gray-900">
                   {participantsByDate.reduce(
                     (sum, dayData) => sum + dayData.participants.length,
                     0
                   )}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Base Price:</span>
-                <span>${baseTotal.toFixed(2)}</span>
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-gray-700">Base Price:</span>
+                <span className="font-semibold text-gray-900">
+                  ${baseTotal.toFixed(2)}
+                </span>
               </div>
               {optionsTotal > 0 && (
-                <div className="flex justify-between">
-                  <span className="font-medium">Options:</span>
-                  <span>+${optionsTotal.toFixed(2)}</span>
+                <div className="flex justify-between items-center">
+                  <span className="font-medium text-gray-700">Options:</span>
+                  <span className="font-semibold text-gray-900">
+                    +${optionsTotal.toFixed(2)}
+                  </span>
                 </div>
               )}
-              <div className="border-t pt-2 mt-2 flex justify-between text-lg font-bold">
-                <span>Total:</span>
-                <span>${grandTotal.toFixed(2)}</span>
+              <div className="border-t-2 border-gray-300 pt-3 mt-3 flex justify-between items-center">
+                <span className="text-lg font-bold text-gray-900">Total:</span>
+                <span className="text-lg font-bold text-gray-900">
+                  ${grandTotal.toFixed(2)}
+                </span>
               </div>
             </div>
           </div>
@@ -351,38 +386,107 @@ export default function PaymentForm({
           <ParticipantFields
             participantsByDate={participantsByDate}
             setParticipantsByDate={setParticipantsByDate}
+            options={reservation.options}
           />
 
-          {reservation.options && reservation.options.length > 0 && (
-            <OptionsSelector
-              options={reservation.options}
-              selectedOptions={selectedOptions}
-              onOptionChange={handleOptionChange}
-            />
-          )}
-
-          <BillingFields
-            billingInfo={billingInfo}
-            onInputChange={handleBillingInputChange}
-          />
-
+          {/* Billing Information Section */}
           <div className="mb-8">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center">
-              <PiSquareLogoFill className="mr-2 text-2xl text-black" />
-              Payment Information
-            </h3>
+            <h2 className="text-xl font-bold text-gray-900 mb-6">
+              Billing Information
+            </h2>
+            <BillingFields
+              billingInfo={billingInfo}
+              onInputChange={handleBillingInputChange}
+            />
+          </div>
+
+          {/* Payment Details Section */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6 mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"
+                />
+              </svg>
+              Payment Details
+            </h2>
+
+            {/* Error Alert */}
             {errors && (
-              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-700">{errors}</p>
+              <div
+                className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6"
+                role="alert"
+              >
+                <strong className="font-bold">Payment Error: </strong>
+                <span className="block sm:inline">{errors}</span>
               </div>
             )}
+
+            {/* Processing Status */}
+            {paymentStatus === "processing" && (
+              <div className="mb-4 p-4 bg-blue-50 border border-blue-300 rounded-lg">
+                <p className="text-blue-700 font-semibold flex items-center">
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-700"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Processing payment...
+                </p>
+              </div>
+            )}
+
             {applicationId && locationId ? (
-              <div>
-                {paymentStatus === "processing" && (
-                  <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-blue-700 font-semibold">Processing payment...</p>
+              <div className="p-6 bg-gray-50 rounded-lg">
+                {/* Yellow Warning Box */}
+                {!isFormValid() && (
+                  <div className="mb-4 p-3 bg-yellow-50 border border-yellow-300 text-yellow-800 rounded-lg">
+                    <div className="flex items-start">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      <p>
+                        Please complete all required fields above before
+                        proceeding with payment. You must provide either an
+                        email address or phone number.
+                      </p>
+                    </div>
                   </div>
                 )}
+
                 <DynamicPaymentForm
                   applicationId={applicationId}
                   locationId={locationId}
@@ -396,14 +500,30 @@ export default function PaymentForm({
                     },
                   })}
                 >
-                  <DynamicCreditCard />
+                  <div className="max-w-md mx-auto">
+                    <DynamicCreditCard />
+                    {!isFormValid() && (
+                      <div className="mt-4 text-red-600 text-center text-sm font-medium">
+                        Please complete all required fields above before
+                        submitting payment
+                      </div>
+                    )}
+                  </div>
                 </DynamicPaymentForm>
               </div>
             ) : (
-              <div className="p-4 text-center">
-                <p className="text-gray-500">Loading payment form...</p>
+              <div className="text-center p-10 bg-gray-50 rounded-lg">
+                <div className="animate-pulse inline-block h-8 w-8 rounded-full bg-primary"></div>
+                <p className="mt-4 text-gray-600">Loading payment form...</p>
               </div>
             )}
+
+            <div className="text-sm text-gray-500 text-center mt-4">
+              <p className="flex items-center justify-center gap-1">
+                Secure payment processing by{" "}
+                <PiSquareLogoFill className="text-xl" /> Square
+              </p>
+            </div>
           </div>
         </div>
       </div>

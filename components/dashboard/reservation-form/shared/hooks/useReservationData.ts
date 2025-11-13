@@ -68,8 +68,6 @@ export const useReservationData = (reservationId: string | null): UseReservation
       setError(null);
 
       try {
-        console.log("[RESERVATION-DATA] Fetching reservation:", reservationId);
-
         const response = await fetch(`/api/reservations/${reservationId}`);
 
         if (!response.ok) {
@@ -84,8 +82,6 @@ export const useReservationData = (reservationId: string | null): UseReservation
         if (!result.success || !result.data) {
           throw new Error(result.error || "Invalid response format");
         }
-
-        console.log("[RESERVATION-DATA] Reservation fetched successfully:", result.data);
 
         const formData = transformReservationToFormState(result.data);
         setReservationData(formData);

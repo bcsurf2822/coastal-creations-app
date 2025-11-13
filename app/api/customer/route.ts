@@ -5,6 +5,19 @@ import Event from "@/lib/models/Event";
 import PrivateEvent from "@/lib/models/PrivateEvent";
 import Reservation from "@/lib/models/Reservations";
 import mongoose from "mongoose";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const LOCAL_TIMEZONE = "America/New_York";
+
+// Helper function to normalize dates to YYYY-MM-DD strings for comparison
+const normalizeDateString = (date: string | Date): string => {
+  return dayjs.tz(date, LOCAL_TIMEZONE).format("YYYY-MM-DD");
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,14 +38,7 @@ export async function POST(request: NextRequest) {
       squareCustomerId,
     } = data;
 
-    console.log(
-      `[CUSTOMER-API-POST] Received eventType: ${eventType}, eventId: ${eventId}, total: ${total}`
-    );
-
-    // Handle Reservation eventType
     if (eventType === "Reservation") {
-      console.log("[CUSTOMER-API-POST] Processing Reservation booking");
-
       // 1. Validate reservation exists
       const reservation = await Reservation.findById(eventId);
       if (!reservation) {
@@ -58,12 +64,6 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      console.log(
-        "[CUSTOMER-API-POST] Validating availability for",
-        selectedDates.length,
-        "dates"
-      );
-
       // 3. Validate availability for each selected date
       for (const selectedDate of selectedDates) {
         const dailyAvail = reservation.dailyAvailability.find(
@@ -72,8 +72,7 @@ export async function POST(request: NextRequest) {
             maxParticipants: number;
             currentBookings: number;
           }) =>
-            new Date(day.date).toISOString().split("T")[0] ===
-            new Date(selectedDate.date).toISOString().split("T")[0]
+            normalizeDateString(day.date) === normalizeDateString(selectedDate.date)
         );
 
         if (!dailyAvail) {
@@ -102,10 +101,6 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      console.log(
-        "[CUSTOMER-API-POST] Availability validated, creating customer booking"
-      );
-
       // 4. Create customer booking
       const customer = new Customer({
         event: eventId,
@@ -123,29 +118,17 @@ export async function POST(request: NextRequest) {
       });
 
       const savedCustomer = await customer.save();
-      console.log("[CUSTOMER-API-POST] Customer created:", savedCustomer._id);
 
       // 5. Update availability atomically for each date
-      console.log(
-        "[CUSTOMER-API-POST] Updating availability for",
-        selectedDates.length,
-        "dates"
-      );
       for (const selectedDate of selectedDates) {
         // Normalize both dates to YYYY-MM-DD for comparison
-        const selectedDateStr = new Date(selectedDate.date)
-          .toISOString()
-          .split("T")[0];
-        console.log(
-          `[CUSTOMER-API-POST] Looking for date: ${selectedDateStr} in dailyAvailability`
-        );
+        const selectedDateStr = normalizeDateString(selectedDate.date);
 
         // Find the reservation to get the exact date object from dailyAvailability
         const reservation = await Reservation.findById(eventId);
         const matchingDay = reservation?.dailyAvailability.find(
           (day: { date: Date }) => {
-            const dayDateStr = new Date(day.date).toISOString().split("T")[0];
-            return dayDateStr === selectedDateStr;
+            return normalizeDateString(day.date) === selectedDateStr;
           }
         );
 
@@ -176,16 +159,8 @@ export async function POST(request: NextRequest) {
             "[CUSTOMER-API-POST] Failed to update availability for date:",
             selectedDate.date
           );
-        } else {
-          console.log(
-            `[CUSTOMER-API-POST] Updated availability for ${selectedDateStr}: +${selectedDate.numberOfParticipants} bookings`
-          );
         }
       }
-
-      console.log(
-        "[CUSTOMER-API-POST] Reservation booking completed successfully"
-      );
 
       return NextResponse.json(
         {
@@ -216,10 +191,6 @@ export async function POST(request: NextRequest) {
 
     const customerTotal =
       total !== undefined ? total : (event.price || 0) * quantity;
-
-    console.log(
-      `[CUSTOMER-API-POST] Using total: ${customerTotal} (provided: ${total}, calculated: ${(event.price || 0) * quantity})`
-    );
 
     const customer = new Customer({
       event: eventId,

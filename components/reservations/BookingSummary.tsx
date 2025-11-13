@@ -16,7 +16,6 @@ export function BookingSummary({
   optionsTotal,
   onContinue,
 }: BookingSummaryProps): ReactElement {
-  console.log("[BookingSummary] Rendering with selectedDates:", selectedDates);
 
   // Calculate total participants across all selected dates
   const totalParticipants = selectedDates.reduce(

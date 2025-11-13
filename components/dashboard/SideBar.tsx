@@ -13,6 +13,12 @@ import {
   RiBookletFill,
   RiTeamLine,
   RiTeamFill,
+  RiImageAddLine,
+  RiImageAddFill,
+  RiTimeLine,
+  RiTimeFill,
+  RiFileTextLine,
+  RiFileTextFill,
 } from "react-icons/ri";
 
 interface NavItem {
@@ -62,7 +68,12 @@ export default function Sidebar() {
       icon: <RiCalendarEventLine className="w-5 h-5" />,
       activeIcon: <RiCalendarEventFill className="w-5 h-5" />,
     },
-
+    {
+      path: "/admin/dashboard/upload-images",
+      label: "Upload Images",
+      icon: <RiImageAddLine className="w-5 h-5" />,
+      activeIcon: <RiImageAddFill className="w-5 h-5" />,
+    },
     {
       path: "/admin/dashboard/customers",
       label: "Customers",
@@ -74,6 +85,18 @@ export default function Sidebar() {
       label: "Error Logs",
       icon: <RiPieChartLine className="w-5 h-5" />,
       activeIcon: <RiPieChartFill className="w-5 h-5" />,
+    },
+    {
+      path: "/admin/dashboard/hours",
+      label: "Hours",
+      icon: <RiTimeLine className="w-5 h-5" />,
+      activeIcon: <RiTimeFill className="w-5 h-5" />,
+    },
+    {
+      path: "/admin/dashboard/page-descriptions",
+      label: "Page Descriptions",
+      icon: <RiFileTextLine className="w-5 h-5" />,
+      activeIcon: <RiFileTextFill className="w-5 h-5" />,
     },
   ];
 

@@ -1,5 +1,10 @@
+"use client";
+
 import Image from "next/image";
 import { EB_Garamond } from "next/font/google";
+import { usePageContent } from "@/hooks/usePageContent";
+import { DEFAULT_TEXT } from "@/lib/constants/defaultPageContent";
+import { portableTextToPlainText } from "@/lib/utils/portableTextHelpers";
 
 const ebGaramond = EB_Garamond({
   subsets: ["latin"],
@@ -7,6 +12,13 @@ const ebGaramond = EB_Garamond({
 });
 
 export default function MainSection() {
+  const { content } = usePageContent();
+
+  // Convert PortableText to plain text
+  const description = content?.homepage?.mainSection?.description
+    ? portableTextToPlainText(content.homepage.mainSection.description)
+    : DEFAULT_TEXT.homepage.mainSection.description;
+
   return (
     <section id="main-section" className="py-16 md:py-24 relative ">
       <div className="container mx-auto px-6 md:px-12">
@@ -30,12 +42,12 @@ export default function MainSection() {
               <h3
                 className={`${ebGaramond.className} text-3xl md:text-5xl font-bold mb-6 text-gray-900 text-center`}
               >
-                Our Creative Space
+                {content?.homepage?.mainSection?.title || DEFAULT_TEXT.homepage.mainSection.title}
               </h3>
               <p
                 className={`${ebGaramond.className} text-lg font-bold md:text-xl text-gray-600 leading-relaxed text-justify`}
               >
-                Coastal Creations Studio is a walk-in art studio where creativity comes to life! We offer a fun, hands-on experience for all ages — no appointment needed. Choose from canvas painting, collage making, mosaics, and more. Looking for a guided experience? Sign up for one of our engaging workshops led by friendly, local artists. Whether you&apos;re a beginner or experienced creator, Coastal Creations is the perfect place to relax, get inspired, and make your own masterpiece!
+                {description}
               </p>
             </div>
           </div>

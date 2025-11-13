@@ -151,3 +151,86 @@ export interface DashboardReservation {
     isAvailable: boolean;
   }>;
 }
+
+// Gallery Destination Types
+export type GalleryDestination =
+  | "adult-class"
+  | "kid-class"
+  | "event"
+  | "camp"
+  | "artist"
+  | "private-event"
+  | "reservation"
+  | "home-page"
+  | "default-gallery";
+
+// Sanity Image Asset Type
+export interface SanityImageAsset {
+  _type: "image";
+  asset: {
+    _type: "reference";
+    _ref: string;
+    _id?: string;
+    url?: string;
+  };
+}
+
+// Picture Gallery Item from Sanity
+export interface PictureGalleryItem {
+  _id: string;
+  _type: "pictureGallery";
+  title: string;
+  description?: string;
+  destination?: string[]; // Optional for backward compatibility with existing images
+  image: SanityImageAsset;
+  _createdAt: string;
+  _updatedAt: string;
+}
+
+// Gallery Upload Form Data
+export interface GalleryUploadFormData {
+  title: string;
+  description?: string;
+  destinations: GalleryDestination[];
+  files: File[];
+}
+
+// Gallery Update Data
+export interface GalleryUpdateData {
+  id: string;
+  title: string;
+  description?: string;
+  destinations: GalleryDestination[];
+}
+
+// Customer booking interface
+export interface ICustomer {
+  _id?: string;
+  event: string;
+  quantity: number;
+  total: number;
+  isSigningUpForSelf: boolean;
+  participants: Array<{
+    firstName: string;
+    lastName: string;
+    email?: string;
+    phone?: string;
+    age?: number;
+    selectedOptions?: Array<{
+      categoryName: string;
+      choice: string;
+    }>;
+  }>;
+  selectedOptions?: Array<{
+    categoryName: string;
+    choice: string;
+  }>;
+  billingInfo: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+  };
+  createdAt?: string;
+  updatedAt?: string;
+}

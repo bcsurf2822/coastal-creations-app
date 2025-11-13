@@ -118,7 +118,6 @@ export async function POST(request: Request) {
     await connectMongo();
     const data = await request.json();
 
-    console.log("[RESERVATIONS-POST] Creating new reservation with data:", data);
 
     if (!data.maxParticipantsPerDay) {
       return NextResponse.json(
@@ -127,9 +126,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const startDate = new Date(data.dates.startDate);
-    const endDate = data.dates.endDate ? new Date(data.dates.endDate) : startDate;
-    const excludeDates = data.dates.excludeDates ? data.dates.excludeDates.map((d: string) => new Date(d)) : [];
+    const startDate = dayjs.tz(data.dates.startDate, LOCAL_TIMEZONE).startOf("day").toDate();
+    const endDate = data.dates.endDate
+      ? dayjs.tz(data.dates.endDate, LOCAL_TIMEZONE).startOf("day").toDate()
+      : startDate;
+    const excludeDates = data.dates.excludeDates
+      ? data.dates.excludeDates.map((d: string) => dayjs.tz(d, LOCAL_TIMEZONE).startOf("day").toDate())
+      : [];
 
     const dailyAvailability = generateDailyAvailability(
       startDate,
@@ -160,8 +163,6 @@ export async function POST(request: Request) {
     };
 
     const reservation = await Reservation.create(reservationData);
-    console.log("[RESERVATIONS-POST] Reservation created successfully:", reservation._id);
-
     return NextResponse.json({ success: true, data: reservation }, { status: 201 });
   } catch (error) {
     console.error("[RESERVATIONS-POST] Error creating reservation:", error);
@@ -175,8 +176,6 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   try {
     await connectMongo();
-
-    console.log("[RESERVATIONS-GET] Fetching reservations");
 
     await cleanupExpiredReservations();
 
@@ -202,7 +201,6 @@ export async function GET(request: Request) {
     }
 
     const reservations = await Reservation.find(filter).sort({ createdAt: -1 });
-    console.log("[RESERVATIONS-GET] Found reservations:", reservations.length);
 
     return NextResponse.json({ success: true, data: reservations, total: reservations.length });
   } catch (error) {
@@ -227,8 +225,6 @@ export async function DELETE(request: Request) {
       );
     }
 
-    console.log("[RESERVATIONS-DELETE] Deleting reservation:", id);
-
     const deletedReservation = await Reservation.findByIdAndDelete(id);
 
     if (!deletedReservation) {
@@ -237,9 +233,7 @@ export async function DELETE(request: Request) {
         { status: 404 }
       );
     }
-
-    console.log("[RESERVATIONS-DELETE] Reservation deleted successfully:", id);
-
+    
     return NextResponse.json({
       success: true,
       message: "Reservation deleted successfully",

@@ -11,9 +11,10 @@ import PaymentError, { SquareErrorCode } from "@/lib/models/PaymentError";
 
 const { paymentsApi } = new Client({
   accessToken: process.env.ACCESS_TOKEN,
-  environment: process.env.SQUARE_ENVIRONMENT === 'sandbox' 
-    ? Environment.Sandbox 
-    : Environment.Production,
+  environment:
+    process.env.SQUARE_ENVIRONMENT === "sandbox"
+      ? Environment.Sandbox
+      : Environment.Production,
 });
 
 export async function submitPayment(
@@ -210,9 +211,8 @@ async function logPaymentError(
     });
 
     await paymentError.save();
-    console.log("Payment error logged to database:", paymentError._id);
+    // console.log("Payment error logged to database:", paymentError._id);
   } catch (logError) {
     console.error("Failed to log payment error to database:", logError);
-    // Don't throw here to avoid masking the original payment error
   }
 }

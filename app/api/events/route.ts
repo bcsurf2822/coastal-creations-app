@@ -1,27 +1,36 @@
 import { NextResponse } from "next/server";
 import { connectMongo } from "@/lib/mongoose";
 import Event from "@/lib/models/Event";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const LOCAL_TIMEZONE = "America/New_York";
 
 // Helper function to check if an event has passed
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function isEventPast(event: any): boolean {
-  const now = new Date();
+  const now = dayjs().tz(LOCAL_TIMEZONE);
 
   // For recurring events, check if the recurring end date has passed
   if (event.dates.isRecurring && event.dates.recurringEndDate) {
-    const recurringEndDate = new Date(event.dates.recurringEndDate);
+    // Parse end date in local timezone
+    const recurringEndDate = dayjs.tz(event.dates.recurringEndDate, LOCAL_TIMEZONE);
     // Add the end time to get the full end datetime
     const [hours, minutes] = event.time.endTime.split(":");
-    recurringEndDate.setHours(parseInt(hours), parseInt(minutes));
-    return now > recurringEndDate;
+    const endDateTime = recurringEndDate.hour(parseInt(hours)).minute(parseInt(minutes));
+    return now.isAfter(endDateTime);
   }
 
   // For single events, check if the event date + end time has passed
-  const eventDate = new Date(event.dates.startDate);
+  const eventDate = dayjs.tz(event.dates.startDate, LOCAL_TIMEZONE);
   const [hours, minutes] = event.time.endTime.split(":");
-  eventDate.setHours(parseInt(hours), parseInt(minutes));
+  const endDateTime = eventDate.hour(parseInt(hours)).minute(parseInt(minutes));
 
-  return now > eventDate;
+  return now.isAfter(endDateTime);
 }
 
 // Function to clean up past events

@@ -16,9 +16,6 @@ export default async function ReservationDetailPage({
   params,
 }: ReservationDetailPageProps): Promise<ReactElement> {
   const { reservationId } = await params;
-
-  console.log("[ReservationDetailPage] Fetching reservation:", reservationId);
-
   let reservation;
   try {
     const res = await fetch(
@@ -71,7 +68,9 @@ export default async function ReservationDetailPage({
             Error Loading Reservation
           </h1>
           <p className={`${ebGaramond.className} text-gray-600 mb-6`}>
-            {error instanceof Error ? error.message : "An error occurred while loading the reservation."}
+            {error instanceof Error
+              ? error.message
+              : "An error occurred while loading the reservation."}
           </p>
           <Link
             href="/reservations"

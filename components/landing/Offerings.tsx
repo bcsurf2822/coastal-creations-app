@@ -3,7 +3,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { EB_Garamond } from "next/font/google";
-import GallerySlideshow from "./GallerySlideshow";
+import GalleryCarousel from "@/components/gallery/GalleryCarousel";
+import { usePageContent } from "@/hooks/usePageContent";
+import { DEFAULT_TEXT } from "@/lib/constants/defaultPageContent";
+import { portableTextToPlainText } from "@/lib/utils/portableTextHelpers";
 
 const ebGaramond = EB_Garamond({
   subsets: ["latin"],
@@ -37,6 +40,24 @@ export default function Offerings() {
     null
   );
   const [isLoading, setIsLoading] = useState(true);
+  const { content } = usePageContent();
+
+  // Convert PortableText to plain text
+  const sectionSubtitle = content?.homepage?.offerings?.sectionSubtitle
+    ? portableTextToPlainText(content.homepage.offerings.sectionSubtitle)
+    : DEFAULT_TEXT.homepage.offerings.sectionSubtitle;
+
+  const artCampsDescription = content?.homepage?.offerings?.artCamps?.description
+    ? portableTextToPlainText(content.homepage.offerings.artCamps.description)
+    : DEFAULT_TEXT.homepage.offerings.artCamps.description;
+
+  const classesWorkshopsDescription = content?.homepage?.offerings?.classesWorkshops?.description
+    ? portableTextToPlainText(content.homepage.offerings.classesWorkshops.description)
+    : DEFAULT_TEXT.homepage.offerings.classesWorkshops.description;
+
+  const privateEventsDescription = content?.homepage?.offerings?.privateEvents?.description
+    ? portableTextToPlainText(content.homepage.offerings.privateEvents.description)
+    : DEFAULT_TEXT.homepage.offerings.privateEvents.description;
 
   useEffect(() => {
     // Fetch events and find the next upcoming artist event
@@ -121,20 +142,25 @@ export default function Offerings() {
               <h3
                 className={`${ebGaramond.className} text-6xl font-bold text-primary`}
               >
-                Creative Experiences
+                {content?.homepage?.offerings?.sectionTitle || DEFAULT_TEXT.homepage.offerings.sectionTitle}
               </h3>
             </div>
             <p
               className={`${ebGaramond.className} text-neutral-900 max-w-md mx-auto text-justify font-bold text-lg`}
             >
-              &quot;We provide a variety of classes, workshops, and creative
-              opportunities for artists of all ages and skill levels!&quot;
+              {sectionSubtitle}
             </p>
           </div>
 
-          {/* Gallery Slideshow */}
+          {/* Gallery Carousel */}
           <div className="mb-16">
-            <GallerySlideshow />
+            <GalleryCarousel
+              destination="home-page"
+              // title="Gallery"
+              autoPlay={true}
+              autoPlayInterval={4000}
+              height="h-[32rem]"
+            />
           </div>
 
           {/* Live Artist Painting - Full Width Row - Only show if there are upcoming events */}
@@ -281,13 +307,12 @@ export default function Offerings() {
               <h4
                 className={`${ebGaramond.className} text-2xl font-semibold text-primary mb-4`}
               >
-                Art Camps
+                {content?.homepage?.offerings?.artCamps?.title || DEFAULT_TEXT.homepage.offerings.artCamps.title}
               </h4>
               <p
                 className={`${ebGaramond.className} text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300 text-justify font-bold text-md`}
               >
-                Hands-on art camps where kids explore creativity, build skills,
-                and have fun together.
+                {artCampsDescription}
               </p>
               <div className="mt-auto flex justify-end">
                 <Link
@@ -318,13 +343,12 @@ export default function Offerings() {
               <h4
                 className={`${ebGaramond.className} text-2xl font-semibold text-primary mb-4`}
               >
-                Classes & Workshops
+                {content?.homepage?.offerings?.classesWorkshops?.title || DEFAULT_TEXT.homepage.offerings.classesWorkshops.title}
               </h4>
               <p
                 className={`${ebGaramond.className} text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300 text-justify font-bold text-md`}
               >
-                Weekly workshops offering focused, guided art sessions for kids
-                and adults of all skill levels.
+                {classesWorkshopsDescription}
               </p>
               <div className="mt-auto flex justify-end">
                 <Link
@@ -355,13 +379,12 @@ export default function Offerings() {
               <h4
                 className={`${ebGaramond.className} text-2xl font-semibold text-primary mb-4`}
               >
-                Private Events
+                {content?.homepage?.offerings?.privateEvents?.title || DEFAULT_TEXT.homepage.offerings.privateEvents.title}
               </h4>
               <p
                 className={`${ebGaramond.className} text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300 text-justify font-bold text-md`}
               >
-                Our art-themed events include guided projects, materials, and
-                colorful memories!
+                {privateEventsDescription}
               </p>
               <div className="mt-auto flex justify-end">
                 <Link

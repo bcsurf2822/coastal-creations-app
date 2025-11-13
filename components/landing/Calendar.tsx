@@ -3,6 +3,9 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { EB_Garamond } from "next/font/google";
 import { createEventSlug } from "@/lib/utils/slugify";
+import { usePageContent } from "@/hooks/usePageContent";
+import { DEFAULT_TEXT } from "@/lib/constants/defaultPageContent";
+import { portableTextToPlainText } from "@/lib/utils/portableTextHelpers";
 
 const ebGaramond = EB_Garamond({
   subsets: ["latin"],
@@ -42,6 +45,12 @@ export default function Calendar() {
   const [eventParticipantCounts, setEventParticipantCounts] = useState<
     Record<string, number>
   >({});
+  const { content } = usePageContent();
+
+  // Convert PortableText to plain text
+  const subtitle = content?.homepage?.upcomingWorkshops?.subtitle
+    ? portableTextToPlainText(content.homepage.upcomingWorkshops.subtitle)
+    : DEFAULT_TEXT.homepage.upcomingWorkshops.subtitle;
 
   useEffect(() => {
     // Set today's date string for comparison
@@ -216,18 +225,17 @@ export default function Calendar() {
             <h4
               className={`${ebGaramond.className} text-secondary uppercase tracking-widest text-sm font-medium mb-3`}
             >
-              Plan Your Visit
+              {content?.homepage?.upcomingWorkshops?.label || DEFAULT_TEXT.homepage.upcomingWorkshops.label}
             </h4>
             <h3
               className={`${ebGaramond.className} text-4xl font-bold text-primary mb-4`}
             >
-              Upcoming Workshops
+              {content?.homepage?.upcomingWorkshops?.title || DEFAULT_TEXT.homepage.upcomingWorkshops.title}
             </h3>
             <p
               className={`${ebGaramond.className} text-gray-600 max-w-2xl mx-auto font-bold text-lg`}
             >
-              Browse our calendar to find the perfect class or workshop for your
-              creative journey.
+              {subtitle}
             </p>
           </div>
 

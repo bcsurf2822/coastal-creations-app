@@ -8,6 +8,8 @@ import { useEffect, useState } from "react";
 import WaveText from "./WaveText";
 import SeaCreatures from "./SeaCreatures";
 import { createEventSlug } from "@/lib/utils/slugify";
+import { usePageContent } from "@/hooks/usePageContent";
+import { DEFAULT_TEXT } from "@/lib/constants/defaultPageContent";
 
 interface CalendarEvent {
   _id: string;
@@ -39,6 +41,7 @@ interface CalendarEvent {
 export default function Hero() {
   const [showLiveEventPopup, setShowLiveEventPopup] = useState(false);
   const [upcomingArtistEvent, setUpcomingArtistEvent] = useState<CalendarEvent | null>(null);
+  const { content } = usePageContent();
 
   useEffect(() => {
     // Check for live artist events
@@ -191,7 +194,7 @@ export default function Hero() {
         <div className="max-w-4xl mx-auto text-center">
           <div className="mb-20 sm:mb-24 h-[320px] md:h-[280px] flex items-center justify-center relative">
             <WaveText
-              text="Welcome to Coastal Creations Studio"
+              text={content?.homepage?.hero?.heading || DEFAULT_TEXT.homepage.hero.heading}
               className="text-4xl sm:text-5xl md:text-6xl leading-tight relative z-10"
               delay={0.3}
               staggerDelay={0.05}
@@ -203,13 +206,13 @@ export default function Hero() {
               href="/events/classes-workshops"
               className="bg-slate-800 hover:bg-slate-700 text-white font-semibold px-6 sm:px-8 py-3 sm:py-3.5 rounded-lg transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg text-base sm:text-xl tracking-wide"
             >
-              Explore Classes
+              {content?.homepage?.hero?.ctaButton1 || DEFAULT_TEXT.homepage.hero.ctaButton1}
             </Link>
             <Link
               href="/about"
               className="bg-white hover:bg-gray-50 border-2 border-slate-600 text-slate-700 font-semibold px-6 sm:px-8 py-3 sm:py-3.5 rounded-lg transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg text-base sm:text-xl tracking-wide"
             >
-              About Us
+              {content?.homepage?.hero?.ctaButton2 || DEFAULT_TEXT.homepage.hero.ctaButton2}
             </Link>
           </div>
         </div>

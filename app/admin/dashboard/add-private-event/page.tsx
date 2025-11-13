@@ -9,12 +9,10 @@ const AddPrivateEventPage = (): ReactElement => {
   const router = useRouter();
 
   const handleSuccess = () => {
-    console.log("[ADD-PRIVATE-EVENT-PAGE-handleSuccess] Private event created successfully, redirecting to dashboard");
     router.push("/admin/dashboard");
   };
 
   const handleCancel = () => {
-    console.log("[ADD-PRIVATE-EVENT-PAGE-handleCancel] User cancelled, redirecting to dashboard");
     router.push("/admin/dashboard");
   };
 

@@ -86,7 +86,9 @@ export const useReservationForm = ({
       setFormData((prev) => ({
         ...prev,
         [parentKey]: {
-          ...(prev[parentKey as keyof ReservationFormState] as unknown as Record<string, unknown>),
+          ...(prev[
+            parentKey as keyof ReservationFormState
+          ] as unknown as Record<string, unknown>),
           [childKey]: value,
         },
       }));
@@ -175,12 +177,17 @@ export const useReservationForm = ({
       categoryDescription: "",
       choices: [{ name: "", price: 0 }],
     };
-    handleInputChange("optionCategories", [...formData.optionCategories, newCategory]);
+    handleInputChange("optionCategories", [
+      ...formData.optionCategories,
+      newCategory,
+    ]);
   }, [formData.optionCategories, handleInputChange]);
 
   const removeOptionCategory = useCallback(
     (index: number) => {
-      const newCategories = formData.optionCategories.filter((_, i) => i !== index);
+      const newCategories = formData.optionCategories.filter(
+        (_, i) => i !== index
+      );
       handleInputChange("optionCategories", newCategories);
     },
     [formData.optionCategories, handleInputChange]
@@ -198,9 +205,9 @@ export const useReservationForm = ({
   const removeChoiceFromCategory = useCallback(
     (categoryIndex: number, choiceIndex: number) => {
       const newCategories = [...formData.optionCategories];
-      newCategories[categoryIndex].choices = newCategories[categoryIndex].choices.filter(
-        (_, i) => i !== choiceIndex
-      );
+      newCategories[categoryIndex].choices = newCategories[
+        categoryIndex
+      ].choices.filter((_, i) => i !== choiceIndex);
       handleInputChange("optionCategories", newCategories);
     },
     [formData.optionCategories, handleInputChange]
@@ -209,7 +216,9 @@ export const useReservationForm = ({
   const updateOptionCategory = useCallback(
     (categoryIndex: number, field: string, value: string) => {
       const newCategories = [...formData.optionCategories];
-      (newCategories[categoryIndex] as unknown as Record<string, unknown>)[field] = value;
+      (newCategories[categoryIndex] as unknown as Record<string, unknown>)[
+        field
+      ] = value;
       handleInputChange("optionCategories", newCategories);
     },
     [formData.optionCategories, handleInputChange]
@@ -223,7 +232,12 @@ export const useReservationForm = ({
       value: string | number | undefined
     ) => {
       const newCategories = [...formData.optionCategories];
-      (newCategories[categoryIndex].choices[choiceIndex] as unknown as Record<string, unknown>)[field] = value;
+      (
+        newCategories[categoryIndex].choices[choiceIndex] as unknown as Record<
+          string,
+          unknown
+        >
+      )[field] = value;
       handleInputChange("optionCategories", newCategories);
     },
     [formData.optionCategories, handleInputChange]
@@ -240,7 +254,9 @@ export const useReservationForm = ({
 
   const removeExcludeDate = useCallback(
     (index: number) => {
-      const newExcludeDates = formData.excludeDates.filter((_, i) => i !== index);
+      const newExcludeDates = formData.excludeDates.filter(
+        (_, i) => i !== index
+      );
       handleInputChange("excludeDates", newExcludeDates);
     },
     [formData.excludeDates, handleInputChange]
@@ -255,26 +271,31 @@ export const useReservationForm = ({
       maxParticipantsPerDay: formData.maxParticipantsPerDay,
       dates: {
         startDate: prepareDateForSubmit(formData.startDate),
-        endDate: formData.endDate ? prepareDateForSubmit(formData.endDate) : undefined,
-        excludeDates: formData.excludeDates.length > 0
-          ? formData.excludeDates.map(prepareDateForSubmit)
+        endDate: formData.endDate
+          ? prepareDateForSubmit(formData.endDate)
           : undefined,
+        excludeDates:
+          formData.excludeDates.length > 0
+            ? formData.excludeDates.map(prepareDateForSubmit)
+            : undefined,
       },
       timeType: formData.timeType,
       time: {
-        startTime: formData.startTime?.format("HH:mm") || "",
-        endTime: formData.endTime?.format("HH:mm") || "",
+        startTime: formData.startTime?.format("HH:mm") || undefined,
+        endTime: formData.endTime?.format("HH:mm") || undefined,
       },
-      customTimes: formData.timeType === "custom"
-        ? formData.customTimes.map((ct) => ({
-            date: ct.date,
-            startTime: ct.startTime?.format("HH:mm") || "",
-            endTime: ct.endTime?.format("HH:mm") || "",
-          }))
-        : undefined,
-      options: formData.hasOptions && formData.optionCategories.length > 0
-        ? formData.optionCategories
-        : undefined,
+      customTimes:
+        formData.timeType === "custom"
+          ? formData.customTimes.map((ct) => ({
+              date: ct.date,
+              startTime: ct.startTime?.format("HH:mm") || undefined,
+              endTime: ct.endTime?.format("HH:mm") || undefined,
+            }))
+          : undefined,
+      options:
+        formData.hasOptions && formData.optionCategories.length > 0
+          ? formData.optionCategories
+          : undefined,
       isDiscountAvailable: formData.isDiscountAvailable,
       discount: formData.isDiscountAvailable ? formData.discount : undefined,
     };
@@ -299,14 +320,12 @@ export const useReservationForm = ({
       try {
         const submitData = prepareFormDataForSubmit();
 
-        const endpoint = mode === "add"
-          ? "/api/reservations"
-          : `/api/reservations/${reservationId}`;
+        const endpoint =
+          mode === "add"
+            ? "/api/reservations"
+            : `/api/reservations/${reservationId}`;
 
         const method = mode === "add" ? "POST" : "PUT";
-
-        console.log(`[RESERVATION-FORM-${method}] Submitting reservation data:`, submitData);
-
         const response = await fetch(endpoint, {
           method,
           headers: { "Content-Type": "application/json" },
@@ -319,10 +338,10 @@ export const useReservationForm = ({
           throw new Error(result.error || "Failed to save reservation");
         }
 
-        console.log(`[RESERVATION-FORM-${method}] Reservation saved successfully:`, result.data);
-
         toast.success(
-          mode === "add" ? "Reservation created successfully!" : "Reservation updated successfully!"
+          mode === "add"
+            ? "Reservation created successfully!"
+            : "Reservation updated successfully!"
         );
 
         if (onSuccess) {
@@ -331,7 +350,10 @@ export const useReservationForm = ({
           router.push("/admin/dashboard");
         }
       } catch (error) {
-        console.error(`[RESERVATION-FORM-ERROR] Error saving reservation:`, error);
+        console.error(
+          `[RESERVATION-FORM-ERROR] Error saving reservation:`,
+          error
+        );
         toast.error(
           error instanceof Error ? error.message : "Failed to save reservation"
         );
@@ -340,7 +362,14 @@ export const useReservationForm = ({
         setIsSubmitting(false);
       }
     },
-    [validateForm, prepareFormDataForSubmit, mode, reservationId, onSuccess, router]
+    [
+      validateForm,
+      prepareFormDataForSubmit,
+      mode,
+      reservationId,
+      onSuccess,
+      router,
+    ]
   );
 
   const actions = {

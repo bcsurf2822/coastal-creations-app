@@ -17,10 +17,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     await connectMongo();
     const { customerId, refundAmount, reason } = await request.json();
 
-    console.log(
-      `[REFUNDS-API-POST] Processing refund for customer ${customerId}, amount: ${refundAmount}`
-    );
-
     if (!customerId) {
       return NextResponse.json(
         { error: "Customer ID is required" },
@@ -55,10 +51,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       ? BigInt(Math.round(refundAmount * 100))
       : BigInt(Math.round((customer.total - (customer.refundAmount || 0)) * 100));
 
-    console.log(
-      `[REFUNDS-API-POST] Refund amount in cents: ${refundAmountCents}`
-    );
-
     const refundResult = await refundsApi.refundPayment({
       idempotencyKey: randomUUID(),
       paymentId: customer.squarePaymentId,
@@ -68,10 +60,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       },
       reason: reason || "Customer requested refund",
     });
-
-    console.log(
-      `[REFUNDS-API-POST] Refund result status: ${refundResult.result?.refund?.status}`
-    );
 
     if (refundResult.result?.refund) {
       const refundAmountDollars = refundAmount || customer.total - (customer.refundAmount || 0);
@@ -84,7 +72,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       customer.refundedAt = new Date();
       await customer.save();
 
-      // Convert refund object to JSON-serializable format (avoiding BigInt issues)
       const refundData = JSON.parse(
         JSON.stringify(refundResult.result.refund, (key, value) =>
           typeof value === "bigint" ? value.toString() : value
@@ -114,8 +101,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
   } catch (error) {
-    console.error("[REFUNDS-API-POST] Error processing refund:", error);
-
     let errorMessage = "Error processing refund";
     let statusCode = 500;
 
