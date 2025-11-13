@@ -4,8 +4,18 @@ import EventsContainer from "@/components/classes/EventsContainer";
 import GalleryCarousel from "@/components/gallery/GalleryCarousel";
 import { FaPalette, FaUsers } from "react-icons/fa";
 import { GiPaintBrush } from "react-icons/gi";
+import { usePageContent } from "@/hooks/usePageContent";
+import { DEFAULT_TEXT } from "@/lib/constants/defaultPageContent";
+import { portableTextToPlainText } from "@/lib/utils/portableTextHelpers";
 
 export default function AdultClassesPage() {
+  const { content } = usePageContent();
+
+  // Convert PortableText to plain text
+  const description = content?.eventPages?.adultClasses?.description
+    ? portableTextToPlainText(content.eventPages.adultClasses.description)
+    : DEFAULT_TEXT.eventPages.adultClasses.description;
+
   return (
     <div className="min-h-screen py-12">
       <div className="container mx-auto px-4">
@@ -16,16 +26,14 @@ export default function AdultClassesPage() {
               <FaPalette />
             </div>
             <h1 className="text-4xl md:text-5xl font-bold text-[#326C85]">
-              Adult Classes
+              {content?.eventPages?.adultClasses?.title || DEFAULT_TEXT.eventPages.adultClasses.title}
             </h1>
             <div className="text-4xl text-[#326C85]">
               <GiPaintBrush />
             </div>
           </div>
           <p className="text-lg text-gray-700 max-w-2xl mx-auto font-semibold">
-            Unleash your creativity with our adult art classes.
-            <br />
-            No experience necessary — just bring your passion!
+            {description}
           </p>
         </div>
 

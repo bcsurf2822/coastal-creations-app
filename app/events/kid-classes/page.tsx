@@ -4,8 +4,18 @@ import EventsContainer from "@/components/classes/EventsContainer";
 import GalleryCarousel from "@/components/gallery/GalleryCarousel";
 import { FaPalette, FaUsers } from "react-icons/fa";
 import { GiPaintBrush } from "react-icons/gi";
+import { usePageContent } from "@/hooks/usePageContent";
+import { DEFAULT_TEXT } from "@/lib/constants/defaultPageContent";
+import { portableTextToPlainText } from "@/lib/utils/portableTextHelpers";
 
 export default function KidClassesPage() {
+  const { content } = usePageContent();
+
+  // Convert PortableText to plain text
+  const description = content?.eventPages?.kidClasses?.description
+    ? portableTextToPlainText(content.eventPages.kidClasses.description)
+    : DEFAULT_TEXT.eventPages.kidClasses.description;
+
   return (
     <div className="min-h-screen py-12">
       <div className="container mx-auto px-4">
@@ -16,16 +26,14 @@ export default function KidClassesPage() {
               <FaPalette />
             </div>
             <h1 className="text-4xl md:text-5xl font-bold text-[#326C85]">
-              Kid Classes
+              {content?.eventPages?.kidClasses?.title || DEFAULT_TEXT.eventPages.kidClasses.title}
             </h1>
             <div className="text-4xl text-[#326C85]">
               <GiPaintBrush />
             </div>
           </div>
           <p className="text-lg text-gray-700 max-w-2xl mx-auto font-semibold">
-            Creative art classes designed for young artists.
-            <br />
-            Fun, educational, and inspiring!
+            {description}
           </p>
         </div>
 

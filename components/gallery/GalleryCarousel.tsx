@@ -205,7 +205,7 @@ export default function GalleryCarousel({
         </h2>
       )}
 
-      <div className="relative rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900 shadow-lg">
+      <div className="relative rounded-lg overflow-hidden">
         {/* Main carousel container */}
         <div
           ref={scrollContainerRef}
@@ -213,45 +213,29 @@ export default function GalleryCarousel({
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          className="flex overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-hide gap-4 p-4"
+          className="flex overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-hide gap-2 md:gap-3"
           style={{ scrollBehavior: "smooth" }}
         >
           {images.map((image, index) => {
             const imageUrl = urlFor(image.image)?.width(800).quality(90).url();
 
             return (
-              <div key={image._id} className="w-full md:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.667rem)] flex-shrink-0 snap-start">
-                <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden h-full">
+              <div key={image._id} className="w-full md:w-[calc(50%-0.375rem)] lg:w-[calc(33.333%-0.5rem)] xl:w-[calc(25%-0.563rem)] flex-shrink-0 snap-start group">
+                <div className="relative rounded-lg overflow-hidden h-full cursor-pointer transition-transform duration-300 ease-out hover:scale-105 hover:shadow-2xl">
                   {imageUrl ? (
-                    <div className={`relative w-full ${height} flex items-center justify-center bg-white dark:bg-gray-800`}>
+                    <div className={`relative w-full ${height} flex items-center justify-center`}>
                       <Image
                         src={imageUrl}
                         alt={image.title}
                         width={800}
                         height={600}
-                        className="w-full h-full object-contain p-4"
+                        className="w-full h-full object-contain rounded-lg transition-all duration-300"
                         priority={index === 0}
                       />
                     </div>
                   ) : (
-                    <div className={`w-full ${height} bg-gray-200 dark:bg-gray-700 flex items-center justify-center`}>
+                    <div className={`w-full ${height} bg-gray-200/50 dark:bg-gray-700/50 flex items-center justify-center rounded-lg`}>
                       <span className="text-gray-400">Image not available</span>
-                    </div>
-                  )}
-
-                  {/* Image title and description below image */}
-                  {(image.title || image.description) && (
-                    <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700">
-                      {image.title && (
-                        <h3 className="text-gray-900 dark:text-white text-base font-semibold mb-1">
-                          {image.title}
-                        </h3>
-                      )}
-                      {image.description && (
-                        <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2">
-                          {image.description}
-                        </p>
-                      )}
                     </div>
                   )}
                 </div>

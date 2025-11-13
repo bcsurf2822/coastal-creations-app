@@ -3,8 +3,18 @@
 import EventsContainer from "@/components/classes/EventsContainer";
 import GalleryCarousel from "@/components/gallery/GalleryCarousel";
 import { FaCampground, FaSun, FaMountain } from "react-icons/fa";
+import { usePageContent } from "@/hooks/usePageContent";
+import { DEFAULT_TEXT } from "@/lib/constants/defaultPageContent";
+import { portableTextToPlainText } from "@/lib/utils/portableTextHelpers";
 
 export default function SummerCampsPage() {
+  const { content } = usePageContent();
+
+  // Convert PortableText to plain text
+  const description = content?.eventPages?.camps?.description
+    ? portableTextToPlainText(content.eventPages.camps.description)
+    : DEFAULT_TEXT.eventPages.camps.description;
+
   return (
     <div className="min-h-screen py-12">
       <div className="container mx-auto px-4">
@@ -15,14 +25,14 @@ export default function SummerCampsPage() {
               <FaCampground />
             </div>
             <h1 className="text-4xl md:text-5xl font-bold text-[#326C85]">
-              Art Camps
+              {content?.eventPages?.camps?.title || DEFAULT_TEXT.eventPages.camps.title}
             </h1>
             <div className="text-4xl text-[#326C85]">
               <FaSun />
             </div>
           </div>
           <p className="text-lg text-gray-700 max-w-2xl mx-auto font-semibold">
-            Spend your time Creating at Coastal Creations!
+            {description}
           </p>
         </div>
 
