@@ -2,6 +2,8 @@ import { ReactElement } from "react";
 import Link from "next/link";
 import { CalendarSelection } from "@/components/reservations/CalendarSelection";
 import { EB_Garamond } from "next/font/google";
+import { connectMongo } from "@/lib/mongoose";
+import Reservation from "@/lib/models/Reservations";
 
 const ebGaramond = EB_Garamond({
   subsets: ["latin"],
@@ -17,16 +19,15 @@ export default async function ReservationDetailPage({
 }: ReservationDetailPageProps): Promise<ReactElement> {
   const { reservationId } = await params;
   let reservation;
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/reservations/${reservationId}`,
-      { cache: "no-store" }
-    );
 
-    if (!res.ok) {
+  try {
+    await connectMongo();
+    reservation = await Reservation.findById(reservationId).lean();
+
+    if (!reservation) {
       console.error(
-        "[ReservationDetailPage] Failed to fetch reservation:",
-        res.status
+        "[ReservationDetailPage-page] Reservation not found:",
+        reservationId
       );
       return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
@@ -50,15 +51,8 @@ export default async function ReservationDetailPage({
         </div>
       );
     }
-
-    const data = await res.json();
-    reservation = data.data;
-
-    if (!reservation) {
-      throw new Error("No reservation data in response");
-    }
   } catch (error) {
-    console.error("[ReservationDetailPage] Error fetching reservation:", error);
+    console.error("[ReservationDetailPage-page] Error fetching reservation:", error);
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
