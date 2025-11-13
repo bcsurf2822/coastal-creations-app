@@ -2,6 +2,8 @@ import { ReactElement } from "react";
 import Link from "next/link";
 import PaymentForm from "@/components/reservations/PaymentForm";
 import { SelectedDate } from "@/components/reservations/types";
+import { connectMongo } from "@/lib/mongoose";
+import ReservationModel from "@/lib/models/Reservations";
 
 interface Reservation {
   _id: string;
@@ -75,19 +77,15 @@ export default async function ReservationPaymentPage({
     );
   }
 
-  let reservation: Reservation;
+  let reservation: Reservation | null;
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
-    const response = await fetch(
-      `${apiUrl}/api/reservations/${reservationId}`,
-      {
-        cache: "no-store",
-      }
-    );
+    await connectMongo();
+    reservation = await ReservationModel.findById(reservationId).lean();
 
-    if (!response.ok) {
+    if (!reservation) {
       console.error(
-        `[ReservationPaymentPage] Failed to fetch reservation: ${response.status}`
+        "[ReservationPaymentPage-page] Reservation not found:",
+        reservationId
       );
       return (
         <div className="max-w-4xl mx-auto py-16 px-4 text-center">
@@ -102,15 +100,9 @@ export default async function ReservationPaymentPage({
         </div>
       );
     }
-
-    const result = await response.json();
-    if (!result.success || !result.data) {
-      throw new Error("Invalid reservation data");
-    }
-    reservation = result.data;
   } catch (error) {
     console.error(
-      "[ReservationPaymentPage] Error fetching reservation:",
+      "[ReservationPaymentPage-page] Error fetching reservation:",
       error
     );
     return (
