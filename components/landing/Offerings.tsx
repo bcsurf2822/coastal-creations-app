@@ -47,16 +47,23 @@ export default function Offerings() {
     ? portableTextToPlainText(content.homepage.offerings.sectionSubtitle)
     : DEFAULT_TEXT.homepage.offerings.sectionSubtitle;
 
-  const artCampsDescription = content?.homepage?.offerings?.artCamps?.description
+  const artCampsDescription = content?.homepage?.offerings?.artCamps
+    ?.description
     ? portableTextToPlainText(content.homepage.offerings.artCamps.description)
     : DEFAULT_TEXT.homepage.offerings.artCamps.description;
 
-  const classesWorkshopsDescription = content?.homepage?.offerings?.classesWorkshops?.description
-    ? portableTextToPlainText(content.homepage.offerings.classesWorkshops.description)
+  const classesWorkshopsDescription = content?.homepage?.offerings
+    ?.classesWorkshops?.description
+    ? portableTextToPlainText(
+        content.homepage.offerings.classesWorkshops.description
+      )
     : DEFAULT_TEXT.homepage.offerings.classesWorkshops.description;
 
-  const privateEventsDescription = content?.homepage?.offerings?.privateEvents?.description
-    ? portableTextToPlainText(content.homepage.offerings.privateEvents.description)
+  const privateEventsDescription = content?.homepage?.offerings?.privateEvents
+    ?.description
+    ? portableTextToPlainText(
+        content.homepage.offerings.privateEvents.description
+      )
     : DEFAULT_TEXT.homepage.offerings.privateEvents.description;
 
   useEffect(() => {
@@ -142,7 +149,8 @@ export default function Offerings() {
               <h3
                 className={`${ebGaramond.className} text-6xl font-bold text-primary`}
               >
-                {content?.homepage?.offerings?.sectionTitle || DEFAULT_TEXT.homepage.offerings.sectionTitle}
+                {content?.homepage?.offerings?.sectionTitle ||
+                  DEFAULT_TEXT.homepage.offerings.sectionTitle}
               </h3>
             </div>
             <p
@@ -226,7 +234,7 @@ export default function Offerings() {
                                   className="w-4 h-4 mr-1"
                                 ></i>
                                 <span
-                                  className={`${ebGaramond.className} font-medium text-lg font-bold`}
+                                  className={`${ebGaramond.className} font-medium text-lg`}
                                 >
                                   {formatEventTime(
                                     nextArtistEvent.time.startTime
@@ -306,7 +314,8 @@ export default function Offerings() {
                   <h4
                     className={`${ebGaramond.className} text-xl font-bold text-gray-800 mb-2`}
                   >
-                    {content?.homepage?.offerings?.artCamps?.title || DEFAULT_TEXT.homepage.offerings.artCamps.title}
+                    {content?.homepage?.offerings?.artCamps?.title ||
+                      DEFAULT_TEXT.homepage.offerings.artCamps.title}
                   </h4>
                   <p
                     className={`${ebGaramond.className} text-gray-600 mb-4 text-sm leading-relaxed flex-1`}
@@ -318,8 +327,18 @@ export default function Offerings() {
                     className={`${ebGaramond.className} inline-flex items-center justify-center w-full px-5 py-2.5 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-all duration-300 text-sm`}
                   >
                     <span>Upcoming Camps</span>
-                    <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    <svg
+                      className="w-4 h-4 ml-2"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 8l4 4m0 0l-4 4m4-4H3"
+                      />
                     </svg>
                   </Link>
                 </div>
@@ -344,7 +363,8 @@ export default function Offerings() {
                   <h4
                     className={`${ebGaramond.className} text-xl font-bold text-gray-800 mb-2`}
                   >
-                    {content?.homepage?.offerings?.classesWorkshops?.title || DEFAULT_TEXT.homepage.offerings.classesWorkshops.title}
+                    {content?.homepage?.offerings?.classesWorkshops?.title ||
+                      DEFAULT_TEXT.homepage.offerings.classesWorkshops.title}
                   </h4>
                   <p
                     className={`${ebGaramond.className} text-gray-600 mb-4 text-sm leading-relaxed flex-1`}
@@ -356,8 +376,18 @@ export default function Offerings() {
                     className={`${ebGaramond.className} inline-flex items-center justify-center w-full px-5 py-2.5 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-all duration-300 text-sm`}
                   >
                     <span>Upcoming Classes</span>
-                    <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    <svg
+                      className="w-4 h-4 ml-2"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 8l4 4m0 0l-4 4m4-4H3"
+                      />
                     </svg>
                   </Link>
                 </div>
@@ -382,7 +412,8 @@ export default function Offerings() {
                   <h4
                     className={`${ebGaramond.className} text-xl font-bold text-gray-800 mb-2`}
                   >
-                    {content?.homepage?.offerings?.privateEvents?.title || DEFAULT_TEXT.homepage.offerings.privateEvents.title}
+                    {content?.homepage?.offerings?.privateEvents?.title ||
+                      DEFAULT_TEXT.homepage.offerings.privateEvents.title}
                   </h4>
                   <p
                     className={`${ebGaramond.className} text-gray-600 mb-4 text-sm leading-relaxed flex-1`}
@@ -394,8 +425,18 @@ export default function Offerings() {
                     className={`${ebGaramond.className} inline-flex items-center justify-center w-full px-5 py-2.5 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-all duration-300 text-sm`}
                   >
                     <span>Learn More</span>
-                    <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    <svg
+                      className="w-4 h-4 ml-2"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 8l4 4m0 0l-4 4m4-4H3"
+                      />
                     </svg>
                   </Link>
                 </div>
