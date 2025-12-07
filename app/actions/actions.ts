@@ -33,6 +33,7 @@ export async function submitPayment(
     eventId?: string;
     eventTitle?: string;
     eventPrice?: string;
+    squareCustomerId?: string;
   }
 ): Promise<ApiResponse<CreatePaymentResponse> | undefined> {
   try {
@@ -67,6 +68,8 @@ export async function submitPayment(
       sourceId,
       referenceId: billingDetails.eventId,
       note,
+      // Link payment to Square customer profile for Dashboard visibility
+      customerId: billingDetails.squareCustomerId,
       billingAddress: {
         addressLine1: billingDetails.addressLine1,
         addressLine2: billingDetails.addressLine2 || "",

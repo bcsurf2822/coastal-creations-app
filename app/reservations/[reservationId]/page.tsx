@@ -14,6 +14,63 @@ interface ReservationDetailPageProps {
   params: Promise<{ reservationId: string }>;
 }
 
+// Helper to serialize a Date or return string as-is
+function serializeDate(value: unknown): string | undefined {
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  return undefined;
+}
+
+// Serialize MongoDB document to plain object for Client Components
+function serializeReservation(doc: Record<string, unknown>): Record<string, unknown> {
+  const dates = doc.dates as { startDate?: Date | string; endDate?: Date | string; excludeDates?: (Date | string)[] } | undefined;
+  const time = doc.time as { startTime?: string; endTime?: string } | undefined;
+  const dailyAvailability = doc.dailyAvailability as Array<{
+    date: Date | string;
+    maxParticipants: number;
+    currentBookings: number;
+    isAvailable: boolean;
+    startTime?: string;
+    endTime?: string;
+  }> | undefined;
+
+  return {
+    _id: String(doc._id),
+    eventName: doc.eventName,
+    eventType: doc.eventType,
+    description: doc.description,
+    pricePerDayPerParticipant: doc.pricePerDayPerParticipant,
+    dates: {
+      startDate: serializeDate(dates?.startDate),
+      endDate: serializeDate(dates?.endDate),
+      excludeDates: dates?.excludeDates?.map((d) => serializeDate(d)),
+    },
+    timeType: doc.timeType,
+    time: {
+      startTime: time?.startTime,
+      endTime: time?.endTime,
+    },
+    dailyAvailability: dailyAvailability?.map((day) => ({
+      date: serializeDate(day.date),
+      maxParticipants: day.maxParticipants,
+      currentBookings: day.currentBookings,
+      isAvailable: day.isAvailable,
+      startTime: day.startTime,
+      endTime: day.endTime,
+    })),
+    options: doc.options,
+    image: doc.image,
+    isDiscountAvailable: doc.isDiscountAvailable,
+    discount: doc.discount,
+    createdAt: serializeDate(doc.createdAt),
+    updatedAt: serializeDate(doc.updatedAt),
+  };
+}
+
 export default async function ReservationDetailPage({
   params,
 }: ReservationDetailPageProps): Promise<ReactElement> {
@@ -77,5 +134,7 @@ export default async function ReservationDetailPage({
     );
   }
 
-  return <CalendarSelection reservation={reservation} />;
+  const serializedReservation = serializeReservation(reservation as unknown as Record<string, unknown>);
+
+  return <CalendarSelection reservation={serializedReservation as unknown as import("@/lib/models/Reservations").IReservation} />;
 }

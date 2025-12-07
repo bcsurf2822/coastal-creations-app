@@ -38,7 +38,10 @@ export default function PageDescriptionsPage(): ReactElement {
           }
         }
       } catch (error) {
-        console.error("[PAGE-DESCRIPTIONS-FETCH] Error fetching content:", error);
+        console.error(
+          "[PAGE-DESCRIPTIONS-FETCH] Error fetching content:",
+          error
+        );
         setError("Failed to load page content");
       } finally {
         setIsLoading(false);
@@ -225,46 +228,7 @@ export default function PageDescriptionsPage(): ReactElement {
                           className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            CTA Button 1 Text
-                          </label>
-                          <input
-                            type="text"
-                            value={
-                              content.homepage?.hero?.ctaButton1 ||
-                              DEFAULT_TEXT.homepage.hero.ctaButton1
-                            }
-                            onChange={(e) =>
-                              updateContent(
-                                ["homepage", "hero", "ctaButton1"],
-                                e.target.value
-                              )
-                            }
-                            className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            CTA Button 2 Text
-                          </label>
-                          <input
-                            type="text"
-                            value={
-                              content.homepage?.hero?.ctaButton2 ||
-                              DEFAULT_TEXT.homepage.hero.ctaButton2
-                            }
-                            onChange={(e) =>
-                              updateContent(
-                                ["homepage", "hero", "ctaButton2"],
-                                e.target.value
-                              )
-                            }
-                            className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </div>
-                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
                     </div>
                   </div>
 
@@ -299,7 +263,8 @@ export default function PageDescriptionsPage(): ReactElement {
                       <TextEditor
                         label="Description"
                         value={
-                          content.homepage?.mainSection?.description as unknown as string ||
+                          (content.homepage?.mainSection
+                            ?.description as unknown as string) ||
                           DEFAULT_TEXT.homepage.mainSection.description
                         }
                         onChange={(value) =>
@@ -345,7 +310,8 @@ export default function PageDescriptionsPage(): ReactElement {
                       <TextEditor
                         label="Section Subtitle"
                         value={
-                          content.homepage?.offerings?.sectionSubtitle as unknown as string ||
+                          (content.homepage?.offerings
+                            ?.sectionSubtitle as unknown as string) ||
                           DEFAULT_TEXT.homepage.offerings.sectionSubtitle
                         }
                         onChange={(value) =>
@@ -375,7 +341,12 @@ export default function PageDescriptionsPage(): ReactElement {
                               }
                               onChange={(e) =>
                                 updateContent(
-                                  ["homepage", "offerings", "artCamps", "title"],
+                                  [
+                                    "homepage",
+                                    "offerings",
+                                    "artCamps",
+                                    "title",
+                                  ],
                                   e.target.value
                                 )
                               }
@@ -385,12 +356,19 @@ export default function PageDescriptionsPage(): ReactElement {
                           <TextEditor
                             label="Card Description"
                             value={
-                              content.homepage?.offerings?.artCamps?.description as unknown as string ||
-                              DEFAULT_TEXT.homepage.offerings.artCamps.description
+                              (content.homepage?.offerings?.artCamps
+                                ?.description as unknown as string) ||
+                              DEFAULT_TEXT.homepage.offerings.artCamps
+                                .description
                             }
                             onChange={(value) =>
                               updateContent(
-                                ["homepage", "offerings", "artCamps", "description"],
+                                [
+                                  "homepage",
+                                  "offerings",
+                                  "artCamps",
+                                  "description",
+                                ],
                                 value
                               )
                             }
@@ -411,12 +389,19 @@ export default function PageDescriptionsPage(): ReactElement {
                             <input
                               type="text"
                               value={
-                                content.homepage?.offerings?.classesWorkshops?.title ||
-                                DEFAULT_TEXT.homepage.offerings.classesWorkshops.title
+                                content.homepage?.offerings?.classesWorkshops
+                                  ?.title ||
+                                DEFAULT_TEXT.homepage.offerings.classesWorkshops
+                                  .title
                               }
                               onChange={(e) =>
                                 updateContent(
-                                  ["homepage", "offerings", "classesWorkshops", "title"],
+                                  [
+                                    "homepage",
+                                    "offerings",
+                                    "classesWorkshops",
+                                    "title",
+                                  ],
                                   e.target.value
                                 )
                               }
@@ -426,12 +411,19 @@ export default function PageDescriptionsPage(): ReactElement {
                           <TextEditor
                             label="Card Description"
                             value={
-                              content.homepage?.offerings?.classesWorkshops?.description as unknown as string ||
-                              DEFAULT_TEXT.homepage.offerings.classesWorkshops.description
+                              (content.homepage?.offerings?.classesWorkshops
+                                ?.description as unknown as string) ||
+                              DEFAULT_TEXT.homepage.offerings.classesWorkshops
+                                .description
                             }
                             onChange={(value) =>
                               updateContent(
-                                ["homepage", "offerings", "classesWorkshops", "description"],
+                                [
+                                  "homepage",
+                                  "offerings",
+                                  "classesWorkshops",
+                                  "description",
+                                ],
                                 value
                               )
                             }
@@ -452,12 +444,19 @@ export default function PageDescriptionsPage(): ReactElement {
                             <input
                               type="text"
                               value={
-                                content.homepage?.offerings?.privateEvents?.title ||
-                                DEFAULT_TEXT.homepage.offerings.privateEvents.title
+                                content.homepage?.offerings?.privateEvents
+                                  ?.title ||
+                                DEFAULT_TEXT.homepage.offerings.privateEvents
+                                  .title
                               }
                               onChange={(e) =>
                                 updateContent(
-                                  ["homepage", "offerings", "privateEvents", "title"],
+                                  [
+                                    "homepage",
+                                    "offerings",
+                                    "privateEvents",
+                                    "title",
+                                  ],
                                   e.target.value
                                 )
                               }
@@ -467,12 +466,19 @@ export default function PageDescriptionsPage(): ReactElement {
                           <TextEditor
                             label="Card Description"
                             value={
-                              content.homepage?.offerings?.privateEvents?.description as unknown as string ||
-                              DEFAULT_TEXT.homepage.offerings.privateEvents.description
+                              (content.homepage?.offerings?.privateEvents
+                                ?.description as unknown as string) ||
+                              DEFAULT_TEXT.homepage.offerings.privateEvents
+                                .description
                             }
                             onChange={(value) =>
                               updateContent(
-                                ["homepage", "offerings", "privateEvents", "description"],
+                                [
+                                  "homepage",
+                                  "offerings",
+                                  "privateEvents",
+                                  "description",
+                                ],
                                 value
                               )
                             }
@@ -533,7 +539,8 @@ export default function PageDescriptionsPage(): ReactElement {
                       <TextEditor
                         label="Subtitle"
                         value={
-                          content.homepage?.upcomingWorkshops?.subtitle as unknown as string ||
+                          (content.homepage?.upcomingWorkshops
+                            ?.subtitle as unknown as string) ||
                           DEFAULT_TEXT.homepage.upcomingWorkshops.subtitle
                         }
                         onChange={(value) =>
@@ -584,7 +591,8 @@ export default function PageDescriptionsPage(): ReactElement {
                       <TextEditor
                         label="Page Description"
                         value={
-                          content.eventPages?.adultClasses?.description as unknown as string ||
+                          (content.eventPages?.adultClasses
+                            ?.description as unknown as string) ||
                           DEFAULT_TEXT.eventPages.adultClasses.description
                         }
                         onChange={(value) =>
@@ -629,7 +637,8 @@ export default function PageDescriptionsPage(): ReactElement {
                       <TextEditor
                         label="Page Description"
                         value={
-                          content.eventPages?.kidClasses?.description as unknown as string ||
+                          (content.eventPages?.kidClasses
+                            ?.description as unknown as string) ||
                           DEFAULT_TEXT.eventPages.kidClasses.description
                         }
                         onChange={(value) =>
@@ -674,7 +683,8 @@ export default function PageDescriptionsPage(): ReactElement {
                       <TextEditor
                         label="Page Description"
                         value={
-                          content.eventPages?.camps?.description as unknown as string ||
+                          (content.eventPages?.camps
+                            ?.description as unknown as string) ||
                           DEFAULT_TEXT.eventPages.camps.description
                         }
                         onChange={(value) =>
@@ -719,7 +729,8 @@ export default function PageDescriptionsPage(): ReactElement {
                       <TextEditor
                         label="Page Description"
                         value={
-                          content.eventPages?.privateEvents?.description as unknown as string ||
+                          (content.eventPages?.privateEvents
+                            ?.description as unknown as string) ||
                           DEFAULT_TEXT.eventPages.privateEvents.description
                         }
                         onChange={(value) =>
@@ -769,7 +780,8 @@ export default function PageDescriptionsPage(): ReactElement {
                       <TextEditor
                         label="Page Description"
                         value={
-                          content.otherPages?.reservations?.description as unknown as string ||
+                          (content.otherPages?.reservations
+                            ?.description as unknown as string) ||
                           DEFAULT_TEXT.otherPages.reservations.description
                         }
                         onChange={(value) =>
@@ -814,7 +826,8 @@ export default function PageDescriptionsPage(): ReactElement {
                       <TextEditor
                         label="Page Description"
                         value={
-                          content.otherPages?.gallery?.description as unknown as string ||
+                          (content.otherPages?.gallery
+                            ?.description as unknown as string) ||
                           DEFAULT_TEXT.otherPages.gallery.description
                         }
                         onChange={(value) =>
@@ -859,7 +872,8 @@ export default function PageDescriptionsPage(): ReactElement {
                       <TextEditor
                         label="Page Description"
                         value={
-                          content.otherPages?.about?.description as unknown as string ||
+                          (content.otherPages?.about
+                            ?.description as unknown as string) ||
                           DEFAULT_TEXT.otherPages.about.description
                         }
                         onChange={(value) =>

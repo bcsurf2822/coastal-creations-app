@@ -156,6 +156,14 @@ export default function Payment() {
 
   const [totalPrice, setTotalPrice] = useState<string>("");
 
+  // Gift card state
+  const [appliedGiftCard, setAppliedGiftCard] = useState<{
+    giftCardId: string;
+    gan: string;
+    amountApplied: number;
+    remainingBalance: number;
+  } | null>(null);
+
   const calculateDiscountedPrice = (
     basePrice: number,
     participantCount: number
@@ -206,12 +214,191 @@ export default function Payment() {
 
     return totalOptionCost;
   };
-    
+
+  // Helper to redeem gift card
+  const redeemGiftCard = async (
+    giftCardId: string,
+    amountCents: number,
+    referenceId?: string
+  ): Promise<boolean> => {
+    try {
+      console.log("[PAYMENT-redeemGiftCard] Redeeming gift card:", giftCardId, "amount:", amountCents);
+      const response = await fetch("/api/gift-cards/redeem", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          giftCardId,
+          amountCents,
+          referenceId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("[PAYMENT-redeemGiftCard] Failed:", errorData);
+        return false;
+      }
+
+      const result = await response.json();
+      console.log("[PAYMENT-redeemGiftCard] Success, new balance:", result.newBalance);
+      return true;
+    } catch (error) {
+      console.error("[PAYMENT-redeemGiftCard] Error:", error);
+      return false;
+    }
+  };
+
+  // Handle gift-card-only order completion (no Square payment)
+  const handleGiftCardOnlyOrder = async (
+    giftCardRedemption?: { giftCardId: string; amountCents: number }
+  ): Promise<void> => {
+    if (!giftCardRedemption) {
+      throw new Error("Gift card redemption details required");
+    }
+
+    // Step 1: Create or find Square customer
+    let squareCustomerId: string | undefined;
+    try {
+      const customerResponse = await fetch("/api/square/customers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: billingDetails.givenName,
+          lastName: billingDetails.familyName,
+          email: billingDetails.email || undefined,
+          phone: billingDetails.phoneNumber || undefined,
+          address: {
+            addressLine1: billingDetails.addressLine1,
+            addressLine2: billingDetails.addressLine2,
+            city: billingDetails.city,
+            state: billingDetails.state,
+            postalCode: billingDetails.postalCode,
+            country: billingDetails.countryCode,
+          },
+        }),
+      });
+
+      if (customerResponse.ok) {
+        const customerData = await customerResponse.json();
+        squareCustomerId = customerData.data?.customerId;
+        console.log(
+          "[PAYMENT-handleGiftCardOnlyOrder] Square customer:",
+          squareCustomerId,
+          customerData.data?.isNew ? "(new)" : "(existing)"
+        );
+      }
+    } catch (customerError) {
+      console.error(
+        "[PAYMENT-handleGiftCardOnlyOrder] Failed to create Square customer:",
+        customerError
+      );
+    }
+
+    // Step 2: Redeem the gift card
+    const redeemed = await redeemGiftCard(
+      giftCardRedemption.giftCardId,
+      giftCardRedemption.amountCents,
+      eventId
+    );
+
+    if (!redeemed) {
+      throw new Error("Failed to redeem gift card");
+    }
+
+    // Step 3: Create customer/booking record
+    const customerData = await submitCustomerDetails(
+      totalPrice,
+      `GIFTCARD-${giftCardRedemption.giftCardId}`,
+      squareCustomerId
+    );
+
+    if (!customerData || !customerData.data || !customerData.data._id) {
+      throw new Error("Failed to create booking record");
+    }
+
+    // Step 4: Send confirmation email
+    try {
+      await fetch("/api/send-confirmation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerId: customerData.data._id,
+          eventId: eventId,
+        }),
+      });
+    } catch (emailError) {
+      console.error("[PAYMENT-handleGiftCardOnlyOrder] Error sending confirmation email:", emailError);
+    }
+
+    // Step 5: Redirect to success page
+    const queryParams = new URLSearchParams();
+    queryParams.set("paymentId", `GIFTCARD-${giftCardRedemption.giftCardId}`);
+    queryParams.set("status", "COMPLETED");
+    queryParams.set("firstName", billingDetails.givenName);
+    queryParams.set("lastName", billingDetails.familyName);
+    queryParams.set("eventTitle", eventTitle || "");
+    queryParams.set("eventId", eventId || "");
+    queryParams.set("amount", (giftCardRedemption.amountCents).toString());
+    queryParams.set("currency", "USD");
+    queryParams.set("paymentMethod", "gift_card");
+
+    if (billingDetails.email) {
+      queryParams.set("email", billingDetails.email);
+    }
+    if (billingDetails.phoneNumber) {
+      queryParams.set("phone", billingDetails.phoneNumber);
+    }
+    queryParams.set("numberOfPeople", billingDetails.numberOfPeople.toString());
+    queryParams.set("totalPrice", totalPrice);
+
+    router.push(`/payment-success?${queryParams.toString()}`);
+  };
+
   const handleSubmitPayment = async (
     token: string,
     paymentData: PaymentSubmitData
   ): Promise<PaymentResult> => {
     try {
+      // Create or find Square customer BEFORE processing payment
+      // This ensures the payment is linked to the customer in Square Dashboard
+      let squareCustomerId: string | undefined;
+      try {
+        const customerResponse = await fetch("/api/square/customers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            firstName: paymentData.givenName,
+            lastName: paymentData.familyName,
+            email: paymentData.email || undefined,
+            phone: paymentData.phoneNumber || undefined,
+            address: {
+              addressLine1: paymentData.addressLine1,
+              addressLine2: paymentData.addressLine2,
+              city: paymentData.city,
+              state: paymentData.state,
+              postalCode: paymentData.postalCode,
+              country: paymentData.countryCode,
+            },
+          }),
+        });
+
+        if (customerResponse.ok) {
+          const customerData = await customerResponse.json();
+          squareCustomerId = customerData.data?.customerId;
+          console.log(
+            "[PAYMENT-handleSubmitPayment] Square customer:",
+            squareCustomerId,
+            customerData.data?.isNew ? "(new)" : "(existing)"
+          );
+        }
+      } catch (customerError) {
+        // Log but don't fail - payment can proceed without customer link
+        console.error(
+          "[PAYMENT-handleSubmitPayment] Failed to create Square customer:",
+          customerError
+        );
+      }
+
       const result = await submitPayment(token, {
         addressLine1: paymentData.addressLine1,
         addressLine2: paymentData.addressLine2,
@@ -226,6 +413,7 @@ export default function Payment() {
         eventId: paymentData.eventId,
         eventTitle: paymentData.eventTitle,
         eventPrice: paymentData.eventPrice,
+        squareCustomerId,
       });
 
       if (!result) {
@@ -240,9 +428,25 @@ export default function Payment() {
       }
 
       if (result.result?.payment?.status === "COMPLETED") {
+        // If a gift card was applied (partial payment), redeem it now
+        if (appliedGiftCard) {
+          console.log("[PAYMENT-handleSubmitPayment] Redeeming gift card for partial payment");
+          const redeemed = await redeemGiftCard(
+            appliedGiftCard.giftCardId,
+            appliedGiftCard.amountApplied,
+            paymentData.eventId
+          );
+          if (!redeemed) {
+            console.error("[PAYMENT-handleSubmitPayment] Failed to redeem gift card - payment completed but gift card not redeemed");
+            // Note: We don't fail the payment here since the card was already charged
+            // The gift card balance can be manually adjusted if needed
+          }
+        }
+
         const customerData = await submitCustomerDetails(
           paymentData.eventPrice,
-          result.result.payment.id
+          result.result.payment.id,
+          squareCustomerId
         );
 
         if (customerData && customerData.data && customerData.data._id) {
@@ -577,7 +781,11 @@ export default function Payment() {
     });
   };
 
-  const submitCustomerDetails = async (chargedAmount?: string, squarePaymentId?: string) => {
+  const submitCustomerDetails = async (
+    chargedAmount?: string,
+    squarePaymentId?: string,
+    squareCustomerId?: string
+  ) => {
     if (!formValid) {
       setError("Please complete all required fields before submitting");
       return null;
@@ -614,6 +822,7 @@ export default function Payment() {
             phoneNumber: billingDetails.phoneNumber,
           },
           squarePaymentId,
+          squareCustomerId,
         }),
       });
 
@@ -686,6 +895,10 @@ export default function Payment() {
               router={router}
               participants={[]}
               getParticipantValidationError={() => null}
+              enableGiftCards={true}
+              appliedGiftCard={appliedGiftCard}
+              onGiftCardApplied={setAppliedGiftCard}
+              onOrderComplete={handleGiftCardOnlyOrder}
             />
           </div>
         </div>
@@ -737,6 +950,10 @@ export default function Payment() {
                 router={router}
                 participants={participants}
                 getParticipantValidationError={getParticipantValidationError}
+                enableGiftCards={true}
+                appliedGiftCard={appliedGiftCard}
+                onGiftCardApplied={setAppliedGiftCard}
+                onOrderComplete={handleGiftCardOnlyOrder}
               />
             </div>
           ) : (
