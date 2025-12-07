@@ -22,7 +22,7 @@ export default function ReservationsPage(): ReactElement {
           <h1 className="text-4xl md:text-5xl font-bold text-[#326C85] mb-4">
             {content?.otherPages?.reservations?.title || DEFAULT_TEXT.otherPages.reservations.title}
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto whitespace-pre-line">
             {description}
           </p>
         </div>

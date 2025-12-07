@@ -115,6 +115,8 @@ Save as: `PRPs/{feature-name}.md`
 
 After completing the PRP generation, **MANDATORY**: Run the PRP Quality Agent to validate the created PRP meets all quality standards.
 
+/Users/benjamincorbett/code/cedesigns/coastal-creations-app/.claude/agents/prp-quality-agent/prp-quality-agent.md
+
 ```bash
 # Execute quality validation with detailed reporting
 /prp-quality-check PRPs/{feature-name}.md --detailed

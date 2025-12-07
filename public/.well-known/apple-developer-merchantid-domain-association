@@ -1,0 +1,15 @@
+# Apple Pay Domain Verification File
+#
+# IMPORTANT: This is a placeholder file.
+#
+# To enable Apple Pay in production:
+# 1. Go to Square Dashboard > Apple Pay
+# 2. Add your production domain
+# 3. Download the verification file from Square
+# 4. Replace this file with the one from Square
+#
+# The actual file content will be a long string provided by Square.
+# It looks something like: 7B227073704964223A22...
+#
+# For more information:
+# https://developer.squareup.com/docs/web-payments/apple-pay

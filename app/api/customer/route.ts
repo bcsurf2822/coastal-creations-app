@@ -4,6 +4,7 @@ import Customer from "@/lib/models/Customer";
 import Event from "@/lib/models/Event";
 import PrivateEvent from "@/lib/models/PrivateEvent";
 import Reservation from "@/lib/models/Reservations";
+import { squareCustomerService } from "@/lib/square/customers";
 import mongoose from "mongoose";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -35,8 +36,41 @@ export async function POST(request: NextRequest) {
       selectedDates,
       billingInfo,
       squarePaymentId,
-      squareCustomerId,
+      squareCustomerId: providedSquareCustomerId,
     } = data;
+
+    // Create or find Square customer if not already provided
+    let squareCustomerId = providedSquareCustomerId;
+    if (!squareCustomerId && billingInfo) {
+      try {
+        const squareResult = await squareCustomerService.findOrCreateCustomer({
+          firstName: billingInfo.firstName,
+          lastName: billingInfo.lastName,
+          email: billingInfo.emailAddress,
+          phone: billingInfo.phoneNumber,
+          address: billingInfo.addressLine1
+            ? {
+                addressLine1: billingInfo.addressLine1,
+                addressLine2: billingInfo.addressLine2,
+                city: billingInfo.city,
+                state: billingInfo.stateProvince,
+                postalCode: billingInfo.postalCode,
+                country: billingInfo.country || "US",
+              }
+            : undefined,
+        });
+        squareCustomerId = squareResult.customerId;
+        console.log(
+          `[CUSTOMER-API-POST] Square customer ${squareResult.isNew ? "created" : "found"}: ${squareCustomerId}`
+        );
+      } catch (squareError) {
+        // Log but don't fail - Square customer creation is not critical for booking
+        console.error(
+          "[CUSTOMER-API-POST] Failed to create/find Square customer:",
+          squareError
+        );
+      }
+    }
 
     if (eventType === "Reservation") {
       // 1. Validate reservation exists

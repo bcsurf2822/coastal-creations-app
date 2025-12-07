@@ -3,7 +3,9 @@
 import { useRouter } from "next/navigation";
 import { PiSquareLogoFill } from "react-icons/pi";
 import dynamic from "next/dynamic";
-import React from "react";
+import React, { useState } from "react";
+// import WalletPayButtons from "./WalletPayButtons";
+import GiftCardRedemption from "./GiftCardRedemption";
 
 // Dynamically import Square payment components with SSR disabled
 const DynamicPaymentForm = dynamic(
@@ -88,6 +90,13 @@ interface Participant {
   }>;
 }
 
+interface AppliedGiftCard {
+  giftCardId: string;
+  gan: string;
+  amountApplied: number;
+  remainingBalance: number;
+}
+
 interface PaymentProcessorProps {
   error: string;
   setError: (error: string) => void;
@@ -105,6 +114,15 @@ interface PaymentProcessorProps {
   router: ReturnType<typeof useRouter>;
   participants: Participant[];
   getParticipantValidationError: () => string | null;
+  // Gift card support (optional)
+  enableGiftCards?: boolean;
+  onGiftCardApplied?: (giftCard: AppliedGiftCard | null) => void;
+  appliedGiftCard?: AppliedGiftCard | null;
+  // Called when order completes (with or without card payment) - used for gift card only orders
+  onOrderComplete?: (giftCardRedemption?: {
+    giftCardId: string;
+    amountCents: number;
+  }) => Promise<void>;
 }
 
 // Helper function to convert Square error codes to user-friendly messages
@@ -180,12 +198,111 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
   submitPayment,
   router,
   getParticipantValidationError,
+  enableGiftCards = false,
+  onGiftCardApplied,
+  appliedGiftCard,
+  onOrderComplete,
 }) => {
+  // Internal state for gift card when parent doesn't manage it
+  const [internalGiftCard, setInternalGiftCard] =
+    useState<AppliedGiftCard | null>(null);
+  // State for gift-card-only order processing
+  const [isProcessingGiftCardOrder, setIsProcessingGiftCardOrder] =
+    useState(false);
+
+  // Use external state if provided, otherwise use internal state
+  const currentGiftCard =
+    appliedGiftCard !== undefined ? appliedGiftCard : internalGiftCard;
+
+  const handleGiftCardApply = (giftCard: AppliedGiftCard): void => {
+    if (onGiftCardApplied) {
+      onGiftCardApplied(giftCard);
+    } else {
+      setInternalGiftCard(giftCard);
+    }
+  };
+
+  const handleGiftCardRemove = (): void => {
+    if (onGiftCardApplied) {
+      onGiftCardApplied(null);
+    } else {
+      setInternalGiftCard(null);
+    }
+  };
+
+  // Handle gift-card-only order completion (no Square payment needed)
+  const handleGiftCardOnlyOrder = async (): Promise<void> => {
+    // Validate form before proceeding
+    const isContactProvided =
+      billingDetails.email.trim() !== "" ||
+      billingDetails.phoneNumber.trim() !== "";
+
+    const areRequiredFieldsFilled =
+      billingDetails.givenName.trim() !== "" &&
+      billingDetails.familyName.trim() !== "" &&
+      billingDetails.addressLine1.trim() !== "" &&
+      billingDetails.city.trim() !== "" &&
+      billingDetails.state.trim() !== "" &&
+      billingDetails.postalCode.trim() !== "" &&
+      isContactProvided;
+
+    const participantError = getParticipantValidationError();
+
+    if (!areRequiredFieldsFilled) {
+      setError(
+        "Please fill in all required fields. Either email or phone number must be provided."
+      );
+      return;
+    }
+
+    if (participantError) {
+      setError(participantError);
+      return;
+    }
+
+    if (!currentGiftCard) {
+      setError("No gift card applied");
+      return;
+    }
+
+    setIsProcessingGiftCardOrder(true);
+    setError("");
+
+    try {
+      // Call the parent's onOrderComplete handler which will:
+      // 1. Redeem the gift card
+      // 2. Create the customer record
+      // 3. Redirect to success page
+      if (onOrderComplete) {
+        await onOrderComplete({
+          giftCardId: currentGiftCard.giftCardId,
+          amountCents: currentGiftCard.amountApplied,
+        });
+      } else {
+        setError("Order processing not configured");
+      }
+    } catch (err) {
+      console.error("[PaymentProcessor-handleGiftCardOnlyOrder] Error:", err);
+      setError("Failed to process order. Please try again.");
+    } finally {
+      setIsProcessingGiftCardOrder(false);
+    }
+  };
+
+  // Calculate remaining amount after gift card
+  const totalInCents = Math.round(parseFloat(totalPrice) * 100);
+  const giftCardAmountApplied = currentGiftCard?.amountApplied || 0;
+  const remainingAmountCents = Math.max(
+    0,
+    totalInCents - giftCardAmountApplied
+  );
+  const remainingAmountDisplay = (remainingAmountCents / 100).toFixed(2);
   // Create unique ID for this payment form to prevent conflicts
   const formId = React.useMemo(
     () => `payment-form-${eventId}-${Date.now()}`,
     [eventId]
   );
+
   return (
     <div className="mb-8">
       <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center">
@@ -231,269 +348,413 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
         </div>
       )}
 
-      {isLoaded ? (
-        <div className="p-6 bg-gray-50 rounded-lg">
-          {!formValid && (
-            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-300 text-yellow-800 rounded-lg">
-              <div className="flex items-start">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <div className="space-y-1">
-                  <p>
-                    Please complete all required fields above before proceeding
-                    with payment. You must provide either an email address or
-                    phone number.
-                  </p>
-                  {getParticipantValidationError() && (
-                    <p className="font-medium">
-                      {getParticipantValidationError()}
-                    </p>
-                  )}
-                </div>
+      {/* Gift Card Redemption Section */}
+      {enableGiftCards && (
+        <div className="mb-6">
+          <GiftCardRedemption
+            totalAmount={totalInCents}
+            onApply={handleGiftCardApply}
+            onRemove={handleGiftCardRemove}
+            appliedCard={currentGiftCard}
+          />
+          {currentGiftCard && remainingAmountCents > 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-blue-800">Order Total:</span>
+                <span className="text-blue-800">${totalPrice}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-green-700">Gift Card Applied:</span>
+                <span className="text-green-700">
+                  -${(giftCardAmountApplied / 100).toFixed(2)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center font-bold mt-2 pt-2 border-t border-blue-200">
+                <span className="text-blue-900">Remaining to Pay:</span>
+                <span className="text-blue-900">${remainingAmountDisplay}</span>
               </div>
             </div>
           )}
-          <DynamicPaymentForm
-            key={formId}
-            applicationId={config.applicationId}
-            locationId={config.locationId}
-            createPaymentRequest={() => {
-              return {
-                countryCode: "US",
-                currencyCode: "USD",
-                total: {
-                  amount: totalPrice,
-                  label: "Total",
-                },
-              };
-            }}
-            cardTokenizeResponseReceived={async (token) => {
-              // Validate form before proceeding
-              const isContactProvided =
-                billingDetails.email.trim() !== "" ||
-                billingDetails.phoneNumber.trim() !== "";
-
-              const areRequiredFieldsFilled =
-                billingDetails.givenName.trim() !== "" &&
-                billingDetails.familyName.trim() !== "" &&
-                billingDetails.addressLine1.trim() !== "" &&
-                billingDetails.city.trim() !== "" &&
-                billingDetails.state.trim() !== "" &&
-                billingDetails.postalCode.trim() !== "" &&
-                isContactProvided;
-
-              // Check participant validation
-              const participantError = getParticipantValidationError();
-
-              if (!areRequiredFieldsFilled) {
-                setError(
-                  "Please fill in all required fields. Either email or phone number must be provided."
-                );
-                return;
-              }
-
-              if (participantError) {
-                setError(participantError);
-                return;
-              }
-
-              if (token.token) {
-                try {
-                  const result = await submitPayment(token.token, {
-                    ...billingDetails,
-                    eventId,
-                    eventTitle,
-                    eventPrice: totalPrice,
-                  });
-
-                  if (result?.result?.payment?.status === "COMPLETED") {
-                    const paymentId = result.result.payment.id;
-                    const receiptUrl = result.result.payment.receiptUrl || "";
-                    const note = result.result.payment.note || "";
-
-                    // Safely extract amount and currency with fallbacks
-                    const amount =
-                      result.result.payment.amountMoney?.amount?.toString() ||
-                      "0";
-                    const currency =
-                      result.result.payment.amountMoney?.currency || "USD";
-
-                    // Get card details if available
-                    const last4 =
-                      result.result.payment.cardDetails?.card?.last4 || "";
-                    const cardBrand =
-                      result.result.payment.cardDetails?.card?.cardBrand || "";
-
-                    // Build query parameters with all relevant information
-                    const queryParams = new URLSearchParams();
-                    queryParams.set("paymentId", paymentId || "");
-                    queryParams.set("status", "COMPLETED");
-                    queryParams.set("receiptUrl", receiptUrl);
-                    queryParams.set("firstName", billingDetails.givenName);
-                    queryParams.set("lastName", billingDetails.familyName);
-                    queryParams.set("eventTitle", eventTitle || "");
-                    queryParams.set("eventId", eventId || "");
-                    queryParams.set("note", note);
-                    queryParams.set("amount", amount);
-                    queryParams.set("currency", currency);
-                    queryParams.set("last4", last4);
-                    queryParams.set("cardBrand", cardBrand);
-
-                    // Add contact information to success page
-                    if (billingDetails.email) {
-                      queryParams.set("email", billingDetails.email);
-                    }
-                    if (billingDetails.phoneNumber) {
-                      queryParams.set("phone", billingDetails.phoneNumber);
-                    }
-
-                    // Add number of people to success page
-                    queryParams.set(
-                      "numberOfPeople",
-                      billingDetails.numberOfPeople.toString()
-                    );
-
-                    // Add total price to success page
-                    queryParams.set("totalPrice", totalPrice);
-
-                    // Use config for redirect URL
-                    router.push(
-                      `${config.redirectUrl}?${queryParams.toString()}`
-                    );
-
-                    // Customer data is now handled in the main component via submitCustomerDetails
-                  } else {
-                    // Handle payment not completed - check for specific error details
-                    console.error("Payment not completed:", result);
-
-                    // Try to extract error information from the result
-                    let errorMessage =
-                      "Payment could not be completed. Please try again.";
-
-                    // Check if there are specific errors in the result
-                    if (
-                      result &&
-                      typeof result === "object" &&
-                      "result" in result
-                    ) {
-                      const resultObj = result as {
-                        result?: {
-                          errors?: Array<{ detail?: string; code?: string }>;
-                        };
-                      };
-                      if (
-                        resultObj.result?.errors &&
-                        Array.isArray(resultObj.result.errors)
-                      ) {
-                        const firstError = resultObj.result.errors[0];
-                        if (firstError?.code || firstError?.detail) {
-                          errorMessage = getErrorMessage(
-                            firstError.code || "",
-                            firstError.detail
-                          );
-                        }
-                      }
-                    }
-
-                    setError(errorMessage);
-                  }
-                } catch (error) {
-                  console.error("Payment processing error:", error);
-
-                  // Extract meaningful error message from the caught error
-                  let errorMessage =
-                    "Payment could not be processed. Please try again.";
-
-                  if (error && typeof error === "object") {
-                    // Check for Square API error structure
-                    if ("result" in error) {
-                      const errorObj = error as {
-                        result?: {
-                          errors?: Array<{ detail?: string; code?: string }>;
-                        };
-                      };
-                      if (
-                        errorObj.result?.errors &&
-                        Array.isArray(errorObj.result.errors)
-                      ) {
-                        const firstError = errorObj.result.errors[0];
-                        if (firstError?.code || firstError?.detail) {
-                          errorMessage = getErrorMessage(
-                            firstError.code || "",
-                            firstError.detail
-                          );
-                        }
-                      }
-                    }
-                    // Check for direct errors array
-                    else if ("errors" in error) {
-                      const errorObj = error as {
-                        errors?: Array<{ detail?: string; code?: string }>;
-                      };
-                      if (errorObj.errors && Array.isArray(errorObj.errors)) {
-                        const firstError = errorObj.errors[0];
-                        if (firstError?.code || firstError?.detail) {
-                          errorMessage = getErrorMessage(
-                            firstError.code || "",
-                            firstError.detail
-                          );
-                        }
-                      }
-                    }
-                    // Check for standard Error object
-                    else if ("message" in error) {
-                      const errorObj = error as Error;
-                      // Only use the error message if it's not a generic network error
-                      if (
-                        errorObj.message &&
-                        !errorObj.message.includes("status 404") &&
-                        !errorObj.message.includes("request failed")
-                      ) {
-                        errorMessage = errorObj.message;
-                      }
-                    }
-                  }
-
-                  setError(errorMessage);
-                }
-              } else {
-                console.error("Payment token is undefined");
-                setError("Payment token is undefined. Please try again.");
-              }
-            }}
-          >
-            <div className="max-w-md mx-auto">
-              <DynamicCreditCard key={`${formId}-card`} />
+          {currentGiftCard && remainingAmountCents === 0 && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+              <p className="text-green-800 font-medium text-center mb-4">
+                Gift card covers the full amount - no additional payment needed!
+              </p>
               {!formValid && (
-                <div className="mt-4 text-red-600 text-center text-sm font-medium space-y-1">
-                  <div>
-                    Please complete all required fields above before submitting
-                    payment
+                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-300 text-yellow-800 rounded-lg">
+                  <div className="flex items-start">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <p>
+                      Please complete all required fields above before
+                      completing your order.
+                    </p>
                   </div>
-                  {getParticipantValidationError() && (
-                    <div className="font-bold">
-                      {getParticipantValidationError()}
+                </div>
+              )}
+              <button
+                onClick={handleGiftCardOnlyOrder}
+                disabled={!formValid || isProcessingGiftCardOrder}
+                className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+              >
+                {isProcessingGiftCardOrder ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="w-5 h-5 mr-2"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    Complete Order with Gift Card
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {isLoaded ? (
+        <div className="p-6 bg-gray-50 rounded-lg">
+          {/* Only show credit card form if there's remaining balance to pay */}
+          {remainingAmountCents > 0 && (
+            <>
+              {!formValid && (
+                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-300 text-yellow-800 rounded-lg">
+                  <div className="flex items-start">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <div className="space-y-1">
+                      <p>
+                        Please complete all required fields above before
+                        proceeding with payment. You must provide either an
+                        email address or phone number.
+                      </p>
+                      {getParticipantValidationError() && (
+                        <p className="font-medium">
+                          {getParticipantValidationError()}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+              <DynamicPaymentForm
+                key={formId}
+                applicationId={config.applicationId}
+                locationId={config.locationId}
+                createPaymentRequest={() => {
+                  // Use remaining amount after gift card, or full amount if no gift card
+                  const paymentAmount =
+                    enableGiftCards && currentGiftCard
+                      ? remainingAmountDisplay
+                      : totalPrice;
+                  return {
+                    countryCode: "US",
+                    currencyCode: "USD",
+                    total: {
+                      amount: paymentAmount,
+                      label: currentGiftCard ? "Remaining Balance" : "Total",
+                    },
+                  };
+                }}
+                cardTokenizeResponseReceived={async (token) => {
+                  // Validate form before proceeding
+                  const isContactProvided =
+                    billingDetails.email.trim() !== "" ||
+                    billingDetails.phoneNumber.trim() !== "";
+
+                  const areRequiredFieldsFilled =
+                    billingDetails.givenName.trim() !== "" &&
+                    billingDetails.familyName.trim() !== "" &&
+                    billingDetails.addressLine1.trim() !== "" &&
+                    billingDetails.city.trim() !== "" &&
+                    billingDetails.state.trim() !== "" &&
+                    billingDetails.postalCode.trim() !== "" &&
+                    isContactProvided;
+
+                  // Check participant validation
+                  const participantError = getParticipantValidationError();
+
+                  if (!areRequiredFieldsFilled) {
+                    setError(
+                      "Please fill in all required fields. Either email or phone number must be provided."
+                    );
+                    return;
+                  }
+
+                  if (participantError) {
+                    setError(participantError);
+                    return;
+                  }
+
+                  if (token.token) {
+                    try {
+                      // Use remaining amount after gift card, or full amount if no gift card
+                      const chargeAmount = currentGiftCard
+                        ? remainingAmountDisplay
+                        : totalPrice;
+
+                      const result = await submitPayment(token.token, {
+                        ...billingDetails,
+                        eventId,
+                        eventTitle,
+                        eventPrice: chargeAmount,
+                      });
+
+                      if (result?.result?.payment?.status === "COMPLETED") {
+                        const paymentId = result.result.payment.id;
+                        const receiptUrl =
+                          result.result.payment.receiptUrl || "";
+                        const note = result.result.payment.note || "";
+
+                        // Safely extract amount and currency with fallbacks
+                        const amount =
+                          result.result.payment.amountMoney?.amount?.toString() ||
+                          "0";
+                        const currency =
+                          result.result.payment.amountMoney?.currency || "USD";
+
+                        // Get card details if available
+                        const last4 =
+                          result.result.payment.cardDetails?.card?.last4 || "";
+                        const cardBrand =
+                          result.result.payment.cardDetails?.card?.cardBrand ||
+                          "";
+
+                        // Build query parameters with all relevant information
+                        const queryParams = new URLSearchParams();
+                        queryParams.set("paymentId", paymentId || "");
+                        queryParams.set("status", "COMPLETED");
+                        queryParams.set("receiptUrl", receiptUrl);
+                        queryParams.set("firstName", billingDetails.givenName);
+                        queryParams.set("lastName", billingDetails.familyName);
+                        queryParams.set("eventTitle", eventTitle || "");
+                        queryParams.set("eventId", eventId || "");
+                        queryParams.set("note", note);
+                        queryParams.set("amount", amount);
+                        queryParams.set("currency", currency);
+                        queryParams.set("last4", last4);
+                        queryParams.set("cardBrand", cardBrand);
+
+                        // Add contact information to success page
+                        if (billingDetails.email) {
+                          queryParams.set("email", billingDetails.email);
+                        }
+                        if (billingDetails.phoneNumber) {
+                          queryParams.set("phone", billingDetails.phoneNumber);
+                        }
+
+                        // Add number of people to success page
+                        queryParams.set(
+                          "numberOfPeople",
+                          billingDetails.numberOfPeople.toString()
+                        );
+
+                        // Add total price to success page
+                        queryParams.set("totalPrice", totalPrice);
+
+                        // Use config for redirect URL
+                        router.push(
+                          `${config.redirectUrl}?${queryParams.toString()}`
+                        );
+
+                        // Customer data is now handled in the main component via submitCustomerDetails
+                      } else {
+                        // Handle payment not completed - check for specific error details
+                        console.error("Payment not completed:", result);
+
+                        // Try to extract error information from the result
+                        let errorMessage =
+                          "Payment could not be completed. Please try again.";
+
+                        // Check if there are specific errors in the result
+                        if (
+                          result &&
+                          typeof result === "object" &&
+                          "result" in result
+                        ) {
+                          const resultObj = result as {
+                            result?: {
+                              errors?: Array<{
+                                detail?: string;
+                                code?: string;
+                              }>;
+                            };
+                          };
+                          if (
+                            resultObj.result?.errors &&
+                            Array.isArray(resultObj.result.errors)
+                          ) {
+                            const firstError = resultObj.result.errors[0];
+                            if (firstError?.code || firstError?.detail) {
+                              errorMessage = getErrorMessage(
+                                firstError.code || "",
+                                firstError.detail
+                              );
+                            }
+                          }
+                        }
+
+                        setError(errorMessage);
+                      }
+                    } catch (error) {
+                      console.error("Payment processing error:", error);
+
+                      // Extract meaningful error message from the caught error
+                      let errorMessage =
+                        "Payment could not be processed. Please try again.";
+
+                      if (error && typeof error === "object") {
+                        // Check for Square API error structure
+                        if ("result" in error) {
+                          const errorObj = error as {
+                            result?: {
+                              errors?: Array<{
+                                detail?: string;
+                                code?: string;
+                              }>;
+                            };
+                          };
+                          if (
+                            errorObj.result?.errors &&
+                            Array.isArray(errorObj.result.errors)
+                          ) {
+                            const firstError = errorObj.result.errors[0];
+                            if (firstError?.code || firstError?.detail) {
+                              errorMessage = getErrorMessage(
+                                firstError.code || "",
+                                firstError.detail
+                              );
+                            }
+                          }
+                        }
+                        // Check for direct errors array
+                        else if ("errors" in error) {
+                          const errorObj = error as {
+                            errors?: Array<{ detail?: string; code?: string }>;
+                          };
+                          if (
+                            errorObj.errors &&
+                            Array.isArray(errorObj.errors)
+                          ) {
+                            const firstError = errorObj.errors[0];
+                            if (firstError?.code || firstError?.detail) {
+                              errorMessage = getErrorMessage(
+                                firstError.code || "",
+                                firstError.detail
+                              );
+                            }
+                          }
+                        }
+                        // Check for standard Error object
+                        else if ("message" in error) {
+                          const errorObj = error as Error;
+                          // Only use the error message if it's not a generic network error
+                          if (
+                            errorObj.message &&
+                            !errorObj.message.includes("status 404") &&
+                            !errorObj.message.includes("request failed")
+                          ) {
+                            errorMessage = errorObj.message;
+                          }
+                        }
+                      }
+
+                      setError(errorMessage);
+                    }
+                  } else {
+                    console.error("Payment token is undefined");
+                    setError("Payment token is undefined. Please try again.");
+                  }
+                }}
+              >
+                <div className="max-w-md mx-auto">
+
+
+                  {/* Credit Card Form */}
+                  <DynamicCreditCard key={`${formId}-card`} />
+                  {!formValid && (
+                    <div className="mt-4 text-red-600 text-center text-sm font-medium space-y-1">
+                      <div>
+                        Please complete all required fields above before
+                        submitting payment
+                      </div>
+                      {getParticipantValidationError() && (
+                        <div className="font-bold">
+                          {getParticipantValidationError()}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-          </DynamicPaymentForm>
+              </DynamicPaymentForm>
+
+              {/* Trust Badges */}
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <div className="flex flex-col items-center gap-3">
+                  {/* Security Text */}
+                  <div className="flex items-center gap-2 text-gray-500 text-xs"></div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       ) : (
         <div className="text-center p-10 bg-gray-50 rounded-lg">
           <div className="animate-pulse inline-block h-8 w-8 rounded-full bg-primary"></div>
-          <p className="mt-4 text-gray-600">Loading payment form...</p>
+          <p className="mt-4 text-gray-600">Loading secure payment...</p>
         </div>
       )}
 

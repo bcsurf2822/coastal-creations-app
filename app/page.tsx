@@ -2,6 +2,7 @@ import Hero from "@/components/landing/Hero";
 import MainSection from "@/components/landing/MainSection";
 import Offerings from "@/components/landing/Offerings";
 import Calendar from "@/components/landing/Calendar";
+import GiftCardBanner from "@/components/landing/GiftCardBanner";
 
 export default function Home() {
   return (
@@ -11,6 +12,9 @@ export default function Home() {
 
       {/* Main Section */}
       <MainSection />
+
+      {/* Gift Card Banner */}
+      <GiftCardBanner />
 
       {/* Creative Experiences Section */}
       <Offerings />

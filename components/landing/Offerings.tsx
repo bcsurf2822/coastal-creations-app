@@ -47,16 +47,23 @@ export default function Offerings() {
     ? portableTextToPlainText(content.homepage.offerings.sectionSubtitle)
     : DEFAULT_TEXT.homepage.offerings.sectionSubtitle;
 
-  const artCampsDescription = content?.homepage?.offerings?.artCamps?.description
+  const artCampsDescription = content?.homepage?.offerings?.artCamps
+    ?.description
     ? portableTextToPlainText(content.homepage.offerings.artCamps.description)
     : DEFAULT_TEXT.homepage.offerings.artCamps.description;
 
-  const classesWorkshopsDescription = content?.homepage?.offerings?.classesWorkshops?.description
-    ? portableTextToPlainText(content.homepage.offerings.classesWorkshops.description)
+  const classesWorkshopsDescription = content?.homepage?.offerings
+    ?.classesWorkshops?.description
+    ? portableTextToPlainText(
+        content.homepage.offerings.classesWorkshops.description
+      )
     : DEFAULT_TEXT.homepage.offerings.classesWorkshops.description;
 
-  const privateEventsDescription = content?.homepage?.offerings?.privateEvents?.description
-    ? portableTextToPlainText(content.homepage.offerings.privateEvents.description)
+  const privateEventsDescription = content?.homepage?.offerings?.privateEvents
+    ?.description
+    ? portableTextToPlainText(
+        content.homepage.offerings.privateEvents.description
+      )
     : DEFAULT_TEXT.homepage.offerings.privateEvents.description;
 
   useEffect(() => {
@@ -142,7 +149,8 @@ export default function Offerings() {
               <h3
                 className={`${ebGaramond.className} text-6xl font-bold text-primary`}
               >
-                {content?.homepage?.offerings?.sectionTitle || DEFAULT_TEXT.homepage.offerings.sectionTitle}
+                {content?.homepage?.offerings?.sectionTitle ||
+                  DEFAULT_TEXT.homepage.offerings.sectionTitle}
               </h3>
             </div>
             <p
@@ -226,7 +234,7 @@ export default function Offerings() {
                                   className="w-4 h-4 mr-1"
                                 ></i>
                                 <span
-                                  className={`${ebGaramond.className} font-medium text-lg font-bold`}
+                                  className={`${ebGaramond.className} font-medium text-lg`}
                                 >
                                   {formatEventTime(
                                     nextArtistEvent.time.startTime
@@ -288,112 +296,150 @@ export default function Offerings() {
 
           {/* Original Three Offerings */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="group p-8 border border-neutral-100 bg-white/80 rounded-lg hover:border-primary shadow-[-8px_8px_15px_rgba(0,0,0,0.15)] hover:shadow-lg transition duration-300 flex flex-col h-full">
-              <div className="relative w-full h-48 mb-6 rounded-lg overflow-hidden">
-                <Image
-                  src="/assets/images/paintingAction1.jpeg"
-                  alt="Canvas and Collage"
-                  fill
-                  sizes="(max-width: 768px) 100vw, 33vw"
-                  className="object-cover"
-                />
-              </div>
-              <div className="w-12 h-12 bg-light rounded-lg flex items-center justify-center mb-6 group-hover:bg-primary transition duration-300">
-                <i
-                  data-lucide="paintbrush"
-                  className="w-6 h-6 text-primary group-hover:text-white transition duration-300"
-                ></i>
-              </div>
-              <h4
-                className={`${ebGaramond.className} text-2xl font-semibold text-primary mb-4`}
-              >
-                {content?.homepage?.offerings?.artCamps?.title || DEFAULT_TEXT.homepage.offerings.artCamps.title}
-              </h4>
-              <p
-                className={`${ebGaramond.className} text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300 text-justify font-bold text-md`}
-              >
-                {artCampsDescription}
-              </p>
-              <div className="mt-auto flex justify-end">
-                <Link
-                  href={"/events/camps"}
-                  className={`${ebGaramond.className} inline-flex items-center justify-center px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg border-2 border-gray-200 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:bg-gray-300 hover:border-gray-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.25)] text-md transform hover:scale-105 transition-all duration-300`}
-                >
-                  <span className="mr-2">Upcoming Camps</span>
-                  <i data-lucide="arrow-right" className="w-4 h-4"></i>
-                </Link>
-              </div>
-            </div>
-            <div className="group p-8 border border-neutral-100 bg-white/80 rounded-lg hover:border-primary shadow-[-8px_8px_15px_rgba(0,0,0,0.15)] hover:shadow-lg transition duration-300 flex flex-col h-full">
-              <div className="relative w-full h-48 mb-6 rounded-lg overflow-hidden">
-                <Image
-                  src="/assets/images/classes_workshops.jpeg"
-                  alt="Workshops"
-                  fill
-                  sizes="(max-width: 768px) 100vw, 33vw"
-                  className="object-cover"
-                />
-              </div>
-              <div className="w-12 h-12 bg-light rounded-lg flex items-center justify-center mb-6 group-hover:bg-primary transition duration-300">
-                <i
-                  data-lucide="calendar"
-                  className="w-6 h-6 text-primary group-hover:text-white transition duration-300"
-                ></i>
-              </div>
-              <h4
-                className={`${ebGaramond.className} text-2xl font-semibold text-primary mb-4`}
-              >
-                {content?.homepage?.offerings?.classesWorkshops?.title || DEFAULT_TEXT.homepage.offerings.classesWorkshops.title}
-              </h4>
-              <p
-                className={`${ebGaramond.className} text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300 text-justify font-bold text-md`}
-              >
-                {classesWorkshopsDescription}
-              </p>
-              <div className="mt-auto flex justify-end">
-                <Link
-                  href={"/events/classes-workshops"}
-                  className={`${ebGaramond.className} inline-flex items-center justify-center px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg border-2 border-gray-200 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:bg-gray-300 hover:border-gray-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.25)] text-md transform hover:scale-105 transition-all duration-300`}
-                >
-                  <span className="mr-2">Upcoming Classes</span>
-                  <i data-lucide="arrow-right" className="w-4 h-4"></i>
-                </Link>
+            {/* Art Camps Card */}
+            <div className="relative group">
+              {/* Decorative background */}
+              <div className="absolute -inset-2 bg-primary/10 rounded-3xl -rotate-2 group-hover:rotate-0 transition-transform duration-300"></div>
+              <div className="relative bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+                <div className="relative w-full h-52 overflow-hidden">
+                  <Image
+                    src="/assets/images/paintingAction1.jpeg"
+                    alt="Canvas and Collage"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                </div>
+                <div className="p-5 flex flex-col flex-1 bg-white">
+                  <h4
+                    className={`${ebGaramond.className} text-xl font-bold text-gray-800 mb-2`}
+                  >
+                    {content?.homepage?.offerings?.artCamps?.title ||
+                      DEFAULT_TEXT.homepage.offerings.artCamps.title}
+                  </h4>
+                  <p
+                    className={`${ebGaramond.className} text-gray-600 mb-4 text-sm leading-relaxed flex-1`}
+                  >
+                    {artCampsDescription}
+                  </p>
+                  <Link
+                    href={"/events/camps"}
+                    className={`${ebGaramond.className} inline-flex items-center justify-center w-full px-5 py-2.5 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-all duration-300 text-sm`}
+                  >
+                    <span>Upcoming Camps</span>
+                    <svg
+                      className="w-4 h-4 ml-2"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 8l4 4m0 0l-4 4m4-4H3"
+                      />
+                    </svg>
+                  </Link>
+                </div>
               </div>
             </div>
-            <div className="group p-8 border border-neutral-100 bg-white/80 rounded-lg hover:border-primary shadow-[-8px_8px_15px_rgba(0,0,0,0.15)] hover:shadow-lg transition duration-300 flex flex-col h-full">
-              <div className="relative w-full h-48 mb-6 rounded-lg overflow-hidden">
-                <Image
-                  src="/assets/images/private_events.png"
-                  alt="Private Events"
-                  fill
-                  sizes="(max-width: 768px) 100vw, 33vw"
-                  className="object-cover object-[center_40%]"
-                />
+
+            {/* Classes & Workshops Card */}
+            <div className="relative group">
+              {/* Decorative background */}
+              <div className="absolute -inset-2 bg-primary/10 rounded-3xl rotate-2 group-hover:rotate-0 transition-transform duration-300"></div>
+              <div className="relative bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+                <div className="relative w-full h-52 overflow-hidden">
+                  <Image
+                    src="/assets/images/classes_workshops.jpeg"
+                    alt="Workshops"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                </div>
+                <div className="p-5 flex flex-col flex-1 bg-white">
+                  <h4
+                    className={`${ebGaramond.className} text-xl font-bold text-gray-800 mb-2`}
+                  >
+                    {content?.homepage?.offerings?.classesWorkshops?.title ||
+                      DEFAULT_TEXT.homepage.offerings.classesWorkshops.title}
+                  </h4>
+                  <p
+                    className={`${ebGaramond.className} text-gray-600 mb-4 text-sm leading-relaxed flex-1`}
+                  >
+                    {classesWorkshopsDescription}
+                  </p>
+                  <Link
+                    href={"/events/classes-workshops"}
+                    className={`${ebGaramond.className} inline-flex items-center justify-center w-full px-5 py-2.5 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-all duration-300 text-sm`}
+                  >
+                    <span>Upcoming Classes</span>
+                    <svg
+                      className="w-4 h-4 ml-2"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 8l4 4m0 0l-4 4m4-4H3"
+                      />
+                    </svg>
+                  </Link>
+                </div>
               </div>
-              <div className="w-12 h-12 bg-light rounded-lg flex items-center justify-center mb-6 group-hover:bg-primary transition duration-300">
-                <i
-                  data-lucide="image"
-                  className="w-6 h-6 text-primary group-hover:text-white transition duration-300"
-                ></i>
-              </div>
-              <h4
-                className={`${ebGaramond.className} text-2xl font-semibold text-primary mb-4`}
-              >
-                {content?.homepage?.offerings?.privateEvents?.title || DEFAULT_TEXT.homepage.offerings.privateEvents.title}
-              </h4>
-              <p
-                className={`${ebGaramond.className} text-gray-600 mb-6 group-hover:text-gray-800 transition duration-300 text-justify font-bold text-md`}
-              >
-                {privateEventsDescription}
-              </p>
-              <div className="mt-auto flex justify-end">
-                <Link
-                  href={"/events/private-events"}
-                  className={`${ebGaramond.className} inline-flex items-center justify-center px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg border-2 border-gray-200 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:bg-gray-300 hover:border-gray-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.25)] text-md transform hover:scale-105 transition-all duration-300`}
-                >
-                  <span className="mr-2">Learn more</span>
-                  <i data-lucide="arrow-right" className="w-4 h-4"></i>
-                </Link>
+            </div>
+
+            {/* Private Events Card */}
+            <div className="relative group">
+              {/* Decorative background */}
+              <div className="absolute -inset-2 bg-primary/10 rounded-3xl -rotate-2 group-hover:rotate-0 transition-transform duration-300"></div>
+              <div className="relative bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+                <div className="relative w-full h-52 overflow-hidden">
+                  <Image
+                    src="/assets/images/private_events.png"
+                    alt="Private Events"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover object-[center_40%] group-hover:scale-105 transition-transform duration-500"
+                  />
+                </div>
+                <div className="p-5 flex flex-col flex-1 bg-white">
+                  <h4
+                    className={`${ebGaramond.className} text-xl font-bold text-gray-800 mb-2`}
+                  >
+                    {content?.homepage?.offerings?.privateEvents?.title ||
+                      DEFAULT_TEXT.homepage.offerings.privateEvents.title}
+                  </h4>
+                  <p
+                    className={`${ebGaramond.className} text-gray-600 mb-4 text-sm leading-relaxed flex-1`}
+                  >
+                    {privateEventsDescription}
+                  </p>
+                  <Link
+                    href={"/events/private-events"}
+                    className={`${ebGaramond.className} inline-flex items-center justify-center w-full px-5 py-2.5 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-all duration-300 text-sm`}
+                  >
+                    <span>Learn More</span>
+                    <svg
+                      className="w-4 h-4 ml-2"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 8l4 4m0 0l-4 4m4-4H3"
+                      />
+                    </svg>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

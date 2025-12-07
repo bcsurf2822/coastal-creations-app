@@ -133,7 +133,7 @@ export const DEFAULT_TEXT = {
     reservations: {
       title: "Reservations",
       description:
-        "Browse our available reservation programs and book your spot for multi-day creative experiences.",
+        "Studio is Open for Walk Ins\nFriday-Monday 11:00am-5:00pm\n\nLate Night Open Studio is Available by Reservation Only",
     },
     gallery: {
       title: "Gallery",
