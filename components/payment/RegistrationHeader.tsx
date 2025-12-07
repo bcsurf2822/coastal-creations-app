@@ -41,66 +41,52 @@ const RegistrationHeader: React.FC<RegistrationHeaderProps> = ({
     return parseFloat(cleanPrice) || 0;
   };
   return (
-    <div className="bg-primary text-black p-6 sm:p-10 mb-6 text-center relative overflow-hidden">
-      <div className="relative z-10">
-        <h1 className="text-3xl font-bold mb-2 text-black">Registration</h1>
-        <p className="text-xl mb-2 font-medium text-black">
-          You&apos;re registering for:{" "}
-          <span className="font-bold text-black">{eventTitle}</span>
-        </p>
+    <div className="p-6 sm:p-8 border-b border-gray-200">
+      <h1 className="text-2xl font-bold text-gray-900 text-center">
+        {eventTitle}
+      </h1>
 
-        {isPriceAvailable ? (
-          <div className="mt-4 space-y-3">
-            {/* Discount Badge */}
-            {isDiscountActive() && discountInfo.discount?.description && (
-              <div className="bg-green-100 text-green-800 py-2 px-6 rounded-full inline-block shadow-md border-2 border-green-300">
-                <p className="text-lg font-bold">
-                  🎉 {discountInfo.discount.description}
-                </p>
-              </div>
-            )}
-
-            {/* Price Display */}
-            <div className="bg-white/70 py-3 px-8 rounded-full inline-block shadow-md">
-              <p className="text-xl">
-                <span className="font-medium text-black">Price:</span>{" "}
-                {isDiscountActive() ? (
-                  <>
-                    <span className="font-medium text-gray-500 line-through mr-2">
-                      ${getOriginalPrice().toFixed(2)}
-                    </span>
-                    <span className="font-bold text-green-600">
-                      ${formattedPrice}
-                    </span>
-                  </>
-                ) : (
-                  <span className="font-bold text-black">
-                    ${formattedPrice}
-                  </span>
-                )}
-                <span className="text-black font-medium"></span>
-              </p>
-
-              {/* Discount Information */}
-              {discountInfo.isDiscountAvailable && discountInfo.discount && (
-                <p className="text-sm text-gray-600 mt-1">
-                  {isDiscountActive()
-                    ? `Discount applied! (${discountInfo.discount.minParticipants}+ participants)`
-                    : `Discount available with ${discountInfo.discount.minParticipants}+ total participants`}
-                </p>
-              )}
+      {isPriceAvailable ? (
+        <div className="mt-4 text-center">
+          {/* Discount Badge */}
+          {isDiscountActive() && discountInfo.discount?.description && (
+            <div className="bg-green-100 text-green-700 py-1 px-3 rounded-full inline-block text-sm font-medium mb-2">
+              {discountInfo.discount.description}
             </div>
+          )}
+
+          {/* Price Display */}
+          <div className="flex items-center justify-center gap-2">
+            {isDiscountActive() ? (
+              <>
+                <span className="text-gray-400 line-through text-lg">
+                  ${getOriginalPrice().toFixed(2)}
+                </span>
+                <span className="text-3xl font-bold text-gray-900">
+                  ${formattedPrice}
+                </span>
+              </>
+            ) : (
+              <span className="text-3xl font-bold text-gray-900">
+                ${formattedPrice}
+              </span>
+            )}
           </div>
-        ) : (
-          <div className="mt-4 bg-white/70 py-3 px-8 rounded-lg inline-block shadow-md">
-            <p className="text-xl font-medium text-red-500">
-              Sorry, payments are currently not available for this event.
-            </p>
-          </div>
-        )}
-      </div>
-      <div className="absolute top-0 right-0 w-64 h-64 bg-white/30 rounded-full -mr-32 -mt-32 z-0"></div>
-      <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/40 rounded-full -ml-24 -mb-24 z-0"></div>
+
+          {/* Discount Information */}
+          {discountInfo.isDiscountAvailable &&
+            discountInfo.discount &&
+            !isDiscountActive() && (
+              <p className="text-sm text-gray-500 mt-1">
+                Save with {discountInfo.discount.minParticipants}+ participants
+              </p>
+            )}
+        </div>
+      ) : (
+        <p className="text-red-600 font-medium text-center mt-4">
+          Payments not available for this event
+        </p>
+      )}
     </div>
   );
 };

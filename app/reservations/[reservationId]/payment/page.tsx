@@ -25,6 +25,30 @@ interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
+// Serialize MongoDB reservation to plain object for Client Components
+function serializeReservation(doc: Record<string, unknown>): Reservation {
+  const options = doc.options as Array<{
+    categoryName: string;
+    categoryDescription?: string;
+    choices: Array<{ name: string; price?: number }>;
+  }> | undefined;
+
+  return {
+    _id: String(doc._id),
+    eventName: String(doc.eventName),
+    description: doc.description ? String(doc.description) : undefined,
+    pricePerDayPerParticipant: Number(doc.pricePerDayPerParticipant),
+    options: options?.map((opt) => ({
+      categoryName: opt.categoryName,
+      categoryDescription: opt.categoryDescription,
+      choices: opt.choices.map((c) => ({
+        name: c.name,
+        price: c.price,
+      })),
+    })),
+  };
+}
+
 export default async function ReservationPaymentPage({
   params,
   searchParams,
@@ -53,11 +77,15 @@ export default async function ReservationPaymentPage({
 
   let selectedDates: SelectedDate[];
   try {
-    selectedDates = JSON.parse(decodeURIComponent(selectedDatesParam));
-    selectedDates = selectedDates.map((sd) => ({
-      ...sd,
+    const parsedDates = JSON.parse(decodeURIComponent(selectedDatesParam));
+    // Parse dates - the PaymentForm client component will receive these
+    selectedDates = parsedDates.map((sd: { date: string; participants: number }) => ({
+      // Create Date and immediately serialize via JSON to get plain object
       date: new Date(sd.date),
+      participants: sd.participants,
     }));
+    // Serialize and deserialize to ensure plain objects (removes Date prototype)
+    selectedDates = JSON.parse(JSON.stringify(selectedDates));
   } catch (error) {
     console.error(
       "[ReservationPaymentPage] Error parsing selectedDates:",
@@ -119,7 +147,10 @@ export default async function ReservationPaymentPage({
     );
   }
 
+  // Serialize reservation to plain object for Client Component
+  const serializedReservation = serializeReservation(reservation as unknown as Record<string, unknown>);
+
   return (
-    <PaymentForm reservation={reservation} selectedDates={selectedDates} />
+    <PaymentForm reservation={serializedReservation} selectedDates={selectedDates} />
   );
 }

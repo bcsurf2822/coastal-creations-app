@@ -40,7 +40,8 @@ interface CalendarEvent {
 
 export default function Hero() {
   const [showLiveEventPopup, setShowLiveEventPopup] = useState(false);
-  const [upcomingArtistEvent, setUpcomingArtistEvent] = useState<CalendarEvent | null>(null);
+  const [upcomingArtistEvent, setUpcomingArtistEvent] =
+    useState<CalendarEvent | null>(null);
   const { content } = usePageContent();
 
   useEffect(() => {
@@ -180,7 +181,11 @@ export default function Hero() {
               Watch creativity unfold in real-time!
             </p>
             <Link
-              href={upcomingArtistEvent ? `/events/live-artist/${createEventSlug(upcomingArtistEvent.eventName, upcomingArtistEvent._id)}` : "/events/events"}
+              href={
+                upcomingArtistEvent
+                  ? `/events/live-artist/${createEventSlug(upcomingArtistEvent.eventName, upcomingArtistEvent._id)}`
+                  : "/events/events"
+              }
               className="inline-block bg-white/20 hover:bg-white/30 backdrop-blur-sm px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 hover:scale-105 border border-white/30"
             >
               Learn More →
@@ -194,29 +199,41 @@ export default function Hero() {
         <div className="max-w-4xl mx-auto text-center">
           <div className="mb-20 sm:mb-24 h-[320px] md:h-[280px] flex items-center justify-center relative">
             <WaveText
-              text={content?.homepage?.hero?.heading || DEFAULT_TEXT.homepage.hero.heading}
+              text={
+                content?.homepage?.hero?.heading ||
+                DEFAULT_TEXT.homepage.hero.heading
+              }
               className="text-4xl sm:text-5xl md:text-6xl leading-tight relative z-10"
               delay={0.3}
               staggerDelay={0.05}
             />
           </div>
 
-          <div className="flex flex-wrap justify-center gap-6">
+          <div className="flex flex-wrap justify-center gap-4">
             <Link
               href="/events/classes-workshops"
-              className="bg-slate-800 hover:bg-slate-700 text-white font-semibold px-6 sm:px-8 py-3 sm:py-3.5 rounded-lg transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg text-base sm:text-xl tracking-wide"
+              className="bg-white hover:bg-primary hover:text-white hover:border-primary border-2 border-primary/40 text-primary font-semibold px-8 py-3 rounded-full transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg text-base tracking-wide"
             >
-              {content?.homepage?.hero?.ctaButton1 || DEFAULT_TEXT.homepage.hero.ctaButton1}
+              {content?.homepage?.hero?.ctaButton1 ||
+                DEFAULT_TEXT.homepage.hero.ctaButton1}
             </Link>
             <Link
               href="/about"
-              className="bg-white hover:bg-gray-50 border-2 border-slate-600 text-slate-700 font-semibold px-6 sm:px-8 py-3 sm:py-3.5 rounded-lg transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg text-base sm:text-xl tracking-wide"
+              className="bg-white hover:bg-primary hover:text-white hover:border-primary border-2 border-primary/40 text-primary font-semibold px-8 py-3 rounded-full transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg text-base tracking-wide"
             >
-              {content?.homepage?.hero?.ctaButton2 || DEFAULT_TEXT.homepage.hero.ctaButton2}
+              {content?.homepage?.hero?.ctaButton2 ||
+                DEFAULT_TEXT.homepage.hero.ctaButton2}
+            </Link>
+            <Link
+              href="/gift-cards"
+              className="bg-white hover:bg-primary hover:text-white hover:border-primary border-2 border-primary/40 text-primary font-semibold px-8 py-3 rounded-full transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg text-base tracking-wide"
+            >
+              Gift Cards
             </Link>
           </div>
         </div>
       </div>
+      <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-b from-transparent to-[#f0f9ff] z-10 pointer-events-none"></div>
     </section>
   );
 }

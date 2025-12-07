@@ -4,7 +4,7 @@
 
 ## Mission: One-Pass TypeScript Implementation Success
 
-## BE SURE TO USE THE ARCHON MCP and @.claude/agents/prp-validation-gate-agent/prp-validation-gate-agent.md TO HELP TRACK / VALIDATE TASKS AS YOU GO THROUGH
+## BE SURE TO USE THE @spec/tasks to create a folder related to the PRP that will help you track your progress, shard the PRP File into manageable traceable tasks
 
 PRPs enable working TypeScript/React code on the first attempt through:
 
