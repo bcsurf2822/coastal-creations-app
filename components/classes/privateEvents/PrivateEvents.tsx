@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import styled from "@emotion/styled";
 import { Box, Container, Paper, CircularProgress, Alert } from "@mui/material";
 import { PrivateEvent } from "@/types/interfaces";
@@ -23,6 +23,7 @@ import {
   GiCupcake,
   GiPartyHat,
 } from "react-icons/gi";
+import { usePrivateEvents } from "@/hooks/queries";
 
 // Sanity image URL builder
 const { projectId, dataset } = client.config();
@@ -318,31 +319,15 @@ const InstagramIcon = styled("div")({
 
 const PrivateEvents = () => {
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
-  const [privateEvents, setPrivateEvents] = useState<PrivateEvent[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchPrivateEvents = async () => {
-      try {
-        const response = await fetch("/api/private-events");
-        const data = await response.json();
+  const {
+    data: privateEventsData = [],
+    isLoading: loading,
+    error,
+  } = usePrivateEvents();
 
-        if (data.success) {
-          setPrivateEvents(data.privateEvents);
-        } else {
-          setError(data.error || "Failed to fetch private events");
-        }
-      } catch (err) {
-        setError("Failed to fetch private events");
-        console.error("Error fetching private events:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPrivateEvents();
-  }, []);
+  // Cast to PrivateEvent[] for type compatibility
+  const privateEvents: PrivateEvent[] = privateEventsData as PrivateEvent[];
 
   const getRandomIcon = (index: number) => {
     const icons = [
@@ -387,7 +372,7 @@ const PrivateEvents = () => {
             },
           }}
         >
-          {error}
+          {error.message}
         </Alert>
       </StyledContainer>
     );

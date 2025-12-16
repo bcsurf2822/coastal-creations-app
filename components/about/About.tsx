@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { usePageContent } from "@/hooks/usePageContent";
+import { usePageContent } from "@/hooks/queries";
 import { DEFAULT_TEXT } from "@/lib/constants/defaultPageContent";
 import { portableTextToPlainText } from "@/lib/utils/portableTextHelpers";
 

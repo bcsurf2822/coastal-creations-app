@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   RiArrowDownSLine,
   RiArrowUpSLine,
@@ -12,70 +12,31 @@ import {
 import { pdf } from "@react-pdf/renderer";
 import { saveAs } from "file-saver";
 import ErrorReportPDF from "./ErrorReportPDF";
-
-interface PaymentError {
-  code: string;
-  detail: string;
-  category: string;
-}
-
-interface ErrorLog {
-  _id: string;
-  eventId: string;
-  eventTitle: string;
-  customerEmail: string;
-  customerPhone: string;
-  customerName: string;
-  paymentAmount: number;
-  sourceId: string;
-  paymentErrors: PaymentError[];
-  rawErrorResponse: {
-    stack: string;
-    message: string;
-    request: {
-      method?: string;
-      url?: string;
-      headers?: Record<string, string>;
-      body?: Record<string, unknown>;
-    };
-    statusCode: number;
-    headers?: Record<string, string>;
-    body?: string;
-    result?: Record<string, unknown>;
-  };
-  errors: PaymentError[];
-  attemptedAt: string;
-  createdAt: string;
-  updatedAt: string;
-  __v: number;
-}
-
-interface ErrorLogsResponse {
-  success: boolean;
-  paymentErrors: ErrorLog[];
-  count: number;
-}
+import { usePaymentErrors, type PaymentErrorLog } from "@/hooks/queries";
+import { useDeletePaymentError } from "@/hooks/mutations";
 
 export default function ErrorLogs() {
-  const [errorLogs, setErrorLogs] = useState<ErrorLog[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [expandedLog, setExpandedLog] = useState<string | null>(null);
-  const [deletingLog, setDeletingLog] = useState<string | null>(null);
 
-  // New filter states
+  // Filter states
   const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
-  useEffect(() => {
-    fetchErrorLogs();
-  }, []);
+  // React Query hooks
+  const {
+    data: errorLogs = [],
+    isLoading: loading,
+    error,
+    refetch,
+  } = usePaymentErrors({ all: true });
+
+  const deletePaymentErrorMutation = useDeletePaymentError();
 
   // Filter logs based on search term and date range
   const filteredLogs = useMemo(() => {
-    let filtered = errorLogs;
+    let filtered: PaymentErrorLog[] = errorLogs;
 
     // Filter by customer name search
     if (searchTerm.trim()) {
@@ -103,25 +64,6 @@ export default function ErrorLogs() {
 
     return filtered;
   }, [errorLogs, searchTerm, startDate, endDate]);
-
-  const fetchErrorLogs = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch("/api/payment-errors?all=true");
-      const data: ErrorLogsResponse = await response.json();
-
-      if (data.success) {
-        setErrorLogs(data.paymentErrors);
-      } else {
-        setError("Failed to fetch error logs");
-      }
-    } catch (err) {
-      setError("An error occurred while fetching logs");
-      console.error("Error fetching logs:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const generatePDFReport = async () => {
     try {
@@ -156,29 +98,17 @@ export default function ErrorLogs() {
     setEndDate("");
   };
 
-  const deleteErrorLog = async (id: string) => {
-    try {
-      setDeletingLog(id);
-      const response = await fetch(`/api/payment-errors?id=${id}`, {
-        method: "DELETE",
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        setErrorLogs((prev) => prev.filter((log) => log._id !== id));
+  const deleteErrorLog = (id: string) => {
+    deletePaymentErrorMutation.mutate(id, {
+      onSuccess: () => {
         if (expandedLog === id) {
           setExpandedLog(null);
         }
-      } else {
+      },
+      onError: () => {
         alert("Failed to delete error log");
-      }
-    } catch (err) {
-      alert("An error occurred while deleting the log");
-      console.error("Error deleting log:", err);
-    } finally {
-      setDeletingLog(null);
-    }
+      },
+    });
   };
 
   const toggleExpand = (id: string) => {
@@ -216,9 +146,9 @@ export default function ErrorLogs() {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-6">
         <h3 className="text-lg font-medium text-red-800 mb-2">Error</h3>
-        <p className="text-red-600">{error}</p>
+        <p className="text-red-600">{error.message}</p>
         <button
-          onClick={fetchErrorLogs}
+          onClick={() => refetch()}
           className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
         >
           Retry
@@ -440,11 +370,15 @@ export default function ErrorLogs() {
                           e.stopPropagation();
                           deleteErrorLog(log._id);
                         }}
-                        disabled={deletingLog === log._id}
+                        disabled={
+                          deletePaymentErrorMutation.isPending &&
+                          deletePaymentErrorMutation.variables === log._id
+                        }
                         className="p-2 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
                         title="Delete error log"
                       >
-                        {deletingLog === log._id ? (
+                        {deletePaymentErrorMutation.isPending &&
+                        deletePaymentErrorMutation.variables === log._id ? (
                           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-500"></div>
                         ) : (
                           <RiDeleteBinLine className="h-5 w-5" />

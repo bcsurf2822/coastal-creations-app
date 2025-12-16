@@ -1,9 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { EB_Garamond } from "next/font/google";
 import { createEventSlug } from "@/lib/utils/slugify";
-import { usePageContent } from "@/hooks/usePageContent";
+import { usePageContent, useEvents, useCustomers } from "@/hooks/queries";
 import { DEFAULT_TEXT } from "@/lib/constants/defaultPageContent";
 import { portableTextToPlainText } from "@/lib/utils/portableTextHelpers";
 
@@ -38,14 +38,37 @@ interface CalendarEvent {
 
 export default function Calendar() {
   const [dates, setDates] = useState<Date[]>([]);
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [today, setToday] = useState<string | null>(null);
-  const [eventParticipantCounts, setEventParticipantCounts] = useState<
-    Record<string, number>
-  >({});
+
+  // React Query hooks
   const { content } = usePageContent();
+  const { data: eventsData, isLoading: eventsLoading, error: eventsError } = useEvents();
+  const { data: customersData } = useCustomers();
+
+  // Cast events to CalendarEvent type for compatibility
+  const events = (eventsData || []) as unknown as CalendarEvent[];
+  const isLoading = eventsLoading;
+  const error = eventsError?.message || null;
+
+  // Calculate participant counts from customers data
+  const eventParticipantCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+
+    if (customersData && Array.isArray(customersData)) {
+      customersData.forEach((customer) => {
+        // Handle both populated and unpopulated event references
+        const eventId = typeof customer.event === 'object'
+          ? (customer.event as { _id?: string })?._id
+          : customer.event;
+
+        if (eventId) {
+          counts[eventId] = (counts[eventId] || 0) + customer.quantity;
+        }
+      });
+    }
+
+    return counts;
+  }, [customersData]);
 
   // Convert PortableText to plain text
   const subtitle = content?.homepage?.upcomingWorkshops?.subtitle
@@ -64,87 +87,6 @@ export default function Calendar() {
       return date;
     });
     setDates(nextFiveDays);
-
-    // Fetch events
-    const fetchEvents = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch("/api/events");
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (data.events) {
-          setEvents(data.events);
-        }
-      } catch (err) {
-        console.error("Error fetching events:", err);
-        setError(
-          err instanceof Error ? err.message : "An unknown error occurred"
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    const fetchCustomers = async () => {
-      try {
-        const response = await fetch("/api/customer", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        const responseText = await response.text();
-
-        let result;
-        try {
-          result = responseText ? JSON.parse(responseText) : {};
-        } catch (parseError) {
-          console.error(
-            "Failed to parse customer response as JSON:",
-            parseError
-          );
-          return;
-        }
-
-        if (!response.ok) {
-          console.error(
-            "Failed to fetch customers:",
-            result.error || "Unknown error"
-          );
-          return;
-        }
-
-        // Calculate participant counts per event
-        const participantCounts: Record<string, number> = {};
-
-        if (result.data && Array.isArray(result.data)) {
-          result.data.forEach(
-            (customer: { event?: { _id: string }; quantity: number }) => {
-              const eventId = customer.event?._id;
-              if (eventId) {
-                // Add the quantity (number of participants) for this registration
-                participantCounts[eventId] =
-                  (participantCounts[eventId] || 0) + customer.quantity;
-              }
-            }
-          );
-        }
-        setEventParticipantCounts(participantCounts);
-      } catch (error) {
-        console.error("Error fetching customers:", error);
-      }
-    };
-
-    fetchEvents();
-    fetchCustomers();
   }, []);
 
   const formatDay = (date: Date) => {

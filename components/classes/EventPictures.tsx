@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { type SanityDocument } from "next-sanity";
 import imageUrlBuilder from "@sanity/image-url";
 import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import Image from "next/image";
 import { PortableText } from "next-sanity";
 import { client } from "@/sanity/client";
+import { useEventPictures } from "@/hooks/queries";
 
 const { projectId, dataset } = client.config();
 const urlFor = (source: SanityImageSource) =>
@@ -15,39 +14,18 @@ const urlFor = (source: SanityImageSource) =>
     : null;
 
 export default function EventPictures() {
-  const [eventPictures, setEventPictures] = useState<SanityDocument[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchEventPictures = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch("/api/eventPictures");
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch event pictures");
-        }
-
-        const data = await response.json();
-        setEventPictures(data);
-      } catch (err) {
-        console.error("Error fetching event pictures:", err);
-        setError("Failed to load event pictures");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchEventPictures();
-  }, []);
+  const {
+    data: eventPictures = [],
+    isLoading,
+    error,
+  } = useEventPictures();
 
   if (isLoading) {
     return <div className="text-center py-8">Loading event pictures...</div>;
   }
 
   if (error) {
-    return <div className="text-center py-8 text-red-500">{error}</div>;
+    return <div className="text-center py-8 text-red-500">{error.message}</div>;
   }
 
   return (

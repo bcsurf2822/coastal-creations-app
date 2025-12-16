@@ -41,6 +41,26 @@ export interface ApiEvent {
     startTime: string;
     endTime?: string;
   };
+  options?: Array<{
+    categoryName: string;
+    categoryDescription?: string;
+    choices: Array<{
+      name: string;
+      price?: number;
+      _id?: string;
+    }>;
+    _id?: string;
+  }>;
+  image?: string;
+  instagramEmbedCode?: string;
+  isDiscountAvailable?: boolean;
+  discount?: {
+    type: "percentage" | "fixed";
+    value: number;
+    minParticipants: number;
+    name: string;
+    description?: string;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -206,31 +226,50 @@ export interface GalleryUpdateData {
 // Customer booking interface
 export interface ICustomer {
   _id?: string;
-  event: string;
+  event: {
+    _id: string;
+    eventName?: string;
+    title?: string;
+    eventType: string;
+    price: number;
+  };
+  eventType: "Event" | "PrivateEvent" | "Reservation";
+  selectedDates?: Array<{
+    date: string;
+    numberOfParticipants: number;
+  }>;
   quantity: number;
   total: number;
   isSigningUpForSelf: boolean;
   participants: Array<{
     firstName: string;
     lastName: string;
-    email?: string;
-    phone?: string;
-    age?: number;
     selectedOptions?: Array<{
       categoryName: string;
-      choice: string;
+      choiceName: string;
     }>;
   }>;
   selectedOptions?: Array<{
     categoryName: string;
-    choice: string;
+    choiceName: string;
   }>;
   billingInfo: {
     firstName: string;
     lastName: string;
-    email: string;
-    phone: string;
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    stateProvince: string;
+    postalCode: string;
+    country: string;
+    emailAddress?: string;
+    phoneNumber?: string;
   };
+  squarePaymentId?: string;
+  squareCustomerId?: string;
+  refundStatus?: "none" | "partial" | "full";
+  refundAmount?: number;
+  refundedAt?: string;
   createdAt?: string;
   updatedAt?: string;
 }

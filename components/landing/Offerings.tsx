@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { EB_Garamond } from "next/font/google";
 import GalleryCarousel from "@/components/gallery/GalleryCarousel";
-import { usePageContent } from "@/hooks/usePageContent";
+import { usePageContent } from "@/hooks/queries";
 import { DEFAULT_TEXT } from "@/lib/constants/defaultPageContent";
 import { portableTextToPlainText } from "@/lib/utils/portableTextHelpers";
 

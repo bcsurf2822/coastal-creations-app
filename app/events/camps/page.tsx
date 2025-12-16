@@ -3,7 +3,7 @@
 import EventsContainer from "@/components/classes/EventsContainer";
 import GalleryCarousel from "@/components/gallery/GalleryCarousel";
 import { FaCampground, FaSun, FaMountain } from "react-icons/fa";
-import { usePageContent } from "@/hooks/usePageContent";
+import { usePageContent } from "@/hooks/queries";
 import { DEFAULT_TEXT } from "@/lib/constants/defaultPageContent";
 import { portableTextToPlainText } from "@/lib/utils/portableTextHelpers";
 

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { EB_Garamond } from "next/font/google";
-import { usePageContent } from "@/hooks/usePageContent";
+import { usePageContent } from "@/hooks/queries";
 import { DEFAULT_TEXT } from "@/lib/constants/defaultPageContent";
 import { portableTextToPlainText } from "@/lib/utils/portableTextHelpers";
 

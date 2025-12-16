@@ -3,7 +3,7 @@
 import { ReactElement } from "react";
 import ReservationList from "@/components/reservations/ReservationList";
 import GalleryCarousel from "@/components/gallery/GalleryCarousel";
-import { usePageContent } from "@/hooks/usePageContent";
+import { usePageContent } from "@/hooks/queries";
 import { DEFAULT_TEXT } from "@/lib/constants/defaultPageContent";
 import { portableTextToPlainText } from "@/lib/utils/portableTextHelpers";
 

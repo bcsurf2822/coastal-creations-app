@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import WaveText from "./WaveText";
 import SeaCreatures from "./SeaCreatures";
 import { createEventSlug } from "@/lib/utils/slugify";
-import { usePageContent } from "@/hooks/usePageContent";
+import { usePageContent } from "@/hooks/queries";
 import { DEFAULT_TEXT } from "@/lib/constants/defaultPageContent";
 
 interface CalendarEvent {

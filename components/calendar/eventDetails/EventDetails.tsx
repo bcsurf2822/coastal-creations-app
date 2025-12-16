@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { use } from "react";
 import { parseISO, format } from "date-fns";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { type SanityDocument } from "next-sanity";
 import imageUrlBuilder from "@sanity/image-url";
 import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import Image from "next/image";
@@ -22,47 +21,9 @@ import {
 import { Description, Settings } from "@mui/icons-material";
 import { motion } from "motion/react";
 import { FaCalendarAlt, FaClock, FaInstagram } from "react-icons/fa";
+import { useEvent, useEventPictures } from "@/hooks/queries";
 
-interface EventOption {
-  categoryName: string;
-  categoryDescription: string;
-  choices: {
-    name: string;
-    _id: string;
-  }[];
-  _id: string;
-}
 
-interface EventDates {
-  startDate: string;
-  isRecurring: boolean;
-  recurringPattern?: string;
-  recurringEndDate?: string;
-  excludeDates: string[];
-  specificDates: string[];
-  _id: string;
-}
-
-interface EventTime {
-  startTime: string;
-  endTime: string;
-  _id: string;
-}
-
-interface EventData {
-  _id: string;
-  eventName: string;
-  eventType: string;
-  description: string;
-  price: number;
-  dates: EventDates;
-  time: EventTime;
-  options: EventOption[];
-  image?: string;
-  instagramEmbedCode?: string;
-  createdAt: string;
-  updatedAt: string;
-}
 
 // Setup Sanity image URL builder
 const { projectId, dataset } = client.config();
@@ -419,61 +380,17 @@ export default function EventDetails({
   const unwrappedParams = use(params);
   const { eventId } = unwrappedParams;
 
-  const [event, setEvent] = useState<EventData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [eventPictures, setEventPictures] = useState<SanityDocument[]>([]);
+  // Use React Query hooks for data fetching
+  const {
+    data: event,
+    isLoading,
+    error
+  } = useEvent(eventId);
 
-  useEffect(() => {
-    const fetchEvent = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(`/api/event/${eventId}`);
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (data.success && data.event) {
-          setEvent(data.event);
-        } else {
-          throw new Error(data.error || "Event not found");
-        }
-      } catch (err) {
-        console.error("Error fetching event:", err);
-        setError(
-          err instanceof Error ? err.message : "An unknown error occurred"
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchEvent();
-  }, [eventId]);
-
-  useEffect(() => {
-    const fetchEventPictures = async () => {
-      try {
-        const response = await fetch("/api/eventPictures");
-        if (!response.ok) {
-          throw new Error("Failed to fetch event pictures");
-        }
-        const data = await response.json();
-        setEventPictures(data);
-      } catch {
-        // Optionally handle error
-      }
-    };
-    fetchEventPictures();
-  }, []);
+  const { data: eventPictures = [] } = useEventPictures();
 
   // Show a Not Found page if an event is explicitly not found after loading
-  if (!isLoading && (error === "Event not found" || !event)) {
+  if (!isLoading && (error?.message === "Event not found" || !event)) {
     notFound();
   }
 
@@ -495,7 +412,7 @@ export default function EventDetails({
             Oops! Something went wrong
           </Typography>
           <Typography variant="body1" color="textSecondary">
-            {error}
+            {error.message}
           </Typography>
         </div>
       </StyledContainer>
@@ -633,7 +550,7 @@ export default function EventDetails({
                                   />
                                 ))}
                               </OptionChips>
-                              {index < eventData.options.length - 1 && (
+                              {index < eventData.options!.length - 1 && (
                                 <Divider style={{ margin: "0.75rem 0" }} />
                               )}
                             </div>
