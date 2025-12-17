@@ -1,6 +1,72 @@
 @import "tailwindcss";
 
 :root {
+  /* Core Colors */
+  --color-primary: #0c4a6e;
+  --color-primary-dark: #073a58;
+  --color-secondary: #0369a1;
+  --color-accent: #fb923c;
+  --color-light: #f0f9ff;
+
+  /* Sand Tones */
+  --color-sand-light: #ffd7b5;
+  --color-sand-medium: #f5cca6;
+
+  /* Text Colors */
+  --color-text-primary: #111827;
+  --color-text-secondary: #374151;
+  --color-text-muted: #4b5563;
+  --color-text-subtle: #6b7280;
+
+  /* Border Colors */
+  --color-border: #d1d5db;
+  --color-border-light: #e5e7eb;
+  --color-border-lighter: #f3f4f6;
+
+  /* Semantic - Success */
+  --color-success: #22c55e;
+  --color-success-light: #dcfce7;
+  --color-success-text: #166534;
+
+  /* Semantic - Error */
+  --color-error: #ef4444;
+  --color-error-dark: #dc2626;
+  --color-error-light: #fee2e2;
+  --color-error-text: #991b1b;
+
+  /* Semantic - Warning */
+  --color-warning: #eab308;
+  --color-warning-light: #fef9c3;
+  --color-warning-text: #854d0e;
+
+  /* Semantic - Info */
+  --color-info: #3b82f6;
+  --color-info-light: #dbeafe;
+  --color-info-text: #1e40af;
+
+  /* Supporting Blues (Gradients) */
+  --color-blue-soft: #42A5F5;
+  --color-blue-medium: #326C85;
+  --color-blue-pale: #64B5F6;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #326C85, #42A5F5, #64B5F6);
+  --gradient-button: linear-gradient(135deg, #326C85, #4A90A4);
+  --gradient-footer: linear-gradient(to right, #f5cca6, #ffd7b5);
+
+  /* Shadows */
+  --shadow-card: 0px 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-event-card: 0px 8px 24px 0px #42a5f5;
+  --shadow-price-badge: 0px 4px 15px 0px #326c85;
+
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-default: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* Base (legacy compatibility) */
   --background: #ffffff;
   --foreground: #171717;
   --primary: #0c4a6e;
@@ -8,18 +74,43 @@
   --accent: #fb923c;
   --light: #f0f9ff;
   --dark: #0f172a;
-  --footer-height: 500px; /* Default footer height, updated via JS */
+  --footer-height: 500px;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-primary: var(--primary);
-  --color-primary-dark: #073a58; /* Added for hover state */
-  --color-secondary: var(--secondary);
-  --color-accent: var(--accent);
-  --color-light: var(--light);
+  --color-primary: var(--color-primary);
+  --color-primary-dark: var(--color-primary-dark);
+  --color-secondary: var(--color-secondary);
+  --color-accent: var(--color-accent);
+  --color-light: var(--color-light);
   --color-dark: var(--dark);
+  --color-sand-light: var(--color-sand-light);
+  --color-sand-medium: var(--color-sand-medium);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-subtle: var(--color-text-subtle);
+  --color-border: var(--color-border);
+  --color-border-light: var(--color-border-light);
+  --color-border-lighter: var(--color-border-lighter);
+  --color-success: var(--color-success);
+  --color-success-light: var(--color-success-light);
+  --color-success-text: var(--color-success-text);
+  --color-error: var(--color-error);
+  --color-error-dark: var(--color-error-dark);
+  --color-error-light: var(--color-error-light);
+  --color-error-text: var(--color-error-text);
+  --color-warning: var(--color-warning);
+  --color-warning-light: var(--color-warning-light);
+  --color-warning-text: var(--color-warning-text);
+  --color-info: var(--color-info);
+  --color-info-light: var(--color-info-light);
+  --color-info-text: var(--color-info-text);
+  --color-blue-soft: var(--color-blue-soft);
+  --color-blue-medium: var(--color-blue-medium);
+  --color-blue-pale: var(--color-blue-pale);
   --font-sans: var(--font-eb-garamond);
   --font-mono: var(--font-geist-mono);
   --font-anton: var(--font-anton);

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, FormEvent, useEffect } from "react";
 import { motion } from "motion/react";
+import { Input, Button } from "@/components/ui";
 
 // Define type for hours data to match new schema
 type DayHours = {
@@ -109,7 +110,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-gradient-to-r from-[#f5cca6] to-[#ffd7b5] text-black py-8 border-t-4 border-neutral-200 mt-auto">
+    <footer className="bg-[var(--gradient-footer)] text-black py-8 border-t-4 border-[var(--color-border-light)] mt-auto">
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row gap-8">
           {/* Logo Container */}
@@ -257,22 +258,24 @@ export default function Footer() {
                     onSubmit={handleSubscribe}
                   >
                     <div className="flex-grow">
-                      <input
+                      <Input
                         type="email"
                         placeholder="Enter your email"
-                        className="w-full px-3 py-2 rounded text-gray-900 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 border border-gray-200"
+                        className="h-10 text-sm"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
                       />
                     </div>
-                    <button
+                    <Button
                       type="submit"
-                      disabled={isSubmitting}
-                      className="bg-blue-400 hover:bg-blue-500 text-white px-4 py-2 rounded text-sm transition-colors disabled:opacity-70 cursor-pointer"
+                      variant="primary"
+                      size="sm"
+                      isLoading={isSubmitting}
+                      className="w-full"
                     >
                       {isSubmitting ? "Subscribing..." : "Subscribe"}
-                    </button>
+                    </Button>
                   </form>
                   {message && (
                     <p
@@ -287,52 +290,52 @@ export default function Footer() {
           </div>
         </div>
         {/* Navigation Links */}
-        <nav className="mt-6 pt-4 border-t border-orange-200 flex flex-wrap justify-center gap-6 text-sm">
+        <nav className="mt-6 pt-4 border-t border-[var(--color-border-light)] flex flex-wrap justify-center gap-6 text-sm">
           <Link
             href="/"
-            className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase"
+            className="text-black hover:text-[var(--color-secondary)] transition-colors font-medium uppercase"
           >
             Home
           </Link>
           <Link
             href="/events/classes-workshops"
-            className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase"
+            className="text-black hover:text-[var(--color-secondary)] transition-colors font-medium uppercase"
           >
             Classes
           </Link>
           <Link
             href="/calendar"
-            className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase"
+            className="text-black hover:text-[var(--color-secondary)] transition-colors font-medium uppercase"
           >
             Calendar
           </Link>
           <Link
             href="/gallery"
-            className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase"
+            className="text-black hover:text-[var(--color-secondary)] transition-colors font-medium uppercase"
           >
             Gallery
           </Link>
           <Link
             href="/blog"
-            className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase"
+            className="text-black hover:text-[var(--color-secondary)] transition-colors font-medium uppercase"
           >
             Blog
           </Link>
           <Link
             href="/about"
-            className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase"
+            className="text-black hover:text-[var(--color-secondary)] transition-colors font-medium uppercase"
           >
             About
           </Link>
           <Link
             href="/contact-us"
-            className="text-black hover:text-[#0369a1] transition-colors font-medium uppercase"
+            className="text-black hover:text-[var(--color-secondary)] transition-colors font-medium uppercase"
           >
             Contact
           </Link>
         </nav>
 
-        <div className="mt-4 pt-4 border-t border-orange-200 text-center text-black text-sm">
+        <div className="mt-4 pt-4 border-t border-[var(--color-border-light)] text-center text-black text-sm">
           <p>
             &copy; {new Date().getFullYear()} Coastal Creation Studios. All
             rights reserved.

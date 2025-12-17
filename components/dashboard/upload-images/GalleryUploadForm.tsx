@@ -6,6 +6,7 @@ import { getAllGalleryDestinations } from "@/lib/utils/galleryHelpers";
 import type { GalleryDestination } from "@/types/interfaces";
 import { RiUploadCloudLine, RiCloseLine, RiImageLine } from "react-icons/ri";
 import { toast } from "react-hot-toast";
+import { Input, Textarea, Label, Button } from "@/components/ui";
 
 interface GalleryUploadFormProps {
   onUploadSuccess?: () => void;
@@ -137,39 +138,28 @@ export default function GalleryUploadForm({
         <div className="p-6 space-y-6">
           {/* Title Input */}
           <div>
-            <label
-              htmlFor="title"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-            >
-              Title <span className="text-red-500">*</span>
-            </label>
-            <input
+            <Label htmlFor="title" required>Title</Label>
+            <Input
               type="text"
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Enter image title"
               disabled={uploading}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
 
           {/* Description Input */}
           <div>
-            <label
-              htmlFor="description"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-            >
-              Description (Optional)
-            </label>
-            <textarea
+            <Label htmlFor="description">Description (Optional)</Label>
+            <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Enter image description"
               disabled={uploading}
               rows={3}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed resize-none"
+              className="resize-none"
             />
           </div>
 
@@ -307,16 +297,18 @@ export default function GalleryUploadForm({
 
           {/* Submit Button */}
           <div className="flex items-center gap-3">
-            <button
+            <Button
               type="button"
+              variant="primary"
               onClick={handleSubmit}
               disabled={uploading}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              isLoading={uploading}
             >
               {uploading ? "Uploading..." : "Upload Images"}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="secondary"
               onClick={() => {
                 setTitle("");
                 setDescription("");
@@ -325,10 +317,9 @@ export default function GalleryUploadForm({
                 reset();
               }}
               disabled={uploading}
-              className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
             >
               Clear
-            </button>
+            </Button>
           </div>
         </div>
       )}

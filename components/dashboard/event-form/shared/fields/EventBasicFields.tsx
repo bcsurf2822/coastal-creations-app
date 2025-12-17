@@ -1,5 +1,6 @@
 import { ReactElement } from "react";
 import { EventFormState, EventFormActions } from "../types/eventForm.types";
+import { Input, Textarea, Select, Label } from "@/components/ui";
 
 interface EventBasicFieldsProps {
   formData: EventFormState;
@@ -28,10 +29,9 @@ const EventBasicFields = ({
 
       {/* Event Type Selection */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Event Type <span className="text-red-500">*</span>
-        </label>
-        <select
+        <Label htmlFor="eventType" required>Event Type</Label>
+        <Select
+          id="eventType"
           value={formData.eventType}
           onChange={(e) =>
             onEventTypeChange(
@@ -39,65 +39,60 @@ const EventBasicFields = ({
             )
           }
           autoComplete="off"
-          autoCapitalize="none"
-          autoCorrect="off"
-          spellCheck="false"
-          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          error={!!errors.eventType}
         >
           <option value="adult-class">Adult Class</option>
           <option value="kid-class">Kid Class</option>
           <option value="event">Event</option>
           <option value="camp">Camp</option>
           <option value="artist">Live Artist Event</option>
-        </select>
+        </Select>
         {errors.eventType && (
-          <p className="text-red-600 text-sm mt-1">{errors.eventType}</p>
+          <p className="text-[var(--color-error)] text-sm mt-1">{errors.eventType}</p>
         )}
       </div>
 
       {/* Event Name */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Event Name <span className="text-red-500">*</span>
-        </label>
-        <input
+        <Label htmlFor="eventName" required>Event Name</Label>
+        <Input
           type="text"
+          id="eventName"
           value={formData.eventName}
           onChange={(e) => actions.handleInputChange("eventName", e.target.value)}
           autoComplete="new-password"
           autoCapitalize="none"
           autoCorrect="off"
-          spellCheck="false"
+          spellCheck={false}
           data-lpignore="true"
           data-form-type="other"
-          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Enter event name"
+          error={!!errors.eventName}
         />
         {errors.eventName && (
-          <p className="text-red-600 text-sm mt-1">{errors.eventName}</p>
+          <p className="text-[var(--color-error)] text-sm mt-1">{errors.eventName}</p>
         )}
       </div>
 
       {/* Description */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Description <span className="text-red-500">*</span>
-        </label>
-        <textarea
+        <Label htmlFor="description" required>Description</Label>
+        <Textarea
+          id="description"
           value={formData.description}
           onChange={(e) => actions.handleInputChange("description", e.target.value)}
           rows={4}
           autoComplete="new-password"
           autoCapitalize="none"
           autoCorrect="off"
-          spellCheck="false"
+          spellCheck={false}
           data-lpignore="true"
           data-form-type="other"
-          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Enter event description"
+          error={!!errors.description}
         />
         {errors.description && (
-          <p className="text-red-600 text-sm mt-1">{errors.description}</p>
+          <p className="text-[var(--color-error)] text-sm mt-1">{errors.description}</p>
         )}
       </div>
     </>
