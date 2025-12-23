@@ -539,7 +539,7 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
                     return;
                   }
 
-                  if (token.token) {
+                  if (token.status === "OK" && token.token) {
                     try {
                       // Use remaining amount after gift card, or full amount if no gift card
                       const chargeAmount = currentGiftCard

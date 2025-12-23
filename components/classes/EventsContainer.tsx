@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, ReactElement } from "react";
+import React, { useState, useMemo, ReactElement } from "react";
 import styled from "@emotion/styled";
 import { Box, Container, CircularProgress, Alert } from "@mui/material";
 import { type SanityDocument } from "next-sanity";
@@ -9,6 +9,7 @@ import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import { client } from "@/sanity/client";
 import UniversalEventCard, { UniversalEventData, CardConfig } from "./EventCard";
 import { getRandomIcon } from "./eventUtils";
+import { useEvents, useCustomers, useEventPictures } from "@/hooks/queries";
 
 const { projectId, dataset } = client.config();
 const urlFor = (source: SanityImageSource) =>
@@ -152,68 +153,38 @@ const ListContainer = styled("div")({
 });
 
 const EventsContainer: React.FC<EventsContainerProps> = ({ config }) => {
-  const [events, setEvents] = useState<UniversalEventData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [eventPictures, setEventPictures] = useState<SanityDocument[]>([]);
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
-  const [eventParticipantCounts, setEventParticipantCounts] = useState<Record<string, number>>({});
 
-  useEffect(() => {
-    const fetchEvents = async (): Promise<void> => {
-      try {
-        setIsLoading(true);
-        const response = await fetch("/api/events");
-        if (!response.ok) throw new Error("Failed to fetch events");
-        const data = await response.json();
-        setEvents(data.events || []);
-      } catch (err: unknown) {
-        console.error("[EventsContainer-fetchEvents] Error:", err);
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // React Query hooks
+  const {
+    data: eventsData,
+    isLoading,
+    error,
+  } = useEvents();
 
-    const fetchCustomers = async (): Promise<void> => {
-      if (!config.fetchParticipantCounts) return;
+  const { data: customersData = [] } = useCustomers({
+    enabled: !!config.fetchParticipantCounts,
+  });
 
-      try {
-        const response = await fetch("/api/customer");
-        const responseText = await response.text();
-        const result = responseText ? JSON.parse(responseText) : {};
+  const { data: eventPicturesData = [] } = useEventPictures(
+    !!config.useEventPictures
+  );
 
-        if (response.ok && result.data && Array.isArray(result.data)) {
-          const counts: Record<string, number> = {};
-          result.data.forEach((customer: { event?: { _id: string }; quantity: number }) => {
-            const eventId = customer.event?._id;
-            if (eventId) counts[eventId] = (counts[eventId] || 0) + customer.quantity;
-          });
-          setEventParticipantCounts(counts);
-        }
-      } catch (error) {
-        console.error("[EventsContainer-fetchCustomers] Error:", error);
-      }
-    };
+  // Transform events data - useEvents returns ApiEvent[] directly
+  const events: UniversalEventData[] = (eventsData || []) as UniversalEventData[];
+  const eventPictures: SanityDocument[] = eventPicturesData;
 
-    const fetchEventPictures = async (): Promise<void> => {
-      if (!config.useEventPictures) return;
+  // Calculate participant counts from customers data
+  const eventParticipantCounts = useMemo(() => {
+    if (!config.fetchParticipantCounts || !customersData.length) return {};
 
-      try {
-        const response = await fetch("/api/eventPictures");
-        if (response.ok) {
-          const data = await response.json();
-          setEventPictures(data);
-        }
-      } catch (err) {
-        console.error("[EventsContainer-fetchEventPictures] Error:", err);
-      }
-    };
-
-    fetchEvents();
-    fetchCustomers();
-    fetchEventPictures();
-  }, [config.fetchParticipantCounts, config.useEventPictures]);
+    const counts: Record<string, number> = {};
+    customersData.forEach((customer) => {
+      const eventId = customer.event?._id;
+      if (eventId) counts[eventId] = (counts[eventId] || 0) + customer.quantity;
+    });
+    return counts;
+  }, [customersData, config.fetchParticipantCounts]);
 
   const findMatchingEventPicture = (eventName: string): SanityDocument | undefined => {
     if (!eventPictures?.length) return undefined;
@@ -245,7 +216,7 @@ const EventsContainer: React.FC<EventsContainerProps> = ({ config }) => {
     return (
       <StyledContainer>
         <Alert severity="error" sx={{ mb: 4, borderRadius: "15px" }}>
-          Error loading events: {error}
+          Error loading events: {error.message}
         </Alert>
       </StyledContainer>
     );

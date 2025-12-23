@@ -1,6 +1,7 @@
 import { ReactElement } from "react";
 import { EventFormState, EventFormActions } from "../types/eventForm.types";
 import { formatNumberInput, parseNumberValue } from "../utils/formHelpers";
+import { Input, Select, Label } from "@/components/ui";
 
 interface EventPricingFieldsProps {
   formData: EventFormState;
@@ -21,11 +22,10 @@ const EventPricingFields = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Price <span className="text-red-500">*</span>
-        </label>
-        <input
+        <Label htmlFor="price" required>Price</Label>
+        <Input
           type="text"
+          id="price"
           value={formData.price?.toString() || ""}
           onChange={(e) => {
             const value = e.target.value;
@@ -36,22 +36,21 @@ const EventPricingFields = ({
           autoComplete="new-password"
           autoCapitalize="none"
           autoCorrect="off"
-          spellCheck="false"
+          spellCheck={false}
           data-lpignore="true"
           data-form-type="other"
-          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Enter Price"
+          error={!!errors.price}
         />
         {errors.price && (
-          <p className="text-red-600 text-sm mt-1">{errors.price}</p>
+          <p className="text-[var(--color-error)] text-sm mt-1">{errors.price}</p>
         )}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Number of Participants <span className="text-red-500">*</span>
-        </label>
-        <select
+        <Label htmlFor="numberOfParticipants" required>Number of Participants</Label>
+        <Select
+          id="numberOfParticipants"
           value={formData.numberOfParticipants?.toString() || ""}
           onChange={(e) =>
             actions.handleInputChange(
@@ -62,7 +61,7 @@ const EventPricingFields = ({
           autoComplete="new-password"
           data-lpignore="true"
           data-form-type="other"
-          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          error={!!errors.numberOfParticipants}
         >
           <option value="">Select number of participants</option>
           {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
@@ -70,9 +69,9 @@ const EventPricingFields = ({
               {num} participant{num > 1 ? "s" : ""}
             </option>
           ))}
-        </select>
+        </Select>
         {errors.numberOfParticipants && (
-          <p className="text-red-600 text-sm mt-1">
+          <p className="text-[var(--color-error)] text-sm mt-1">
             {errors.numberOfParticipants}
           </p>
         )}

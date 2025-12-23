@@ -1,76 +1,59 @@
 "use client";
 
 import EventsContainer from "@/components/classes/EventsContainer";
+import PageHeader from "@/components/classes/PageHeader";
 import GalleryCarousel from "@/components/gallery/GalleryCarousel";
 import { FaPalette, FaUsers } from "react-icons/fa";
 import { GiPaintBrush } from "react-icons/gi";
-import { usePageContent } from "@/hooks/usePageContent";
-import { DEFAULT_TEXT } from "@/lib/constants/defaultPageContent";
-import { portableTextToPlainText } from "@/lib/utils/portableTextHelpers";
 
 export default function KidClassesPage() {
-  const { content } = usePageContent();
-
-  // Convert PortableText to plain text
-  const description = content?.eventPages?.kidClasses?.description
-    ? portableTextToPlainText(content.eventPages.kidClasses.description)
-    : DEFAULT_TEXT.eventPages.kidClasses.description;
-
   return (
-    <div className="min-h-screen py-12">
-      <div className="container mx-auto px-4">
-        {/* Title Section */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-4 mb-4">
-            <div className="text-4xl text-[#326C85]">
-              <FaPalette />
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-[#326C85]">
-              {content?.eventPages?.kidClasses?.title || DEFAULT_TEXT.eventPages.kidClasses.title}
-            </h1>
-            <div className="text-4xl text-[#326C85]">
-              <GiPaintBrush />
-            </div>
-          </div>
-          <p className="text-lg text-gray-700 max-w-2xl mx-auto font-semibold">
-            {description}
-          </p>
-        </div>
-
-        {/* Gallery Carousel */}
-        <div className="mb-12">
-          <GalleryCarousel destination="kid-class" height="h-64" />
-        </div>
-      </div>
-
-      {/* Events List */}
-      <EventsContainer
-        config={{
-          title: "",
-          sectionTitle: "Upcoming Kid Classes",
-          eventTypeFilter: (eventType) => {
-            // Only show events explicitly marked as "kid-class"
-            return eventType === "kid-class";
-          },
-          layout: "list",
-          cardConfig: {
-            layout: "horizontal",
-            showPrice: true,
-            showSignupButton: true,
-            showParticipantCount: true,
-            showOptions: true,
-            showImage: true,
-            buttonText: "Sign Up for Class",
-          },
-          emptyStateMessage: "No kid classes currently scheduled.",
-          emptyStateSubmessage: "Check back soon for new creative opportunities!",
-          emptyStateIcon: <FaUsers style={{ color: "black" }} />,
-          loadingMessage: "Loading kid classes...",
-          fetchParticipantCounts: true,
-          useEventPictures: true,
-          baseUrl: "/events/kid-classes",
-        }}
+    <div className="min-h-screen">
+      {/* Hero Header */}
+      <PageHeader
+        title="Kid Workshops"
+        subtitle="We encourage kids to bring their own creativity to the table! Our workshops will always have guided activities, but full creative freedom is encouraged."
+        variant="kid"
+        leftIcon={<FaPalette />}
+        rightIcon={<GiPaintBrush />}
       />
+
+      <div className="py-8">
+        <div className="container mx-auto px-4">
+          {/* Gallery Carousel */}
+          <div className="mb-12">
+            <GalleryCarousel destination="kid-class" height="h-64" />
+          </div>
+        </div>
+
+        {/* Events List */}
+        <EventsContainer
+          config={{
+            title: "",
+            sectionTitle: "Upcoming Kid Workshops",
+            eventTypeFilter: (eventType) => {
+              return eventType === "kid-class";
+            },
+            layout: "list",
+            cardConfig: {
+              layout: "horizontal",
+              showPrice: true,
+              showSignupButton: true,
+              showParticipantCount: true,
+              showOptions: true,
+              showImage: true,
+              buttonText: "Sign Up for Class",
+            },
+            emptyStateMessage: "No kid workshops currently scheduled.",
+            emptyStateSubmessage: "Check back soon for new creative opportunities!",
+            emptyStateIcon: <FaUsers style={{ color: "black" }} />,
+            loadingMessage: "Loading kid workshops...",
+            fetchParticipantCounts: true,
+            useEventPictures: true,
+            baseUrl: "/events/kid-classes",
+          }}
+        />
+      </div>
     </div>
   );
 }

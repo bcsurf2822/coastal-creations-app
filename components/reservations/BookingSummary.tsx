@@ -17,6 +17,9 @@ export function BookingSummary({
   onContinue,
 }: BookingSummaryProps): ReactElement {
 
+  // Check if any selected dates have time slots
+  const hasTimeSlots = selectedDates.some((sd) => sd.timeSlot);
+
   // Calculate total participants across all selected dates
   const totalParticipants = selectedDates.reduce(
     (sum, sd) => sum + sd.participants,
@@ -25,6 +28,24 @@ export function BookingSummary({
 
   // Calculate base price (participants × price per day per participant)
   const basePrice = totalParticipants * pricePerDayPerParticipant;
+
+  // Format time from 24h to 12h format
+  const formatTime = (time24: string): string => {
+    if (!time24) return "";
+    const [hours, minutes] = time24.split(":");
+    const hour = parseInt(hours, 10);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
+  };
+
+  // Format date for display
+  const formatDate = (date: Date): string => {
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+  };
 
   // Calculate discount
   let discountAmount = 0;
@@ -107,6 +128,39 @@ export function BookingSummary({
           </span>
         </div>
       </div>
+
+      {/* Selected Dates Details (when time slots are present) */}
+      {hasTimeSlots && selectedDates.length > 0 && (
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <p
+            className={`${ebGaramond.className} text-sm font-bold text-gray-700 mb-2`}
+          >
+            Your Selections:
+          </p>
+          <div className="space-y-2 max-h-32 overflow-y-auto">
+            {selectedDates.map((sd, index) => (
+              <div
+                key={index}
+                className="text-xs bg-gray-50 rounded p-2"
+              >
+                <div className="flex justify-between">
+                  <span className={`${ebGaramond.className} font-medium text-gray-700`}>
+                    {formatDate(sd.date)}
+                  </span>
+                  <span className={`${ebGaramond.className} text-gray-600`}>
+                    {sd.participants} {sd.participants === 1 ? "person" : "people"}
+                  </span>
+                </div>
+                {sd.timeSlot && (
+                  <p className={`${ebGaramond.className} text-blue-600 mt-1`}>
+                    {formatTime(sd.timeSlot.startTime)} - {formatTime(sd.timeSlot.endTime)}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {discount && !isDiscountApplied && (
         <p className={`${ebGaramond.className} text-xs text-gray-500 mt-3`}>

@@ -1,445 +1,375 @@
 # Coastal Creations Studio - Architecture Guide
 
-> A Next.js 15 art studio booking & management platform with MongoDB, Square payments, and Sanity CMS
+> Next.js 15 art studio booking & management platform with MongoDB, Square payments, and Sanity CMS
 
-## Quick Context
+## Project Purpose
 
-**Purpose**: Full-featured event booking system for Coastal Creations Studio (Ocean City, NJ)
+Full-featured event booking system for Coastal Creations Studio (Ocean City, NJ):
 
 - **Customer-facing**: Browse/book classes, camps, workshops, private events, reservations with Square payments
-- **Admin**: Event management, customer tracking, payment monitoring, refunds, content management, error logging
-- **Tech Stack**: Next.js 15, React 18, TypeScript, MongoDB (Mongoose), NextAuth, Square, Sanity CMS, Resend
+- **Admin**: Event management, customer tracking, payment monitoring, refunds, content management
+- **Tech Stack**: Next.js 15, React 18, TypeScript, MongoDB (Mongoose), NextAuth, Square, Sanity CMS, Resend, TanStack Query
 
-## Core Philosophy
-
-### KISS & YAGNI
-
-- Choose simple solutions over complex ones
-- Build only what's needed now, not speculative features
-- Validate inputs early, fail fast
-
-### Design Principles
-
-- **Vertical Slice Architecture**: Organize by features, not layers
-- **Dependency Inversion**: Depend on abstractions, not implementations
-- **Open/Closed**: Open for extension, closed for modification
-- **Single Responsibility**: Components/functions do one thing well
-
-## Project Architecture
+## Project Structure
 
 ```
 coastal-creations-app/
-├── app/                        # Next.js 15 App Router
-│   ├── [slug]/                 # CMS dynamic pages (Sanity)
-│   ├── about/                  # About page
-│   ├── blog/                   # Blog pages
-│   ├── calendar/               # Event calendar
-│   │   └── [eventId]/          # Event detail pages
+├── app/                          # Next.js 15 App Router
+│   ├── [slug]/                   # CMS dynamic pages (Sanity)
+│   ├── about/                    # About page
+│   ├── blog/                     # Blog pages
+│   ├── calendar/                 # Event calendar
+│   │   └── [eventId]/            # Event detail pages
 │   │
-│   ├── events/                 # Event pages by type
-│   │   ├── adult-classes/      # Adult class listings
-│   │   ├── kid-classes/        # Kid class listings
-│   │   ├── camps/              # Camp listings
-│   │   ├── live-artist/        # Live artist events
-│   │   ├── events/             # General events/workshops
-│   │   ├── classes-workshops/  # All events combined
-│   │   └── private-events/     # Private party offerings
+│   ├── events/                   # Event pages by type
+│   │   ├── adult-classes/        # Adult class listings + [eventId]
+│   │   ├── kid-classes/          # Kid class listings + [eventId]
+│   │   ├── camps/                # Camp listings + [eventId]
+│   │   ├── live-artist/          # Live artist events + [eventId]
+│   │   ├── events/               # General events + [eventId]
+│   │   ├── classes-workshops/    # All events combined + [eventId]
+│   │   └── private-events/       # Private party offerings
 │   │
-│   ├── reservations/           # Day-by-day bookings
-│   │   ├── [reservationId]/    # Reservation booking page
-│   │   └── confirmation/       # Booking confirmation
+│   ├── reservations/             # Day-by-day bookings
+│   │   ├── [reservationId]/      # Reservation booking + /payment
+│   │   └── confirmation/         # Booking confirmation
 │   │
-│   ├── contact-us/             # Contact form
-│   ├── gallery/                # Photo gallery
-│   ├── payments/               # Payment flows
-│   ├── payment-success/        # Success redirect
-│   └── square-redirect/        # Square OAuth
+│   ├── gift-cards/               # Gift card purchase & balance check
+│   │   └── balance/              # Balance lookup page
 │   │
-│   ├── admin/
-│   │   └── dashboard/          # Admin panel (NextAuth protected)
-│   │       ├── add-event/
-│   │       ├── edit-event/
-│   │       ├── add-reservation/
-│   │       ├── edit-reservation/
-│   │       ├── reservations/
-│   │       ├── add-private-event/
-│   │       ├── edit-private-event/
-│   │       ├── private-offerings/
-│   │       ├── customers/
-│   │       ├── upload-images/
-│   │       ├── page-descriptions/
-│   │       ├── hours/
-│   │       └── error-logs/
+│   ├── contact-us/               # Contact form
+│   ├── gallery/                  # Photo gallery
+│   ├── payments/                 # Payment flows
+│   ├── payment-success/          # Success redirect
+│   ├── payment/cashapp-callback/ # CashApp OAuth callback
 │   │
-│   ├── api/                    # API Routes
-│   │   ├── auth/[...nextauth]/ # NextAuth endpoints
-│   │   ├── events/             # Event CRUD
-│   │   ├── event/[id]/         # Individual event operations
-│   │   ├── customer/           # Customer bookings
-│   │   ├── reservations/       # Reservation CRUD
-│   │   ├── private-events/     # Private event offerings CRUD
-│   │   ├── payment-config/     # Square config
-│   │   ├── payment-errors/     # Error logging
-│   │   ├── refunds/            # Square refund processing
-│   │   ├── gallery/            # Gallery CRUD
-│   │   ├── eventPictures/      # Event photos
+│   ├── admin/dashboard/          # Admin panel (NextAuth protected)
+│   │   ├── add-event/            # Create events
+│   │   ├── edit-event/           # Edit events
+│   │   ├── events/[eventId]/     # Event customers view
+│   │   ├── add-reservation/      # Create reservations
+│   │   ├── edit-reservation/     # Edit reservations
+│   │   ├── reservations/         # Reservation management + [id]
+│   │   ├── add-private-event/    # Create private events
+│   │   ├── edit-private-event/   # Edit private events
+│   │   ├── private-offerings/    # Private event list
+│   │   ├── private-events/[id]/customers/ # Private event customers
+│   │   ├── customers/            # Customer management
+│   │   ├── gift-cards/           # Gift card management
+│   │   ├── upload-images/        # Gallery upload
+│   │   ├── page-descriptions/    # CMS content editing
+│   │   ├── hours/                # Business hours
+│   │   └── error-logs/           # Error monitoring
+│   │
+│   ├── api/                      # API Routes
+│   │   ├── auth/[...nextauth]/   # NextAuth endpoints
+│   │   ├── events/               # Event CRUD + [id]
+│   │   ├── event/[id]/           # Single event operations
+│   │   ├── customer/             # Customer bookings
+│   │   ├── reservations/         # Reservation CRUD + [id]
+│   │   ├── private-events/       # Private event CRUD + [id]
+│   │   ├── payments/             # Process payments
+│   │   ├── payment-config/       # Square SDK config
+│   │   ├── payment-errors/       # Error logging
+│   │   ├── refunds/              # Square refund processing
+│   │   ├── gift-cards/           # Gift card operations
+│   │   │   ├── list/             # List all gift cards
+│   │   │   ├── balance/          # Check balance
+│   │   │   ├── redeem/           # Redeem gift card
+│   │   │   └── [id]/activities/  # Transaction history
+│   │   ├── square/customers/     # Square customer sync + [id], /migrate
+│   │   ├── gallery/              # Gallery CRUD
+│   │   ├── eventPictures/        # Event photos
 │   │   ├── privateEventPictures/ # Private event photos
-│   │   ├── upload-image/       # Upload event images
+│   │   ├── upload-image/         # Upload event images
 │   │   ├── upload-private-image/ # Upload private event images
-│   │   ├── delete-image/       # Delete images
-│   │   ├── send/               # Email API (Resend)
-│   │   ├── send-confirmation/  # Booking confirmation emails
-│   │   ├── contact/            # Contact form submission
-│   │   ├── subscribe/          # Newsletter subscription
-│   │   ├── hours/              # Business hours management
-│   │   └── page-content/       # CMS page content
+│   │   ├── delete-image/         # Delete images
+│   │   ├── send/                 # Email API (Resend)
+│   │   ├── send-confirmation/    # Booking confirmation emails
+│   │   ├── contact/              # Contact form submission
+│   │   ├── subscribe/            # Newsletter subscription
+│   │   ├── hours/                # Business hours management
+│   │   └── page-content/         # CMS page content
 │   │
-│   ├── actions/                # Server Actions
-│   ├── layout.tsx              # Root layout
-│   ├── page.tsx                # Homepage
-│   └── globals.css             # Global styles (Tailwind)
+│   ├── actions/actions.ts        # Server Actions
+│   ├── providers.tsx             # React Query + Auth providers
+│   ├── get-query-client.ts       # Query client factory
+│   ├── layout.tsx                # Root layout
+│   └── page.tsx                  # Homepage
 │
-├── components/                 # Feature-organized components
-│   ├── landing/                # Homepage: Hero, Calendar, Offerings
-│   ├── calendar/               # Calendar views & event details
-│   ├── classes/                # Event display components
-│   ├── reservations/           # Reservation booking flow
-│   ├── dashboard/              # Admin components
-│   │   ├── home/               # Dashboard home
-│   │   ├── event-form/         # Add/edit events
-│   │   ├── reservation-form/   # Reservation management
-│   │   ├── reservations/       # Reservation display
-│   │   ├── private-event-form/ # Private event management
-│   │   ├── private-offerings/  # Private offerings display
-│   │   ├── customers/          # Customer management
-│   │   ├── upload-images/      # Gallery upload
-│   │   ├── page-descriptions/  # Content management
-│   │   ├── errors-logs/        # Error monitoring
-│   │   └── shared/             # Shared components
-│   ├── payment/                # Square payment components
-│   ├── layout/                 # Nav & Footer
-│   ├── email-templates/        # React Email templates
-│   ├── gallery/                # Gallery components
-│   ├── contact/                # Contact form
-│   ├── about/                  # About page
-│   ├── blog/                   # Blog components
-│   ├── authentication/         # Auth components
-│   └── providers/              # Context providers
+├── components/                   # Feature-organized components
+│   ├── ui/                       # Design System UI Components
+│   │   ├── Button.tsx            # 5 variants (primary, secondary, ghost, destructive, pill)
+│   │   ├── Input.tsx             # Text input with error state
+│   │   ├── Textarea.tsx          # Multiline input with error state
+│   │   ├── Select.tsx            # Dropdown with custom arrow
+│   │   ├── Label.tsx             # Form labels with required indicator
+│   │   ├── Card.tsx              # 3 variants (standard, featured, event)
+│   │   ├── Badge.tsx             # 5 status variants (available, fewSpots, soldOut, newClass, upcoming)
+│   │   ├── PriceBadge.tsx        # Gradient price display
+│   │   └── index.ts              # Barrel export
+│   ├── landing/                  # Homepage: Hero, Calendar, Offerings
+│   ├── calendar/                 # Calendar views & event details
+│   ├── classes/                  # Event display (EventCard, PageHeader, etc.)
+│   ├── reservations/             # Reservation booking flow
+│   ├── payment/                  # Square payment components
+│   ├── gift-cards/               # Gift card UI components
+│   ├── gallery/                  # Gallery display
+│   ├── contact/                  # Contact form
+│   ├── about/                    # About page
+│   ├── blog/                     # Blog components
+│   ├── email-templates/          # React Email templates
+│   ├── layout/                   # Nav & Footer
+│   ├── authentication/           # Auth components
+│   ├── providers/                # Context providers
+│   ├── dashboard/                # Admin components
+│   │   ├── home/                 # Dashboard home
+│   │   ├── event-form/           # Add/edit events
+│   │   ├── reservation-form/     # Reservation management
+│   │   ├── reservations/         # Reservation display
+│   │   ├── private-event-form/   # Private event management
+│   │   ├── private-offerings/    # Private offerings display
+│   │   ├── customers/            # Customer management
+│   │   ├── gift-cards/           # Gift card admin
+│   │   ├── upload-images/        # Gallery upload
+│   │   ├── page-descriptions/    # Content management
+│   │   ├── errors-logs/          # Error monitoring
+│   │   └── shared/               # Shared components
+│   ├── PageTransition.tsx        # Page transitions
+│   └── PageTransitionProvider.tsx
 │
-├── lib/                        # Core utilities
-│   ├── models/                 # Mongoose schemas
-│   │   ├── Event.ts            # Events (classes, camps, workshops, artist)
-│   │   ├── Customer.ts         # Customer bookings with refunds
-│   │   ├── Reservations.ts     # Day-by-day reservations
-│   │   ├── PrivateEvent.ts     # Private event offerings
-│   │   └── PaymentError.ts     # Error tracking
-│   ├── types/
-│   │   ├── eventTypes.ts       # Event type definitions
-│   │   └── reservationTypes.ts # Reservation type definitions
-│   ├── mongoose.ts             # MongoDB connection
-│   ├── mongodb.ts              # MongoDB client
-│   └── gtag.js                 # Google Analytics
+├── hooks/                        # Custom React hooks
+│   ├── queries/                  # TanStack Query hooks (data fetching)
+│   │   ├── index.ts              # Export all query hooks
+│   │   ├── use-events.ts         # useEvents, useEvent
+│   │   ├── use-customers.ts      # useCustomers
+│   │   ├── use-reservations.ts   # useReservations, useReservation
+│   │   ├── use-private-events.ts # usePrivateEvents, usePrivateEvent
+│   │   ├── use-gallery.ts        # useGallery
+│   │   ├── use-event-pictures.ts # useEventPictures
+│   │   ├── use-private-event-pictures.ts
+│   │   ├── use-payment-config.ts # usePaymentConfig
+│   │   ├── use-payment-errors.ts # usePaymentErrors
+│   │   ├── use-hours.ts          # useHours
+│   │   └── use-page-content.ts   # usePageContent
+│   │
+│   ├── mutations/                # TanStack Query mutation hooks
+│   │   ├── index.ts              # Export all mutation hooks
+│   │   ├── use-create-event.ts   # useCreateEvent
+│   │   ├── use-update-event.ts   # useUpdateEvent
+│   │   ├── use-delete-event.ts   # useDeleteEvent
+│   │   ├── use-create-customer.ts
+│   │   ├── use-create-reservation.ts
+│   │   ├── use-update-reservation.ts
+│   │   ├── use-delete-reservation.ts
+│   │   ├── use-create-private-event.ts
+│   │   ├── use-update-private-event.ts
+│   │   ├── use-delete-private-event.ts
+│   │   ├── use-process-refund.ts
+│   │   ├── use-update-hours.ts
+│   │   ├── use-update-page-content.ts
+│   │   ├── use-upload-gallery-image.ts
+│   │   ├── use-update-gallery-image.ts
+│   │   ├── use-delete-gallery-image.ts
+│   │   └── use-delete-payment-error.ts
+│   │
+│   ├── useDaySelection.ts        # Reservation date selection
+│   └── usePageContent.ts         # Legacy page content hook
 │
-├── types/
-│   ├── interfaces.ts           # Shared TypeScript interfaces
-│   ├── hours.ts                # Business hours types
-│   └── pageContent.ts          # CMS content types
+├── lib/                          # Core utilities
+│   ├── models/                   # Mongoose schemas
+│   │   ├── Event.ts              # Events (classes, camps, workshops)
+│   │   ├── Customer.ts           # Customer bookings with refunds
+│   │   ├── Reservations.ts       # Day-by-day reservations
+│   │   ├── PrivateEvent.ts       # Private event offerings
+│   │   └── PaymentError.ts       # Error tracking
+│   │
+│   ├── types/                    # Type definitions
+│   │   ├── eventTypes.ts         # Event type definitions
+│   │   └── reservationTypes.ts   # Reservation type definitions
+│   │
+│   ├── square/                   # Square SDK utilities
+│   │   ├── customers.ts          # Customer management
+│   │   ├── gift-cards.ts         # Gift card operations
+│   │   └── payment-config.ts     # Payment configuration
+│   │
+│   ├── utils/                    # Helper utilities
+│   │   ├── eventTypeHelpers.ts   # Event type utilities
+│   │   ├── slugify.ts            # URL slug generation
+│   │   ├── galleryHelpers.ts     # Gallery utilities
+│   │   └── portableTextHelpers.ts # Sanity content helpers
+│   │
+│   ├── constants/                # App constants
+│   │   └── defaultPageContent.ts # Default CMS content
+│   │
+│   ├── mongoose.ts               # MongoDB connection
+│   ├── mongodb.ts                # MongoDB client
+│   └── gtag.js                   # Google Analytics
 │
-├── hooks/
-│   └── useDaySelection.ts      # Custom hooks
+├── types/                        # Global TypeScript types
+│   ├── interfaces.ts             # Shared interfaces (ICustomer, etc.)
+│   ├── hours.ts                  # Business hours types
+│   ├── pageContent.ts            # CMS content types
+│   └── next-auth.d.ts            # NextAuth type extensions
 │
-├── sanity/                     # Sanity CMS
-│   └── client.ts               # Sanity client config
+├── sanity/                       # Sanity CMS
+│   └── client.ts                 # Sanity client config
 │
-├── auth.ts                     # NextAuth config
-├── next.config.ts              # Next.js config
-├── tsconfig.json               # TypeScript config (strict mode)
-└── package.json                # Dependencies
+├── __tests__/                    # Test files
+│
+├── auth.ts                       # NextAuth configuration
+├── next.config.ts                # Next.js config
+├── tsconfig.json                 # TypeScript config
+├── vitest.config.mts             # Vitest test config
+├── vitest.setup.ts               # Test setup
+└── package.json                  # Dependencies
 ```
 
 ## Data Models (lib/models/)
 
-### Event.ts
+| Model | Purpose | Key Fields |
+|-------|---------|------------|
+| **Event.ts** | Classes, camps, workshops | eventName, eventType, price, dates, time, recurring, options, discount |
+| **Customer.ts** | Booking/registration | event (ref), eventType, selectedDates, participants[], billingInfo, squarePaymentId, refundStatus |
+| **Reservations.ts** | Day-by-day availability | eventName, pricePerDayPerParticipant, dailyAvailability[], timeType |
+| **PrivateEvent.ts** | Private party offerings | options, deposit, image |
+| **PaymentError.ts** | Payment failure tracking | error details, customer info |
 
-**Purpose**: Core event model for classes, camps, workshops, artist sessions
-**Key Features**:
+## API Routes Summary
 
-- Recurring patterns (daily, weekly, monthly, yearly)
-- Timezone handling (America/New_York)
-- Pricing with group discounts
-- Participant limits
-- Options/add-ons with pricing
-- Exclude dates for holidays
+| Route | Methods | Purpose |
+|-------|---------|---------|
+| `/api/events` | GET, POST | List/create events |
+| `/api/events/[id]` | GET, PUT, DELETE | Single event operations |
+| `/api/customer` | GET, POST | Customer bookings |
+| `/api/reservations` | GET, POST | Reservation CRUD |
+| `/api/reservations/[id]` | GET, PUT, DELETE | Single reservation |
+| `/api/private-events` | GET, POST, PUT, DELETE | Private event offerings |
+| `/api/payments` | POST | Process Square payments |
+| `/api/payment-config` | GET | Square SDK config |
+| `/api/refunds` | GET, POST | Process refunds |
+| `/api/gift-cards` | GET, POST | Gift card operations |
+| `/api/gift-cards/balance` | POST | Check balance by GAN |
+| `/api/gift-cards/redeem` | POST | Redeem gift card |
+| `/api/square/customers` | GET, POST | Square customer sync |
+| `/api/gallery` | GET, POST, PUT, DELETE | Gallery management |
+| `/api/hours` | GET, PUT | Business hours |
+| `/api/page-content` | GET, PUT | CMS content |
+| `/api/send-confirmation` | POST | Booking confirmation email |
+| `/api/contact` | POST | Contact form |
 
-**Fields**: eventName, eventType, description, price, numberOfParticipants, dates (startDate, endDate, recurring), time (startTime, endTime), options, discount, image
+## React Query Hooks
 
-### Customer.ts
+All data fetching uses TanStack Query for caching, background refetching, and optimistic updates.
 
-**Purpose**: Booking/registration data
-**Key Features**:
+### Query Hooks (hooks/queries/)
 
-- Multiple participants per booking
-- Self vs. group registration
-- Per-participant options
-- Billing info with email/phone validation
-- Auto-calculates total based on event price
-- Polymorphic event references (Event, PrivateEvent, Reservation)
-- Refund tracking (status, amount, date)
+```typescript
+import { useEvents, useEvent, useCustomers, useReservations, useReservation,
+         usePrivateEvents, usePrivateEvent, useGallery, usePaymentConfig,
+         usePaymentErrors, useHours, usePageContent } from "@/hooks/queries";
 
-**Fields**: event (ref), eventType, selectedDates[] (for reservations), quantity, total, isSigningUpForSelf, participants[], selectedOptions[], billingInfo, squarePaymentId, squareCustomerId, refundStatus, refundAmount, refundedAt
+// Examples
+const { data: events, isLoading } = useEvents();           // All events
+const { data: events } = useEvents("adult-class");         // Filtered
+const { data: event } = useEvent(eventId);                 // Single event
+const { data: customers } = useCustomers({ eventId });     // With filters
+```
 
-### Reservations.ts
+### Mutation Hooks (hooks/mutations/)
 
-**Purpose**: Day-by-day availability tracking for studio reservations
-**Key Features**:
+```typescript
+import { useCreateEvent, useUpdateEvent, useDeleteEvent, useCreateCustomer,
+         useProcessRefund, useUpdateHours } from "@/hooks/mutations";
 
-- Price per day per participant pricing model
-- Daily capacity limits with real-time tracking
-- Date-specific availability (excludes holidays)
-- Flexible scheduling (same time all days OR custom times per day)
-- Daily booking count tracking (currentBookings vs maxParticipants)
-- Options/add-ons with pricing
-- Group discounts based on minimum days
+// Examples
+const { mutate: createEvent, isPending } = useCreateEvent();
+createEvent(eventData, { onSuccess: () => router.push("/...") });
+```
 
-**Fields**: eventName, eventType, description, pricePerDayPerParticipant, dates (startDate, endDate, excludeDates), timeType, time, dailyAvailability[], options, discount, image
+Cache invalidation is automatic - mutations invalidate related queries.
 
-### PrivateEvent.ts
+## Key Dependencies
 
-**Purpose**: Private event offerings (birthdays, custom parties)
-**Key Features**:
+| Package | Purpose |
+|---------|---------|
+| `@tanstack/react-query` | Server state management, caching |
+| `next-auth` | Authentication (Google OAuth) |
+| `mongoose` | MongoDB ODM |
+| `square` | Payment processing |
+| `react-square-web-payments-sdk` | Payment UI |
+| `resend` | Transactional emails |
+| `next-sanity` | CMS integration |
+| `@fullcalendar/*` | Calendar UI |
+| `@mui/material` | UI components |
+| `dayjs` | Date handling (America/New_York timezone) |
+| `vitest` | Testing framework |
 
-- Customizable options with pricing
-- Deposit requirements
-- Image upload support
+## Configuration
 
-### PaymentError.ts
+### Environment Variables Required
 
-**Purpose**: Error tracking for payment failures
+```
+MONGODB_URI              # MongoDB connection
+NEXTAUTH_SECRET          # Auth secret
+GOOGLE_CLIENT_ID         # OAuth
+GOOGLE_CLIENT_SECRET     # OAuth
+SQUARE_ACCESS_TOKEN      # Square API
+SQUARE_APPLICATION_ID    # Square SDK
+SQUARE_LOCATION_ID       # Square location
+SANITY_PROJECT_ID        # Sanity CMS
+SANITY_DATASET           # Sanity dataset
+RESEND_API_KEY           # Email service
+```
 
-## API Routes (app/api/)
-
-**Core Patterns**:
-
-- All routes use `connectMongo()` before DB operations
-- Error responses: `{ error: "message" }` format
-- Success responses: `{ success: true, data: ... }`
-- Timezone: America/New_York for all date operations
-
-### Events & Calendar
-
-- `POST /api/events` - Create event (auto-cleanup on GET)
-- `GET /api/events?type=` - List events with filtering
-- `PUT /api/events/[id]` - Update event
-- `DELETE /api/events?id=` - Delete event
-- `GET /api/event/[id]` - Get single event
-- `PATCH /api/event/[id]` - Update single event
-
-### Customer Bookings
-
-- `POST /api/customer` - Create booking (handles Events, PrivateEvents, Reservations)
-- `GET /api/customer?eventId=&eventType=` - List bookings with filtering
-  - For reservations: validates dailyAvailability, atomically updates currentBookings
-  - Auto-calculates total if not provided
-
-### Reservations
-
-- `POST /api/reservations` - Create reservation (generates dailyAvailability array)
-- `GET /api/reservations?type=&fromDate=&toDate=` - List reservations with filtering
-- `PUT /api/reservations/[id]` - Update reservation (regenerates dailyAvailability)
-- `DELETE /api/reservations?id=` - Delete reservation
-- `GET /api/reservations/[id]` - Get single reservation
-
-### Private Events
-
-- `POST /api/private-events` - Create private event offering
-- `GET /api/private-events` - List private event offerings
-- `PUT /api/private-events?id=` - Update private event offering
-- `DELETE /api/private-events?id=` - Delete private event offering
-- `GET /api/private-events/[id]` - Get single private event
-
-### Payments (Square)
-
-- `GET /api/payment-config` - Square SDK config (applicationId, locationId)
-- `GET /api/payment-errors?limit=&eventId=&customerEmail=` - List payment errors
-- `DELETE /api/payment-errors?id=` - Delete payment error
-- `POST /api/refunds` - Process refund (customerId, refundAmount, reason)
-- `GET /api/refunds?customerId=` - Get refund status/list refunded customers
-
-### Email (Resend)
-
-- `POST /api/contact` - Contact form submission (validation + email to admin)
-- `POST /api/send-confirmation` - Booking confirmation (customerId, eventId)
-- `POST /api/subscribe` - Newsletter subscription
-- `POST /api/send` - Generic test email
-
-### Gallery & Media (Sanity)
-
-- `GET /api/gallery?destination=` - Fetch gallery images by destination
-- `POST /api/gallery` - Upload gallery images (FormData: title, description, destinations, files)
-- `PUT /api/gallery` - Update gallery metadata (id, title, description, destinations)
-- `DELETE /api/gallery?id=` - Delete gallery image
-- `GET /api/eventPictures` - Fetch event pictures
-- `GET /api/privateEventPictures` - Fetch private event pictures
-- `POST /api/upload-image` - Upload event image (FormData: file, title)
-- `POST /api/upload-private-image` - Upload private event image (FormData: file, title)
-- `DELETE /api/delete-image?imageUrl=` - Delete image by URL
-
-### CMS Content (Sanity)
-
-- `GET /api/hours` - Get business hours
-- `PUT /api/hours` - Update business hours (monday-sunday schedule)
-- `GET /api/page-content` - Get page content (homepage, eventPages, otherPages)
-- `PUT /api/page-content` - Update page content
-
-## Authentication (auth.ts)
-
-**NextAuth Setup**:
-
-- Google OAuth provider
-- Email whitelist: `crystaledgedev22@gmail.com`, `ashley@coastalcreationsstudio.com`
-- JWT session strategy
-- Admin routes protected via middleware
-
-## Payment Integration
-
-**Square Web Payments SDK**:
-
-- Components: `components/payment/`
-- Config API: `/api/payment-config`
-- Error logging: `/api/payment-errors` → `PaymentError` model
-- Success redirect: `/payment-success`
-- Refund processing: `/api/refunds` (partial/full refunds with status tracking)
-
-## Email System
-
-**Resend API**:
-
-- Templates: `components/email-templates/` (React Email)
-- Booking confirmations: `/api/send-confirmation`
-- Contact form: `/api/contact`
-- Newsletter: `/api/subscribe`
-- Templates: EventEmailTemplate, CustomerDetailsTemplate, CustomerContactTemplate, NewsletterEmailTemplate, ReservationEmailTemplate
-
-## Key Features
-
-### 1. Multiple Event Types
-
-- **Adult Classes**: Filtered display of adult-oriented classes
-- **Kid Classes**: Child-focused class offerings
-- **Camps**: Multi-day summer camps
-- **Live Artist Events**: Free artist demonstrations (no booking required)
-- **General Events**: Workshops and special events
-- **Private Events**: Custom party offerings (birthdays, corporate events)
-
-### 2. Reservation System
-
-- Day-by-day booking with flexible date selection
-- Real-time availability tracking (currentBookings vs maxParticipants)
-- Per-day-per-participant pricing model
-- Custom time slots per day OR same time for all days
-- Automatic capacity management (atomic updates)
-- Confirmation page with booking summary
-
-### 3. Admin Content Management
-
-- **Page Content**: Edit all website text via admin dashboard (homepage hero, offerings, page descriptions)
-- **Business Hours**: Manage hours of operation for each day
-- **Gallery**: Upload/manage images with destination filtering (adult-class, kid-class, camp, etc.)
-- **Event Pictures**: Separate galleries for events and private events
-- Changes sync with Sanity CMS (5-minute propagation)
-
-### 4. Refund Management
-
-- Process partial or full refunds via Square API
-- Refund status tracking: "none", "partial", "full"
-- Customer refund history with timestamps
-- Admin can view refunded customers and refund amounts
-
-### 5. Gallery System
-
-- Destination-based filtering (adult-class, kid-class, camp, artist, event, private-event, reservation, general)
-- Multiple image upload support
-- Edit metadata (title, description, destinations)
-- Delete images with asset cleanup
-- Separate galleries for events, private events, and main gallery
-
-## Key Configuration Files
-
-### tsconfig.json
-
-- **Target**: ES2017
-- **Strict mode**: Enabled
-- **Path alias**: `@/*` → `./`
-
-### next.config.ts
-
-- **Images**: Sanity CDN (`cdn.sanity.io`)
-- **Dev**: Turbopack enabled
-
-### package.json Scripts
+### Scripts
 
 ```bash
-npm run dev    # Development with Turbopack
-npm run build  # Production build
-npm run lint   # ESLint check
+npm run dev         # Development with Turbopack
+npm run build       # Production build
+npm run lint        # ESLint check
+npm run test        # Run Vitest tests
+npm run test:run    # Run tests once
 ```
 
 ## Development Guidelines
 
-### TypeScript (MANDATORY)
+### TypeScript (Strict)
 
-- **NEVER use `any`** - use `unknown` if needed
-- **MUST use `ReactElement`** not `JSX.Element` for return types
-- **MUST have explicit return types** for all functions/components
-- **NEVER use `@ts-ignore`** - fix the type issue
+- Never use `any` - use `unknown` if needed
+- Use `ReactElement` not `JSX.Element`
+- Explicit return types for all functions
+- Never use `@ts-ignore`
 
 ### Component Standards
 
-- **Max 200 lines per component** - refactor if larger
-- **Max 500 lines per file** - split if approaching
-- **Max 50 lines per function** - keep focused
-- **Co-locate tests** in `__tests__/` folders
+- Max 200 lines per component
+- Max 500 lines per file
+- Max 50 lines per function
+- Arrow functions for components
+- Server Components by default
 
-### State Management Hierarchy
+### State Management
 
-1. **Local State** (`useState`) - component-specific only
-2. **Context** - cross-component within a feature
-3. **URL State** - search params for shareable state
-4. **Server State** - TanStack Query for API data
-5. **Global State** - Zustand only when truly needed
+1. **Local State** (`useState`) - component-specific
+2. **React Query** - server state (primary for API data)
+3. **URL State** - shareable state via search params
+4. **Context** - cross-component within feature
 
-### Search Commands
-
-```bash
-# ✅ Use ripgrep (rg)
-rg "pattern"
-rg --files -g "*.tsx"
-
-# ❌ Don't use grep/find
-grep -r "pattern" .
-find . -name "*.tsx"
-```
-
-### Logging Format
+### Logging
 
 ```typescript
-console.log("[FILENAME-FUNCTION] description and log");
+console.log("[FILENAME-FUNCTION] description");
 ```
 
-### Code Style
-
-- **No emojis** unless explicitly requested
-- **Arrow functions** for named components
-- **Server Components** by default
-- **Client Components** only when needed (interactivity)
-
-## Common Patterns
-
-### Database Connection
+### API Patterns
 
 ```typescript
 import { connectMongo } from "@/lib/mongoose";
 await connectMongo();
+
+// Success: { success: true, data: ... }
+// Error: { error: "message" }
 ```
 
 ### Date Handling
@@ -451,109 +381,106 @@ dayjs.extend(timezone);
 const date = dayjs.tz(dateString, "America/New_York");
 ```
 
-### API Error Handling
+## Finding Things
 
-```typescript
-try {
-  // operation
-  return Response.json({ success: true, data });
-} catch (error) {
-  console.error("[API-ROUTE] Error:", error);
-  return Response.json({ error: "Message" }, { status: 500 });
-}
+| Feature | Models | API | Pages | Components |
+|---------|--------|-----|-------|------------|
+| Events | `lib/models/Event.ts` | `/api/events/` | `app/events/` | `components/classes/` |
+| Customers | `lib/models/Customer.ts` | `/api/customer/` | `app/admin/dashboard/customers/` | `components/dashboard/customers/` |
+| Reservations | `lib/models/Reservations.ts` | `/api/reservations/` | `app/reservations/` | `components/reservations/` |
+| Private Events | `lib/models/PrivateEvent.ts` | `/api/private-events/` | `app/events/private-events/` | `components/dashboard/private-event-form/` |
+| Payments | - | `/api/payments/`, `/api/refunds/` | `app/payments/` | `components/payment/` |
+| Gift Cards | - | `/api/gift-cards/` | `app/gift-cards/` | `components/gift-cards/` |
+| Gallery | - | `/api/gallery/` | `app/gallery/` | `components/gallery/` |
+| CMS Content | - | `/api/page-content/`, `/api/hours/` | - | `components/dashboard/page-descriptions/` |
+
+## Authentication
+
+- **Provider**: Google OAuth
+- **Whitelist**: `crystaledgedev22@gmail.com`, `ashley@coastalcreationsstudio.com`
+- **Session**: JWT strategy
+- **Protected Routes**: `/admin/*`
+
+## Design System
+
+The application uses a custom design system with CSS variables and reusable UI components. **Always use these components and tokens for consistency.**
+
+### Design Tokens (app/globals.css)
+
+```css
+/* Colors */
+--color-primary: #0c4a6e;       /* Sky-900 - main brand */
+--color-primary-dark: #073a58;  /* Darker primary */
+--color-secondary: #0369a1;     /* Sky-700 */
+--color-accent: #fb923c;        /* Orange-400 - CTA buttons */
+--color-light: #f0f9ff;         /* Sky-50 - backgrounds */
+
+/* Semantic Colors */
+--color-success: #22c55e;
+--color-warning: #f59e0b;
+--color-error: #ef4444;
+
+/* Gradients */
+--gradient-primary: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+--gradient-accent: linear-gradient(135deg, var(--color-accent), #f97316);
+--gradient-hero: linear-gradient(180deg, #e0f2fe, #bae6fd, #7dd3fc);
+
+/* Shadows */
+--shadow-sm, --shadow-md, --shadow-lg, --shadow-xl
+--shadow-card: 0 4px 6px -1px rgba(12, 74, 110, 0.1);
+
+/* Border Radii */
+--radius-sm: 0.375rem;
+--radius-md: 0.5rem;
+--radius-lg: 0.75rem;
+--radius-xl: 1rem;
+--radius-2xl: 1.5rem;
+--radius-full: 9999px;
 ```
 
-## Finding Things Fast
+### UI Components (components/ui/)
 
-### Events/Calendar
+Import from the barrel export:
+```typescript
+import { Button, Input, Textarea, Select, Label, Card, Badge, PriceBadge } from "@/components/ui";
+```
 
-- **Models**: `lib/models/Event.ts`
-- **API**: `app/api/events/`, `app/api/event/[id]/`
-- **Types**: `lib/types/eventTypes.ts`, `types/interfaces.ts`
-- **Pages**: `app/events/adult-classes/`, `app/events/kid-classes/`, `app/events/camps/`, `app/events/live-artist/`, `app/events/events/`, `app/events/classes-workshops/`
-- **Calendar UI**: `components/calendar/`, `components/landing/Calendar.tsx`
-- **Event Details**: `app/calendar/[eventId]/`, `components/calendar/eventDetails/`
-- **Components**: `components/classes/` (EventCard, EventsContainer)
+| Component | Variants | Usage |
+|-----------|----------|-------|
+| **Button** | `primary`, `secondary`, `ghost`, `destructive`, `pill` | All buttons, CTAs |
+| **Input** | - | Text inputs with error state |
+| **Textarea** | - | Multiline inputs with error state |
+| **Select** | - | Dropdowns with custom styling |
+| **Label** | - | Form labels with required indicator |
+| **Card** | `standard`, `featured`, `event` | Content containers |
+| **Badge** | `available`, `fewSpots`, `soldOut`, `newClass`, `upcoming` | Status indicators |
+| **PriceBadge** | - | Price display with gradient background |
 
-### Bookings/Customers
+### PageHeader Component (components/classes/PageHeader.tsx)
 
-- **Models**: `lib/models/Customer.ts` (includes refund tracking)
-- **API**: `app/api/customer/`
-- **Types**: `types/interfaces.ts` (ICustomer)
-- **Admin**: `app/admin/dashboard/customers/`, `components/dashboard/customers/`
+Used on all event listing pages with centered card-style design:
 
-### Reservations
+```typescript
+import PageHeader from "@/components/classes/PageHeader";
 
-- **Models**: `lib/models/Reservations.ts` (dailyAvailability tracking)
-- **API**: `app/api/reservations/`, `app/api/reservations/[id]/`
-- **Types**: `lib/types/reservationTypes.ts`
-- **Pages**: `app/reservations/`, `app/reservations/[reservationId]/`, `app/reservations/confirmation/`
-- **Components**: `components/reservations/` (booking flow)
-- **Admin**: `app/admin/dashboard/reservations/`, `components/dashboard/reservation-form/`, `components/dashboard/reservations/`
+<PageHeader
+  title="Adult Workshops"
+  subtitle="Description text here..."
+  variant="adult" // adult | kid | events | camps | all
+  leftIcon={<FaPalette />}
+  rightIcon={<GiPaintBrush />}
+/>
+```
 
-### Private Events
+Each variant has specific SVG decorations from `/public/assets/svg/`.
 
-- **Models**: `lib/models/PrivateEvent.ts`
-- **API**: `app/api/private-events/`, `app/api/private-events/[id]/`
-- **Pages**: `app/events/private-events/`
-- **Components**: `components/classes/privateEvents/`
-- **Admin**: `app/admin/dashboard/private-offerings/`, `components/dashboard/private-event-form/`
+### Usage Guidelines
 
-### Admin Dashboard
-
-- **Route**: `app/admin/dashboard/`
-- **Components**: `components/dashboard/`
-- **Auth**: Protected by NextAuth (see `auth.ts`)
-- **Pages**: add-event, edit-event, add-reservation, edit-reservation, add-private-event, edit-private-event, customers, upload-images, page-descriptions, hours, error-logs
-
-### Payments & Refunds
-
-- **Components**: `components/payment/`
-- **API**: `app/api/payment-config/`, `app/api/refunds/`
-- **Error Tracking**: `app/api/payment-errors/`, `lib/models/PaymentError.ts`
-- **Pages**: `app/payments/`, `app/payment-success/`
-
-### Email
-
-- **API**: `app/api/send-confirmation/`, `app/api/contact/`, `app/api/subscribe/`
-- **Templates**: `components/email-templates/`
-- **Provider**: Resend
-
-### Gallery & Media
-
-- **API**: `app/api/gallery/`, `app/api/eventPictures/`, `app/api/privateEventPictures/`, `app/api/upload-image/`, `app/api/upload-private-image/`, `app/api/delete-image/`
-- **Page**: `app/gallery/`
-- **Components**: `components/gallery/`
-- **Admin**: `app/admin/dashboard/upload-images/`, `components/dashboard/upload-images/`
-
-### CMS Content
-
-- **Config**: `sanity/client.ts`
-- **API**: `app/api/page-content/`, `app/api/hours/`
-- **Types**: `types/pageContent.ts`, `types/hours.ts`
-- **Pages**: `app/[slug]/`, `app/blog/`
-- **Admin**: `app/admin/dashboard/page-descriptions/`, `app/admin/dashboard/hours/`
-
-## FORBIDDEN Practices
-
-- NEVER ignore TypeScript errors with `@ts-ignore`
-- NEVER use `JSX.Element` (use `ReactElement`)
-- NEVER store sensitive data in localStorage
-- NEVER use `dangerouslySetInnerHTML` without sanitization
-- NEVER exceed file/component size limits
-- NEVER prop drill beyond 2 levels
-- NEVER commit without passing quality checks
-- NEVER create documentation unless explicitly asked
-
-## Testing Requirements
-
-- **Minimum 80% coverage** - NO EXCEPTIONS
-- **Co-locate tests** in `__tests__/` folders
-- **React Testing Library** for component tests
-- **Test user behavior**, not implementation
-- **Mock external dependencies**
+1. **Always use UI components** instead of raw HTML elements for forms and buttons
+2. **Use CSS variables** for colors, shadows, and spacing
+3. **Use Tailwind classes** that reference CSS variables where possible
+4. **Maintain consistency** - check existing implementations before creating new patterns
 
 ---
 
-**Quick Start**: `npm run dev` → http://localhost:3000
-**Admin**: Login via Google OAuth (whitelisted emails only)
+**Quick Start**: `npm run dev` -> http://localhost:3000

@@ -18,11 +18,20 @@ export const validateReservationForm = (formData: ReservationFormState): Reserva
 
   // Pricing validation
   if (!formData.pricePerDayPerParticipant || formData.pricePerDayPerParticipant <= 0) {
-    errors.pricePerDayPerParticipant = "Price per day per participant must be greater than 0";
+    errors.pricePerDayPerParticipant = "Price must be greater than 0";
   }
 
-  if (!formData.maxParticipantsPerDay || formData.maxParticipantsPerDay <= 0) {
-    errors.maxParticipantsPerDay = "Max participants per day must be greater than 0";
+  // Capacity validation depends on time type
+  if (formData.timeType === "custom") {
+    // For custom time type, maxParticipantsPerDay is required
+    if (!formData.maxParticipantsPerDay || formData.maxParticipantsPerDay <= 0) {
+      errors.maxParticipantsPerDay = "Max participants per day must be greater than 0";
+    }
+  } else {
+    // For same time type (with time slots), maxParticipantsPerSlot is required
+    if (!formData.maxParticipantsPerSlot || formData.maxParticipantsPerSlot <= 0) {
+      errors.maxParticipantsPerSlot = "Capacity per time slot must be greater than 0";
+    }
   }
 
   // Date validation

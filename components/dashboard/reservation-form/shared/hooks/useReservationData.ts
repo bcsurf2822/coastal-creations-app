@@ -41,6 +41,10 @@ const transformReservationToFormState = (reservation: Reservation): ReservationF
     excludeDates: reservation.dates.excludeDates
       ? reservation.dates.excludeDates.map(date => dayjs(date).format("YYYY-MM-DD"))
       : [],
+    // Time slot configuration - always enabled for reservations
+    enableTimeSlots: true,
+    slotDurationMinutes: reservation.slotDurationMinutes || 60,
+    maxParticipantsPerSlot: reservation.maxParticipantsPerSlot || 1,
     hasOptions: Boolean(reservation.options && reservation.options.length > 0),
     optionCategories: reservation.options || [],
     isDiscountAvailable: Boolean(reservation.isDiscountAvailable),

@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
-import { type SanityDocument } from "next-sanity";
 import imageUrlBuilder from "@sanity/image-url";
 import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import { client } from "@/sanity/client";
 import { motion, AnimatePresence } from "motion/react";
+import { useGallery } from "@/hooks/queries";
+import type { PictureGalleryItem } from "@/types/interfaces";
 
 // Setup Sanity image URL builder
 const { projectId, dataset } = client.config();
@@ -16,35 +17,15 @@ const urlFor = (source: SanityImageSource) =>
     : null;
 
 export default function ImageGallery() {
-  const [images, setImages] = useState<SanityDocument[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedImage, setSelectedImage] = useState<SanityDocument | null>(
+  const [selectedImage, setSelectedImage] = useState<PictureGalleryItem | null>(
     null
   );
 
-  useEffect(() => {
-    const fetchGalleryImages = async () => {
-      try {
-        const response = await fetch("/api/gallery");
-        if (!response.ok) {
-          throw new Error("Failed to fetch gallery images");
-        }
-        const result = await response.json();
-        setImages(result.data || []);
-      } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("An unknown error occurred");
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchGalleryImages();
-  }, []);
+  const {
+    data: images = [],
+    isLoading: loading,
+    error,
+  } = useGallery();
 
   const getEnlargedImageUrl = (imageSource: SanityImageSource) => {
     return urlFor(imageSource)?.width(1200).quality(80).url() || null;
@@ -61,7 +42,7 @@ export default function ImageGallery() {
   if (error) {
     return (
       <div className="flex justify-center items-center min-h-[300px]">
-        <p className="text-red-500 font-bold">Error: {error}</p>
+        <p className="text-red-500 font-bold">Error: {error.message}</p>
       </div>
     );
   }

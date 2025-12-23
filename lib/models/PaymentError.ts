@@ -204,7 +204,6 @@ export interface IPaymentErrorDetail {
 
 // TypeScript interface for PaymentError document
 export interface IPaymentError extends Document {
-  _id: string;
   eventId?: string;
   eventTitle?: string;
   customerEmail?: string;

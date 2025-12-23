@@ -159,7 +159,7 @@ export default function EventContainer() {
 
           if (Array.isArray(eventsData)) {
             const transformedEvents: DashboardEvent[] = eventsData.map((event: IEvent) => ({
-              id: event._id,
+              id: event._id.toString(),
               name: event.eventName,
               description: event.description,
               eventType: event.eventType,

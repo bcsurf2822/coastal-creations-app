@@ -14,6 +14,7 @@ import {
 import ConditionalLayout from "@/components/layout/ConditionalLayout";
 import AnalyticsEvents from "@/components/AnalyticsEvents";
 import { GA_TRACKING_ID } from "@/lib/gtag";
+import { Providers } from "./providers";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -69,7 +70,9 @@ export default function RootLayout({
           <AnalyticsEvents />
         </Suspense>
         {/* <AuthProvider> */}
-        <ConditionalLayout>{children}</ConditionalLayout>
+        <Providers>
+          <ConditionalLayout>{children}</ConditionalLayout>
+        </Providers>
         {GA_TRACKING_ID && (
           <>
             <Script
