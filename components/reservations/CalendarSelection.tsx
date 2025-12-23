@@ -7,6 +7,7 @@ import { DayCard } from "./DayCard";
 import { BookingSummary } from "./BookingSummary";
 import { IReservation } from "@/lib/models/Reservations";
 import { EB_Garamond } from "next/font/google";
+import { FaQuestionCircle } from "react-icons/fa";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
@@ -270,11 +271,42 @@ export function CalendarSelection({
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <h1
-            className={`${ebGaramond.className} text-3xl md:text-4xl font-bold text-primary mb-3`}
-          >
-            {reservation.eventName}
-          </h1>
+          <div className="flex items-center justify-between mb-3">
+            <h1
+              className={`${ebGaramond.className} text-3xl md:text-4xl font-bold text-primary`}
+            >
+              {reservation.eventName}
+            </h1>
+            {/* Help Tooltip */}
+            <div className="relative group">
+              <button
+                type="button"
+                className="text-blue-500 hover:text-blue-700 transition-colors p-2"
+                aria-label="How to book"
+              >
+                <FaQuestionCircle size={24} />
+              </button>
+              <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-xl p-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <h3 className={`${ebGaramond.className} text-lg font-bold text-blue-900 mb-2`}>
+                  How to Book:
+                </h3>
+                <ol className={`${ebGaramond.className} text-sm text-gray-700 space-y-1.5 list-decimal list-inside`}>
+                  <li>Click on any available date to select it</li>
+                  {hasTimeSlots ? (
+                    <>
+                      <li>Select a time slot from the options</li>
+                      <li>Choose number of participants</li>
+                    </>
+                  ) : (
+                    <li>Choose participants from dropdown</li>
+                  )}
+                  <li>Select additional dates if needed</li>
+                  <li>Review in booking summary</li>
+                  <li>Click &quot;Continue to Checkout&quot;</li>
+                </ol>
+              </div>
+            </div>
+          </div>
           <p className={`${ebGaramond.className} text-gray-600 mb-4 text-base`}>
             {reservation.description}
           </p>
@@ -320,32 +352,6 @@ export function CalendarSelection({
             </div>
           </div>
 
-          {/* Booking Instructions */}
-          <div className="bg-blue-50  border-blue-500 p-4 rounded-r-lg">
-            <h2
-              className={`${ebGaramond.className} text-lg font-bold text-blue-900 mb-2`}
-            >
-              How to Book:
-            </h2>
-            <ol
-              className={`${ebGaramond.className} text-sm text-blue-800 space-y-1.5 list-decimal list-inside`}
-            >
-              <li>Click on any available date below to select it</li>
-              {hasTimeSlots ? (
-                <>
-                  <li>Select a time slot from the available options</li>
-                  <li>Choose the number of participants for your selected time</li>
-                </>
-              ) : (
-                <li>Choose the number of participants from the dropdown menu</li>
-              )}
-              <li>Select additional dates if needed</li>
-              <li>
-                Review your selections in the booking summary on the right
-              </li>
-              <li>Click &quot;Continue to Checkout&quot; when ready</li>
-            </ol>
-          </div>
         </div>
 
         {/* Calendar Navigation */}

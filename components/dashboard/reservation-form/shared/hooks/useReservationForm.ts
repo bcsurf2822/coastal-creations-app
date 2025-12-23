@@ -357,7 +357,7 @@ export const useReservationForm = ({
         if (onSuccess) {
           onSuccess(result.data?._id);
         } else {
-          router.push("/admin/dashboard");
+          router.push("/admin/dashboard/reservations");
         }
       } catch (error) {
         console.error(

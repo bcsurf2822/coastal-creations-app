@@ -5,7 +5,8 @@ import type { Reservation } from "@/lib/types/reservationTypes";
 
 interface ReservationsResponse {
   success: boolean;
-  reservations: Reservation[];
+  data: Reservation[];
+  total?: number;
 }
 
 interface UseReservationsOptions {
@@ -31,11 +32,11 @@ async function fetchReservations(options: UseReservationsOptions): Promise<Reser
 
   const result: ReservationsResponse = await response.json();
 
-  if (!result.success && !result.reservations) {
+  if (!result.success && !result.data) {
     throw new Error("API returned unsuccessful response");
   }
 
-  return result.reservations || [];
+  return result.data || [];
 }
 
 /**
