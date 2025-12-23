@@ -1,8 +1,9 @@
 "use client";
 
-import { ReactElement, useState, useEffect } from "react";
+import { ReactElement, useMemo } from "react";
 import ReservationCard from "./ReservationCard";
-import { IReservation } from "@/lib/models/Reservations";
+import { Reservation } from "@/lib/types/reservationTypes";
+import { useReservations } from "@/hooks/queries";
 
 interface ReservationListProps {
   baseUrl?: string;
@@ -11,48 +12,24 @@ interface ReservationListProps {
 export default function ReservationList({
   baseUrl = "/reservations",
 }: ReservationListProps): ReactElement {
-  const [reservations, setReservations] = useState<IReservation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: reservationsData = [],
+    isLoading: loading,
+    error,
+  } = useReservations();
 
-  useEffect(() => {
-    const fetchReservations = async (): Promise<void> => {
-      try {
-        setLoading(true);
-        const response = await fetch("/api/reservations");
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch reservations");
-        }
-
-        const data = await response.json();
-
-        if (data.success && Array.isArray(data.data)) {
-          const now = new Date();
-          const activeReservations = data.data.filter(
-            (reservation: IReservation) => {
-              const endDate = reservation.dates.endDate
-                ? new Date(reservation.dates.endDate)
-                : new Date(reservation.dates.startDate);
-              return endDate >= now;
-            }
-          );
-          setReservations(activeReservations);
-        } else {
-          setError("Invalid response format");
-        }
-      } catch (err) {
-        console.error("[ReservationList-fetchReservations] Error:", err);
-        setError(
-          err instanceof Error ? err.message : "Failed to load reservations"
-        );
-      } finally {
-        setLoading(false);
+  // Filter to active reservations only
+  const reservations = useMemo(() => {
+    const now = new Date();
+    return (reservationsData as Reservation[]).filter(
+      (reservation: Reservation) => {
+        const endDate = reservation.dates.endDate
+          ? new Date(reservation.dates.endDate)
+          : new Date(reservation.dates.startDate);
+        return endDate >= now;
       }
-    };
-
-    fetchReservations();
-  }, []);
+    );
+  }, [reservationsData]);
 
   if (loading) {
     return (
@@ -74,7 +51,7 @@ export default function ReservationList({
           <h3 className="text-red-700 font-bold text-xl mb-2">
             Error Loading Reservations
           </h3>
-          <p className="text-red-600">{error}</p>
+          <p className="text-red-600">{error.message}</p>
           <button
             onClick={() => window.location.reload()}
             className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"

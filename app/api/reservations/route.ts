@@ -18,13 +18,63 @@ interface CustomTime {
   endTime: string;
 }
 
+// Time slot type - only 1, 2, or 4 hours allowed
+type SlotDurationMinutes = 60 | 120 | 240;
+
+interface TimeSlot {
+  startTime: string;
+  endTime: string;
+  maxParticipants: number;
+  currentBookings: number;
+  isAvailable: boolean;
+}
+
+// Generate time slots based on operating hours and slot duration
+function generateTimeSlots(
+  operatingStartTime: string,
+  operatingEndTime: string,
+  slotDurationMinutes: SlotDurationMinutes,
+  maxParticipantsPerSlot: number
+): TimeSlot[] {
+  const slots: TimeSlot[] = [];
+
+  if (!operatingStartTime || !operatingEndTime) return slots;
+
+  let current = dayjs(`2000-01-01 ${operatingStartTime}`);
+  const end = dayjs(`2000-01-01 ${operatingEndTime}`);
+
+  // Generate slots until we can't fit another full slot
+  while (current.add(slotDurationMinutes, "minute").isSameOrBefore(end)) {
+    const slotEnd = current.add(slotDurationMinutes, "minute");
+    slots.push({
+      startTime: current.format("HH:mm"),
+      endTime: slotEnd.format("HH:mm"),
+      maxParticipants: maxParticipantsPerSlot,
+      currentBookings: 0,
+      isAvailable: true,
+    });
+    current = slotEnd;
+  }
+
+  return slots;
+}
+
+interface TimeSlotConfig {
+  enableTimeSlots: boolean;
+  slotDurationMinutes?: SlotDurationMinutes;
+  maxParticipantsPerSlot?: number;
+  operatingStartTime?: string;
+  operatingEndTime?: string;
+}
+
 function generateDailyAvailability(
   startDate: Date,
   endDate: Date,
   excludeDates: Date[] = [],
   maxParticipantsPerDay: number,
   timeType: "same" | "custom" = "same",
-  customTimes?: CustomTime[]
+  customTimes?: CustomTime[],
+  timeSlotConfig?: TimeSlotConfig
 ) {
   const dailyAvailability = [];
   const start = dayjs(startDate).tz(LOCAL_TIMEZONE);
@@ -41,6 +91,24 @@ function generateDailyAvailability(
     });
   }
 
+  // Generate time slots once if enabled (same slots for all days when timeType is "same")
+  let timeSlots: TimeSlot[] | undefined;
+  if (
+    timeSlotConfig?.enableTimeSlots &&
+    timeType === "same" &&
+    timeSlotConfig.slotDurationMinutes &&
+    timeSlotConfig.maxParticipantsPerSlot &&
+    timeSlotConfig.operatingStartTime &&
+    timeSlotConfig.operatingEndTime
+  ) {
+    timeSlots = generateTimeSlots(
+      timeSlotConfig.operatingStartTime,
+      timeSlotConfig.operatingEndTime,
+      timeSlotConfig.slotDurationMinutes,
+      timeSlotConfig.maxParticipantsPerSlot
+    );
+  }
+
   let currentDate = start;
   while (currentDate.isSameOrBefore(end, 'day')) {
     const dateStr = currentDate.format('YYYY-MM-DD');
@@ -53,6 +121,7 @@ function generateDailyAvailability(
         isAvailable: boolean;
         startTime?: string;
         endTime?: string;
+        timeSlots?: TimeSlot[];
       } = {
         date: currentDate.toDate(),
         maxParticipants: maxParticipantsPerDay,
@@ -67,6 +136,11 @@ function generateDailyAvailability(
           dayEntry.startTime = customTime.startTime;
           dayEntry.endTime = customTime.endTime;
         }
+      }
+
+      // Add time slots if enabled (create fresh copy for each day)
+      if (timeSlots && timeSlots.length > 0) {
+        dayEntry.timeSlots = timeSlots.map(slot => ({ ...slot }));
       }
 
       dailyAvailability.push(dayEntry);
@@ -119,7 +193,17 @@ export async function POST(request: Request) {
     const data = await request.json();
 
 
-    if (!data.maxParticipantsPerDay) {
+    // maxParticipantsPerDay is only required for custom time type
+    // For same time type (with time slots), we derive it from slot capacity
+    const timeType = data.timeType || "same";
+    let maxParticipantsPerDay = data.maxParticipantsPerDay;
+
+    if (!maxParticipantsPerDay && timeType === "same") {
+      // Default to slot capacity when time slots are enabled
+      maxParticipantsPerDay = data.maxParticipantsPerSlot || 1;
+    }
+
+    if (!maxParticipantsPerDay) {
       return NextResponse.json(
         { success: false, error: "maxParticipantsPerDay is required" },
         { status: 400 }
@@ -134,13 +218,24 @@ export async function POST(request: Request) {
       ? data.dates.excludeDates.map((d: string) => dayjs.tz(d, LOCAL_TIMEZONE).startOf("day").toDate())
       : [];
 
+    // Prepare time slot configuration - always enabled for reservations when timeType is "same"
+    const shouldEnableTimeSlots = timeType === "same";
+    const timeSlotConfig: TimeSlotConfig = {
+      enableTimeSlots: shouldEnableTimeSlots,
+      slotDurationMinutes: data.slotDurationMinutes || 60, // Default to 1 hour
+      maxParticipantsPerSlot: data.maxParticipantsPerSlot || 1,
+      operatingStartTime: data.time?.startTime,
+      operatingEndTime: data.time?.endTime,
+    };
+
     const dailyAvailability = generateDailyAvailability(
       startDate,
       endDate,
       excludeDates,
-      data.maxParticipantsPerDay,
-      data.timeType || "same",
-      data.customTimes
+      maxParticipantsPerDay,
+      timeType,
+      data.customTimes,
+      timeSlotConfig
     );
 
     const reservationData = {
@@ -153,8 +248,12 @@ export async function POST(request: Request) {
         endDate: data.dates.endDate ? endDate : undefined,
         excludeDates: excludeDates.length > 0 ? excludeDates : undefined,
       },
-      timeType: data.timeType || "same",
+      timeType,
       time: data.time,
+      // Time slot configuration - always enabled when timeType is "same"
+      enableTimeSlots: shouldEnableTimeSlots,
+      slotDurationMinutes: shouldEnableTimeSlots ? (data.slotDurationMinutes || 60) : undefined,
+      maxParticipantsPerSlot: shouldEnableTimeSlots ? (data.maxParticipantsPerSlot || 1) : undefined,
       dailyAvailability,
       options: data.options,
       image: data.image,

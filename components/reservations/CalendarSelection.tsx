@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useMemo, ReactElement } from "react";
+import { useState, useMemo, ReactElement, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { SelectedDate } from "./types";
+import { SelectedDate, TimeSlot } from "./types";
 import { DayCard } from "./DayCard";
 import { BookingSummary } from "./BookingSummary";
 import { IReservation } from "@/lib/models/Reservations";
 import { EB_Garamond } from "next/font/google";
+import { FaQuestionCircle } from "react-icons/fa";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
@@ -40,6 +41,9 @@ export function CalendarSelection({
     return new Date(startDate.getFullYear(), startDate.getMonth(), 1);
   });
 
+  // Check if time slots are enabled for this reservation
+  const hasTimeSlots = reservation.enableTimeSlots === true;
+
   // Create map of available dates from dailyAvailability
   const availableDatesMap = useMemo(() => {
     const map = new Map<
@@ -50,6 +54,7 @@ export function CalendarSelection({
         isAvailable: boolean;
         startTime?: string;
         endTime?: string;
+        timeSlots?: TimeSlot[];
       }
     >();
     reservation.dailyAvailability.forEach((day) => {
@@ -60,6 +65,7 @@ export function CalendarSelection({
         isAvailable: day.isAvailable,
         startTime: day.startTime,
         endTime: day.endTime,
+        timeSlots: day.timeSlots as TimeSlot[] | undefined,
       });
     });
     return map;
@@ -112,7 +118,7 @@ export function CalendarSelection({
       // Deselect
       setSelectedDates(selectedDates.filter((sd) => sd !== existing));
     } else {
-      // Select with default 1 participant
+      // Select with default 1 participant (no time slot initially if time slots are enabled)
       setSelectedDates([...selectedDates, { date, participants: 1 }]);
     }
   };
@@ -129,10 +135,48 @@ export function CalendarSelection({
     );
   };
 
+  // Handle time slot selection for a specific date
+  const handleTimeSlotSelect = useCallback(
+    (date: Date, slot: { startTime: string; endTime: string } | null): void => {
+      const dateKey = normalizeDateString(date);
+
+      setSelectedDates((prev) =>
+        prev.map((sd) => {
+          if (normalizeDateString(sd.date) !== dateKey) return sd;
+
+          if (slot) {
+            // Set the time slot
+            return {
+              ...sd,
+              timeSlot: { startTime: slot.startTime, endTime: slot.endTime },
+            };
+          } else {
+            // Clear the time slot - destructure and omit timeSlot
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { timeSlot: _removed, ...rest } = sd;
+            return rest as SelectedDate;
+          }
+        })
+      );
+    },
+    []
+  );
+
   const handleContinue = (): void => {
+    // Validate that all selected dates have time slots if time slots are enabled
+    if (hasTimeSlots) {
+      const missingTimeSlots = selectedDates.some((sd) => !sd.timeSlot);
+      if (missingTimeSlots) {
+        // Show error or prevent continuation
+        alert("Please select a time slot for each selected date.");
+        return;
+      }
+    }
+
     const selectedDatesData = selectedDates.map((sd) => ({
       date: sd.date.toISOString(),
       participants: sd.participants,
+      timeSlot: sd.timeSlot, // Include time slot if present
     }));
 
     const selectedDatesParam = encodeURIComponent(
@@ -227,11 +271,42 @@ export function CalendarSelection({
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <h1
-            className={`${ebGaramond.className} text-3xl md:text-4xl font-bold text-primary mb-3`}
-          >
-            {reservation.eventName}
-          </h1>
+          <div className="flex items-center justify-between mb-3">
+            <h1
+              className={`${ebGaramond.className} text-3xl md:text-4xl font-bold text-primary`}
+            >
+              {reservation.eventName}
+            </h1>
+            {/* Help Tooltip */}
+            <div className="relative group">
+              <button
+                type="button"
+                className="text-blue-500 hover:text-blue-700 transition-colors p-2"
+                aria-label="How to book"
+              >
+                <FaQuestionCircle size={24} />
+              </button>
+              <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-xl p-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <h3 className={`${ebGaramond.className} text-lg font-bold text-blue-900 mb-2`}>
+                  How to Book:
+                </h3>
+                <ol className={`${ebGaramond.className} text-sm text-gray-700 space-y-1.5 list-decimal list-inside`}>
+                  <li>Click on any available date to select it</li>
+                  {hasTimeSlots ? (
+                    <>
+                      <li>Select a time slot from the options</li>
+                      <li>Choose number of participants</li>
+                    </>
+                  ) : (
+                    <li>Choose participants from dropdown</li>
+                  )}
+                  <li>Select additional dates if needed</li>
+                  <li>Review in booking summary</li>
+                  <li>Click &quot;Continue to Checkout&quot;</li>
+                </ol>
+              </div>
+            </div>
+          </div>
           <p className={`${ebGaramond.className} text-gray-600 mb-4 text-base`}>
             {reservation.description}
           </p>
@@ -277,25 +352,6 @@ export function CalendarSelection({
             </div>
           </div>
 
-          {/* Booking Instructions */}
-          <div className="bg-blue-50  border-blue-500 p-4 rounded-r-lg">
-            <h2
-              className={`${ebGaramond.className} text-lg font-bold text-blue-900 mb-2`}
-            >
-              How to Book:
-            </h2>
-            <ol
-              className={`${ebGaramond.className} text-sm text-blue-800 space-y-1.5 list-decimal list-inside`}
-            >
-              <li>Click on any available date below to select it</li>
-              <li>Choose the number of participants from the dropdown menu</li>
-              <li>Select additional dates if needed</li>
-              <li>
-                Review your selections in the booking summary on the right
-              </li>
-              <li>Click &quot;Continue to Checkout&quot; when ready</li>
-            </ol>
-          </div>
         </div>
 
         {/* Calendar Navigation */}
@@ -367,10 +423,17 @@ export function CalendarSelection({
                     availability={availability}
                     startTime={availabilityData?.startTime}
                     endTime={availabilityData?.endTime}
+                    timeSlots={hasTimeSlots ? availabilityData?.timeSlots : undefined}
+                    selectedTimeSlot={selectedDate?.timeSlot}
                     onSelect={() => handleDateToggle(date)}
                     participantCount={selectedDate?.participants}
                     onParticipantChange={(count) =>
                       handleParticipantChange(date, count)
+                    }
+                    onTimeSlotSelect={
+                      hasTimeSlots
+                        ? (slot) => handleTimeSlotSelect(date, slot)
+                        : undefined
                     }
                   />
                 );

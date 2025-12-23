@@ -2,7 +2,7 @@
 
 import React from "react";
 import ImageGallery from "@/components/gallery/ImageGallery";
-import { usePageContent } from "@/hooks/usePageContent";
+import { usePageContent } from "@/hooks/queries";
 import { DEFAULT_TEXT } from "@/lib/constants/defaultPageContent";
 
 export default function GalleryPage() {

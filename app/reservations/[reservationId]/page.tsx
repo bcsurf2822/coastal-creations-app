@@ -25,6 +25,15 @@ function serializeDate(value: unknown): string | undefined {
   return undefined;
 }
 
+// Time slot type for serialization
+interface TimeSlotData {
+  startTime: string;
+  endTime: string;
+  maxParticipants: number;
+  currentBookings: number;
+  isAvailable: boolean;
+}
+
 // Serialize MongoDB document to plain object for Client Components
 function serializeReservation(doc: Record<string, unknown>): Record<string, unknown> {
   const dates = doc.dates as { startDate?: Date | string; endDate?: Date | string; excludeDates?: (Date | string)[] } | undefined;
@@ -36,6 +45,7 @@ function serializeReservation(doc: Record<string, unknown>): Record<string, unkn
     isAvailable: boolean;
     startTime?: string;
     endTime?: string;
+    timeSlots?: TimeSlotData[];
   }> | undefined;
 
   return {
@@ -54,6 +64,10 @@ function serializeReservation(doc: Record<string, unknown>): Record<string, unkn
       startTime: time?.startTime,
       endTime: time?.endTime,
     },
+    // Time slot configuration
+    enableTimeSlots: doc.enableTimeSlots,
+    slotDurationMinutes: doc.slotDurationMinutes,
+    maxParticipantsPerSlot: doc.maxParticipantsPerSlot,
     dailyAvailability: dailyAvailability?.map((day) => ({
       date: serializeDate(day.date),
       maxParticipants: day.maxParticipants,
@@ -61,6 +75,14 @@ function serializeReservation(doc: Record<string, unknown>): Record<string, unkn
       isAvailable: day.isAvailable,
       startTime: day.startTime,
       endTime: day.endTime,
+      // Include time slots data
+      timeSlots: day.timeSlots?.map((slot) => ({
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        maxParticipants: slot.maxParticipants,
+        currentBookings: slot.currentBookings || 0,
+        isAvailable: slot.isAvailable !== false,
+      })),
     })),
     options: doc.options,
     image: doc.image,

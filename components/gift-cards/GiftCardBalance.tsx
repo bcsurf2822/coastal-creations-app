@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, ReactElement } from "react";
+import { Input, Label, Button, Card } from "@/components/ui";
 
 interface BalanceResult {
   balance: number;
@@ -66,93 +67,85 @@ export function GiftCardBalance(): ReactElement {
   const getStatusColor = (status: string): string => {
     switch (status) {
       case "ACTIVE":
-        return "text-green-600 bg-green-100";
+        return "text-[var(--color-success-text)] bg-[var(--color-success-light)]";
       case "PENDING":
-        return "text-yellow-600 bg-yellow-100";
+        return "text-[var(--color-warning-text)] bg-[var(--color-warning-light)]";
       case "DEACTIVATED":
       case "BLOCKED":
-        return "text-red-600 bg-red-100";
+        return "text-[var(--color-error-text)] bg-[var(--color-error-light)]";
       default:
-        return "text-gray-600 bg-gray-100";
+        return "text-[var(--color-text-muted)] bg-[var(--color-border-lighter)]";
     }
   };
 
   return (
-    <div className="max-w-md mx-auto bg-white rounded-2xl shadow-lg p-8">
-      <h2 className="text-2xl font-bold text-gray-800 mb-2">Check Gift Card Balance</h2>
-      <p className="text-gray-600 mb-6">
+    <Card variant="featured" className="max-w-md mx-auto shadow-lg p-8">
+      <h2 className="text-2xl font-bold text-[var(--color-text-primary)] mb-2">Check Gift Card Balance</h2>
+      <p className="text-[var(--color-text-muted)] mb-6">
         Enter your gift card number below to check your remaining balance.
       </p>
 
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Gift Card Number
-        </label>
-        <input
+        <Label htmlFor="gan">Gift Card Number</Label>
+        <Input
           type="text"
+          id="gan"
           value={gan}
           onChange={handleGanChange}
           placeholder="XXXX-XXXX-XXXX-XXXX"
           maxLength={19}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent font-mono text-lg text-center tracking-wider"
+          className="font-mono text-lg text-center tracking-wider"
         />
       </div>
 
-      <button
+      <Button
         onClick={handleCheckBalance}
         disabled={gan.replace(/-/g, "").length !== 16 || loading}
-        className="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        variant="primary"
+        size="lg"
+        isLoading={loading}
+        className="w-full"
       >
-        {loading ? (
-          <span className="flex items-center justify-center">
-            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Checking...
-          </span>
-        ) : (
-          "Check Balance"
-        )}
-      </button>
+        {loading ? "Checking..." : "Check Balance"}
+      </Button>
 
       {error && (
-        <div className="mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        <div className="mt-4 bg-[var(--color-error-light)] border border-[var(--color-error)] text-[var(--color-error-text)] px-4 py-3 rounded-[var(--radius-default)]">
           {error}
         </div>
       )}
 
       {result && (
-        <div className="mt-6 bg-gray-50 rounded-lg p-6 text-center">
+        <div className="mt-6 bg-[var(--color-border-lighter)] rounded-[var(--radius-default)] p-6 text-center">
           <div className="mb-3">
             <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(result.status)}`}>
               {result.status}
             </span>
           </div>
-          <p className="text-sm text-gray-500 mb-1">Current Balance</p>
-          <p className="text-4xl font-bold text-gray-800">{result.formattedBalance}</p>
+          <p className="text-sm text-[var(--color-text-muted)] mb-1">Current Balance</p>
+          <p className="text-4xl font-bold text-[var(--color-text-primary)]">{result.formattedBalance}</p>
           {result.status === "ACTIVE" && result.balance > 0 && (
-            <p className="mt-4 text-sm text-gray-600">
+            <p className="mt-4 text-sm text-[var(--color-text-muted)]">
               Ready to use at checkout!
             </p>
           )}
           {result.status === "ACTIVE" && result.balance === 0 && (
-            <p className="mt-4 text-sm text-gray-500">
+            <p className="mt-4 text-sm text-[var(--color-text-subtle)]">
               This gift card has been fully redeemed.
             </p>
           )}
           {result.status !== "ACTIVE" && (
-            <p className="mt-4 text-sm text-red-600">
+            <p className="mt-4 text-sm text-[var(--color-error-text)]">
               This gift card cannot be used. Please contact us for assistance.
             </p>
           )}
         </div>
       )}
 
-      <p className="mt-6 text-xs text-gray-500 text-center">
+      <p className="mt-6 text-xs text-[var(--color-text-subtle)] text-center">
         Gift cards do not expire. The balance can be used across multiple purchases.
       </p>
-    </div>
+    </Card>
   );
 }
 

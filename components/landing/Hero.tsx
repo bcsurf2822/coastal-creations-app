@@ -1,15 +1,14 @@
 "use client";
 
-// import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
-// import { Abril_Fatface } from "next/font/google";
 import WaveText from "./WaveText";
 import SeaCreatures from "./SeaCreatures";
 import { createEventSlug } from "@/lib/utils/slugify";
-import { usePageContent } from "@/hooks/usePageContent";
+import { usePageContent } from "@/hooks/queries";
 import { DEFAULT_TEXT } from "@/lib/constants/defaultPageContent";
+import { Button } from "@/components/ui";
 
 interface CalendarEvent {
   _id: string;
@@ -183,7 +182,10 @@ export default function Hero() {
             <Link
               href={
                 upcomingArtistEvent
-                  ? `/events/live-artist/${createEventSlug(upcomingArtistEvent.eventName, upcomingArtistEvent._id)}`
+                  ? `/events/live-artist/${createEventSlug(
+                      upcomingArtistEvent.eventName,
+                      upcomingArtistEvent._id
+                    )}`
                   : "/events/events"
               }
               className="inline-block bg-white/20 hover:bg-white/30 backdrop-blur-sm px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 hover:scale-105 border border-white/30"
@@ -210,25 +212,34 @@ export default function Hero() {
           </div>
 
           <div className="flex flex-wrap justify-center gap-4">
-            <Link
-              href="/events/classes-workshops"
-              className="bg-white hover:bg-primary hover:text-white hover:border-primary border-2 border-primary/40 text-primary font-semibold px-8 py-3 rounded-full transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg text-base tracking-wide"
-            >
-              {content?.homepage?.hero?.ctaButton1 ||
-                DEFAULT_TEXT.homepage.hero.ctaButton1}
+            <Link href="/events/classes-workshops">
+              <Button
+                variant="pill"
+                size="lg"
+                className="shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer"
+              >
+                {content?.homepage?.hero?.ctaButton1 ||
+                  DEFAULT_TEXT.homepage.hero.ctaButton1}
+              </Button>
             </Link>
-            <Link
-              href="/about"
-              className="bg-white hover:bg-primary hover:text-white hover:border-primary border-2 border-primary/40 text-primary font-semibold px-8 py-3 rounded-full transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg text-base tracking-wide"
-            >
-              {content?.homepage?.hero?.ctaButton2 ||
-                DEFAULT_TEXT.homepage.hero.ctaButton2}
+            <Link href="/about">
+              <Button
+                variant="pill"
+                size="lg"
+                className="shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer"
+              >
+                {content?.homepage?.hero?.ctaButton2 ||
+                  DEFAULT_TEXT.homepage.hero.ctaButton2}
+              </Button>
             </Link>
-            <Link
-              href="/gift-cards"
-              className="bg-white hover:bg-primary hover:text-white hover:border-primary border-2 border-primary/40 text-primary font-semibold px-8 py-3 rounded-full transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg text-base tracking-wide"
-            >
-              Gift Cards
+            <Link href="/gift-cards">
+              <Button
+                variant="pill"
+                size="lg"
+                className="shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer"
+              >
+                Gift Cards
+              </Button>
             </Link>
           </div>
         </div>

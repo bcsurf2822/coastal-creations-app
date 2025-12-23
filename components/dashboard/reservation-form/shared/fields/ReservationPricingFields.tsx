@@ -19,14 +19,18 @@ const ReservationPricingFields = ({
   actions,
   errors,
 }: ReservationPricingFieldsProps): ReactElement => {
+  // Time slots are always enabled for reservations when timeType is "same"
+  // so we only show maxParticipantsPerDay for "custom" timeType
+  const showDailyCapacity = formData.timeType === "custom";
+
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium text-gray-900">Pricing & Capacity</h3>
+      <h3 className="text-lg font-medium text-gray-900">Pricing</h3>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className={showDailyCapacity ? "grid grid-cols-1 md:grid-cols-2 gap-4" : ""}>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Price Per Day Per Participant{" "}
+            Price Per Participant Per Booking{" "}
             <span className="text-red-500">*</span>
           </label>
           <div className="relative">
@@ -53,6 +57,9 @@ const ReservationPricingFields = ({
               placeholder="0.00"
             />
           </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Amount charged per person per time slot booked
+          </p>
           {errors.pricePerDayPerParticipant && (
             <p className="text-red-600 text-sm mt-1">
               {errors.pricePerDayPerParticipant}
@@ -60,36 +67,39 @@ const ReservationPricingFields = ({
           )}
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Max Participants Per Day <span className="text-red-500">*</span>
-          </label>
-          <select
-            value={formData.maxParticipantsPerDay?.toString() || ""}
-            onChange={(e) =>
-              actions.handleInputChange(
-                "maxParticipantsPerDay",
-                e.target.value ? Number(e.target.value) : 0
-              )
-            }
-            autoComplete="new-password"
-            data-lpignore="true"
-            data-form-type="other"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Select daily capacity</option>
-            {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
-              <option key={num} value={num.toString()}>
-                {num} participant{num > 1 ? "s" : ""} per day
-              </option>
-            ))}
-          </select>
-          {errors.maxParticipantsPerDay && (
-            <p className="text-red-600 text-sm mt-1">
-              {errors.maxParticipantsPerDay}
-            </p>
-          )}
-        </div>
+        {/* Only show daily capacity for custom time mode */}
+        {showDailyCapacity && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Max Participants Per Day <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={formData.maxParticipantsPerDay?.toString() || ""}
+              onChange={(e) =>
+                actions.handleInputChange(
+                  "maxParticipantsPerDay",
+                  e.target.value ? Number(e.target.value) : 0
+                )
+              }
+              autoComplete="new-password"
+              data-lpignore="true"
+              data-form-type="other"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Select daily capacity</option>
+              {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
+                <option key={num} value={num.toString()}>
+                  {num} participant{num > 1 ? "s" : ""} per day
+                </option>
+              ))}
+            </select>
+            {errors.maxParticipantsPerDay && (
+              <p className="text-red-600 text-sm mt-1">
+                {errors.maxParticipantsPerDay}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
@@ -113,8 +123,12 @@ const ReservationPricingFields = ({
             </h3>
             <div className="mt-2 text-sm text-blue-700">
               <p>
-                Customers will pay the daily rate multiplied by the number of
-                days they select.
+                Customers pay this rate for each time slot they book.
+                {!showDailyCapacity && (
+                  <span className="block mt-1">
+                    Set the capacity per time slot in the Time Slot Configuration section below.
+                  </span>
+                )}
               </p>
             </div>
           </div>

@@ -8,6 +8,7 @@ import {
 import { useReservationForm } from "./shared/hooks/useReservationForm";
 import ReservationBasicFields from "./shared/fields/ReservationBasicFields";
 import ReservationDateTimeFields from "./shared/fields/ReservationDateTimeFields";
+import ReservationTimeSlotFields from "./shared/fields/ReservationTimeSlotFields";
 import ReservationPricingFields from "./shared/fields/ReservationPricingFields";
 // import ReservationImageUpload from "./shared/fields/ReservationImageUpload";
 import ReservationOptionsFields from "./shared/fields/ReservationOptionsFields";
@@ -53,6 +54,12 @@ const ReservationFormBase = ({
           />
 
           <ReservationDateTimeFields
+            formData={formData}
+            actions={actions}
+            errors={errors}
+          />
+
+          <ReservationTimeSlotFields
             formData={formData}
             actions={actions}
             errors={errors}

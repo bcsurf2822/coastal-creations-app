@@ -1,5 +1,6 @@
 import { ReactElement } from "react";
 import { PrivateEventFieldsProps } from "../types/privateEventForm.types";
+import { Input, Textarea, Label } from "@/components/ui";
 
 const PrivateEventBasicFields = ({
   formData,
@@ -8,39 +9,36 @@ const PrivateEventBasicFields = ({
 }: PrivateEventFieldsProps): ReactElement => {
   return (
     <div className="space-y-4">
-
       <div className="grid grid-cols-1 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Event Title <span className="text-red-500">*</span>
-          </label>
-          <input
+          <Label htmlFor="title" required>Event Title</Label>
+          <Input
             type="text"
+            id="title"
             value={formData.title}
             onChange={(e) => actions.handleInputChange("title", e.target.value)}
             autoComplete="new-password"
             autoCapitalize="none"
             autoCorrect="off"
-            spellCheck="false"
+            spellCheck={false}
             data-lpignore="true"
             data-form-type="other"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter private event title"
             maxLength={100}
+            error={!!errors.title}
           />
           {errors.title && (
-            <p className="text-red-600 text-sm mt-1">{errors.title}</p>
+            <p className="text-[var(--color-error)] text-sm mt-1">{errors.title}</p>
           )}
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-[var(--color-text-subtle)] mt-1">
             {formData.title.length}/100 characters
           </p>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Description <span className="text-red-500">*</span>
-          </label>
-          <textarea
+          <Label htmlFor="description" required>Description</Label>
+          <Textarea
+            id="description"
             value={formData.description}
             onChange={(e) =>
               actions.handleInputChange("description", e.target.value)
@@ -48,18 +46,18 @@ const PrivateEventBasicFields = ({
             autoComplete="new-password"
             autoCapitalize="none"
             autoCorrect="off"
-            spellCheck="false"
+            spellCheck={false}
             data-lpignore="true"
             data-form-type="other"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Private event description"
             rows={4}
             maxLength={500}
+            error={!!errors.description}
           />
           {errors.description && (
-            <p className="text-red-600 text-sm mt-1">{errors.description}</p>
+            <p className="text-[var(--color-error)] text-sm mt-1">{errors.description}</p>
           )}
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-[var(--color-text-subtle)] mt-1">
             {formData.description.length}/500 characters
           </p>
         </div>

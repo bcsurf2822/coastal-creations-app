@@ -24,6 +24,10 @@ const getInitialFormState = (): ReservationFormState => ({
   endTime: null,
   customTimes: [],
   excludeDates: [],
+  // Time slot configuration defaults - always enabled for reservations
+  enableTimeSlots: true,
+  slotDurationMinutes: 60, // Default to 1 hour
+  maxParticipantsPerSlot: 1,
   hasOptions: false,
   optionCategories: [],
   isDiscountAvailable: false,
@@ -292,6 +296,12 @@ export const useReservationForm = ({
               endTime: ct.endTime?.format("HH:mm") || undefined,
             }))
           : undefined,
+      // Time slot configuration - always enabled for reservations when timeType is "same"
+      enableTimeSlots: formData.timeType === "same",
+      slotDurationMinutes:
+        formData.timeType === "same" ? formData.slotDurationMinutes : undefined,
+      maxParticipantsPerSlot:
+        formData.timeType === "same" ? formData.maxParticipantsPerSlot : undefined,
       options:
         formData.hasOptions && formData.optionCategories.length > 0
           ? formData.optionCategories
@@ -347,7 +357,7 @@ export const useReservationForm = ({
         if (onSuccess) {
           onSuccess(result.data?._id);
         } else {
-          router.push("/admin/dashboard");
+          router.push("/admin/dashboard/reservations");
         }
       } catch (error) {
         console.error(

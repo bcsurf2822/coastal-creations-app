@@ -2,6 +2,7 @@
 
 import { ReactElement } from "react";
 import { DayCardProps } from "./types";
+import { TimeSlotPicker } from "./TimeSlotPicker";
 import { EB_Garamond } from "next/font/google";
 
 const ebGaramond = EB_Garamond({
@@ -18,9 +19,12 @@ export function DayCard({
   availability,
   startTime,
   endTime,
+  timeSlots,
+  selectedTimeSlot,
   onSelect,
   participantCount = 0,
   onParticipantChange,
+  onTimeSlotSelect,
 }: DayCardProps): ReactElement {
   const formatDay = (d: Date): string =>
     d.toLocaleDateString("en-US", { weekday: "long" });
@@ -58,20 +62,24 @@ export function DayCard({
     e.stopPropagation();
   };
 
+  // Determine if we need extra height for time slots
+  const hasTimeSlotsToShow = isSelected && timeSlots && timeSlots.length > 0;
+  const hasTimeSlots = timeSlots && timeSlots.length > 0;
+
   return (
-    <button
-      onClick={onSelect}
-      disabled={isDisabled || isExcluded || isSoldOut}
+    <div
+      onClick={!isDisabled && !isExcluded && !isSoldOut ? onSelect : undefined}
       className={`
-        min-w-[240px] max-w-[240px] h-[380px]
-        border-2 rounded-lg flex flex-col
-        transition-all duration-300 overflow-hidden
+        min-w-[320px] max-w-[320px]
+        ${hasTimeSlotsToShow ? "min-h-[580px]" : hasTimeSlots ? "min-h-[280px]" : "min-h-[320px]"}
+        border-2 rounded-xl flex flex-col
+        transition-all duration-300
         ${isToday ? "bg-blue-300" : "bg-gray-100"}
-        ${isSelected ? "ring-4 ring-blue-300 border-blue-300" : "border-gray-200"}
+        ${isSelected ? "ring-4 ring-blue-400 border-blue-400 shadow-lg" : "border-gray-200"}
         ${
           isDisabled || isExcluded || isSoldOut
             ? "opacity-50 cursor-not-allowed"
-            : "hover:shadow-lg hover:border-blue-300 hover:scale-[1.02] cursor-pointer"
+            : "hover:shadow-xl hover:border-blue-300 hover:scale-[1.02] cursor-pointer"
         }
       `}
     >
@@ -105,19 +113,41 @@ export function DayCard({
       </div>
 
       {/* Body */}
-      <div className="p-5 bg-white flex-1 flex flex-col justify-between">
+      <div className="p-4 bg-white flex-1 flex flex-col">
         <div>
-          <p
-            className={`${ebGaramond.className} text-sm text-gray-600 font-medium`}
-          >
-            Available Spots:
-          </p>
-          <p className={`${ebGaramond.className} text-xl font-bold mt-1`}>
-            {availableSpots} / {availability.max}
-          </p>
+          {/* Show time slot count when time slots are available but not selected */}
+          {hasTimeSlots && !isSelected && (
+            <>
+              <p
+                className={`${ebGaramond.className} text-sm text-gray-600 font-medium`}
+              >
+                Available Time Slots:
+              </p>
+              <p className={`${ebGaramond.className} text-xl font-bold mt-1`}>
+                {timeSlots.filter(s => s.isAvailable && s.maxParticipants - s.currentBookings > 0).length} of {timeSlots.length}
+              </p>
+              <p className={`${ebGaramond.className} text-xs text-gray-500 mt-1`}>
+                Click to select a time
+              </p>
+            </>
+          )}
 
-          {/* Display custom time if available */}
-          {startTime && (
+          {/* Show regular availability when no time slots */}
+          {!hasTimeSlots && (
+            <>
+              <p
+                className={`${ebGaramond.className} text-sm text-gray-600 font-medium`}
+              >
+                Available Spots:
+              </p>
+              <p className={`${ebGaramond.className} text-xl font-bold mt-1`}>
+                {availableSpots} / {availability.max}
+              </p>
+            </>
+          )}
+
+          {/* Display custom time if available (for custom time type without slots) */}
+          {startTime && !hasTimeSlots && (
             <div className="mt-3 pt-3 border-t border-gray-200">
               <p
                 className={`${ebGaramond.className} text-sm text-gray-600 font-medium`}
@@ -131,7 +161,7 @@ export function DayCard({
             </div>
           )}
 
-          {isSoldOut && (
+          {isSoldOut && !hasTimeSlots && (
             <p
               className={`${ebGaramond.className} text-red-500 font-bold mt-2`}
             >
@@ -147,8 +177,19 @@ export function DayCard({
           )}
         </div>
 
-        {/* Participant select if selected */}
-        {isSelected && onParticipantChange && !isSoldOut && (
+        {/* Time Slot Picker (when time slots are enabled) */}
+        {isSelected && timeSlots && timeSlots.length > 0 && onTimeSlotSelect && onParticipantChange && (
+          <TimeSlotPicker
+            timeSlots={timeSlots}
+            selectedSlot={selectedTimeSlot}
+            onSlotSelect={onTimeSlotSelect}
+            participantCount={participantCount}
+            onParticipantChange={onParticipantChange}
+          />
+        )}
+
+        {/* Regular Participant select (when time slots are NOT enabled) */}
+        {isSelected && onParticipantChange && !isSoldOut && (!timeSlots || timeSlots.length === 0) && (
           <div className="mt-4">
             <label
               className={`${ebGaramond.className} block text-sm font-bold mb-2 text-gray-700`}
@@ -177,6 +218,6 @@ export function DayCard({
           </div>
         )}
       </div>
-    </button>
+    </div>
   );
 }

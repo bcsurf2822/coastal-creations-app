@@ -1,3 +1,8 @@
+/**
+ * @deprecated Use usePageContent from @/hooks/queries instead.
+ * This hook uses manual caching and will be removed in a future version.
+ * The new React Query-based hook provides automatic caching, deduplication, and better DX.
+ */
 import { useState, useEffect } from "react";
 import type { PageContent } from "@/types/pageContent";
 

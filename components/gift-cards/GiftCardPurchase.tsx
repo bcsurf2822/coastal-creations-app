@@ -606,7 +606,7 @@ export function GiftCardPurchase(): ReactElement {
                     );
                     return;
                   }
-                  if (token.token) {
+                  if (token.status === "OK" && token.token) {
                     await handlePayment(token.token);
                   } else {
                     setError("Failed to process card. Please try again.");

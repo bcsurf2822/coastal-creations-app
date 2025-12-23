@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactElement, useState, useEffect } from "react";
+import { ReactElement, useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import imageUrlBuilder from "@sanity/image-url";
@@ -15,6 +15,8 @@ import {
   RiUserLine,
 } from "react-icons/ri";
 import AddButton from "@/components/dashboard/shared/AddButton";
+import { usePrivateEvents } from "@/hooks/queries";
+import { useDeletePrivateEvent } from "@/hooks/mutations";
 
 const { projectId, dataset } = client.config();
 const urlFor = (source: SanityImageSource) =>
@@ -22,115 +24,53 @@ const urlFor = (source: SanityImageSource) =>
     ? imageUrlBuilder({ projectId, dataset }).image(source)
     : null;
 
-interface PrivateEventApiData {
-  _id: string;
-  title: string;
-  description?: string;
-  price: number;
-  image?: string;
-  options?: Array<{
-    categoryName: string;
-    categoryDescription?: string;
-    choices: Array<{
-      name: string;
-      price?: number;
-    }>;
-  }>;
-  isDepositRequired?: boolean;
-  depositAmount?: number;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
 const PrivateOfferings = (): ReactElement => {
-  const [privateEvents, setPrivateEvents] = useState<DashboardPrivateEvent[]>(
-    []
-  );
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [deletingEventIds, setDeletingEventIds] = useState<Set<string>>(
-    new Set()
-  );
 
-  useEffect(() => {
-    const fetchPrivateEvents = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch("/api/private-events", {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
+  // React Query hooks
+  const {
+    data: privateEventsData = [],
+    isLoading,
+    error,
+  } = usePrivateEvents();
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch private events");
-        }
+  const deletePrivateEventMutation = useDeletePrivateEvent();
 
-        const result = await response.json();
-        const privateEventsData = result.privateEvents || result.data || result;
+  // Transform API data to DashboardPrivateEvent format
+  const privateEvents: DashboardPrivateEvent[] = useMemo(() => {
+    return privateEventsData.map((event) => ({
+      id: event._id,
+      title: event.title,
+      description: event.description,
+      eventType: "private-event" as const,
+      price: event.price,
+      image: event.image,
+      options: event.options,
+      isDepositRequired: event.isDepositRequired,
+      depositAmount: event.depositAmount,
+      dates: event.createdAt ? [new Date(event.createdAt)] : [],
+    }));
+  }, [privateEventsData]);
 
-        if (Array.isArray(privateEventsData)) {
-          const transformedEvents: DashboardPrivateEvent[] =
-            privateEventsData.map((event: PrivateEventApiData) => ({
-              id: event._id,
-              title: event.title,
-              description: event.description,
-              eventType: "private-event" as const,
-              price: event.price,
-              image: event.image,
-              options: event.options,
-              isDepositRequired: event.isDepositRequired,
-              depositAmount: event.depositAmount,
-              dates: event.createdAt ? [new Date(event.createdAt)] : [],
-            }));
-          setPrivateEvents(transformedEvents);
-        }
-      } catch (error) {
-        console.error(
-          "[PRIVATE-OFFERINGS-fetchPrivateEvents] Error fetching private events:",
-          error
-        );
-        setError(typeof error === "string" ? error : (error as Error).message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchPrivateEvents();
-  }, []);
-
-  const handleDeletePrivateEvent = async (eventId: string) => {
+  const handleDeletePrivateEvent = (eventId: string) => {
     if (
       !confirm("Are you sure you want to delete this private event offering?")
     ) {
       return;
     }
 
-    setDeletingEventIds((prev) => new Set(prev).add(eventId));
+    deletePrivateEventMutation.mutate(eventId, {
+      onError: () => {
+        alert("Failed to delete private event. Please try again.");
+      },
+    });
+  };
 
-    try {
-      const response = await fetch(`/api/private-events?id=${eventId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete private event");
-      }
-
-      setPrivateEvents((prev) => prev.filter((event) => event.id !== eventId));
-    } catch (error) {
-      console.error(
-        "[PRIVATE-OFFERINGS-handleDeletePrivateEvent] Error deleting private event:",
-        error
-      );
-      alert("Failed to delete private event. Please try again.");
-    } finally {
-      setDeletingEventIds((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(eventId);
-        return newSet;
-      });
-    }
+  const isDeletingEvent = (eventId: string): boolean => {
+    return (
+      deletePrivateEventMutation.isPending &&
+      deletePrivateEventMutation.variables === eventId
+    );
   };
 
   const filteredEvents = privateEvents.filter(
@@ -180,7 +120,7 @@ const PrivateOfferings = (): ReactElement => {
               </div>
             ) : error ? (
               <div className="text-center py-10">
-                <p className="text-red-500 font-medium">{error}</p>
+                <p className="text-red-500 font-medium">{error.message}</p>
                 <button
                   className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition-colors"
                   onClick={() => window.location.reload()}
@@ -216,12 +156,12 @@ const PrivateOfferings = (): ReactElement => {
                   <div
                     key={event.id}
                     className={`bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all ${
-                      deletingEventIds.has(event.id)
+                      isDeletingEvent(event.id)
                         ? "opacity-50 pointer-events-none relative"
                         : ""
                     }`}
                   >
-                    {deletingEventIds.has(event.id) && (
+                    {isDeletingEvent(event.id) && (
                       <div className="absolute inset-0 bg-white/75 rounded-lg flex items-center justify-center z-10">
                         <div className="flex items-center space-x-2 text-red-600">
                           <div className="w-5 h-5 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin"></div>
@@ -354,15 +294,15 @@ const PrivateOfferings = (): ReactElement => {
 
                       <button
                         onClick={() => handleDeletePrivateEvent(event.id)}
-                        disabled={deletingEventIds.has(event.id)}
+                        disabled={isDeletingEvent(event.id)}
                         className={`inline-flex items-center px-3 py-1.5 text-sm rounded-md transition-colors ${
-                          deletingEventIds.has(event.id)
+                          isDeletingEvent(event.id)
                             ? "text-gray-400 cursor-not-allowed"
                             : "text-gray-600 hover:text-red-600 hover:bg-red-50 cursor-pointer"
                         }`}
                         title="Delete private event"
                       >
-                        {deletingEventIds.has(event.id) ? (
+                        {isDeletingEvent(event.id) ? (
                           <div className="w-4 h-4 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin mr-1"></div>
                         ) : (
                           <RiDeleteBinLine className="w-4 h-4 mr-1" />

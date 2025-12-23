@@ -51,24 +51,6 @@ export default function Sidebar() {
       activeIcon: <RiBookletFill className="w-5 h-5" />,
     },
     {
-      path: "/admin/dashboard/add-event",
-      label: "Add Event",
-      icon: <RiCalendarEventLine className="w-5 h-5" />,
-      activeIcon: <RiCalendarEventFill className="w-5 h-5" />,
-    },
-    {
-      path: "/admin/dashboard/add-private-event",
-      label: "Add Private Event",
-      icon: <RiCalendarEventLine className="w-5 h-5" />,
-      activeIcon: <RiCalendarEventFill className="w-5 h-5" />,
-    },
-    {
-      path: "/admin/dashboard/add-reservation",
-      label: "Add Reservation",
-      icon: <RiCalendarEventLine className="w-5 h-5" />,
-      activeIcon: <RiCalendarEventFill className="w-5 h-5" />,
-    },
-    {
       path: "/admin/dashboard/upload-images",
       label: "Upload Images",
       icon: <RiImageAddLine className="w-5 h-5" />,

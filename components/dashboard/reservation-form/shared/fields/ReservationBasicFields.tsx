@@ -1,5 +1,6 @@
 import { ReactElement } from "react";
 import { ReservationFormState, ReservationFormActions } from "../types/reservationForm.types";
+import { Input, Textarea, Label } from "@/components/ui";
 
 interface ReservationBasicFieldsProps {
   formData: ReservationFormState;
@@ -15,46 +16,44 @@ const ReservationBasicFields = ({
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Reservation Name <span className="text-red-500">*</span>
-        </label>
-        <input
+        <Label htmlFor="eventName" required>Reservation Name</Label>
+        <Input
           type="text"
+          id="eventName"
           value={formData.eventName}
           onChange={(e) => actions.handleInputChange("eventName", e.target.value)}
           autoComplete="new-password"
           autoCapitalize="none"
           autoCorrect="off"
-          spellCheck="false"
+          spellCheck={false}
           data-lpignore="true"
           data-form-type="other"
-          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Enter reservation name (e.g., After School Program)"
+          error={!!errors.eventName}
         />
         {errors.eventName && (
-          <p className="text-red-600 text-sm mt-1">{errors.eventName}</p>
+          <p className="text-[var(--color-error)] text-sm mt-1">{errors.eventName}</p>
         )}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Description <span className="text-red-500">*</span>
-        </label>
-        <textarea
+        <Label htmlFor="description" required>Description</Label>
+        <Textarea
+          id="description"
           value={formData.description}
           onChange={(e) => actions.handleInputChange("description", e.target.value)}
           autoComplete="new-password"
           autoCapitalize="none"
           autoCorrect="off"
-          spellCheck="false"
+          spellCheck={false}
           data-lpignore="true"
           data-form-type="other"
           rows={4}
-          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Describe the reservation program..."
+          error={!!errors.description}
         />
         {errors.description && (
-          <p className="text-red-600 text-sm mt-1">{errors.description}</p>
+          <p className="text-[var(--color-error)] text-sm mt-1">{errors.description}</p>
         )}
       </div>
     </div>

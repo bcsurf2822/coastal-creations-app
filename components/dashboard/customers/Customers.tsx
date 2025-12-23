@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import toast from "react-hot-toast";
 import {
   RiArrowDownSLine,
@@ -10,69 +10,16 @@ import {
   RiUserLine,
   RiRefundLine,
 } from "react-icons/ri";
+import { useCustomers } from "@/hooks/queries";
+import { useProcessRefund } from "@/hooks/mutations";
+import type { ICustomer } from "@/types/interfaces";
 
-interface SelectedOption {
-  categoryName: string;
-  choiceName: string;
-}
-
-interface Participant {
-  firstName: string;
-  lastName: string;
-  selectedOptions?: SelectedOption[];
-}
-
-interface BillingInfo {
-  firstName: string;
-  lastName: string;
-  addressLine1: string;
-  addressLine2?: string;
-  city: string;
-  stateProvince: string;
-  postalCode: string;
-  country: string;
-  emailAddress?: string;
-  phoneNumber?: string;
-}
-
-interface Event {
-  _id: string;
-  eventName?: string; // For regular events
-  title?: string; // For private events
-  eventType: string;
-  price: number;
-}
-
-interface Customer {
-  _id: string;
-  event: Event;
-  eventType: "Event" | "PrivateEvent";
-  quantity: number;
-  total: number;
-  isSigningUpForSelf: boolean;
-  participants: Participant[];
-  selectedOptions?: SelectedOption[];
-  billingInfo: BillingInfo;
-  squarePaymentId?: string;
-  squareCustomerId?: string;
-  refundStatus?: "none" | "partial" | "full";
-  refundAmount?: number;
-  refundedAt?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface CustomersResponse {
-  success: boolean;
-  message: string;
-  data: Customer[];
-  count: number;
-}
 
 export default function Customers() {
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Use React Query for data fetching
+  const { data: customers = [], isLoading: loading, error, refetch } = useCustomers();
+  const processRefundMutation = useProcessRefund();
+
   const [expandedCustomer, setExpandedCustomer] = useState<string | null>(null);
 
   // Filter states
@@ -81,26 +28,19 @@ export default function Customers() {
   const [endDate, setEndDate] = useState("");
 
   // Refund states
-  const [refundingCustomer, setRefundingCustomer] = useState<string | null>(
-    null
-  );
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [selectedCustomerForRefund, setSelectedCustomerForRefund] =
-    useState<Customer | null>(null);
+    useState<ICustomer | null>(null);
   const [refundAmount, setRefundAmount] = useState("");
   const [refundReason, setRefundReason] = useState("");
 
   // Helper function to get event name based on event type
-  const getEventName = (customer: Customer): string => {
+  const getEventName = (customer: ICustomer): string => {
     if (customer.eventType === "PrivateEvent") {
       return customer.event?.title || "Unknown Private Event";
     }
     return customer.event?.eventName || "Unknown Event";
   };
-
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
 
   // Filter customers based on search term and date range
   const filteredCustomers = useMemo(() => {
@@ -127,7 +67,7 @@ export default function Customers() {
     // Filter by date range
     if (startDate) {
       filtered = filtered.filter(
-        (customer) => new Date(customer.createdAt) >= new Date(startDate)
+        (customer) => customer.createdAt && new Date(customer.createdAt) >= new Date(startDate)
       );
     }
 
@@ -135,31 +75,12 @@ export default function Customers() {
       const endDateTime = new Date(endDate);
       endDateTime.setHours(23, 59, 59, 999); // End of day
       filtered = filtered.filter(
-        (customer) => new Date(customer.createdAt) <= endDateTime
+        (customer) => customer.createdAt && new Date(customer.createdAt) <= endDateTime
       );
     }
 
     return filtered;
   }, [customers, searchTerm, startDate, endDate]);
-
-  const fetchCustomers = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch("/api/customer");
-      const data: CustomersResponse = await response.json();
-
-      if (data.success) {
-        setCustomers(data.data);
-      } else {
-        setError("Failed to fetch customers");
-      }
-    } catch (err) {
-      setError("An error occurred while fetching customers");
-      console.error("[CUSTOMERS-FETCH] Error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -171,7 +92,7 @@ export default function Customers() {
     setExpandedCustomer(expandedCustomer === id ? null : id);
   };
 
-  const openRefundModal = (customer: Customer) => {
+  const openRefundModal = (customer: ICustomer) => {
     setSelectedCustomerForRefund(customer);
     const remainingAmount = customer.total - (customer.refundAmount || 0);
     setRefundAmount(remainingAmount.toFixed(2));
@@ -204,36 +125,23 @@ export default function Customers() {
       return;
     }
 
-    try {
-      setRefundingCustomer(selectedCustomerForRefund._id);
-
-      const response = await fetch("/api/refunds", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+    processRefundMutation.mutate(
+      {
+        customerId: selectedCustomerForRefund._id!,
+        refundAmount: refundAmountNum,
+        reason: refundReason || "Customer requested refund",
+      },
+      {
+        onSuccess: () => {
+          toast.success(`Refund provided: ${formatCurrency(refundAmountNum)}`);
+          closeRefundModal();
         },
-        body: JSON.stringify({
-          customerId: selectedCustomerForRefund._id,
-          refundAmount: refundAmountNum,
-          reason: refundReason || "Customer requested refund",
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        toast.success(`Refund provided: ${formatCurrency(refundAmountNum)}`);
-        closeRefundModal();
-        fetchCustomers();
-      } else {
-        toast.error(`Refund failed: ${data.error || "Unknown error"}`);
+        onError: (error) => {
+          console.error("[CUSTOMERS-REFUND] Error processing refund:", error);
+          toast.error(`Refund failed: ${error.message || "Unknown error"}`);
+        },
       }
-    } catch (error) {
-      console.error("[CUSTOMERS-REFUND] Error processing refund:", error);
-      toast.error("An error occurred while processing the refund");
-    } finally {
-      setRefundingCustomer(null);
-    }
+    );
   };
 
   const formatDate = (dateString: string) => {
@@ -266,9 +174,9 @@ export default function Customers() {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-6">
         <h3 className="text-lg font-medium text-red-800 mb-2">Error</h3>
-        <p className="text-red-600">{error}</p>
+        <p className="text-red-600">{error.message}</p>
         <button
-          onClick={fetchCustomers}
+          onClick={() => refetch()}
           className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
         >
           Retry
@@ -402,18 +310,18 @@ export default function Customers() {
           <div className="space-y-3">
             {filteredCustomers.map((customer) => (
               <div
-                key={customer._id}
+                key={customer._id!}
                 className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden"
               >
                 {/* Header */}
                 <div
                   className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
-                  onClick={() => toggleExpand(customer._id)}
+                  onClick={() => toggleExpand(customer._id!)}
                 >
                   <div className="grid grid-cols-12 gap-4 items-center">
                     {/* Expand/Collapse Icon */}
                     <div className="col-span-1">
-                      {expandedCustomer === customer._id ? (
+                      {expandedCustomer === customer._id! ? (
                         <RiArrowUpSLine className="h-5 w-5 text-gray-400" />
                       ) : (
                         <RiArrowDownSLine className="h-5 w-5 text-gray-400" />
@@ -463,14 +371,14 @@ export default function Customers() {
                     {/* Date */}
                     <div className="col-span-1">
                       <div className="text-xs text-gray-500">
-                        {new Date(customer.createdAt).toLocaleDateString()}
+                        {customer.createdAt ? new Date(customer.createdAt).toLocaleDateString() : "N/A"}
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Expanded Content */}
-                {expandedCustomer === customer._id && (
+                {expandedCustomer === customer._id! && (
                   <div className="border-t border-gray-200 bg-gray-50 p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {/* Billing Information */}
@@ -736,19 +644,11 @@ export default function Customers() {
                                       e.stopPropagation();
                                       openRefundModal(customer);
                                     }}
-                                    disabled={
-                                      refundingCustomer === customer._id
-                                    }
+                                    disabled={processRefundMutation.isPending}
                                     className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-400 text-white rounded-lg hover:bg-red-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                   >
-                                    {refundingCustomer === customer._id ? (
-                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                    ) : (
-                                      <>
-                                        <RiRefundLine className="h-4 w-4" />
-                                        <span>Process Refund</span>
-                                      </>
-                                    )}
+                                    <RiRefundLine className="h-4 w-4" />
+                                    <span>Process Refund</span>
                                   </button>
                                 </div>
                               )}
@@ -775,20 +675,20 @@ export default function Customers() {
                                 Customer ID:
                               </span>{" "}
                               <code className="bg-gray-100 px-2 py-1 rounded text-xs">
-                                {customer._id}
+                                {customer._id!}
                               </code>
                             </div>
                             <div>
                               <span className="font-medium text-gray-700">
                                 Created At:
                               </span>{" "}
-                              {formatDate(customer.createdAt)}
+                              {customer.createdAt ? formatDate(customer.createdAt) : "N/A"}
                             </div>
                             <div>
                               <span className="font-medium text-gray-700">
                                 Updated At:
                               </span>{" "}
-                              {formatDate(customer.updatedAt)}
+                              {customer.updatedAt ? formatDate(customer.updatedAt) : "N/A"}
                             </div>
                           </div>
                         </div>
@@ -890,17 +790,17 @@ export default function Customers() {
               <div className="flex gap-3 mt-6">
                 <button
                   onClick={closeRefundModal}
-                  disabled={refundingCustomer === selectedCustomerForRefund._id}
+                  disabled={processRefundMutation.isPending}
                   className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={processRefund}
-                  disabled={refundingCustomer === selectedCustomerForRefund._id}
+                  disabled={processRefundMutation.isPending}
                   className="flex-1 px-4 py-2 bg-red-400 text-white rounded-lg hover:bg-red-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {refundingCustomer === selectedCustomerForRefund._id
+                  {processRefundMutation.isPending
                     ? "Processing..."
                     : "Confirm Refund"}
                 </button>

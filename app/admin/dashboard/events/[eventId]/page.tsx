@@ -243,7 +243,7 @@ export default function EventCustomersPage(): ReactElement {
             <div className="space-y-4">
               {customers.map((customer) => (
                 <div
-                  key={customer._id}
+                  key={customer._id.toString()}
                   className="bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-700 p-4"
                 >
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
