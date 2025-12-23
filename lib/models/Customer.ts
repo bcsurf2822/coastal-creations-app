@@ -4,7 +4,6 @@ import { IPrivateEvent } from "./PrivateEvent";
 import { IReservation } from "./Reservations";
 
 export interface ICustomer extends Document {
-  _id: string;
   event: IEvent | IPrivateEvent | IReservation | string;
   eventType: "Event" | "PrivateEvent" | "Reservation";
   selectedDates?: Array<{

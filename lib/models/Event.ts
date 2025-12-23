@@ -10,7 +10,6 @@ dayjs.extend(timezone);
 
 const LOCAL_TIMEZONE = "America/New_York"; 
 export interface IEvent extends Document {
-  _id: string;
   eventName: string;
   eventType: "adult-class" | "kid-class" | "event" | "camp" | "artist" | "class" | "workshop"; // Temporarily allow old values
   description: string;

@@ -1,7 +1,6 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
 
 export interface IPrivateEvent extends Document {
-  _id: string;
   title: string;
   description: string;
   price: number;

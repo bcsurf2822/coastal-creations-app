@@ -18,7 +18,6 @@ export interface ITimeSlot {
 }
 
 export interface IReservation extends Document {
-  _id: string;
   eventName: string;
   eventType: "reservation";
   description: string;

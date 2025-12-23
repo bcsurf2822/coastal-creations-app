@@ -2,7 +2,7 @@
 
 import { ReactElement, useMemo } from "react";
 import ReservationCard from "./ReservationCard";
-import { IReservation } from "@/lib/models/Reservations";
+import { Reservation } from "@/lib/types/reservationTypes";
 import { useReservations } from "@/hooks/queries";
 
 interface ReservationListProps {
@@ -21,8 +21,8 @@ export default function ReservationList({
   // Filter to active reservations only
   const reservations = useMemo(() => {
     const now = new Date();
-    return (reservationsData as IReservation[]).filter(
-      (reservation: IReservation) => {
+    return (reservationsData as Reservation[]).filter(
+      (reservation: Reservation) => {
         const endDate = reservation.dates.endDate
           ? new Date(reservation.dates.endDate)
           : new Date(reservation.dates.startDate);

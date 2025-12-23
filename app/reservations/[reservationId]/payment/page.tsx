@@ -116,7 +116,8 @@ export default async function ReservationPaymentPage({
   let reservation: Reservation | null;
   try {
     await connectMongo();
-    reservation = await ReservationModel.findById(reservationId).lean();
+    const doc = await ReservationModel.findById(reservationId).lean();
+    reservation = doc ? serializeReservation(doc as Record<string, unknown>) : null;
 
     if (!reservation) {
       console.error(

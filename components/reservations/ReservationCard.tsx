@@ -7,10 +7,10 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import Image from "next/image";
 import { FaCalendarAlt, FaDollarSign } from "react-icons/fa";
-import { IReservation } from "@/lib/models/Reservations";
+import { Reservation } from "@/lib/types/reservationTypes";
 
 interface ReservationCardProps {
-  reservation: IReservation;
+  reservation: Reservation;
   baseUrl: string;
   index?: number;
 }
@@ -216,7 +216,7 @@ export default function ReservationCard({
 
   return (
     <motion.div
-      key={reservation._id}
+      key={reservation._id.toString()}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.1 }}

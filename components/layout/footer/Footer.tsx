@@ -38,7 +38,7 @@ export default function Footer() {
     animate: {
       scale: 1,
       transition: {
-        type: "spring",
+        type: "spring" as const,
         stiffness: 300,
         damping: 20,
         duration: 0.5,
