@@ -2,6 +2,7 @@
 
 import { ReactElement } from "react";
 import { DayCardProps } from "./types";
+import { TimeSlotPicker } from "./TimeSlotPicker";
 import { EB_Garamond } from "next/font/google";
 
 const ebGaramond = EB_Garamond({
@@ -18,9 +19,12 @@ export function DayCard({
   availability,
   startTime,
   endTime,
+  timeSlots,
+  selectedTimeSlot,
   onSelect,
   participantCount = 0,
   onParticipantChange,
+  onTimeSlotSelect,
 }: DayCardProps): ReactElement {
   const formatDay = (d: Date): string =>
     d.toLocaleDateString("en-US", { weekday: "long" });
@@ -147,8 +151,19 @@ export function DayCard({
           )}
         </div>
 
-        {/* Participant select if selected */}
-        {isSelected && onParticipantChange && !isSoldOut && (
+        {/* Time Slot Picker (when time slots are enabled) */}
+        {isSelected && timeSlots && timeSlots.length > 0 && onTimeSlotSelect && onParticipantChange && (
+          <TimeSlotPicker
+            timeSlots={timeSlots}
+            selectedSlot={selectedTimeSlot}
+            onSlotSelect={onTimeSlotSelect}
+            participantCount={participantCount}
+            onParticipantChange={onParticipantChange}
+          />
+        )}
+
+        {/* Regular Participant select (when time slots are NOT enabled) */}
+        {isSelected && onParticipantChange && !isSoldOut && (!timeSlots || timeSlots.length === 0) && (
           <div className="mt-4">
             <label
               className={`${ebGaramond.className} block text-sm font-bold mb-2 text-gray-700`}

@@ -9,6 +9,15 @@ export interface ReservationTime {
   endTime?: string;
 }
 
+// Time slot within a day (for granular booking)
+export interface TimeSlot {
+  startTime: string;
+  endTime: string;
+  maxParticipants: number;
+  currentBookings: number;
+  isAvailable: boolean;
+}
+
 export interface DailyAvailability {
   date: Date;
   maxParticipants: number;
@@ -16,6 +25,16 @@ export interface DailyAvailability {
   isAvailable: boolean;
   startTime?: string;
   endTime?: string;
+  // Time slots within the day (only present when enableTimeSlots is true)
+  timeSlots?: TimeSlot[];
+}
+
+// Selected time slot for client bookings
+export interface SelectedTimeSlot {
+  date: Date;
+  startTime: string;
+  endTime: string;
+  participants: number;
 }
 
 export interface ReservationOption {
@@ -44,6 +63,10 @@ export interface Reservation {
   dates: ReservationDates;
   timeType?: "same" | "custom";
   time: ReservationTime;
+  // Time slot configuration
+  enableTimeSlots?: boolean;
+  slotDurationMinutes?: 60 | 120 | 240; // 1, 2, or 4 hours only
+  maxParticipantsPerSlot?: number;
   dailyAvailability: DailyAvailability[];
   options?: ReservationOption[];
   image?: string;
@@ -67,6 +90,10 @@ export interface CreateReservationData {
     endTime?: string;
   };
   maxParticipantsPerDay: number;
+  // Time slot configuration
+  enableTimeSlots?: boolean;
+  slotDurationMinutes?: 60 | 120 | 240;
+  maxParticipantsPerSlot?: number;
   options?: ReservationOption[];
   image?: string;
   isDiscountAvailable?: boolean;

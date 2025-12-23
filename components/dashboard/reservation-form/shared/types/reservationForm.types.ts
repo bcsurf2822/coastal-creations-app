@@ -20,6 +20,9 @@ export interface DayCustomTime {
   endTime: Dayjs | null;
 }
 
+// Slot duration type - only 1, 2, or 4 hours allowed
+export type SlotDurationMinutes = 60 | 120 | 240;
+
 export interface ReservationFormState {
   eventName: string;
   eventType: "reservation";
@@ -33,6 +36,10 @@ export interface ReservationFormState {
   endTime: Dayjs | null;
   customTimes: DayCustomTime[];
   excludeDates: string[];
+  // Time slot configuration
+  enableTimeSlots: boolean;
+  slotDurationMinutes: SlotDurationMinutes;
+  maxParticipantsPerSlot: number;
   hasOptions: boolean;
   optionCategories: ReservationOptionCategory[];
   isDiscountAvailable: boolean;

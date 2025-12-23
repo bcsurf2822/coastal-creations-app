@@ -79,11 +79,19 @@ export default async function ReservationPaymentPage({
   try {
     const parsedDates = JSON.parse(decodeURIComponent(selectedDatesParam));
     // Parse dates - the PaymentForm client component will receive these
-    selectedDates = parsedDates.map((sd: { date: string; participants: number }) => ({
-      // Create Date and immediately serialize via JSON to get plain object
-      date: new Date(sd.date),
-      participants: sd.participants,
-    }));
+    selectedDates = parsedDates.map(
+      (sd: {
+        date: string;
+        participants: number;
+        timeSlot?: { startTime: string; endTime: string };
+      }) => ({
+        // Create Date and immediately serialize via JSON to get plain object
+        date: new Date(sd.date),
+        participants: sd.participants,
+        // Include time slot if present
+        timeSlot: sd.timeSlot,
+      })
+    );
     // Serialize and deserialize to ensure plain objects (removes Date prototype)
     selectedDates = JSON.parse(JSON.stringify(selectedDates));
   } catch (error) {

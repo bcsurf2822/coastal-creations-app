@@ -8,6 +8,15 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const LOCAL_TIMEZONE = "America/New_York";
+// Time slot interface for granular booking within a day
+export interface ITimeSlot {
+  startTime: string; // "10:00"
+  endTime: string; // "11:00"
+  maxParticipants: number;
+  currentBookings: number;
+  isAvailable: boolean;
+}
+
 export interface IReservation extends Document {
   _id: string;
   eventName: string;
@@ -24,6 +33,10 @@ export interface IReservation extends Document {
     startTime?: string;
     endTime?: string;
   };
+  // Time slot configuration (optional - when enabled, clients select specific time blocks)
+  enableTimeSlots?: boolean;
+  slotDurationMinutes?: 60 | 120 | 240; // 1, 2, or 4 hours only
+  maxParticipantsPerSlot?: number;
   dailyAvailability: Array<{
     date: Date;
     maxParticipants: number;
@@ -31,6 +44,8 @@ export interface IReservation extends Document {
     isAvailable: boolean;
     startTime?: string;
     endTime?: string;
+    // Time slots within the day (only populated when enableTimeSlots is true)
+    timeSlots?: ITimeSlot[];
   }>;
   options?: Array<{
     categoryName: string;
@@ -96,6 +111,35 @@ const ReservationDatesSchema = new Schema({
   ],
 });
 
+// Schema for individual time slots within a day
+const TimeSlotSchema = new Schema(
+  {
+    startTime: {
+      type: String,
+      required: true,
+    },
+    endTime: {
+      type: String,
+      required: true,
+    },
+    maxParticipants: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+    currentBookings: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    isAvailable: {
+      type: Boolean,
+      default: true,
+    },
+  },
+  { _id: false }
+);
+
 const DailyAvailabilitySchema = new Schema({
   date: {
     type: Date,
@@ -122,6 +166,11 @@ const DailyAvailabilitySchema = new Schema({
   },
   endTime: {
     type: String,
+    required: false,
+  },
+  // Time slots within the day (only used when enableTimeSlots is true)
+  timeSlots: {
+    type: [TimeSlotSchema],
     required: false,
   },
 });
@@ -227,6 +276,21 @@ const ReservationSchema = new Schema<IReservation>(
     time: {
       type: ReservationTimeSchema,
       required: true,
+    },
+    // Time slot configuration
+    enableTimeSlots: {
+      type: Boolean,
+      default: false,
+    },
+    slotDurationMinutes: {
+      type: Number,
+      enum: [60, 120, 240], // 1, 2, or 4 hours only
+      required: false,
+    },
+    maxParticipantsPerSlot: {
+      type: Number,
+      min: 1,
+      required: false,
     },
     dailyAvailability: {
       type: [DailyAvailabilitySchema],

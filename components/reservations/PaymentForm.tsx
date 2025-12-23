@@ -281,6 +281,8 @@ export default function PaymentForm({
         selectedDates: selectedDates.map((sd) => ({
           date: sd.date.toISOString(),
           numberOfParticipants: sd.participants,
+          // Include time slot if present
+          timeSlot: sd.timeSlot,
         })),
         quantity: totalParticipants,
         total: grandTotal,
@@ -540,6 +542,8 @@ export default function PaymentForm({
         selectedDates: selectedDates.map((sd) => ({
           date: sd.date.toISOString(),
           numberOfParticipants: sd.participants,
+          // Include time slot if present
+          timeSlot: sd.timeSlot,
         })),
         quantity: totalParticipants,
         total: grandTotal,
@@ -560,7 +564,7 @@ export default function PaymentForm({
 
       if (!response.ok) {
         console.error(
-          "[PaymentForm-handleSubmit] Booking creation failed:",
+          "[PaymentForm-handleCardTokenizeResponse] Booking creation failed:",
           result
         );
         await fetch("/api/payment-errors", {

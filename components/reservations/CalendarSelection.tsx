@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo, ReactElement } from "react";
+import { useState, useMemo, ReactElement, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { SelectedDate } from "./types";
+import { SelectedDate, TimeSlot } from "./types";
 import { DayCard } from "./DayCard";
 import { BookingSummary } from "./BookingSummary";
 import { IReservation } from "@/lib/models/Reservations";
@@ -40,6 +40,9 @@ export function CalendarSelection({
     return new Date(startDate.getFullYear(), startDate.getMonth(), 1);
   });
 
+  // Check if time slots are enabled for this reservation
+  const hasTimeSlots = reservation.enableTimeSlots === true;
+
   // Create map of available dates from dailyAvailability
   const availableDatesMap = useMemo(() => {
     const map = new Map<
@@ -50,6 +53,7 @@ export function CalendarSelection({
         isAvailable: boolean;
         startTime?: string;
         endTime?: string;
+        timeSlots?: TimeSlot[];
       }
     >();
     reservation.dailyAvailability.forEach((day) => {
@@ -60,6 +64,7 @@ export function CalendarSelection({
         isAvailable: day.isAvailable,
         startTime: day.startTime,
         endTime: day.endTime,
+        timeSlots: day.timeSlots as TimeSlot[] | undefined,
       });
     });
     return map;
@@ -112,7 +117,7 @@ export function CalendarSelection({
       // Deselect
       setSelectedDates(selectedDates.filter((sd) => sd !== existing));
     } else {
-      // Select with default 1 participant
+      // Select with default 1 participant (no time slot initially if time slots are enabled)
       setSelectedDates([...selectedDates, { date, participants: 1 }]);
     }
   };
@@ -129,10 +134,48 @@ export function CalendarSelection({
     );
   };
 
+  // Handle time slot selection for a specific date
+  const handleTimeSlotSelect = useCallback(
+    (date: Date, slot: { startTime: string; endTime: string } | null): void => {
+      const dateKey = normalizeDateString(date);
+
+      setSelectedDates((prev) =>
+        prev.map((sd) => {
+          if (normalizeDateString(sd.date) !== dateKey) return sd;
+
+          if (slot) {
+            // Set the time slot
+            return {
+              ...sd,
+              timeSlot: { startTime: slot.startTime, endTime: slot.endTime },
+            };
+          } else {
+            // Clear the time slot - destructure and omit timeSlot
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { timeSlot: _removed, ...rest } = sd;
+            return rest as SelectedDate;
+          }
+        })
+      );
+    },
+    []
+  );
+
   const handleContinue = (): void => {
+    // Validate that all selected dates have time slots if time slots are enabled
+    if (hasTimeSlots) {
+      const missingTimeSlots = selectedDates.some((sd) => !sd.timeSlot);
+      if (missingTimeSlots) {
+        // Show error or prevent continuation
+        alert("Please select a time slot for each selected date.");
+        return;
+      }
+    }
+
     const selectedDatesData = selectedDates.map((sd) => ({
       date: sd.date.toISOString(),
       participants: sd.participants,
+      timeSlot: sd.timeSlot, // Include time slot if present
     }));
 
     const selectedDatesParam = encodeURIComponent(
@@ -288,7 +331,14 @@ export function CalendarSelection({
               className={`${ebGaramond.className} text-sm text-blue-800 space-y-1.5 list-decimal list-inside`}
             >
               <li>Click on any available date below to select it</li>
-              <li>Choose the number of participants from the dropdown menu</li>
+              {hasTimeSlots ? (
+                <>
+                  <li>Select a time slot from the available options</li>
+                  <li>Choose the number of participants for your selected time</li>
+                </>
+              ) : (
+                <li>Choose the number of participants from the dropdown menu</li>
+              )}
               <li>Select additional dates if needed</li>
               <li>
                 Review your selections in the booking summary on the right
@@ -367,10 +417,17 @@ export function CalendarSelection({
                     availability={availability}
                     startTime={availabilityData?.startTime}
                     endTime={availabilityData?.endTime}
+                    timeSlots={hasTimeSlots ? availabilityData?.timeSlots : undefined}
+                    selectedTimeSlot={selectedDate?.timeSlot}
                     onSelect={() => handleDateToggle(date)}
                     participantCount={selectedDate?.participants}
                     onParticipantChange={(count) =>
                       handleParticipantChange(date, count)
+                    }
+                    onTimeSlotSelect={
+                      hasTimeSlots
+                        ? (slot) => handleTimeSlotSelect(date, slot)
+                        : undefined
                     }
                   />
                 );

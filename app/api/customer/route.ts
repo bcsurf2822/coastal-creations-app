@@ -99,12 +99,21 @@ export async function POST(request: NextRequest) {
       }
 
       // 3. Validate availability for each selected date
+      const hasTimeSlots = reservation.enableTimeSlots === true;
+
       for (const selectedDate of selectedDates) {
         const dailyAvail = reservation.dailyAvailability.find(
           (day: {
             date: Date;
             maxParticipants: number;
             currentBookings: number;
+            timeSlots?: Array<{
+              startTime: string;
+              endTime: string;
+              maxParticipants: number;
+              currentBookings: number;
+              isAvailable: boolean;
+            }>;
           }) =>
             normalizeDateString(day.date) === normalizeDateString(selectedDate.date)
         );
@@ -120,18 +129,55 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        const availableSpots =
-          dailyAvail.maxParticipants - dailyAvail.currentBookings;
-        if (selectedDate.numberOfParticipants > availableSpots) {
-          console.error(
-            `[CUSTOMER-API-POST] Not enough spots on ${selectedDate.date}. Requested: ${selectedDate.numberOfParticipants}, Available: ${availableSpots}`
+        // Time slot validation if time slots are enabled
+        if (hasTimeSlots && selectedDate.timeSlot) {
+          const timeSlot = dailyAvail.timeSlots?.find(
+            (slot: { startTime: string; endTime: string }) =>
+              slot.startTime === selectedDate.timeSlot.startTime &&
+              slot.endTime === selectedDate.timeSlot.endTime
           );
-          return NextResponse.json(
-            {
-              error: `Not enough spots available on ${selectedDate.date}. Only ${availableSpots} spots left.`,
-            },
-            { status: 400 }
-          );
+
+          if (!timeSlot) {
+            console.error(
+              "[CUSTOMER-API-POST] Time slot not found:",
+              selectedDate.timeSlot
+            );
+            return NextResponse.json(
+              {
+                error: `Time slot ${selectedDate.timeSlot.startTime} - ${selectedDate.timeSlot.endTime} is not available`,
+              },
+              { status: 400 }
+            );
+          }
+
+          const slotAvailableSpots =
+            timeSlot.maxParticipants - timeSlot.currentBookings;
+          if (selectedDate.numberOfParticipants > slotAvailableSpots) {
+            console.error(
+              `[CUSTOMER-API-POST] Not enough spots in time slot. Requested: ${selectedDate.numberOfParticipants}, Available: ${slotAvailableSpots}`
+            );
+            return NextResponse.json(
+              {
+                error: `Not enough spots available in time slot ${selectedDate.timeSlot.startTime} - ${selectedDate.timeSlot.endTime}. Only ${slotAvailableSpots} spots left.`,
+              },
+              { status: 400 }
+            );
+          }
+        } else {
+          // Regular day-level validation (no time slots)
+          const availableSpots =
+            dailyAvail.maxParticipants - dailyAvail.currentBookings;
+          if (selectedDate.numberOfParticipants > availableSpots) {
+            console.error(
+              `[CUSTOMER-API-POST] Not enough spots on ${selectedDate.date}. Requested: ${selectedDate.numberOfParticipants}, Available: ${availableSpots}`
+            );
+            return NextResponse.json(
+              {
+                error: `Not enough spots available on ${selectedDate.date}. Only ${availableSpots} spots left.`,
+              },
+              { status: 400 }
+            );
+          }
         }
       }
 
@@ -159,40 +205,82 @@ export async function POST(request: NextRequest) {
         const selectedDateStr = normalizeDateString(selectedDate.date);
 
         // Find the reservation to get the exact date object from dailyAvailability
-        const reservation = await Reservation.findById(eventId);
-        const matchingDay = reservation?.dailyAvailability.find(
+        const currentReservation = await Reservation.findById(eventId);
+        const matchingDayIndex = currentReservation?.dailyAvailability.findIndex(
           (day: { date: Date }) => {
             return normalizeDateString(day.date) === selectedDateStr;
           }
         );
 
-        if (!matchingDay) {
+        if (matchingDayIndex === undefined || matchingDayIndex === -1) {
           console.error(
             `[CUSTOMER-API-POST] Could not find matching date in dailyAvailability for ${selectedDateStr}`
           );
           continue;
         }
 
-        // Use the exact date object from dailyAvailability for the update
-        const updateResult = await Reservation.findOneAndUpdate(
-          {
-            _id: eventId,
-            "dailyAvailability.date": matchingDay.date,
-          },
-          {
-            $inc: {
-              "dailyAvailability.$.currentBookings":
-                selectedDate.numberOfParticipants,
-            },
-          },
-          { new: true }
-        );
+        const matchingDay = currentReservation!.dailyAvailability[matchingDayIndex];
 
-        if (!updateResult) {
-          console.error(
-            "[CUSTOMER-API-POST] Failed to update availability for date:",
-            selectedDate.date
+        // If time slots are enabled and a time slot was selected, update time slot availability
+        if (hasTimeSlots && selectedDate.timeSlot && matchingDay.timeSlots) {
+          const slotIndex = matchingDay.timeSlots.findIndex(
+            (slot: { startTime: string; endTime: string }) =>
+              slot.startTime === selectedDate.timeSlot.startTime &&
+              slot.endTime === selectedDate.timeSlot.endTime
           );
+
+          if (slotIndex !== -1) {
+            // Update the specific time slot's currentBookings
+            const updateResult = await Reservation.findOneAndUpdate(
+              {
+                _id: eventId,
+                "dailyAvailability.date": matchingDay.date,
+              },
+              {
+                $inc: {
+                  [`dailyAvailability.${matchingDayIndex}.timeSlots.${slotIndex}.currentBookings`]:
+                    selectedDate.numberOfParticipants,
+                },
+              },
+              { new: true }
+            );
+
+            if (!updateResult) {
+              console.error(
+                "[CUSTOMER-API-POST] Failed to update time slot availability for date:",
+                selectedDate.date,
+                "slot:",
+                selectedDate.timeSlot
+              );
+            }
+          } else {
+            console.error(
+              "[CUSTOMER-API-POST] Time slot not found for update:",
+              selectedDate.timeSlot
+            );
+          }
+        } else {
+          // Update day-level availability (no time slots)
+          const updateResult = await Reservation.findOneAndUpdate(
+            {
+              _id: eventId,
+              "dailyAvailability.date": matchingDay.date,
+            },
+            {
+              $inc: {
+                "dailyAvailability.$.currentBookings":
+                  selectedDate.numberOfParticipants,
+              },
+            },
+            { new: true }
+          );
+
+          if (!updateResult) {
+            console.error(
+              "[CUSTOMER-API-POST] Failed to update availability for date:",
+              selectedDate.date
+            );
+          }
         }
       }
 

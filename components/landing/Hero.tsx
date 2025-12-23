@@ -182,7 +182,10 @@ export default function Hero() {
             <Link
               href={
                 upcomingArtistEvent
-                  ? `/events/live-artist/${createEventSlug(upcomingArtistEvent.eventName, upcomingArtistEvent._id)}`
+                  ? `/events/live-artist/${createEventSlug(
+                      upcomingArtistEvent.eventName,
+                      upcomingArtistEvent._id
+                    )}`
                   : "/events/events"
               }
               className="inline-block bg-white/20 hover:bg-white/30 backdrop-blur-sm px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 hover:scale-105 border border-white/30"
@@ -210,19 +213,31 @@ export default function Hero() {
 
           <div className="flex flex-wrap justify-center gap-4">
             <Link href="/events/classes-workshops">
-              <Button variant="pill" size="lg" className="shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300">
+              <Button
+                variant="pill"
+                size="lg"
+                className="shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer"
+              >
                 {content?.homepage?.hero?.ctaButton1 ||
                   DEFAULT_TEXT.homepage.hero.ctaButton1}
               </Button>
             </Link>
             <Link href="/about">
-              <Button variant="pill" size="lg" className="shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300">
+              <Button
+                variant="pill"
+                size="lg"
+                className="shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer"
+              >
                 {content?.homepage?.hero?.ctaButton2 ||
                   DEFAULT_TEXT.homepage.hero.ctaButton2}
               </Button>
             </Link>
             <Link href="/gift-cards">
-              <Button variant="pill" size="lg" className="shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300">
+              <Button
+                variant="pill"
+                size="lg"
+                className="shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer"
+              >
                 Gift Cards
               </Button>
             </Link>
