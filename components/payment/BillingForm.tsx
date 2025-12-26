@@ -804,18 +804,7 @@ const BillingForm: React.FC<BillingFormProps> = ({
               <span className="text-lg font-medium text-gray-800">
                 Event price:
               </span>
-              <span className="text-lg font-semibold">
-                {isDiscountActive() ? (
-                  <>
-                    <span className="text-gray-500 line-through mr-2">
-                      ${getOriginalPrice().toFixed(2)}
-                    </span>
-                    <span className="text-green-600">${formattedPrice}</span>
-                  </>
-                ) : (
-                  `$${formattedPrice}`
-                )}
-              </span>
+              <span className="text-lg font-semibold">${formattedPrice}</span>
             </div>
             <div className="flex justify-between items-center mt-2">
               <span className="text-lg font-medium text-gray-800">

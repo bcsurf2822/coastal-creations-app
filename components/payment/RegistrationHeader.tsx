@@ -24,7 +24,6 @@ const RegistrationHeader: React.FC<RegistrationHeaderProps> = ({
   eventTitle,
   formattedPrice,
   isPriceAvailable,
-  originalPrice,
   discountInfo,
   numberOfPeople,
 }) => {
@@ -36,10 +35,6 @@ const RegistrationHeader: React.FC<RegistrationHeaderProps> = ({
     return numberOfPeople >= discountInfo.discount.minParticipants;
   };
 
-  const getOriginalPrice = (): number => {
-    const cleanPrice = originalPrice.replace(/[^\d.]/g, "");
-    return parseFloat(cleanPrice) || 0;
-  };
   return (
     <div className="p-6 sm:p-8 border-b border-gray-200">
       <h1 className="text-2xl font-bold text-gray-900 text-center">
@@ -57,20 +52,9 @@ const RegistrationHeader: React.FC<RegistrationHeaderProps> = ({
 
           {/* Price Display */}
           <div className="flex items-center justify-center gap-2">
-            {isDiscountActive() ? (
-              <>
-                <span className="text-gray-400 line-through text-lg">
-                  ${getOriginalPrice().toFixed(2)}
-                </span>
-                <span className="text-3xl font-bold text-gray-900">
-                  ${formattedPrice}
-                </span>
-              </>
-            ) : (
-              <span className="text-3xl font-bold text-gray-900">
-                ${formattedPrice}
-              </span>
-            )}
+            <span className="text-3xl font-bold text-gray-900">
+              ${formattedPrice}
+            </span>
           </div>
 
           {/* Discount Information */}

@@ -296,12 +296,6 @@ const DiscountBadge = styled("div")({
   marginBottom: "1rem",
 });
 
-const OriginalPrice = styled("span")({
-  textDecoration: "line-through",
-  color: "#888",
-  fontSize: "0.875rem",
-  marginRight: "0.5rem",
-});
 
 const PreviewContainer = styled("div")({
   padding: "2rem",
@@ -390,18 +384,7 @@ const EventCardPreview = ({
     }
   };
 
-  const calculateDiscountedPrice = (): number => {
-    if (!formData.isDiscountAvailable || !formData.discount || !formData.price)
-      return formData.price || 0;
-    if (formData.discount.type === "percentage") {
-      return formData.price - (formData.price * formData.discount.value) / 100;
-    } else {
-      return formData.price - formData.discount.value;
-    }
-  };
-
   const IconComponent = getRandomIcon();
-  const displayPrice = calculateDiscountedPrice();
   const hasDiscount = formData.isDiscountAvailable && formData.discount;
 
   return (
@@ -420,15 +403,7 @@ const EventCardPreview = ({
           onMouseLeave={() => setHoveredCard(false)}
         >
           <PriceTag>
-            <FaDollarSign />
-            {hasDiscount && formData.price ? (
-              <>
-                <OriginalPrice>${formData.price}</OriginalPrice>$
-                {displayPrice.toFixed(2)}
-              </>
-            ) : (
-              `$${formData.price || 0}`
-            )}
+            <FaDollarSign />${formData.price || 0}
           </PriceTag>
 
           <CardContent>

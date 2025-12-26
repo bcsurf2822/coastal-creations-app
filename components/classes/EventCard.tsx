@@ -372,12 +372,6 @@ const DiscountBadge = styled("div")({
   marginBottom: "1rem",
 });
 
-const OriginalPrice = styled("span")({
-  textDecoration: "line-through",
-  color: "#888",
-  fontSize: "0.875rem",
-  marginRight: "0.5rem",
-});
 
 const InstagramIcon = styled("div")({
   position: "absolute",
@@ -466,19 +460,6 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
     }
   };
 
-  const calculateDiscountedPrice = (): number => {
-    if (!event.isDiscountAvailable || !event.discount || !event.price)
-      return event.price || 0;
-    if (currentParticipants < event.discount.minParticipants)
-      return event.price;
-
-    if (event.discount.type === "percentage") {
-      return event.price - (event.price * event.discount.value) / 100;
-    } else {
-      return event.price - event.discount.value;
-    }
-  };
-
   const isDiscountActive = (): boolean => {
     return !!(
       event.isDiscountAvailable &&
@@ -488,7 +469,6 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
   };
 
   const discountActive = isDiscountActive();
-  const displayPrice = calculateDiscountedPrice();
   const isSoldOut = currentParticipants >= (event.numberOfParticipants || 20);
 
   return (
@@ -512,16 +492,7 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
             {badge.text}
           </Badge>
         ) : showPrice && event.price !== undefined && !isArtistEvent ? (
-          <PriceTag>
-            {discountActive ? (
-              <>
-                <OriginalPrice>${event.price}</OriginalPrice>$
-                {displayPrice.toFixed(2)}
-              </>
-            ) : (
-              `$${event.price}`
-            )}
-          </PriceTag>
+          <PriceTag>${event.price}</PriceTag>
         ) : null}
 
         {/* Image Section */}
