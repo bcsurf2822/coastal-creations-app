@@ -6,6 +6,7 @@ import { EB_Garamond } from "next/font/google";
 import { usePageContent } from "@/hooks/queries";
 import { DEFAULT_TEXT } from "@/lib/constants/defaultPageContent";
 import { portableTextToPlainText } from "@/lib/utils/portableTextHelpers";
+import MainSectionDecorations from "./MainSectionDecorations";
 
 const ebGaramond = EB_Garamond({
   subsets: ["latin"],
@@ -25,127 +26,7 @@ export default function MainSection() {
       id="main-section"
       className="py-20 md:py-28 relative overflow-hidden"
     >
-      {/* Starfish on top-left of storefront image - outside main container for z-index */}
-      <div className="absolute top-2 left-28 md:top-6 md:left-36 lg:top-8 lg:left-52 z-20 pointer-events-none">
-        <Image
-          src="/assets/svg/starfish.svg"
-          alt="Starfish"
-          width={220}
-          height={220}
-          className="w-44 md:w-52 lg:w-60 -rotate-12 opacity-95"
-        />
-      </div>
-
-      {/* Decorative SVG Clusters - No Animation */}
-      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-
-        {/* ALL OTHER SVGs: Clustered around "Our Creative Space" text and button */}
-        <div className="absolute top-1/2 right-0 lg:right-[5%] -translate-y-1/2 w-[50%] h-[85%] hidden lg:block">
-
-          {/* Star near title */}
-          <div className="absolute -top-4 right-32 lg:right-40">
-            <Image
-              src="/assets/svg/star.svg"
-              alt="Star"
-              width={200}
-              height={200}
-              className="w-40 lg:w-48 -rotate-[30deg] opacity-90"
-            />
-          </div>
-
-          {/* Main cluster around and below the button area */}
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/3">
-            <div className="relative">
-              {/* Shells grouped together */}
-              <div className="relative top-6 lg:top-8">
-                <Image
-                  src="/assets/svg/shell3-art.svg"
-                  alt="Shell art"
-                  width={220}
-                  height={220}
-                  className="w-44 lg:w-56 -rotate-6 opacity-95"
-                />
-                <Image
-                  src="/assets/svg/shell2.svg"
-                  alt="Shell"
-                  width={140}
-                  height={140}
-                  className="absolute top-8 lg:top-12 left-32 lg:left-40 w-32 lg:w-36 rotate-12 opacity-85"
-                />
-              </div>
-              {/* Mosaic to the left */}
-              <Image
-                src="/assets/svg/mosaic-art.svg"
-                alt="Mosaic art"
-                width={200}
-                height={200}
-                className="absolute top-24 lg:top-32 -left-[26rem] lg:-left-[32rem] w-40 lg:w-48 opacity-90"
-              />
-              {/* Rock and Eagles grouped together */}
-              <div className="absolute top-32 lg:top-36 -left-28 lg:-left-32">
-                <Image
-                  src="/assets/svg/rock-art.svg"
-                  alt="Rock art"
-                  width={120}
-                  height={120}
-                  className="w-24 lg:w-32 -rotate-6 opacity-90"
-                />
-                <Image
-                  src="/assets/svg/egales-art.svg"
-                  alt="Eagles art"
-                  width={120}
-                  height={120}
-                  className="absolute -top-4 left-16 lg:left-20 w-24 lg:w-32 rotate-12 opacity-90"
-                />
-              </div>
-              {/* Paintings cluster - all in one div, tightly overlapping */}
-              <div className="absolute -top-44 lg:-top-52 left-20 lg:left-28 w-[30rem] h-[28rem] lg:w-[38rem] lg:h-[34rem]">
-                <Image
-                  src="/assets/svg/jellyfish-art.svg"
-                  alt="Jellyfish art"
-                  width={600}
-                  height={650}
-                  className="absolute top-0 left-0 w-96 lg:w-[28rem] rotate-[-5deg]"
-                />
-                <Image
-                  src="/assets/svg/seahorse-art.svg"
-                  alt="Seahorse art"
-                  width={550}
-                  height={600}
-                  className="absolute top-4 left-28 lg:left-36 w-80 lg:w-96 rotate-[8deg]"
-                />
-                <Image
-                  src="/assets/svg/flowers-paint.svg"
-                  alt="Flowers"
-                  width={550}
-                  height={480}
-                  className="absolute top-40 lg:top-48 left-12 lg:left-16 w-80 lg:w-96 -rotate-2"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile: Simplified cluster */}
-        <div className="absolute bottom-4 right-2 lg:hidden">
-          <div className="relative">
-            <Image
-              src="/assets/svg/shell3-art.svg"
-              alt="Shell art"
-              width={130}
-              height={130}
-              className="w-32 -rotate-6 opacity-95"
-            />
-            <Image
-              src="/assets/svg/jellyfish-art.svg"
-              alt="Jellyfish art"
-              width={100}
-              height={110}
-              className="absolute -top-10 left-20 w-24 rotate-3 opacity-90"
-            />
-          </div>
-        </div>
-      </div>
+      <MainSectionDecorations />
 
       <div className="container mx-auto px-6 md:px-12 relative z-10">
         <div className="max-w-6xl mx-auto">
