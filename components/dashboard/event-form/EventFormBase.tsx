@@ -80,6 +80,13 @@ const EventFormBase = ({
             errors={errors}
           />
 
+          {/* Discount fields directly after pricing for clear price preview */}
+          <EventDiscountFields
+            formData={formData}
+            actions={actions}
+            errors={errors}
+          />
+
           <EventImageUpload
             formData={formData}
             actions={actions}
@@ -94,12 +101,6 @@ const EventFormBase = ({
           />
 
           <EventOptionsFields
-            formData={formData}
-            actions={actions}
-            errors={errors}
-          />
-
-          <EventDiscountFields
             formData={formData}
             actions={actions}
             errors={errors}

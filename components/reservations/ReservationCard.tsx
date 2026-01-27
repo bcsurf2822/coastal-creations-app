@@ -66,11 +66,12 @@ const ImageContainer = styled("div")({
 const StyledImage = styled(Image, {
   shouldForwardProp: (prop) => prop !== "isPlaceholder",
 })<{ isPlaceholder?: boolean }>(({ isPlaceholder }) => ({
-  objectFit: isPlaceholder ? "contain" : "cover",
+  objectFit: "contain",
   transition: "all 0.3s ease",
-  padding: isPlaceholder ? "1rem" : "0",
+  padding: isPlaceholder ? "1rem" : "0.5rem",
+  backgroundColor: isPlaceholder ? "transparent" : "#f8fafc",
   "&:hover": {
-    transform: "scale(1.05)",
+    transform: "scale(1.02)",
   },
 }));
 

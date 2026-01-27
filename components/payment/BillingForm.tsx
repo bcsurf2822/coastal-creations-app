@@ -59,6 +59,7 @@ interface BillingFormProps {
     };
   };
   currentParticipantCount: number;
+  isFreeEvent?: boolean;
 }
 
 const BillingForm: React.FC<BillingFormProps> = ({
@@ -75,6 +76,7 @@ const BillingForm: React.FC<BillingFormProps> = ({
   totalPrice,
   originalPrice,
   discountInfo,
+  isFreeEvent = false,
 }) => {
   // Helper functions
   const isDiscountActive = (): boolean => {
@@ -146,21 +148,38 @@ const BillingForm: React.FC<BillingFormProps> = ({
   return (
     <div className="mb-10">
       <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6 mr-2"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-          />
-        </svg>
-        Billing Information
+        {isFreeEvent ? (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6 mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+            />
+          </svg>
+        ) : (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6 mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+            />
+          </svg>
+        )}
+        {isFreeEvent ? "Contact Information" : "Billing Information"}
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

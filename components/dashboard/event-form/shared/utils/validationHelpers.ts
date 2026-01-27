@@ -63,7 +63,8 @@ export const validateEventForm = (
 
   // Event type specific validations
   if (formData.eventType !== "artist") {
-    if (!formData.price || formData.price <= 0) {
+    // Only require price > 0 if event is not free
+    if (!formData.isFree && (!formData.price || formData.price <= 0)) {
       newErrors.price = "Price is required and must be greater than 0";
     }
 

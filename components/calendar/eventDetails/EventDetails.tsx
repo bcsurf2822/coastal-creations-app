@@ -20,7 +20,7 @@ import {
 } from "@mui/material";
 import { Description, Settings } from "@mui/icons-material";
 import { motion } from "motion/react";
-import { FaCalendarAlt, FaClock, FaInstagram } from "react-icons/fa";
+import { FaCalendarAlt, FaClock, FaInstagram, FaGift } from "react-icons/fa";
 import { useEvent, useEventPictures } from "@/hooks/queries";
 
 
@@ -562,8 +562,21 @@ export default function EventDetails({
                 )}
 
                 {/* Price Display - Don't show for artist events */}
-                {eventData.price !== undefined && eventData.eventType !== "artist" && (
-                  <PriceDisplay>${eventData.price}</PriceDisplay>
+                {eventData.eventType !== "artist" && (
+                  eventData.isFree || eventData.price === 0 ? (
+                    <InfoSection elevation={0} style={{ marginBottom: "0" }}>
+                      <InfoItem>
+                        <InfoIcon style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)" }}>
+                          <FaGift />
+                        </InfoIcon>
+                        <InfoText style={{ fontSize: "1rem", color: "#22c55e" }}>
+                          Free Event - No Payment Required
+                        </InfoText>
+                      </InfoItem>
+                    </InfoSection>
+                  ) : eventData.price !== undefined ? (
+                    <PriceDisplay>${eventData.price}</PriceDisplay>
+                  ) : null
                 )}
 
                 {/* Registration Button - Don't show for artist events */}
@@ -573,7 +586,9 @@ export default function EventDetails({
                       href={`/payments?eventId=${encodeURIComponent(
                         eventData._id
                       )}&eventTitle=${encodeURIComponent(eventData.eventName)}${
-                        eventData.price !== undefined
+                        eventData.isFree || eventData.price === 0
+                          ? `&price=0&isFree=true`
+                          : eventData.price !== undefined
                           ? `&price=${encodeURIComponent(eventData.price)}`
                           : ""
                       }`}

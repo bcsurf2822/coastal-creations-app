@@ -106,6 +106,10 @@ export default function Payment() {
   const eventTitle = searchParams.get("eventTitle") || "";
   const eventPrice = searchParams.get("price") || "";
   const isPrivateEvent = searchParams.get("isPrivateEvent") === "true";
+  const isFreeEvent = searchParams.get("isFree") === "true" || eventPrice === "0";
+
+  // State for free event registration
+  const [isProcessingFreeRegistration, setIsProcessingFreeRegistration] = useState(false);
 
   const [formattedPrice, setFormattedPrice] = useState<string>("");
   const [isPriceAvailable, setIsPriceAvailable] = useState<boolean>(true);
@@ -352,6 +356,132 @@ export default function Payment() {
     queryParams.set("totalPrice", totalPrice);
 
     router.push(`/payment-success?${queryParams.toString()}`);
+  };
+
+  // Handle free event registration (no payment needed)
+  const handleFreeRegistration = async (): Promise<void> => {
+    // Validate form before proceeding
+    const isContactProvided =
+      billingDetails.email.trim() !== "" ||
+      billingDetails.phoneNumber.trim() !== "";
+
+    const areRequiredFieldsFilled =
+      billingDetails.givenName.trim() !== "" &&
+      billingDetails.familyName.trim() !== "" &&
+      billingDetails.addressLine1.trim() !== "" &&
+      billingDetails.city.trim() !== "" &&
+      billingDetails.state.trim() !== "" &&
+      billingDetails.postalCode.trim() !== "" &&
+      isContactProvided;
+
+    const participantError = getParticipantValidationError();
+
+    if (!areRequiredFieldsFilled) {
+      setError(
+        "Please fill in all required fields. Either email or phone number must be provided."
+      );
+      return;
+    }
+
+    if (participantError) {
+      setError(participantError);
+      return;
+    }
+
+    setIsProcessingFreeRegistration(true);
+    setError("");
+
+    try {
+      // Step 1: Create or find Square customer (for record keeping)
+      let squareCustomerId: string | undefined;
+      try {
+        const customerResponse = await fetch("/api/square/customers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            firstName: billingDetails.givenName,
+            lastName: billingDetails.familyName,
+            email: billingDetails.email || undefined,
+            phone: billingDetails.phoneNumber || undefined,
+            address: {
+              addressLine1: billingDetails.addressLine1,
+              addressLine2: billingDetails.addressLine2,
+              city: billingDetails.city,
+              state: billingDetails.state,
+              postalCode: billingDetails.postalCode,
+              country: billingDetails.countryCode,
+            },
+          }),
+        });
+
+        if (customerResponse.ok) {
+          const customerData = await customerResponse.json();
+          squareCustomerId = customerData.data?.customerId;
+          console.log(
+            "[PAYMENT-handleFreeRegistration] Square customer:",
+            squareCustomerId
+          );
+        }
+      } catch (customerError) {
+        console.error(
+          "[PAYMENT-handleFreeRegistration] Failed to create Square customer:",
+          customerError
+        );
+      }
+
+      // Step 2: Create customer/booking record
+      const customerData = await submitCustomerDetails(
+        "0.00",
+        "FREE-EVENT",
+        squareCustomerId
+      );
+
+      if (!customerData || !customerData.data || !customerData.data._id) {
+        throw new Error("Failed to create booking record");
+      }
+
+      // Step 3: Send confirmation email
+      try {
+        await fetch("/api/send-confirmation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customerId: customerData.data._id,
+            eventId: eventId,
+          }),
+        });
+      } catch (emailError) {
+        console.error("[PAYMENT-handleFreeRegistration] Error sending confirmation email:", emailError);
+      }
+
+      // Step 4: Redirect to success page
+      const queryParams = new URLSearchParams();
+      queryParams.set("paymentId", "FREE-EVENT");
+      queryParams.set("status", "COMPLETED");
+      queryParams.set("firstName", billingDetails.givenName);
+      queryParams.set("lastName", billingDetails.familyName);
+      queryParams.set("eventTitle", eventTitle || "");
+      queryParams.set("eventId", eventId || "");
+      queryParams.set("amount", "0");
+      queryParams.set("currency", "USD");
+      queryParams.set("paymentMethod", "free");
+
+      if (billingDetails.email) {
+        queryParams.set("email", billingDetails.email);
+      }
+      if (billingDetails.phoneNumber) {
+        queryParams.set("phone", billingDetails.phoneNumber);
+      }
+      queryParams.set("numberOfPeople", billingDetails.numberOfPeople.toString());
+      queryParams.set("totalPrice", "0.00");
+
+      router.push(`/payment-success?${queryParams.toString()}`);
+    } catch (err) {
+      console.error("[PAYMENT-handleFreeRegistration] Error:", err);
+      setError("Failed to complete registration. Please try again.");
+    } finally {
+      setIsProcessingFreeRegistration(false);
+    }
   };
 
   const handleSubmitPayment = async (
@@ -934,27 +1064,76 @@ export default function Payment() {
                 originalPrice={eventPrice}
                 discountInfo={discountInfo}
                 currentParticipantCount={currentParticipantCount}
+                isFreeEvent={isFreeEvent}
               />
 
-              <PaymentProcessor
-                error={error}
-                setError={setError}
-                isLoaded={isLoaded}
-                config={config}
-                formValid={formValid}
-                billingDetails={billingDetails}
-                eventId={eventId}
-                eventTitle={eventTitle}
-                totalPrice={totalPrice}
-                submitPayment={handleSubmitPayment}
-                router={router}
-                participants={participants}
-                getParticipantValidationError={getParticipantValidationError}
-                enableGiftCards={true}
-                appliedGiftCard={appliedGiftCard}
-                onGiftCardApplied={setAppliedGiftCard}
-                onOrderComplete={handleGiftCardOnlyOrder}
-              />
+              {isFreeEvent ? (
+                <div className="mb-8">
+                  {error && (
+                    <div
+                      className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6"
+                      role="alert"
+                    >
+                      <strong className="font-bold">Error: </strong>
+                      <span className="block sm:inline">{error}</span>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleFreeRegistration}
+                    disabled={!formValid || isProcessingFreeRegistration}
+                    className="w-full bg-gradient-to-r from-sky-700 to-sky-600 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:from-sky-800 hover:to-sky-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center cursor-pointer"
+                  >
+                    {isProcessingFreeRegistration ? (
+                      <>
+                        <svg
+                          className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Processing...
+                      </>
+                    ) : (
+                      "Register for Event"
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <PaymentProcessor
+                  error={error}
+                  setError={setError}
+                  isLoaded={isLoaded}
+                  config={config}
+                  formValid={formValid}
+                  billingDetails={billingDetails}
+                  eventId={eventId}
+                  eventTitle={eventTitle}
+                  totalPrice={totalPrice}
+                  submitPayment={handleSubmitPayment}
+                  router={router}
+                  participants={participants}
+                  getParticipantValidationError={getParticipantValidationError}
+                  enableGiftCards={true}
+                  appliedGiftCard={appliedGiftCard}
+                  onGiftCardApplied={setAppliedGiftCard}
+                  onOrderComplete={handleGiftCardOnlyOrder}
+                />
+              )}
             </div>
           ) : (
             <div className="p-10 text-center">

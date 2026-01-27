@@ -10,7 +10,12 @@ interface AddButtonProps {
 export default function AddButton({ href, label }: AddButtonProps) {
   return (
     <Link href={href}>
-      <Button variant="primary" size="md" leftIcon={<RiAddLine className="w-5 h-5" />}>
+      <Button
+        variant="primary"
+        size="md"
+        className="cursor-pointer"
+        leftIcon={<RiAddLine className="w-5 h-5" />}
+      >
         {label}
       </Button>
     </Link>
