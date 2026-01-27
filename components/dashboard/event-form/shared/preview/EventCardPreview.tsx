@@ -227,11 +227,12 @@ const OptionChips = styled("div")({
 
 const StyledImage = styled(Image)({
   borderRadius: "12px",
-  objectFit: "cover",
+  objectFit: "contain",
   width: "100%",
   height: "auto",
   aspectRatio: "4/3",
   transition: "all 0.3s ease",
+  backgroundColor: "#f8fafc",
   "@media (max-width: 600px)": {
     maxHeight: "90px",
   },

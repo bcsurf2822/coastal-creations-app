@@ -71,6 +71,13 @@ const ReservationFormBase = ({
             errors={errors}
           />
 
+          {/* Discount fields directly after pricing for clear price preview */}
+          <ReservationDiscountFields
+            formData={formData}
+            actions={actions}
+            errors={errors}
+          />
+
           {/* <ReservationImageUpload
             formData={formData}
             actions={actions}
@@ -79,12 +86,6 @@ const ReservationFormBase = ({
           /> */}
 
           <ReservationOptionsFields
-            formData={formData}
-            actions={actions}
-            errors={errors}
-          />
-
-          <ReservationDiscountFields
             formData={formData}
             actions={actions}
             errors={errors}

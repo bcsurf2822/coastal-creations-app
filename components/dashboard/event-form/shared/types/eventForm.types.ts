@@ -19,6 +19,7 @@ export interface EventFormState {
   eventName: string;
   eventType: "adult-class" | "kid-class" | "event" | "camp" | "artist";
   description: string;
+  isFree: boolean;
   price?: number;
   numberOfParticipants?: number;
   startDate: string;

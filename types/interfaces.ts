@@ -26,6 +26,7 @@ export interface ApiEvent {
   eventName: string;
   eventType: string;
   description: string;
+  isFree?: boolean;
   price: number;
   numberOfParticipants?: number;
   dates: {

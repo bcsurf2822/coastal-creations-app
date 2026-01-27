@@ -40,6 +40,7 @@ export interface UniversalEventData {
   eventName: string;
   eventType: string;
   description: string;
+  isFree?: boolean;
   price?: number;
   numberOfParticipants?: number;
   dates: EventDates;
@@ -153,12 +154,13 @@ const ImageContainer = styled("div")<{ layout?: "horizontal" | "vertical" }>(
 const StyledImage = styled(Image, {
   shouldForwardProp: (prop) => prop !== "isPlaceholder",
 })<{ isPlaceholder?: boolean }>(({ isPlaceholder }) => ({
-  objectFit: isPlaceholder ? "contain" : "cover",
+  objectFit: "contain",
   transition: "all 0.3s ease",
   borderRadius: "12px",
-  padding: isPlaceholder ? "1rem" : "0",
+  padding: isPlaceholder ? "1rem" : "0.5rem",
+  backgroundColor: isPlaceholder ? "transparent" : "#f8fafc",
   "&:hover": {
-    transform: "scale(1.05)",
+    transform: "scale(1.02)",
   },
 }));
 
@@ -397,7 +399,7 @@ const InstagramIcon = styled("div")({
   },
 });
 
-const PLACEHOLDER_IMAGE = "/assets/logos/coastalLogoFull.png";
+const PLACEHOLDER_IMAGE = "/assets/images/flowerPainting.jpeg";
 
 const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
   event,
@@ -491,8 +493,12 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
             {badge.icon && <badge.icon />}
             {badge.text}
           </Badge>
-        ) : showPrice && event.price !== undefined && !isArtistEvent ? (
-          <PriceTag>${event.price}</PriceTag>
+        ) : showPrice && !isArtistEvent ? (
+          event.isFree || event.price === 0 ? (
+            <PriceTag background="linear-gradient(135deg, #22c55e, #16a34a)">Free</PriceTag>
+          ) : event.price !== undefined ? (
+            <PriceTag>${event.price}</PriceTag>
+          ) : null
         ) : null}
 
         {/* Image Section */}

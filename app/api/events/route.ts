@@ -15,19 +15,25 @@ const LOCAL_TIMEZONE = "America/New_York";
 function isEventPast(event: any): boolean {
   const now = dayjs().tz(LOCAL_TIMEZONE);
 
+  // Use endTime if available, otherwise fall back to startTime
+  const timeString = event.time.endTime || event.time.startTime;
+  if (!timeString) {
+    // If no time info available, can't determine if past - assume not past
+    return false;
+  }
+  const [hours, minutes] = timeString.split(":");
+
   // For recurring events, check if the recurring end date has passed
   if (event.dates.isRecurring && event.dates.recurringEndDate) {
     // Parse end date in local timezone
     const recurringEndDate = dayjs.tz(event.dates.recurringEndDate, LOCAL_TIMEZONE);
     // Add the end time to get the full end datetime
-    const [hours, minutes] = event.time.endTime.split(":");
     const endDateTime = recurringEndDate.hour(parseInt(hours)).minute(parseInt(minutes));
     return now.isAfter(endDateTime);
   }
 
   // For single events, check if the event date + end time has passed
   const eventDate = dayjs.tz(event.dates.startDate, LOCAL_TIMEZONE);
-  const [hours, minutes] = event.time.endTime.split(":");
   const endDateTime = eventDate.hour(parseInt(hours)).minute(parseInt(minutes));
 
   return now.isAfter(endDateTime);

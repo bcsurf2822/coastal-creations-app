@@ -13,6 +13,7 @@ export interface IEvent extends Document {
   eventName: string;
   eventType: "adult-class" | "kid-class" | "event" | "camp" | "artist" | "class" | "workshop"; // Temporarily allow old values
   description: string;
+  isFree?: boolean;
   price?: number;
   numberOfParticipants?: number;
   dates: {
@@ -190,6 +191,10 @@ const EventSchema = new Schema<IEvent>(
     description: {
       type: String,
       required: true,
+    },
+    isFree: {
+      type: Boolean,
+      default: false,
     },
     price: {
       type: Number,

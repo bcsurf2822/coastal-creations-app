@@ -45,6 +45,7 @@ export const useEventData = (eventId: string | null): UseEventDataReturn => {
           eventName: event.eventName || "",
           eventType: event.eventType || "class",
           description: event.description || "",
+          isFree: event.isFree || false,
           price: event.price,
           numberOfParticipants: event.numberOfParticipants,
           startDate: event.dates?.startDate
