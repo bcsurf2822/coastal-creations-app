@@ -29,7 +29,7 @@ export default function SummerCampsPage() {
         <EventsContainer
           config={{
             title: "",
-            sectionTitle: "Upcoming Art Camps",
+            sectionTitle: "",
             eventTypeFilter: (eventType) => eventType === "camp",
             layout: "grid",
             gridColumns: {

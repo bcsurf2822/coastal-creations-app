@@ -24,9 +24,10 @@ export default function ConditionalLayout({
   return (
     <>
       <NavBar />
-      <div className="relative pt-32 md:pt-56">
-        <div className="absolute inset-0 bg-gradient-to-r from-[#b6dce6] via-[#BEDCDC] to-[#daebeb] z-10"></div>
-        <div className="relative z-20">{children}</div>
+      <div className="pt-32 md:pt-56">
+        <div className="bg-gradient-to-r from-[#b6dce6] via-[#BEDCDC] to-[#daebeb]">
+          {children}
+        </div>
       </div>
       <Footer />
     </>

@@ -380,16 +380,6 @@ const PrivateEvents = () => {
 
   return (
     <StyledContainer>
-      <Title>
-        <TitleIcon>
-          <FaBirthdayCake />
-        </TitleIcon>
-        Private Events
-        <TitleIcon>
-          <GiBalloons />
-        </TitleIcon>
-      </Title>
-
       <GridContainer>
         {privateEvents.map((privateEvent, index) => {
           const IconComponent = getRandomIcon(index);
@@ -421,7 +411,7 @@ const PrivateEvents = () => {
                 </FloatingIcon>
 
                 <PriceTag>
-                  <FaGift />${privateEvent.price}
+                  <FaGift />${privateEvent.price}/per person
                 </PriceTag>
 
                 <CardContent>

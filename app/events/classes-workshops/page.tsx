@@ -21,7 +21,7 @@ export default function AllEventsPage() {
         <EventsContainer
           config={{
             title: "",
-            sectionTitle: "All Upcoming Events",
+            sectionTitle: "",
             eventTypeFilter: () => {
               return true;
             },

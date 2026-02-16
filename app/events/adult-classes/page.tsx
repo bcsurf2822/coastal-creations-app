@@ -30,7 +30,7 @@ export default function AdultClassesPage() {
         <EventsContainer
           config={{
             title: "",
-            sectionTitle: "Upcoming Adult Workshops",
+            sectionTitle: "",
             eventTypeFilter: (eventType) => {
               return eventType === "adult-class";
             },
