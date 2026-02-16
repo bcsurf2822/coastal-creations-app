@@ -39,34 +39,6 @@ const StyledContainer = styled(Container)({
   fontFamily: "var(--font-montserrat)",
 });
 
-const Title = styled("h1")({
-  fontSize: "2.75rem",
-  fontWeight: "bold",
-  textAlign: "center",
-  marginBottom: "3rem",
-  color: "#326C85", // Updated title color
-  position: "relative",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "1rem",
-  "@media (max-width: 600px)": {
-    fontSize: "2rem",
-    flexDirection: "column",
-    gap: "0.5rem",
-  },
-});
-
-const TitleIcon = styled("div")({
-  fontSize: "3rem",
-  color: "#326C85",
-  animation: "bounce 2s ease-in-out infinite",
-  "@keyframes bounce": {
-    "0%, 20%, 50%, 80%, 100%": { transform: "translateY(0)" },
-    "40%": { transform: "translateY(-10px)" },
-    "60%": { transform: "translateY(-5px)" },
-  },
-});
 
 const PriceTag = styled("div")({
   display: "inline-flex",
