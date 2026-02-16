@@ -1,9 +1,47 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
+import { useEvents } from "@/hooks/queries";
+
+interface ClassDropdownItem {
+  href: string;
+  label: string;
+  matchTypes: string[];
+  isAllEvents?: boolean;
+}
+
+const CLASS_CATEGORY_ITEMS: ClassDropdownItem[] = [
+  {
+    href: "/events/adult-classes",
+    label: "Adult Classes",
+    matchTypes: ["adult-class", "class", "workshop"],
+  },
+  {
+    href: "/events/kid-classes",
+    label: "Kid Classes",
+    matchTypes: ["kid-class"],
+  },
+  {
+    href: "/events/events",
+    label: "Events",
+    matchTypes: ["event", "artist"],
+  },
+  {
+    href: "/events/camps",
+    label: "Camps",
+    matchTypes: ["camp"],
+  },
+];
+
+const ALL_EVENTS_ITEM: ClassDropdownItem = {
+  href: "/events/classes-workshops",
+  label: "All Events",
+  matchTypes: [],
+  isAllEvents: true,
+};
 
 export default function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -11,6 +49,25 @@ export default function NavBar() {
   const [hideNavbar, setHideNavbar] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
   const navRef = useRef<HTMLElement>(null);
+  const { data: eventsData = [], isLoading: isEventsLoading } = useEvents();
+
+  const classDropdownItems = useMemo((): ClassDropdownItem[] => {
+    if (!eventsData.length) {
+      return [];
+    }
+
+    const availableTypes = new Set(
+      eventsData.map((event) => event.eventType.toLowerCase())
+    );
+
+    const availableCategories = CLASS_CATEGORY_ITEMS.filter((item) =>
+      item.matchTypes.some((type) => availableTypes.has(type))
+    );
+
+    return [...availableCategories, ALL_EVENTS_ITEM];
+  }, [eventsData]);
+
+  const hasClassItems = classDropdownItems.length > 0;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -144,11 +201,11 @@ export default function NavBar() {
       }}
       transition={{ duration: 0.3 }}
     >
-      <div className="container mx-auto px-6 md:px-12">
+      <div className="container mx-auto px-6 lg:px-8 xl:px-12">
         <div className="flex justify-between items-center py-1">
           {/* Left Navigation */}
           <motion.nav
-            className="hidden md:flex items-center justify-center space-x-10 h-full"
+            className="hidden lg:flex items-center justify-center lg:space-x-3 xl:space-x-6 2xl:space-x-10 h-full flex-1"
             variants={navVariants}
             initial="hidden"
             animate="visible"
@@ -156,7 +213,7 @@ export default function NavBar() {
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
                 Home
               </Link>
@@ -167,65 +224,58 @@ export default function NavBar() {
               whileHover="hover"
               className="relative group"
             >
-              <div className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold uppercase flex items-center gap-1 cursor-pointer">
-                Classes
-                <motion.svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="transition-transform duration-200 group-hover:rotate-180"
-                >
-                  <polyline points="6,9 12,15 18,9"></polyline>
-                </motion.svg>
-              </div>
-
-              {/* Desktop Dropdown */}
-              <div className="absolute top-full left-0 mt-2 w-56 bg-white/95 backdrop-blur-sm border border-gray-100 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
-                <div className="py-2">
-                  <Link
-                    href="/events/adult-classes"
-                    className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
+                <div className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase flex items-center gap-1 cursor-pointer">
+                  Classes
+                  <motion.svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="transition-transform duration-200 group-hover:rotate-180"
                   >
-                    Adult Classes
-                  </Link>
-                  <Link
-                    href="/events/kid-classes"
-                    className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
-                  >
-                    Kid Classes
-                  </Link>
-                  <Link
-                    href="/events/events"
-                    className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
-                  >
-                    Events
-                  </Link>
-                  <Link
-                    href="/events/camps"
-                    className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium"
-                  >
-                    Camps
-                  </Link>
-                  <Link
-                    href="/events/classes-workshops"
-                    className="block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 font-medium border-t border-gray-100"
-                  >
-                    All Events
-                  </Link>
+                    <polyline points="6,9 12,15 18,9"></polyline>
+                  </motion.svg>
                 </div>
-              </div>
-            </motion.div>
+
+                {/* Desktop Dropdown */}
+                <div className="absolute top-full left-0 mt-2 w-56 bg-white/95 backdrop-blur-sm border border-gray-100 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+                  <div className="py-2">
+                    {isEventsLoading ? (
+                      <div className="px-4 py-3 text-sm text-[#475569]">
+                        Loading classes...
+                      </div>
+                    ) : hasClassItems ? (
+                      classDropdownItems.map((item) => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          className={`block px-4 py-3 text-[#0f172a] hover:text-[#0369a1] hover:bg-gray-50 transition-colors duration-200 ${
+                            item.isAllEvents
+                              ? "font-semibold border-t border-gray-100"
+                              : "font-medium"
+                          }`}
+                        >
+                          {item.label}
+                        </Link>
+                      ))
+                    ) : (
+                      <div className="px-4 py-3 text-sm text-[#475569]">
+                        Sorry, no classes available at this time.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
 
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/calendar"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
                 Calendar
               </Link>
@@ -234,7 +284,7 @@ export default function NavBar() {
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/events/private-events"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
                 Private Events
               </Link>
@@ -242,9 +292,9 @@ export default function NavBar() {
           </motion.nav>
 
           {/* Logo */}
-          <div className="flex items-center relative">
+          <div className="flex items-center relative flex-shrink-0">
             <motion.div
-              className="relative w-48 h-32 md:w-96 -mt-2 -mb-5 ml-10 md:ml-0 md:h-56 md:-mt-2 md:-mb-5"
+              className="relative w-48 h-32 lg:w-56 lg:h-40 xl:w-72 xl:h-48 2xl:w-96 2xl:h-56 -mt-2 -mb-5 ml-10 lg:ml-0"
               variants={logoVariants}
               initial="initial"
               animate="animate"
@@ -264,7 +314,7 @@ export default function NavBar() {
 
           {/* Right Navigation */}
           <motion.nav
-            className="hidden md:flex items-center justify-center space-x-10 h-full"
+            className="hidden lg:flex items-center justify-center lg:space-x-3 xl:space-x-6 2xl:space-x-10 h-full flex-1"
             variants={navVariants}
             initial="hidden"
             animate="visible"
@@ -272,7 +322,7 @@ export default function NavBar() {
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/reservations"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
                 Reservations
               </Link>
@@ -281,7 +331,7 @@ export default function NavBar() {
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/gallery"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
                 Gallery
               </Link>
@@ -290,7 +340,7 @@ export default function NavBar() {
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/about"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
                 About
               </Link>
@@ -299,7 +349,7 @@ export default function NavBar() {
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/contact-us"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
                 Contact
               </Link>
@@ -308,7 +358,7 @@ export default function NavBar() {
 
           {/* Mobile Menu Button */}
           <motion.button
-            className="md:hidden flex items-center"
+            className="lg:hidden flex items-center"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Toggle menu"
             whileTap={{ scale: 0.9 }}
@@ -357,7 +407,7 @@ export default function NavBar() {
         <AnimatePresence>
           {isMenuOpen && (
             <motion.div
-              className="md:hidden pt-4 pb-2 overflow-hidden"
+              className="lg:hidden pt-4 pb-2 overflow-hidden"
               variants={mobileMenuVariants}
               initial="hidden"
               animate="visible"
@@ -387,105 +437,82 @@ export default function NavBar() {
                   whileHover="hover"
                   className="border-b border-gray-100 pb-2"
                 >
-                  <button
-                    className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block w-full text-left flex items-center justify-between uppercase"
-                    onClick={() =>
-                      setIsClassesDropdownOpen(!isClassesDropdownOpen)
-                    }
-                  >
-                    Classes
-                    <motion.svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      animate={{ rotate: isClassesDropdownOpen ? 180 : 0 }}
-                      transition={{ duration: 0.2 }}
+                    <button
+                      className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block w-full text-left flex items-center justify-between uppercase"
+                      onClick={() =>
+                        setIsClassesDropdownOpen(!isClassesDropdownOpen)
+                      }
                     >
-                      <polyline points="6,9 12,15 18,9"></polyline>
-                    </motion.svg>
-                  </button>
-                  <AnimatePresence>
-                    {isClassesDropdownOpen && (
-                      <motion.div
-                        className="ml-4 mt-2 overflow-hidden"
-                        variants={dropdownVariants}
-                        initial="hidden"
-                        animate="visible"
-                        exit="hidden"
+                      Classes
+                      <motion.svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        animate={{ rotate: isClassesDropdownOpen ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
                       >
-                        <motion.div variants={itemVariants} className="py-1">
-                          <Link
-                            href="/events/adult-classes"
-                            className="text-[#0f172a] hover:text-[#0369a1] font-normal py-1 block text-sm"
-                            onClick={() => {
-                              setIsMenuOpen(false);
-                              setIsClassesDropdownOpen(false);
-                            }}
-                          >
-                            Adult Classes
-                          </Link>
-                        </motion.div>
-                        <motion.div variants={itemVariants} className="py-1">
-                          <Link
-                            href="/events/kid-classes"
-                            className="text-[#0f172a] hover:text-[#0369a1] font-normal py-1 block text-sm"
-                            onClick={() => {
-                              setIsMenuOpen(false);
-                              setIsClassesDropdownOpen(false);
-                            }}
-                          >
-                            Kid Classes
-                          </Link>
-                        </motion.div>
-                        <motion.div variants={itemVariants} className="py-1">
-                          <Link
-                            href="/events/events"
-                            className="text-[#0f172a] hover:text-[#0369a1] font-normal py-1 block text-sm"
-                            onClick={() => {
-                              setIsMenuOpen(false);
-                              setIsClassesDropdownOpen(false);
-                            }}
-                          >
-                            Events
-                          </Link>
-                        </motion.div>
-                        <motion.div variants={itemVariants} className="py-1">
-                          <Link
-                            href="/events/camps"
-                            className="text-[#0f172a] hover:text-[#0369a1] font-normal py-1 block text-sm"
-                            onClick={() => {
-                              setIsMenuOpen(false);
-                              setIsClassesDropdownOpen(false);
-                            }}
-                          >
-                            Camps
-                          </Link>
-                        </motion.div>
+                        <polyline points="6,9 12,15 18,9"></polyline>
+                      </motion.svg>
+                    </button>
+                    <AnimatePresence>
+                      {isClassesDropdownOpen && (
                         <motion.div
-                          variants={itemVariants}
-                          className="py-1 border-t border-gray-100 pt-2 mt-2"
+                          className="ml-4 mt-2 overflow-hidden"
+                          variants={dropdownVariants}
+                          initial="hidden"
+                          animate="visible"
+                          exit="hidden"
                         >
-                          <Link
-                            href="/events/classes-workshops"
-                            className="text-[#0f172a] hover:text-[#0369a1] font-semibold py-1 block text-sm"
-                            onClick={() => {
-                              setIsMenuOpen(false);
-                              setIsClassesDropdownOpen(false);
-                            }}
-                          >
-                            All Events
-                          </Link>
+                          {isEventsLoading ? (
+                            <motion.div variants={itemVariants} className="py-1">
+                              <div className="py-1 text-sm text-[#475569]">
+                                Loading classes...
+                              </div>
+                            </motion.div>
+                          ) : hasClassItems ? (
+                            classDropdownItems.map((item) => (
+                              <motion.div
+                                key={item.href}
+                                variants={itemVariants}
+                                className={`py-1 ${
+                                  item.isAllEvents
+                                    ? "border-t border-gray-100 pt-2 mt-2"
+                                    : ""
+                                }`}
+                              >
+                                <Link
+                                  href={item.href}
+                                  className={`text-[#0f172a] hover:text-[#0369a1] py-1 block text-sm ${
+                                    item.isAllEvents
+                                      ? "font-semibold"
+                                      : "font-normal"
+                                  }`}
+                                  onClick={() => {
+                                    setIsMenuOpen(false);
+                                    setIsClassesDropdownOpen(false);
+                                  }}
+                                >
+                                  {item.label}
+                                </Link>
+                              </motion.div>
+                            ))
+                          ) : (
+                            <motion.div variants={itemVariants} className="py-1">
+                              <div className="py-1 text-sm text-[#475569]">
+                                Sorry, no classes available at this time.
+                              </div>
+                            </motion.div>
+                          )}
                         </motion.div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
                 <motion.div
                   variants={itemVariants}
                   whileHover="hover"

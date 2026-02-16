@@ -17,12 +17,13 @@ export default function About() {
     <div className="container mx-auto px-6 md:px-12 py-16 md:py-24">
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          <div className="relative w-full h-[550px] md:h-[750px] rounded-3xl overflow-hidden shadow-xl ">
+          <div className="relative w-full flex items-center justify-center">
             <Image
-              src="/assets/images/ashley_about.jpeg"
-              alt="Laura Epsom"
-              fill
-              className="object-cover object-center"
+              src="/assets/svg/ashley-rigid-bg.svg"
+              alt="Ashley at Coastal Creations Studio"
+              width={600}
+              height={750}
+              className="w-full h-auto"
               priority
             />
           </div>

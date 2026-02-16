@@ -5,9 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, FormEvent, useEffect } from "react";
 import { motion } from "motion/react";
-import { Input, Button } from "@/components/ui";
 
-// Define type for hours data to match new schema
 type DayHours = {
   isClosed?: boolean;
   hours?: {
@@ -25,6 +23,26 @@ type HoursData = {
   saturday?: DayHours;
   sunday?: DayHours;
 };
+
+const DAYS = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+] as const;
+
+const NAV_LINKS = [
+  { href: "/", label: "Home" },
+  { href: "/events/classes-workshops", label: "Classes" },
+  { href: "/calendar", label: "Calendar" },
+  { href: "/gallery", label: "Gallery" },
+  { href: "/blog", label: "Blog" },
+  { href: "/about", label: "About" },
+  { href: "/contact-us", label: "Contact" },
+];
 
 export default function Footer() {
   const [email, setEmail] = useState("");
@@ -58,7 +76,7 @@ export default function Footer() {
         const result = await response.json();
         setHoursData(result.data || result);
       } catch (error) {
-        console.error("Error fetching hours:", error);
+        console.error("[Footer-fetchHours] Error fetching hours:", error);
       } finally {
         setLoading(false);
       }
@@ -67,7 +85,7 @@ export default function Footer() {
     fetchHours();
   }, []);
 
-  const formatDayHours = (day: DayHours | undefined) => {
+  const formatDayHours = (day: DayHours | undefined): string => {
     if (!day || day.isClosed) {
       return "Closed";
     }
@@ -102,7 +120,10 @@ export default function Footer() {
         setMessage(data.error || "Something went wrong. Please try again.");
       }
     } catch (error: unknown) {
-      console.error("Newsletter subscription error:", error);
+      console.error(
+        "[Footer-handleSubscribe] Newsletter subscription error:",
+        error
+      );
       setMessage("An error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -110,13 +131,14 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-[var(--gradient-footer)] text-black py-8 border-t-4 border-[var(--color-border-light)] mt-auto">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row gap-8">
-          {/* Logo Container */}
-          <div className="md:w-1/4 flex flex-col items-center justify-center">
+    <footer className="mt-auto border-t border-gray-200 bg-[#f8f9fa] text-[var(--color-text-primary)]">
+      {/* Main footer content */}
+      <div className="container mx-auto px-6 py-12 lg:px-12">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Column 1: Logo + Social */}
+          <div className="flex flex-col items-center sm:items-start">
             <motion.div
-              className="relative w-80 h-80 flex items-center justify-center"
+              className="relative h-36 w-36 xl:h-40 xl:w-40"
               variants={logoVariants}
               initial="initial"
               animate="animate"
@@ -133,211 +155,138 @@ export default function Footer() {
               </Link>
             </motion.div>
 
-            {/* Social icons moved under logo */}
-            <div className="mt-4 flex space-x-6 justify-center">
+            <p className="mt-3 text-sm text-[var(--color-text-subtle)] text-center sm:text-left">
+              Ocean City&apos;s creative art studio for all ages.
+            </p>
+
+            <div className="mt-4 flex space-x-4">
               <Link
                 href="https://www.facebook.com/p/Coastal-Creations-Studio-61574989546371"
-                className="text-black hover:text-blue-700 transition-colors"
+                className="text-[var(--color-text-subtle)] hover:text-[var(--color-secondary)] transition-colors"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <FaFacebook size={32} />
+                <FaFacebook size={22} />
               </Link>
               <Link
                 href="https://www.instagram.com/coastalcreationsocnj/?igsh=MTZrMG5odHJ4bXZrZA%3D%3D"
-                className="text-black hover:text-pink-600 transition-colors"
+                className="text-[var(--color-text-subtle)] hover:text-[var(--color-secondary)] transition-colors"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <FaInstagram size={32} />
+                <FaInstagram size={22} />
               </Link>
             </div>
           </div>
 
-          {/* Information Sections Container */}
-          <div className="md:w-3/4 flex flex-col gap-6">
-            {/* Top Row: Hours and Contact */}
-            <div className="flex flex-col md:flex-row justify-between gap-8 h-full">
-              {/* Hours */}
-              <div className="bg-white bg-opacity-90 rounded-lg p-6 shadow-[4px_4px_10px_rgba(0,0,0,0.2)] md:w-[48%] border border-orange-200 flex flex-col h-full">
-                <h3 className="text-lg font-semibold mb-4 pb-2 border-b border-orange-200">
-                  Studio Hours
-                </h3>
-                {loading ? (
-                  <p>Loading hours...</p>
-                ) : (
-                  <ul className="space-y-4 text-black text-sm flex-grow flex flex-col justify-between py-2">
-                    <li className="flex justify-between">
-                      <span className="font-semibold">Monday:</span>
-                      <span>
-                        {hoursData
-                          ? formatDayHours(hoursData.monday)
-                          : "Not available"}
-                      </span>
-                    </li>
-                    <li className="flex justify-between">
-                      <span className="font-semibold">Tuesday:</span>
-                      <span>
-                        {hoursData
-                          ? formatDayHours(hoursData.tuesday)
-                          : "Not available"}
-                      </span>
-                    </li>
-                    <li className="flex justify-between">
-                      <span className="font-semibold">Wednesday:</span>
-                      <span>
-                        {hoursData
-                          ? formatDayHours(hoursData.wednesday)
-                          : "Not available"}
-                      </span>
-                    </li>
-                    <li className="flex justify-between">
-                      <span className="font-semibold">Thursday:</span>
-                      <span>
-                        {hoursData
-                          ? formatDayHours(hoursData.thursday)
-                          : "Not available"}
-                      </span>
-                    </li>
-                    <li className="flex justify-between">
-                      <span className="font-semibold">Friday:</span>
-                      <span>
-                        {hoursData
-                          ? formatDayHours(hoursData.friday)
-                          : "Not available"}
-                      </span>
-                    </li>
-                    <li className="flex justify-between">
-                      <span className="font-semibold">Saturday:</span>
-                      <span>
-                        {hoursData
-                          ? formatDayHours(hoursData.saturday)
-                          : "Not available"}
-                      </span>
-                    </li>
-                    <li className="flex justify-between">
-                      <span className="font-semibold">Sunday:</span>
-                      <span>
-                        {hoursData
-                          ? formatDayHours(hoursData.sunday)
-                          : "Not available"}
-                      </span>
-                    </li>
-                  </ul>
-                )}
+          {/* Column 2: Studio Hours */}
+          <div>
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--color-primary)]">
+              Studio Hours
+            </h3>
+            <div className="mb-4 h-px w-10 bg-[var(--color-accent)]" />
+            {loading ? (
+              <p className="text-sm text-[var(--color-text-subtle)]">
+                Loading hours...
+              </p>
+            ) : (
+              <ul className="space-y-2 text-sm">
+                {DAYS.map((day) => (
+                  <li key={day} className="flex justify-between gap-4">
+                    <span className="font-medium capitalize text-[var(--color-text-muted)]">
+                      {day}
+                    </span>
+                    <span className="text-[var(--color-text-subtle)]">
+                      {hoursData
+                        ? formatDayHours(hoursData[day])
+                        : "Not available"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {/* Column 3: Contact */}
+          <div>
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--color-primary)]">
+              Contact Us
+            </h3>
+            <div className="mb-4 h-px w-10 bg-[var(--color-accent)]" />
+            <div className="space-y-4 text-sm">
+              <div className="text-[var(--color-text-subtle)] leading-relaxed">
+                <p>411 E 8th Street</p>
+                <p>Ocean City, NJ 08226</p>
               </div>
-
-              {/* Contact & Social */}
-              <div className="bg-white bg-opacity-90 rounded-lg p-6 shadow-[4px_4px_10px_rgba(0,0,0,0.2)] md:w-[48%] border border-orange-200 flex flex-col h-full">
-                <h3 className="text-lg font-semibold mb-4 pb-2 border-b border-orange-200">
-                  Contact Us
-                </h3>
-                <div className="space-y-3 text-black">
-                  <p className="flex items-center">
-                    <span>411 E 8th Street</span>
-                  </p>
-                  <p>Ocean City, NJ 08226</p>
-
-                  <div>
-                    <p className="font-bold">Email:</p>
-                    <Link
-                      href={`mailto:${process.env.NEXT_PUBLIC_STUDIO_EMAIL || "info@coastalcreationsstudio.com"}`}
-                      className="hover:underline text-sm break-words"
-                    >
-                      {process.env.NEXT_PUBLIC_STUDIO_EMAIL || "info@coastalcreationsstudio.com"}
-                    </Link>
-                  </div>
-                </div>
-                <div className="mt-6 pt-4 border-t border-orange-200">
-                  <h3 className="text-lg font-semibold mb-2 text-center">
-                    Sign Up for our Newsletter
-                  </h3>
-
-                  <form
-                    className="flex flex-col gap-3"
-                    onSubmit={handleSubscribe}
-                  >
-                    <div className="flex-grow">
-                      <Input
-                        type="email"
-                        placeholder="Enter your email"
-                        className="h-10 text-sm"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      size="sm"
-                      isLoading={isSubmitting}
-                      className="w-full"
-                    >
-                      {isSubmitting ? "Subscribing..." : "Subscribe"}
-                    </Button>
-                  </form>
-                  {message && (
-                    <p
-                      className={`text-sm mt-2 text-center ${message.includes("error") || message.includes("wrong") ? "text-red-600" : "text-green-600"}`}
-                    >
-                      {message}
-                    </p>
-                  )}
-                </div>
+              <div>
+                <Link
+                  href={`mailto:${process.env.NEXT_PUBLIC_STUDIO_EMAIL || "info@coastalcreationsstudio.com"}`}
+                  className="text-[var(--color-secondary)] hover:underline transition-colors break-words"
+                >
+                  {process.env.NEXT_PUBLIC_STUDIO_EMAIL ||
+                    "info@coastalcreationsstudio.com"}
+                </Link>
               </div>
             </div>
           </div>
-        </div>
-        {/* Navigation Links */}
-        <nav className="mt-6 pt-4 border-t border-[var(--color-border-light)] flex flex-wrap justify-center gap-6 text-sm">
-          <Link
-            href="/"
-            className="text-black hover:text-[var(--color-secondary)] transition-colors font-medium uppercase"
-          >
-            Home
-          </Link>
-          <Link
-            href="/events/classes-workshops"
-            className="text-black hover:text-[var(--color-secondary)] transition-colors font-medium uppercase"
-          >
-            Classes
-          </Link>
-          <Link
-            href="/calendar"
-            className="text-black hover:text-[var(--color-secondary)] transition-colors font-medium uppercase"
-          >
-            Calendar
-          </Link>
-          <Link
-            href="/gallery"
-            className="text-black hover:text-[var(--color-secondary)] transition-colors font-medium uppercase"
-          >
-            Gallery
-          </Link>
-          <Link
-            href="/blog"
-            className="text-black hover:text-[var(--color-secondary)] transition-colors font-medium uppercase"
-          >
-            Blog
-          </Link>
-          <Link
-            href="/about"
-            className="text-black hover:text-[var(--color-secondary)] transition-colors font-medium uppercase"
-          >
-            About
-          </Link>
-          <Link
-            href="/contact-us"
-            className="text-black hover:text-[var(--color-secondary)] transition-colors font-medium uppercase"
-          >
-            Contact
-          </Link>
-        </nav>
 
-        <div className="mt-4 pt-4 border-t border-[var(--color-border-light)] text-center text-black text-sm">
-          <p>
-            &copy; {new Date().getFullYear()} Coastal Creation Studios. All
+          {/* Column 4: Newsletter */}
+          <div>
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--color-primary)]">
+              Newsletter
+            </h3>
+            <div className="mb-4 h-px w-10 bg-[var(--color-accent)]" />
+            <p className="mb-4 text-sm leading-relaxed text-[var(--color-text-subtle)]">
+              Sign up for updates on classes, events, and workshops.
+            </p>
+            <form className="flex flex-col gap-3" onSubmit={handleSubscribe}>
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm text-[var(--color-text-primary)] placeholder-gray-400 outline-none transition-colors focus:border-[var(--color-secondary)] focus:ring-1 focus:ring-[var(--color-secondary)]"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="h-10 rounded-lg bg-[var(--color-accent)] px-4 text-sm font-semibold text-white transition-colors hover:brightness-110 disabled:opacity-50"
+              >
+                {isSubmitting ? "Subscribing..." : "Subscribe"}
+              </button>
+            </form>
+            {message && (
+              <p
+                className={`mt-2 text-sm ${
+                  message.includes("error") || message.includes("wrong")
+                    ? "text-[var(--color-error)]"
+                    : "text-[var(--color-success-text)]"
+                }`}
+              >
+                {message}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom bar */}
+      <div className="border-t border-gray-200 bg-gray-100">
+        <div className="container mx-auto px-6 py-5 lg:px-12">
+          <nav className="mb-3 flex flex-wrap justify-center gap-x-6 gap-y-2">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-subtle)] transition-colors hover:text-[var(--color-secondary)]"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+          <p className="text-center text-xs text-[var(--color-text-subtle)]">
+            &copy; {new Date().getFullYear()} Coastal Creations Studio. All
             rights reserved.
           </p>
         </div>

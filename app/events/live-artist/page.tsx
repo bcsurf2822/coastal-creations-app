@@ -1,6 +1,7 @@
 "use client";
 
 import EventsContainer from "@/components/classes/EventsContainer";
+import PageHeader from "@/components/classes/PageHeader";
 import GalleryCarousel from "@/components/gallery/GalleryCarousel";
 import { FaPalette, FaUsers, FaEye } from "react-icons/fa";
 import { GiPaintBrush } from "react-icons/gi";
@@ -8,18 +9,20 @@ import { GiPaintBrush } from "react-icons/gi";
 export default function LiveArtistPage() {
   return (
     <>
+      <PageHeader
+        title="Live Artist Painting"
+        subtitle="Watch talented artists create beautiful works live. Observe the process, learn techniques, and get inspired."
+        variant="events"
+        leftIcon={<FaPalette />}
+        rightIcon={<GiPaintBrush />}
+      />
       <div className="mb-12">
         <GalleryCarousel destination="artist" title="Live Artist Gallery" height="h-96" />
       </div>
       <EventsContainer
         config={{
-          title: "Live Artist Painting",
-          titleIcons: {
-            left: <FaPalette />,
-            right: <GiPaintBrush />,
-          },
-          subtitle: "Watch talented artists create beautiful works live! Observe the creative process, learn new techniques, and be inspired by artistic mastery in action.",
-          sectionTitle: "Live Artist Events",
+          title: "",
+          sectionTitle: "",
           eventTypeFilter: (eventType) => eventType.toLowerCase() === "artist",
           eventSort: (a, b) => {
             const dateA = new Date(a.dates.startDate);

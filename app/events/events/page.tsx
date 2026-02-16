@@ -30,7 +30,7 @@ export default function EventsPage() {
         <EventsContainer
           config={{
             title: "",
-            sectionTitle: "Upcoming Events",
+            sectionTitle: "",
             eventTypeFilter: (eventType) => {
               return eventType === "event" || eventType === "artist";
             },

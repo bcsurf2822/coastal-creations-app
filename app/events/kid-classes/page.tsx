@@ -30,7 +30,7 @@ export default function KidClassesPage() {
         <EventsContainer
           config={{
             title: "",
-            sectionTitle: "Upcoming Kid Workshops",
+            sectionTitle: "",
             eventTypeFilter: (eventType) => {
               return eventType === "kid-class";
             },

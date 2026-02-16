@@ -20,11 +20,15 @@ export default function ContactForm() {
     description: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
+  const [submitStatus, setSubmitStatus] = useState<
+    "idle" | "success" | "error"
+  >("idle");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -57,7 +61,10 @@ export default function ContactForm() {
         setSubmitStatus("error");
       }
     } catch (error) {
-      console.error("[ContactForm-handleSubmit] Error submitting form:", error);
+      console.error(
+        "[ContactForm-handleSubmit] Error submitting form:",
+        error
+      );
       setSubmitStatus("error");
     } finally {
       setIsSubmitting(false);
@@ -65,9 +72,9 @@ export default function ContactForm() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Name Field */}
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Name + Email row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <div>
           <Label htmlFor="name" required>
             Name
@@ -82,8 +89,6 @@ export default function ContactForm() {
             placeholder="Your full name"
           />
         </div>
-
-        {/* Email Field */}
         <div>
           <Label htmlFor="email" required>
             Email
@@ -98,12 +103,12 @@ export default function ContactForm() {
             placeholder="your.email@example.com"
           />
         </div>
+      </div>
 
-        {/* Phone Field */}
+      {/* Phone + Subject row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <div>
-          <Label htmlFor="phone">
-            Phone Number
-          </Label>
+          <Label htmlFor="phone">Phone Number</Label>
           <Input
             type="tel"
             id="phone"
@@ -113,8 +118,6 @@ export default function ContactForm() {
             placeholder="(555) 123-4567"
           />
         </div>
-
-        {/* Subject Field */}
         <div>
           <Label htmlFor="subject" required>
             Subject
@@ -126,52 +129,53 @@ export default function ContactForm() {
             value={formData.subject}
             onChange={handleChange}
             required
-            placeholder="What can we help you with?"
+            placeholder="What can we help with?"
           />
         </div>
+      </div>
 
-        {/* Description Field */}
-        <div>
-          <Label htmlFor="description" required>
-            Message
-          </Label>
-          <Textarea
-            id="description"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            required
-            className="min-h-[150px]"
-            placeholder="Please tell us about your inquiry, event details, or any questions you have..."
-          />
+      {/* Message */}
+      <div>
+        <Label htmlFor="description" required>
+          Message
+        </Label>
+        <Textarea
+          id="description"
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          required
+          className="min-h-[160px]"
+          placeholder="Tell us about your inquiry, event details, or any questions you have..."
+        />
+      </div>
+
+      {/* Submit */}
+      <div className="pt-2">
+        <Button
+          type="submit"
+          variant="primary"
+          size="lg"
+          isLoading={isSubmitting}
+          className="w-full"
+        >
+          {isSubmitting ? "Sending..." : "Send Message"}
+        </Button>
+      </div>
+
+      {/* Status Messages */}
+      {submitStatus === "success" && (
+        <div className="rounded-lg bg-[var(--color-success-light)] border border-[var(--color-success)] text-[var(--color-success-text)] px-4 py-3 text-sm text-center">
+          Thank you for your message! We&apos;ll get back to you soon.
         </div>
+      )}
 
-        {/* Submit Button */}
-        <div className="pt-4">
-          <Button
-            type="submit"
-            variant="primary"
-            size="lg"
-            isLoading={isSubmitting}
-            className="w-full"
-          >
-            {isSubmitting ? "Sending..." : "Send Message"}
-          </Button>
+      {submitStatus === "error" && (
+        <div className="rounded-lg bg-[var(--color-error-light)] border border-[var(--color-error)] text-[var(--color-error-text)] px-4 py-3 text-sm text-center">
+          There was an error sending your message. Please try again or contact
+          us directly.
         </div>
-
-        {/* Status Messages */}
-        {submitStatus === "success" && (
-          <div className="bg-[var(--color-success-light)] border border-[var(--color-success)] text-[var(--color-success-text)] px-4 py-3 rounded-[var(--radius-default)]">
-            Thank you for your message! We&apos;ll get back to you soon.
-          </div>
-        )}
-
-        {submitStatus === "error" && (
-          <div className="bg-[var(--color-error-light)] border border-[var(--color-error)] text-[var(--color-error-text)] px-4 py-3 rounded-[var(--radius-default)]">
-            There was an error sending your message. Please try again or contact us directly.
-          </div>
-        )}
-      </form>
-    </div>
+      )}
+    </form>
   );
 }
