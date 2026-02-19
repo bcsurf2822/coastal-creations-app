@@ -2,13 +2,13 @@
 
 import React from "react";
 import styled from "@emotion/styled";
-import { Box, Paper, Chip } from "@mui/material";
+import { Box, Chip } from "@mui/material";
 import Link from "next/link";
 import { motion } from "motion/react";
 import Image from "next/image";
 import { FaCalendarAlt, FaClock, FaUsers, FaInstagram } from "react-icons/fa";
 import { IconType } from "react-icons";
-import { createEventSlug } from "@/lib/utils/slugify";
+import { Button } from "@/components/ui";
 
 // Event interfaces
 interface EventOption {
@@ -76,9 +76,6 @@ export interface CardConfig {
 export interface UniversalEventCardProps {
   event: UniversalEventData;
   index: number;
-  isHovered: boolean;
-  onMouseEnter: () => void;
-  onMouseLeave: () => void;
   icon: IconType;
   imageUrl?: string | null;
   currentParticipants?: number;
@@ -86,48 +83,25 @@ export interface UniversalEventCardProps {
   baseUrl?: string;
 }
 
-interface CardStyledProps {
-  isHovered: boolean;
-  layout?: "horizontal" | "vertical";
-}
+// --- Styled Components ---
 
-const Card = styled(Paper, {
-  shouldForwardProp: (prop) => prop !== "isHovered" && prop !== "layout",
-})<CardStyledProps>(({ isHovered, layout = "horizontal" }) => ({
-  borderRadius: "20px",
-  overflow: "hidden",
-  height: layout === "vertical" ? "100%" : "auto",
-  position: "relative",
-  display: "flex",
-  flexDirection: layout === "vertical" ? "column" : "row",
-  transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
-  boxShadow: isHovered
-    ? "0 20px 40px rgba(50, 108, 133, 0.25)"
-    : "0 8px 24px rgba(66, 165, 245, 0.15)",
-  transform: isHovered
-    ? layout === "vertical"
-      ? "translateY(-12px) scale(1.03) rotate(1deg)"
-      : "translateY(-8px) scale(1.02)"
-    : "translateY(0) scale(1) rotate(0deg)",
-  border: "2px solid transparent",
-  background: isHovered
-    ? "linear-gradient(white, white) padding-box, linear-gradient(135deg, #326C85, #42A5F5, #64B5F6) border-box"
-    : "white",
-  "&:before": {
-    content: '""',
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    background: isHovered
-      ? "linear-gradient(135deg, rgba(50,108,133,0.03), rgba(66,165,245,0.03))"
-      : "transparent",
-    opacity: 1,
-    transition: "all 0.4s ease",
-    zIndex: 0,
-  },
-}));
+const CardWrapper = styled("div")<{ layout?: "horizontal" | "vertical" }>(
+  ({ layout = "horizontal" }) => ({
+    borderRadius: "16px",
+    overflow: "hidden",
+    height: layout === "vertical" ? "100%" : "auto",
+    position: "relative",
+    display: "flex",
+    flexDirection: layout === "vertical" ? "column" : "row",
+    backgroundColor: "white",
+    boxShadow: "0 2px 12px rgba(0, 0, 0, 0.08)",
+    border: "1px solid #e5e7eb",
+    transition: "box-shadow 0.2s ease",
+    "&:hover": {
+      boxShadow: "0 4px 20px rgba(0, 0, 0, 0.12)",
+    },
+  })
+);
 
 const ImageContainer = styled("div")<{ layout?: "horizontal" | "vertical" }>(
   ({ layout = "horizontal" }) => ({
@@ -136,6 +110,7 @@ const ImageContainer = styled("div")<{ layout?: "horizontal" | "vertical" }>(
     width: layout === "vertical" ? "100%" : "180px",
     overflow: "hidden",
     flex: layout === "vertical" ? "0 0 auto" : "0 0 180px",
+    backgroundColor: "#f3f4f6",
     "@media (max-width: 600px)": {
       width: layout === "horizontal" ? "120px" : "100%",
       flex: layout === "horizontal" ? "0 0 120px" : "0 0 auto",
@@ -155,18 +130,14 @@ const StyledImage = styled(Image, {
   shouldForwardProp: (prop) => prop !== "isPlaceholder",
 })<{ isPlaceholder?: boolean }>(({ isPlaceholder }) => ({
   objectFit: "contain",
-  transition: "all 0.3s ease",
-  borderRadius: "12px",
+  borderRadius: "0",
   padding: isPlaceholder ? "1rem" : "0.5rem",
   backgroundColor: isPlaceholder ? "transparent" : "#f8fafc",
-  "&:hover": {
-    transform: "scale(1.02)",
-  },
 }));
 
 const CardContent = styled(Box)<{ layout?: "horizontal" | "vertical" }>(
   ({ layout = "horizontal" }) => ({
-    padding: "2rem",
+    padding: "1.5rem",
     display: "flex",
     flexDirection: "column",
     flex: "1 1 auto",
@@ -177,133 +148,94 @@ const CardContent = styled(Box)<{ layout?: "horizontal" | "vertical" }>(
 );
 
 const EventTitle = styled("h3")({
-  fontSize: "1.5rem",
-  fontWeight: "bold",
-  marginBottom: "0.75rem",
-  color: "#326C85",
-  position: "relative",
+  fontSize: "1.35rem",
+  fontWeight: "700",
+  marginBottom: "0.5rem",
+  color: "#1e293b",
   display: "flex",
   alignItems: "center",
-  gap: "0.75rem",
-  paddingRight: "120px",
-  "&:after": {
-    content: '""',
-    position: "absolute",
-    bottom: "-4px",
-    left: "0",
-    width: "0",
-    height: "3px",
-    background: "linear-gradient(90deg, #326C85, #42A5F5)",
-    transition: "width 0.3s ease",
-    borderRadius: "2px",
-  },
-  "&:hover:after": {
-    width: "calc(100% - 120px)",
-  },
-  "@media (min-width: 768px)": {
-    paddingRight: "140px",
-    "&:hover:after": {
-      width: "calc(100% - 140px)",
-    },
-  },
+  gap: "0.5rem",
 });
 
 const EventIcon = styled("span")({
-  fontSize: "1.25rem",
-  color: "#42A5F5",
-  animation: "wiggle 2s ease-in-out infinite",
-  "@keyframes wiggle": {
-    "0%, 100%": { transform: "rotate(0deg)" },
-    "25%": { transform: "rotate(5deg)" },
-    "75%": { transform: "rotate(-5deg)" },
-  },
+  fontSize: "1.15rem",
+  color: "#326C85",
 });
+
+const Price = styled("span")({
+  fontSize: "1.1rem",
+  fontWeight: "700",
+  color: "#1e293b",
+  whiteSpace: "nowrap",
+});
+
+const BadgeTag = styled("span")<{ background?: string }>(
+  ({ background }) => ({
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "0.35rem",
+    fontSize: "0.8rem",
+    fontWeight: "600",
+    color: "white",
+    background: background || "#326C85",
+    padding: "0.3rem 0.75rem",
+    borderRadius: "6px",
+    whiteSpace: "nowrap",
+  })
+);
 
 const InfoGrid = styled("div")({
   display: "flex",
-  flexDirection: "column",
-  gap: "0.75rem",
-  marginBottom: "1rem",
+  flexWrap: "wrap",
+  gap: "0.4rem",
+  marginBottom: "0.75rem",
 });
 
-const InfoItem = styled("div")({
+const InfoPill = styled("div")({
   display: "inline-flex",
   alignItems: "center",
-  gap: "0.5rem",
-  padding: "0.5rem 0.75rem",
-  background:
-    "linear-gradient(135deg, rgba(50,108,133,0.08), rgba(66,165,245,0.08))",
-  borderRadius: "12px",
-  border: "1px solid rgba(50,108,133,0.15)",
-  fontSize: "0.875rem",
-  color: "#424242",
-  fontWeight: "700",
-  width: "fit-content",
-});
-
-const InfoIcon = styled("span")({
-  color: "#42A5F5",
-  fontSize: "1rem",
+  gap: "0.3rem",
+  padding: "0.3rem 0.6rem",
+  backgroundColor: "#f0f9ff",
+  borderRadius: "6px",
+  border: "1px solid #e0f2fe",
+  fontSize: "0.78rem",
+  color: "#475569",
+  fontWeight: "500",
+  "& svg": {
+    color: "#326C85",
+    fontSize: "0.75rem",
+  },
 });
 
 const Description = styled("p")({
   marginTop: "0.5rem",
-  marginBottom: "1rem",
-  color: "#616161",
-  lineHeight: 1.6,
+  marginBottom: "0.75rem",
+  color: "#4b5563",
+  lineHeight: 1.65,
   flex: "1",
-  textAlign: "justify",
-  fontWeight: "700",
+  textAlign: "left",
+  fontWeight: "400",
+  fontSize: "0.9rem",
 });
 
-const PriceTag = styled("div")<{ background?: string }>(({ background }) => ({
+const DiscountTag = styled("div")({
   display: "inline-flex",
   alignItems: "center",
-  gap: "0.5rem",
-  fontSize: "1.125rem",
-  fontWeight: "bold",
-  color: "white",
-  background: background || "linear-gradient(135deg, #326C85, #4A90A4)",
-  padding: "0.5rem 1rem",
-  borderRadius: "20px",
-  position: "absolute",
-  top: "15px",
-  right: "15px",
-  boxShadow: "0 4px 15px rgba(50, 108, 133, 0.3)",
-  zIndex: 3,
-  transform: "rotate(-2deg)",
-  transition: "all 0.3s ease",
-  "&:hover": {
-    transform: "rotate(0deg) scale(1.05)",
-    boxShadow: "0 6px 20px rgba(50, 108, 133, 0.4)",
-  },
-}));
-
-const Badge = styled("div")<{ background?: string }>(({ background }) => ({
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "0.5rem",
-  fontSize: "1rem",
-  fontWeight: "bold",
-  color: "white",
-  background: background || "linear-gradient(135deg, #FF6B6B, #FF8E53)",
-  padding: "0.5rem 1rem",
-  borderRadius: "20px",
-  position: "absolute",
-  top: "15px",
-  right: "15px",
-  boxShadow: "0 4px 15px rgba(255, 107, 107, 0.3)",
-  zIndex: 3,
-  transform: "rotate(-2deg)",
-  transition: "all 0.3s ease",
-  "&:hover": {
-    transform: "rotate(0deg) scale(1.05)",
-    boxShadow: "0 6px 20px rgba(255, 107, 107, 0.4)",
-  },
-}));
+  gap: "0.35rem",
+  padding: "0.3rem 0.7rem",
+  backgroundColor: "#dcfce7",
+  color: "#166534",
+  borderRadius: "6px",
+  border: "1px solid #bbf7d0",
+  fontSize: "0.8rem",
+  fontWeight: "600",
+  marginBottom: "0.75rem",
+  width: "fit-content",
+});
 
 const OptionsContainer = styled("div")({
-  marginBottom: "1rem",
+  marginBottom: "0.75rem",
 });
 
 const OptionCategory = styled("div")({
@@ -311,9 +243,9 @@ const OptionCategory = styled("div")({
 });
 
 const OptionLabel = styled("span")({
-  fontWeight: "700",
+  fontWeight: "600",
   color: "#326C85",
-  fontSize: "0.875rem",
+  fontSize: "0.85rem",
 });
 
 const OptionChips = styled("div")({
@@ -323,79 +255,24 @@ const OptionChips = styled("div")({
   marginTop: "0.25rem",
 });
 
-const ActionButton = styled("div")({
-  display: "inline-block",
-  padding: "0.75rem 1.5rem",
-  background: "linear-gradient(135deg, #326C85, #42A5F5)",
-  color: "white",
-  borderRadius: "25px",
-  textDecoration: "none",
-  fontWeight: "700",
-  transition: "all 0.3s ease",
-  border: "2px solid transparent",
-  position: "relative",
-  overflow: "hidden",
-  textAlign: "center",
-  cursor: "pointer",
-  "&:before": {
-    content: '""',
-    position: "absolute",
-    top: 0,
-    left: "-100%",
-    width: "100%",
-    height: "100%",
-    background:
-      "linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)",
-    transition: "left 0.5s ease",
-  },
-  "&:hover": {
-    transform: "translateY(-2px)",
-    boxShadow: "0 8px 25px rgba(50, 108, 133, 0.3)",
-    "&:before": {
-      left: "100%",
-    },
-  },
-  "&:active": {
-    transform: "translateY(0)",
-  },
-});
-
-const DiscountBadge = styled("div")({
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "0.5rem",
-  padding: "0.5rem 1rem",
-  background: "linear-gradient(135deg, #4caf50, #66bb6a)",
-  color: "black",
-  borderRadius: "15px",
-  fontSize: "0.875rem",
-  fontWeight: "700",
-  boxShadow: "0 2px 8px rgba(76, 175, 80, 0.3)",
-  marginBottom: "1rem",
-});
-
-
-const InstagramIcon = styled("div")({
+const InstagramLink = styled("a")({
   position: "absolute",
-  bottom: "15px",
-  right: "15px",
-  fontSize: "1.5rem",
+  bottom: "12px",
+  right: "12px",
+  fontSize: "1.25rem",
   color: "#E1306C",
-  cursor: "pointer",
-  transition: "all 0.3s ease",
-  zIndex: 3,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  width: "40px",
-  height: "40px",
+  width: "36px",
+  height: "36px",
   borderRadius: "50%",
   background: "rgba(255, 255, 255, 0.9)",
-  boxShadow: "0 2px 8px rgba(225, 48, 108, 0.3)",
+  boxShadow: "0 1px 4px rgba(0, 0, 0, 0.1)",
+  transition: "transform 0.2s ease",
+  zIndex: 3,
   "&:hover": {
-    transform: "scale(1.1) rotate(5deg)",
-    boxShadow: "0 4px 12px rgba(225, 48, 108, 0.5)",
-    color: "#C13584",
+    transform: "scale(1.1)",
   },
 });
 
@@ -404,9 +281,6 @@ const PLACEHOLDER_IMAGE = "/assets/images/flowerPainting.jpeg";
 const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
   event,
   index,
-  isHovered,
-  onMouseEnter,
-  onMouseLeave,
   icon: IconComponent,
   imageUrl,
   currentParticipants = 0,
@@ -424,14 +298,21 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
     buttonText = "Sign Up for Class",
   } = config;
 
-  // Check if this is an artist event
   const isArtistEvent = event.eventType === "artist";
-
-  // Override button text for artist events
   const finalButtonText = isArtistEvent ? "Get More Information" : buttonText;
 
-  // Override baseUrl for artist events
-  const finalBaseUrl = isArtistEvent ? "/events/live-artist" : baseUrl;
+  const buildPaymentUrl = (): string => {
+    const params = new URLSearchParams();
+    params.set("eventId", event._id);
+    params.set("eventTitle", event.eventName);
+    if (event.isFree || event.price === 0) {
+      params.set("price", "0");
+      params.set("isFree", "true");
+    } else if (event.price !== undefined) {
+      params.set("price", String(event.price));
+    }
+    return `/payments?${params.toString()}`;
+  };
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
@@ -480,27 +361,7 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.1 }}
     >
-      <Card
-        elevation={3}
-        isHovered={isHovered}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        layout={layout}
-      >
-        {/* Badge or Price Tag */}
-        {badge ? (
-          <Badge background={badge.background}>
-            {badge.icon && <badge.icon />}
-            {badge.text}
-          </Badge>
-        ) : showPrice && !isArtistEvent ? (
-          event.isFree || event.price === 0 ? (
-            <PriceTag background="linear-gradient(135deg, #22c55e, #16a34a)">Free</PriceTag>
-          ) : event.price !== undefined ? (
-            <PriceTag>${event.price}</PriceTag>
-          ) : null
-        ) : null}
-
+      <CardWrapper layout={layout}>
         {/* Image Section */}
         {showImage && (
           <ImageContainer layout={layout}>
@@ -515,21 +376,43 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
 
         <CardContent layout={layout}>
           <div>
-            <EventTitle>
-              <EventIcon>
-                <IconComponent />
-              </EventIcon>
-              {event.eventName}
-            </EventTitle>
+            {/* Title row with price/badge */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: "0.75rem",
+              }}
+            >
+              <EventTitle>
+                <EventIcon>
+                  <IconComponent />
+                </EventIcon>
+                {event.eventName}
+              </EventTitle>
+              {badge ? (
+                <BadgeTag background={badge.background}>
+                  {badge.icon && <badge.icon />}
+                  {badge.text}
+                </BadgeTag>
+              ) : showPrice && !isArtistEvent ? (
+                event.isFree || event.price === 0 ? (
+                  <Price style={{ color: "#16a34a" }}>Free</Price>
+                ) : event.price !== undefined ? (
+                  <Price>${event.price}</Price>
+                ) : null
+              ) : null}
+            </div>
 
             <Description>{event.description}</Description>
 
             {/* Discount Badge */}
             {discountActive &&
               (event.discount?.name || event.discount?.description) && (
-                <DiscountBadge>
+                <DiscountTag>
                   {event.discount.name || event.discount.description}
-                </DiscountBadge>
+                </DiscountTag>
               )}
 
             {/* Potential Discount Info */}
@@ -537,54 +420,11 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
               !discountActive &&
               event.discount &&
               (event.discount.name || event.discount.description) && (
-                <div
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                    padding: "0.5rem 1rem",
-                    background: "linear-gradient(135deg, #81c784, #a5d6a7)",
-                    color: "black",
-                    borderRadius: "15px",
-                    fontSize: "0.875rem",
-                    fontWeight: "700",
-                    boxShadow: "0 2px 8px rgba(129, 199, 132, 0.3)",
-                    marginBottom: "1rem",
-                    width: "fit-content",
-                    maxWidth: "50%",
-                  }}
-                >
+                <DiscountTag>
                   Discount Available:{" "}
                   {event.discount.name || event.discount.description}
-                </div>
+                </DiscountTag>
               )}
-
-            <InfoGrid>
-              <InfoItem>
-                <InfoIcon>
-                  <FaCalendarAlt />
-                </InfoIcon>
-                {getDateInfo()}
-              </InfoItem>
-              <InfoItem>
-                <InfoIcon>
-                  <FaClock />
-                </InfoIcon>
-                {formatTime(event.time.startTime)} -{" "}
-                {formatTime(event.time.endTime)}
-              </InfoItem>
-
-              {/* Participant Count */}
-              {showParticipantCount && currentParticipants > 5 && (
-                <InfoItem>
-                  <InfoIcon>
-                    <FaUsers />
-                  </InfoIcon>
-                  {currentParticipants} / {event.numberOfParticipants || 20}{" "}
-                  signed up
-                </InfoItem>
-              )}
-            </InfoGrid>
 
             {/* Options */}
             {showOptions && event.options && event.options.length > 0 && (
@@ -599,11 +439,12 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
                           label={choice.name}
                           size="small"
                           sx={{
-                            backgroundColor: "rgba(50,108,133,0.1)",
-                            color: "#326C85",
+                            backgroundColor: "#f0f9ff",
+                            color: "#475569",
                             fontWeight: "500",
+                            border: "1px solid #e0f2fe",
                             "&:hover": {
-                              backgroundColor: "rgba(50,108,133,0.2)",
+                              backgroundColor: "#e0f2fe",
                             },
                           }}
                         />
@@ -615,48 +456,70 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
             )}
           </div>
 
-          {/* Action Button */}
-          {showSignupButton &&
-            (isSoldOut ? (
-              <div
-                style={{
-                  display: "inline-block",
-                  padding: "0.75rem 1.5rem",
-                  background: "linear-gradient(135deg, #d32f2f, #f44336)",
-                  color: "white",
-                  borderRadius: "25px",
-                  fontWeight: "700",
-                  textAlign: "center",
-                  cursor: "not-allowed",
-                  alignSelf: "flex-start",
-                }}
-              >
-                Sold Out
-              </div>
-            ) : (
-              <Link
-                href={`${finalBaseUrl}/${createEventSlug(event.eventName, event._id)}`}
-                style={{ textDecoration: "none", alignSelf: "flex-start" }}
-              >
-                <ActionButton>{finalButtonText}</ActionButton>
-              </Link>
-            ))}
+          {/* Bottom row: info pills left, button right */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-end",
+              justifyContent: "space-between",
+              gap: "1rem",
+              marginTop: "auto",
+            }}
+          >
+            <InfoGrid style={{ marginBottom: 0 }}>
+              <InfoPill>
+                <FaCalendarAlt />
+                {getDateInfo()}
+              </InfoPill>
+              <InfoPill>
+                <FaClock />
+                {formatTime(event.time.startTime)} -{" "}
+                {formatTime(event.time.endTime)}
+              </InfoPill>
+
+              {showParticipantCount && currentParticipants > 5 && (
+                <InfoPill>
+                  <FaUsers />
+                  {currentParticipants} / {event.numberOfParticipants || 20}{" "}
+                  signed up
+                </InfoPill>
+              )}
+            </InfoGrid>
+
+            {showSignupButton &&
+              (isSoldOut ? (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled
+                  style={{ flexShrink: 0, cursor: "not-allowed" }}
+                >
+                  Sold Out
+                </Button>
+              ) : (
+                <Link
+                  href={isArtistEvent ? `/events/live-artist/${event._id}` : buildPaymentUrl()}
+                  style={{ textDecoration: "none", flexShrink: 0 }}
+                >
+                  <Button variant="primary" size="sm">
+                    {finalButtonText}
+                  </Button>
+                </Link>
+              ))}
+          </div>
         </CardContent>
 
         {/* Instagram Icon */}
         {event.instagramEmbedCode && event.instagramEmbedCode.trim() && (
-          <a
+          <InstagramLink
             href={event.instagramEmbedCode}
             target="_blank"
             rel="noopener noreferrer"
-            style={{ textDecoration: "none" }}
           >
-            <InstagramIcon>
-              <FaInstagram />
-            </InstagramIcon>
-          </a>
+            <FaInstagram />
+          </InstagramLink>
         )}
-      </Card>
+      </CardWrapper>
     </motion.div>
   );
 };

@@ -6,20 +6,11 @@ import GiftCardBanner from "@/components/landing/GiftCardBanner";
 
 export default function Home() {
   return (
-    <div className="min-h-screen m-0 p-0">
-      {/* Hero Section */}
+    <div className="min-h-screen m-0 p-0 bg-transparent">
       <Hero />
-
-      {/* Main Section */}
       <MainSection />
-
-      {/* Gift Card Banner */}
-      <GiftCardBanner />
-
-      {/* Creative Experiences Section */}
       <Offerings />
-
-      {/* Calendar Section */}
+      <GiftCardBanner />
       <Calendar />
     </div>
   );

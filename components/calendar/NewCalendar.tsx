@@ -25,9 +25,9 @@ export default function NewCalendar() {
     useState<NodeJS.Timeout | null>(null);
 
   const resources = [
-    { id: "class", title: "Classes", eventColor: "#3788d8" },
-    { id: "camp", title: "Camps", eventColor: "green" },
-    { id: "workshop", title: "Workshops", eventColor: "orange" },
+    { id: "class", title: "Classes", eventColor: "#0c4a6e" },
+    { id: "camp", title: "Camps", eventColor: "#0369a1" },
+    { id: "workshop", title: "Workshops", eventColor: "#fb923c" },
   ];
 
   // Add a helper function to convert 24-hour time to 12-hour time
@@ -102,6 +102,7 @@ export default function NewCalendar() {
                 description: event.description,
                 eventType: event.eventType,
                 price: event.price,
+                isFree: event.isFree,
                 timeDisplay,
                 isRecurring: false,
                 isMultiDay: true,
@@ -142,6 +143,7 @@ export default function NewCalendar() {
                 description: event.description,
                 eventType: event.eventType,
                 price: event.price,
+                isFree: event.isFree,
                 timeDisplay,
                 isRecurring: false,
               },
@@ -181,6 +183,7 @@ export default function NewCalendar() {
               description: event.description,
               eventType: event.eventType,
               price: event.price,
+              isFree: event.isFree,
               timeDisplay,
               isRecurring: true,
               recurringPattern: event.dates.recurringPattern,
@@ -363,22 +366,36 @@ export default function NewCalendar() {
     fetchCustomers();
   }, [transformEvents]);
 
-  // Define a function to get event colors based on type
+  // Event colors using brand palette
   const getEventColor = (eventType: string): string => {
     switch (eventType) {
+      case "kid-class":
+      case "adult-class":
       case "class":
-        return "#3788d8"; // Blue
+        return "#0c4a6e"; // --color-primary
       case "camp":
-        return "green";
+        return "#0369a1"; // --color-secondary
+      case "event":
       case "workshop":
-        return "orange";
+        return "#fb923c"; // --color-accent
+      case "artist":
+        return "#326C85"; // --color-blue-medium
       default:
-        return "#3788d8"; // Default blue
+        return "#0c4a6e"; // --color-primary
     }
   };
 
-  const navigateToEvent = (eventId: string) => {
-    router.push(`/calendar/${eventId}`);
+  const navigateToPayment = (eventId: string, eventTitle: string, price?: number, isFree?: boolean) => {
+    const params = new URLSearchParams();
+    params.set("eventId", eventId);
+    params.set("eventTitle", eventTitle);
+    if (isFree || price === 0) {
+      params.set("price", "0");
+      params.set("isFree", "true");
+    } else if (price !== undefined) {
+      params.set("price", String(price));
+    }
+    router.push(`/payments?${params.toString()}`);
   };
 
   useEffect(() => {
@@ -615,7 +632,12 @@ export default function NewCalendar() {
             if (signupButton) {
               signupButton.addEventListener("click", (e) => {
                 e.stopPropagation();
-                navigateToEvent(info.event.extendedProps?._id || "unknown");
+                navigateToPayment(
+                  info.event.extendedProps?._id || "unknown",
+                  info.event.title,
+                  info.event.extendedProps?.price,
+                  info.event.extendedProps?.isFree
+                );
               });
             }
           }, 0);

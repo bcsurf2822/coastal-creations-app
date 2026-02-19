@@ -11,6 +11,7 @@ export interface CalendarEvent {
     description?: string;
     eventType?: string;
     price?: number;
+    isFree?: boolean;
     timeDisplay?: string;
     isRecurring?: boolean;
     recurringPattern?: string;

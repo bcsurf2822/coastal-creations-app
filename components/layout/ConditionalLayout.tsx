@@ -24,7 +24,7 @@ export default function ConditionalLayout({
   return (
     <>
       <NavBar />
-      <div className="pt-32 md:pt-56">
+      <div className="pt-[var(--nav-offset,8rem)]">
         <div className="bg-gradient-to-r from-[#b6dce6] via-[#BEDCDC] to-[#daebeb]">
           {children}
         </div>

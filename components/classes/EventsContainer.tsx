@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, ReactElement } from "react";
+import React, { useMemo, ReactElement } from "react";
 import styled from "@emotion/styled";
 import { Box, Container, CircularProgress, Alert } from "@mui/material";
 import { type SanityDocument } from "next-sanity";
@@ -153,24 +153,17 @@ const ListContainer = styled("div")({
 });
 
 const EventsContainer: React.FC<EventsContainerProps> = ({ config }) => {
-  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
-
-  // React Query hooks
   const {
     data: eventsData,
     isLoading,
     error,
   } = useEvents();
-
   const { data: customersData = [] } = useCustomers({
     enabled: !!config.fetchParticipantCounts,
   });
-
   const { data: eventPicturesData = [] } = useEventPictures(
     !!config.useEventPictures
   );
-
-  // Transform events data - useEvents returns ApiEvent[] directly
   const events: UniversalEventData[] = (eventsData || []) as UniversalEventData[];
   const eventPictures: SanityDocument[] = eventPicturesData;
 
@@ -234,9 +227,6 @@ const EventsContainer: React.FC<EventsContainerProps> = ({ config }) => {
           key={event._id}
           event={event}
           index={index}
-          isHovered={hoveredCard === index}
-          onMouseEnter={() => setHoveredCard(index)}
-          onMouseLeave={() => setHoveredCard(null)}
           icon={getRandomIcon(index, event.eventType)}
           imageUrl={imageUrl}
           currentParticipants={eventParticipantCounts[event._id] || 0}

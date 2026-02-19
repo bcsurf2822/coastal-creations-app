@@ -131,7 +131,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="mt-auto border-t border-gray-200 bg-[#f8f9fa] text-[var(--color-text-primary)]">
+    <footer className="mt-auto border-t border-gray-100 bg-white/90 text-[var(--color-text-primary)]">
       {/* Main footer content */}
       <div className="container mx-auto px-6 py-12 lg:px-12">
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
@@ -272,7 +272,7 @@ export default function Footer() {
       </div>
 
       {/* Bottom bar */}
-      <div className="border-t border-gray-200 bg-gray-100">
+      <div className="border-t border-gray-100 bg-white/90">
         <div className="container mx-auto px-6 py-5 lg:px-12">
           <nav className="mb-3 flex flex-wrap justify-center gap-x-6 gap-y-2">
             {NAV_LINKS.map((link) => (
