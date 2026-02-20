@@ -201,3 +201,26 @@ html {
 .animate-float-delayed {
   animation: float 3.5s ease-in-out infinite 0.5s;
 }
+
+/* Thin scrollbar for description overflow areas */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #bae6fd transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: #bae6fd;
+  border-radius: 9999px;
+}
+
+.scrollbar-thin:hover::-webkit-scrollbar-thumb {
+  background-color: #7dd3fc;
+}

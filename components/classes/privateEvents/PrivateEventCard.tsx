@@ -9,16 +9,10 @@ import Link from "next/link";
 import imageUrlBuilder from "@sanity/image-url";
 import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import { client } from "@/sanity/client";
-import {
-  FaBirthdayCake,
-  FaInstagram,
-} from "react-icons/fa";
-import {
-  GiBalloons,
-  GiCupcake,
-  GiPartyPopper,
-} from "react-icons/gi";
+import { FaBirthdayCake, FaInstagram } from "react-icons/fa";
+import { GiBalloons, GiCupcake, GiPartyPopper } from "react-icons/gi";
 import { Button } from "@/components/ui";
+import { motion } from "motion/react";
 
 const { projectId, dataset } = client.config();
 const urlFor = (source: SanityImageSource) =>
@@ -145,134 +139,143 @@ const PrivateEventCard = ({
   const needsTruncation = descriptionText.length > TRUNCATE_LENGTH;
   const displayText =
     !isExpanded && needsTruncation
-      ? descriptionText.slice(0, descriptionText.lastIndexOf(" ", TRUNCATE_LENGTH)) +
-        "..."
+      ? descriptionText.slice(
+          0,
+          descriptionText.lastIndexOf(" ", TRUNCATE_LENGTH),
+        ) + "..."
       : descriptionText;
 
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+  };
+
   return (
-    <CardWrapper>
-      <ImageContainer>
-        {privateEvent.image ? (
-          <Image
-            src={
-              urlFor(privateEvent.image)?.width(600).height(280).url() || ""
-            }
-            alt={privateEvent.title || "Private event image"}
-            fill
-            style={{ objectFit: "cover" }}
-          />
-        ) : (
-          <PlaceholderIcon>
-            <GiPartyPopper />
-          </PlaceholderIcon>
-        )}
-      </ImageContainer>
-
-      <CardContent>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <PartyTitle>
-            <TitleIcon>
-              <IconComponent />
-            </TitleIcon>
-            {privateEvent.title}
-          </PartyTitle>
-          <Price>${privateEvent.price}/person</Price>
-        </div>
-
-        <Description>
-          {displayText}
-          {needsTruncation && (
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              style={{
-                background: "none",
-                border: "none",
-                color: "#326C85",
-                cursor: "pointer",
-                fontWeight: "600",
-                fontSize: "0.85rem",
-                padding: "0 0.25rem",
-              }}
-            >
-              {isExpanded ? "Read less" : "Read more"}
-            </button>
+    <motion.div variants={itemVariants} style={{ height: "100%" }}>
+      <CardWrapper>
+        <ImageContainer>
+          {privateEvent.image ? (
+            <Image
+              src={
+                urlFor(privateEvent.image)?.width(600).height(280).url() || ""
+              }
+              alt={privateEvent.title || "Private event image"}
+              fill
+              style={{ objectFit: "cover" }}
+            />
+          ) : (
+            <PlaceholderIcon>
+              <GiPartyPopper />
+            </PlaceholderIcon>
           )}
-        </Description>
+        </ImageContainer>
 
-        {privateEvent.options && privateEvent.options.length > 0 && (
-          <div className="mt-4 space-y-3">
-            <h4 className="text-md font-semibold text-gray-800">
-              Available Options:
-            </h4>
-            {privateEvent.options.map((category, categoryIndex) => (
-              <div key={categoryIndex} className="bg-gray-50 rounded-lg p-3">
-                <h5 className="font-medium text-gray-900 mb-2">
-                  {category.categoryName}
-                </h5>
-                {category.categoryDescription && (
-                  <p className="text-sm text-gray-600 mb-2">
-                    {category.categoryDescription}
-                  </p>
-                )}
-                <div className="space-y-1">
-                  {category.choices.map((choice, choiceIndex) => (
-                    <div
-                      key={choiceIndex}
-                      className="flex justify-between items-center text-sm"
-                    >
-                      <span className="text-gray-700">{choice.name}</span>
-                      {choice.price && choice.price > 0 && (
-                        <span className="font-medium text-gray-900">
-                          +${choice.price}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {privateEvent.isDepositRequired && privateEvent.depositAmount && (
-          <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-blue-800">
-                  <strong>Deposit Required:</strong> $
-                  {privateEvent.depositAmount}
-                </p>
-              </div>
-              <Link
-                href={`/payments?eventId=${privateEvent._id}&eventTitle=${encodeURIComponent(privateEvent.title)}&price=${privateEvent.depositAmount}&isPrivateEvent=true`}
-                style={{ textDecoration: "none" }}
-              >
-                <Button variant="primary" size="sm">
-                  Pay Deposit
-                </Button>
-              </Link>
-            </div>
-          </div>
-        )}
-      </CardContent>
-
-      {privateEvent.instagramEmbedCode &&
-        privateEvent.instagramEmbedCode.trim() && (
-          <InstagramLink
-            href={privateEvent.instagramEmbedCode}
-            target="_blank"
-            rel="noopener noreferrer"
+        <CardContent>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
           >
-            <FaInstagram />
-          </InstagramLink>
-        )}
-    </CardWrapper>
+            <PartyTitle>
+              <TitleIcon>
+                <IconComponent />
+              </TitleIcon>
+              {privateEvent.title}
+            </PartyTitle>
+            <Price>${privateEvent.price}/person</Price>
+          </div>
+
+          <Description>
+            {displayText}
+            {needsTruncation && (
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#326C85",
+                  cursor: "pointer",
+                  fontWeight: "600",
+                  fontSize: "0.85rem",
+                  padding: "0 0.25rem",
+                }}
+              >
+                {isExpanded ? "Read less" : "Read more"}
+              </button>
+            )}
+          </Description>
+
+          {privateEvent.options && privateEvent.options.length > 0 && (
+            <div className="mt-4 space-y-3">
+              <h4 className="text-md font-semibold text-gray-800">
+                Available Options:
+              </h4>
+              {privateEvent.options.map((category, categoryIndex) => (
+                <div key={categoryIndex} className="bg-gray-50 rounded-lg p-3">
+                  <h5 className="font-medium text-gray-900 mb-2">
+                    {category.categoryName}
+                  </h5>
+                  {category.categoryDescription && (
+                    <p className="text-sm text-gray-600 mb-2">
+                      {category.categoryDescription}
+                    </p>
+                  )}
+                  <div className="space-y-1">
+                    {category.choices.map((choice, choiceIndex) => (
+                      <div
+                        key={choiceIndex}
+                        className="flex justify-between items-center text-sm"
+                      >
+                        <span className="text-gray-700">{choice.name}</span>
+                        {choice.price && choice.price > 0 && (
+                          <span className="font-medium text-gray-900">
+                            +${choice.price}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {privateEvent.isDepositRequired && privateEvent.depositAmount && (
+            <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-blue-800">
+                    <strong>Deposit Required:</strong> $
+                    {privateEvent.depositAmount}
+                  </p>
+                </div>
+                <Link
+                  href={`/payments?eventId=${privateEvent._id}&eventTitle=${encodeURIComponent(privateEvent.title)}&price=${privateEvent.depositAmount}&isPrivateEvent=true`}
+                  style={{ textDecoration: "none" }}
+                >
+                  <Button variant="primary" size="sm">
+                    Pay Deposit
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          )}
+        </CardContent>
+
+        {privateEvent.instagramEmbedCode &&
+          privateEvent.instagramEmbedCode.trim() && (
+            <InstagramLink
+              href={privateEvent.instagramEmbedCode}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <FaInstagram />
+            </InstagramLink>
+          )}
+      </CardWrapper>
+    </motion.div>
   );
 };
 

@@ -71,6 +71,13 @@ export interface EventFormActions {
   ) => void;
 }
 
+export interface DiscountWarning {
+  originalPrice: number;
+  discountValue: number;
+  discountedPrice: number;
+  discountPercent: number;
+}
+
 export interface UseEventFormReturn {
   formData: EventFormState;
   errors: EventFormErrors;
@@ -79,4 +86,7 @@ export interface UseEventFormReturn {
   handleSubmit: (e: React.FormEvent) => Promise<void>;
   validateForm: () => boolean;
   getFieldError: (fieldPath: string) => string | null;
+  discountWarning: DiscountWarning | null;
+  confirmDiscountSubmit: () => void;
+  cancelDiscountSubmit: () => void;
 }

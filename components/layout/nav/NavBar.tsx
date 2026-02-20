@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
 import { useEvents } from "@/hooks/queries";
+import NavRippleText from "./NavRippleText";
 
 interface ClassDropdownItem {
   href: string;
@@ -249,9 +250,9 @@ export default function NavBar() {
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
-                Home
+                <NavRippleText text="Home" />
               </Link>
             </motion.div>
 
@@ -260,8 +261,8 @@ export default function NavBar() {
               whileHover="hover"
               className="relative group"
             >
-                <div className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase flex items-center gap-1 cursor-pointer">
-                  Classes
+                <div className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase flex items-center gap-1 cursor-pointer">
+                  <NavRippleText text="Classes" />
                   <motion.svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="14"
@@ -311,18 +312,18 @@ export default function NavBar() {
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/calendar"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
-                Calendar
+                <NavRippleText text="Calendar" />
               </Link>
             </motion.div>
 
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/events/private-events"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
-                Private Events
+                <NavRippleText text="Private Events" />
               </Link>
             </motion.div>
           </motion.nav>
@@ -358,36 +359,36 @@ export default function NavBar() {
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/reservations"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
-                Reservations
+                <NavRippleText text="Reservations" />
               </Link>
             </motion.div>
 
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/gallery"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
-                Gallery
+                <NavRippleText text="Gallery" />
               </Link>
             </motion.div>
 
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/about"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
-                About
+                <NavRippleText text="About" />
               </Link>
             </motion.div>
 
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/contact-us"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
-                Contact
+                <NavRippleText text="Contact" />
               </Link>
             </motion.div>
           </motion.nav>

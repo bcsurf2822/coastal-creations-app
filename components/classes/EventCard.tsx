@@ -100,7 +100,7 @@ const CardWrapper = styled("div")<{ layout?: "horizontal" | "vertical" }>(
     "&:hover": {
       boxShadow: "0 4px 20px rgba(0, 0, 0, 0.12)",
     },
-  })
+  }),
 );
 
 const ImageContainer = styled("div")<{ layout?: "horizontal" | "vertical" }>(
@@ -123,7 +123,7 @@ const ImageContainer = styled("div")<{ layout?: "horizontal" | "vertical" }>(
       width: layout === "horizontal" ? "180px" : "100%",
       flex: layout === "horizontal" ? "0 0 180px" : "0 0 auto",
     },
-  })
+  }),
 );
 
 const StyledImage = styled(Image, {
@@ -144,7 +144,7 @@ const CardContent = styled(Box)<{ layout?: "horizontal" | "vertical" }>(
     position: "relative",
     zIndex: 2,
     justifyContent: layout === "vertical" ? "space-between" : "flex-start",
-  })
+  }),
 );
 
 const EventTitle = styled("h3")({
@@ -169,20 +169,18 @@ const Price = styled("span")({
   whiteSpace: "nowrap",
 });
 
-const BadgeTag = styled("span")<{ background?: string }>(
-  ({ background }) => ({
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "0.35rem",
-    fontSize: "0.8rem",
-    fontWeight: "600",
-    color: "white",
-    background: background || "#326C85",
-    padding: "0.3rem 0.75rem",
-    borderRadius: "6px",
-    whiteSpace: "nowrap",
-  })
-);
+const BadgeTag = styled("span")<{ background?: string }>(({ background }) => ({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "0.35rem",
+  fontSize: "0.8rem",
+  fontWeight: "600",
+  color: "white",
+  background: background || "#326C85",
+  padding: "0.3rem 0.75rem",
+  borderRadius: "6px",
+  whiteSpace: "nowrap",
+}));
 
 const InfoGrid = styled("div")({
   display: "flex",
@@ -285,7 +283,6 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
   imageUrl,
   currentParticipants = 0,
   config = {},
-  baseUrl = "/calendar",
 }) => {
   const {
     layout = "horizontal",
@@ -354,12 +351,16 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
   const discountActive = isDiscountActive();
   const isSoldOut = currentParticipants >= (event.numberOfParticipants || 20);
 
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+  };
+
   return (
     <motion.div
       key={event._id}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.1 }}
+      variants={itemVariants}
+      style={{ height: "100%" }}
     >
       <CardWrapper layout={layout}>
         {/* Image Section */}
@@ -498,7 +499,11 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
                 </Button>
               ) : (
                 <Link
-                  href={isArtistEvent ? `/events/live-artist/${event._id}` : buildPaymentUrl()}
+                  href={
+                    isArtistEvent
+                      ? `/events/live-artist/${event._id}`
+                      : buildPaymentUrl()
+                  }
                   style={{ textDecoration: "none", flexShrink: 0 }}
                 >
                   <Button variant="primary" size="sm">

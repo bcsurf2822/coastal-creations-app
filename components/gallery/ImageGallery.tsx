@@ -7,6 +7,7 @@ import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import { client } from "@/sanity/client";
 import { motion, AnimatePresence } from "motion/react";
 import { useGallery } from "@/hooks/queries";
+import GallerySkeleton from "./GallerySkeleton";
 import type { PictureGalleryItem } from "@/types/interfaces";
 
 // Setup Sanity image URL builder
@@ -32,11 +33,7 @@ export default function ImageGallery() {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[300px]">
-        <p className="text-lg font-bold">Loading gallery...</p>
-      </div>
-    );
+    return <GallerySkeleton />;
   }
 
   if (error) {

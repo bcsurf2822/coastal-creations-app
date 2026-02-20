@@ -4,6 +4,7 @@ import type { ReactElement } from "react";
 import { usePathname } from "next/navigation";
 import NavBar from "@/components/layout/nav/NavBar";
 import Footer from "@/components/layout/footer/Footer";
+import LayoutTransition from "@/components/layout/LayoutTransition";
 
 interface ConditionalLayoutProps {
   children: React.ReactNode;
@@ -26,7 +27,7 @@ export default function ConditionalLayout({
       <NavBar />
       <div className="pt-[var(--nav-offset,8rem)]">
         <div className="bg-gradient-to-r from-[#b6dce6] via-[#BEDCDC] to-[#daebeb]">
-          {children}
+          <LayoutTransition>{children}</LayoutTransition>
         </div>
       </div>
       <Footer />

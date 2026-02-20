@@ -8,7 +8,7 @@ import { useCustomers, useEvents, usePageContent } from "@/hooks/queries";
 import { DEFAULT_TEXT } from "@/lib/constants/defaultPageContent";
 import { portableTextToPlainText } from "@/lib/utils/portableTextHelpers";
 import type { ApiEvent } from "@/types/interfaces";
-import { Button, Card } from "@/components/ui";
+import { Button, Card, Skeleton } from "@/components/ui";
 
 const ebGaramond = EB_Garamond({
   subsets: ["latin"],
@@ -123,9 +123,30 @@ const Calendar = (): ReactElement => {
           <p className="mb-8 max-w-3xl text-lg leading-relaxed text-slate-700">{subtitle}</p>
 
           {isLoading ? (
-            <p className="py-10 text-center text-lg font-semibold text-primary/80">
-              Loading upcoming workshops...
-            </p>
+            <div className="grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex h-full flex-col rounded-2xl border border-sky-100 bg-white p-5 shadow-[0_8px_18px_rgba(12,74,110,0.1)]"
+                >
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <Skeleton variant="rounded" width={90} height={24} />
+                    <Skeleton variant="text" width={80} height={16} />
+                  </div>
+                  <Skeleton variant="text" height={28} className="mb-2 w-3/4" />
+                  <div className="mb-5 space-y-2">
+                    <Skeleton variant="text" height={16} className="w-full" />
+                    <Skeleton variant="text" height={16} className="w-full" />
+                    <Skeleton variant="text" height={16} className="w-2/3" />
+                  </div>
+                  <div className="mb-5 flex items-center justify-between">
+                    <Skeleton variant="text" width={70} height={14} />
+                    <Skeleton variant="text" width={80} height={14} />
+                  </div>
+                  <Skeleton variant="rounded" height={40} className="mt-auto w-full" />
+                </div>
+              ))}
+            </div>
           ) : error ? (
             <p className="py-10 text-center text-lg font-semibold text-red-600">
               Error loading workshops. Please check the full calendar.
@@ -176,13 +197,15 @@ const Calendar = (): ReactElement => {
                       {event.eventName}
                     </h3>
 
-                    <p
-                      className={`mb-5 text-base leading-relaxed text-slate-700 ${
-                        hasSingleEvent ? "line-clamp-none" : "line-clamp-3"
+                    <div
+                      className={`mb-5 rounded-lg border border-sky-100 bg-sky-50/60 px-3 py-2.5 text-sm leading-relaxed text-slate-600 ${
+                        hasSingleEvent
+                          ? ""
+                          : "max-h-[4.5rem] overflow-y-auto scrollbar-thin"
                       }`}
                     >
-                      {event.description}
-                    </p>
+                      <p>{event.description}</p>
+                    </div>
 
                     <div className="mb-5 flex items-center justify-between text-sm font-semibold text-slate-600">
                       <span>{formatEventTime(event.time.startTime)}</span>

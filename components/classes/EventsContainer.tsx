@@ -2,14 +2,19 @@
 
 import React, { useMemo, ReactElement } from "react";
 import styled from "@emotion/styled";
-import { Box, Container, CircularProgress, Alert } from "@mui/material";
+import { Container, Alert } from "@mui/material";
 import { type SanityDocument } from "next-sanity";
 import imageUrlBuilder from "@sanity/image-url";
 import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import { client } from "@/sanity/client";
-import UniversalEventCard, { UniversalEventData, CardConfig } from "./EventCard";
+import { motion } from "motion/react";
+import UniversalEventCard, {
+  UniversalEventData,
+  CardConfig,
+} from "./EventCard";
 import { getRandomIcon } from "./eventUtils";
 import { useEvents, useCustomers, useEventPictures } from "@/hooks/queries";
+import EventCardSkeleton from "./EventCardSkeleton";
 
 const { projectId, dataset } = client.config();
 const urlFor = (source: SanityImageSource) =>
@@ -100,26 +105,6 @@ const SectionTitle = styled("h2")({
   position: "relative",
 });
 
-const LoadingContainer = styled(Box)({
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "center",
-  alignItems: "center",
-  minHeight: "400px",
-  gap: "1rem",
-});
-
-const LoadingText = styled("div")({
-  color: "#326C85",
-  fontSize: "1.25rem",
-  fontWeight: "bold",
-  animation: "colorChange 2s ease-in-out infinite",
-  "@keyframes colorChange": {
-    "0%, 100%": { color: "#326C85" },
-    "50%": { color: "#42A5F5" },
-  },
-});
-
 const EmptyState = styled("div")({
   textAlign: "center",
   padding: "3rem 2rem",
@@ -132,19 +117,19 @@ const EmptyState = styled("div")({
   fontWeight: "700",
 });
 
-const GridContainer = styled("div")<{ columns?: { mobile?: number; tablet?: number; desktop?: number } }>(
-  ({ columns = { mobile: 1, tablet: 2, desktop: 3 } }) => ({
-    display: "grid",
-    gridTemplateColumns: `repeat(${columns.mobile || 1}, 1fr)`,
-    gap: "2rem",
-    "@media (min-width: 768px)": {
-      gridTemplateColumns: `repeat(${columns.tablet || 2}, 1fr)`,
-    },
-    "@media (min-width: 1024px)": {
-      gridTemplateColumns: `repeat(${columns.desktop || 3}, 1fr)`,
-    },
-  })
-);
+const GridContainer = styled("div")<{
+  columns?: { mobile?: number; tablet?: number; desktop?: number };
+}>(({ columns = { mobile: 1, tablet: 2, desktop: 3 } }) => ({
+  display: "grid",
+  gridTemplateColumns: `repeat(${columns.mobile || 1}, 1fr)`,
+  gap: "2rem",
+  "@media (min-width: 768px)": {
+    gridTemplateColumns: `repeat(${columns.tablet || 2}, 1fr)`,
+  },
+  "@media (min-width: 1024px)": {
+    gridTemplateColumns: `repeat(${columns.desktop || 3}, 1fr)`,
+  },
+}));
 
 const ListContainer = styled("div")({
   display: "flex",
@@ -152,19 +137,23 @@ const ListContainer = styled("div")({
   gap: "2rem",
 });
 
+const containerVariants = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.07 },
+  },
+};
+
 const EventsContainer: React.FC<EventsContainerProps> = ({ config }) => {
-  const {
-    data: eventsData,
-    isLoading,
-    error,
-  } = useEvents();
+  const { data: eventsData, isLoading, error } = useEvents();
   const { data: customersData = [] } = useCustomers({
     enabled: !!config.fetchParticipantCounts,
   });
   const { data: eventPicturesData = [] } = useEventPictures(
-    !!config.useEventPictures
+    !!config.useEventPictures,
   );
-  const events: UniversalEventData[] = (eventsData || []) as UniversalEventData[];
+  const events: UniversalEventData[] = (eventsData ||
+    []) as UniversalEventData[];
   const eventPictures: SanityDocument[] = eventPicturesData;
 
   // Calculate participant counts from customers data
@@ -179,15 +168,23 @@ const EventsContainer: React.FC<EventsContainerProps> = ({ config }) => {
     return counts;
   }, [customersData, config.fetchParticipantCounts]);
 
-  const findMatchingEventPicture = (eventName: string): SanityDocument | undefined => {
+  const findMatchingEventPicture = (
+    eventName: string,
+  ): SanityDocument | undefined => {
     if (!eventPictures?.length) return undefined;
-    return eventPictures.find((picture) =>
-      picture.title?.toLowerCase() === eventName.toLowerCase()
+    return eventPictures.find(
+      (picture) => picture.title?.toLowerCase() === eventName.toLowerCase(),
     );
   };
 
-  const defaultSort = (a: UniversalEventData, b: UniversalEventData): number => {
-    return new Date(a.dates.startDate).getTime() - new Date(b.dates.startDate).getTime();
+  const defaultSort = (
+    a: UniversalEventData,
+    b: UniversalEventData,
+  ): number => {
+    return (
+      new Date(a.dates.startDate).getTime() -
+      new Date(b.dates.startDate).getTime()
+    );
   };
 
   const filteredEvents = events
@@ -195,12 +192,20 @@ const EventsContainer: React.FC<EventsContainerProps> = ({ config }) => {
     .sort(config.eventSort || defaultSort);
 
   if (isLoading) {
+    const skeletonLayout = config.cardConfig?.layout || "horizontal";
+    const skeletons = Array.from({ length: 3 }).map((_, i) => (
+      <EventCardSkeleton key={i} layout={skeletonLayout} />
+    ));
+
     return (
       <StyledContainer>
-        <LoadingContainer>
-          <CircularProgress size={60} sx={{ color: "#326C85" }} />
-          <LoadingText>{config.loadingMessage || "Loading events..."}</LoadingText>
-        </LoadingContainer>
+        {config.layout === "grid" ? (
+          <GridContainer columns={config.gridColumns}>
+            {skeletons}
+          </GridContainer>
+        ) : (
+          <ListContainer>{skeletons}</ListContainer>
+        )}
       </StyledContainer>
     );
   }
@@ -237,23 +242,47 @@ const EventsContainer: React.FC<EventsContainerProps> = ({ config }) => {
     });
 
     if (config.layout === "grid") {
-      return <GridContainer columns={config.gridColumns}>{cards}</GridContainer>;
+      return (
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          style={{ width: "100%" }}
+        >
+          <GridContainer columns={config.gridColumns}>{cards}</GridContainer>
+        </motion.div>
+      );
     } else {
-      return <ListContainer>{cards}</ListContainer>;
+      return (
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          style={{ width: "100%" }}
+        >
+          <ListContainer>{cards}</ListContainer>
+        </motion.div>
+      );
     }
   };
 
   return (
     <StyledContainer>
       <Title>
-        {config.titleIcons?.left && <TitleIcon>{config.titleIcons.left}</TitleIcon>}
+        {config.titleIcons?.left && (
+          <TitleIcon>{config.titleIcons.left}</TitleIcon>
+        )}
         {config.title}
-        {config.titleIcons?.right && <TitleIcon>{config.titleIcons.right}</TitleIcon>}
+        {config.titleIcons?.right && (
+          <TitleIcon>{config.titleIcons.right}</TitleIcon>
+        )}
       </Title>
 
       {config.subtitle && <Subtitle>{config.subtitle}</Subtitle>}
 
-      {config.sectionTitle && <SectionTitle>{config.sectionTitle}</SectionTitle>}
+      {config.sectionTitle && (
+        <SectionTitle>{config.sectionTitle}</SectionTitle>
+      )}
 
       {filteredEvents.length === 0 ? (
         <EmptyState>
@@ -262,7 +291,9 @@ const EventsContainer: React.FC<EventsContainerProps> = ({ config }) => {
               {config.emptyStateIcon}
             </div>
           )}
-          <div>{config.emptyStateMessage || "No events currently scheduled."}</div>
+          <div>
+            {config.emptyStateMessage || "No events currently scheduled."}
+          </div>
           {config.emptyStateSubmessage && (
             <div style={{ marginTop: "0.5rem", fontSize: "1rem" }}>
               {config.emptyStateSubmessage}

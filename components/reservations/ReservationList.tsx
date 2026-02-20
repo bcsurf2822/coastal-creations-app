@@ -2,6 +2,7 @@
 
 import { ReactElement, useMemo } from "react";
 import ReservationCard from "./ReservationCard";
+import ReservationCardSkeleton from "./ReservationCardSkeleton";
 import { Reservation } from "@/lib/types/reservationTypes";
 import { useReservations } from "@/hooks/queries";
 
@@ -33,12 +34,11 @@ export default function ReservationList({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#326C85] mx-auto mb-4"></div>
-          <p className="text-[#326C85] font-semibold text-lg">
-            Loading reservations...
-          </p>
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <ReservationCardSkeleton key={i} />
+          ))}
         </div>
       </div>
     );

@@ -1,384 +1,250 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useCallback } from "react";
+import { Abril_Fatface } from "next/font/google";
 
-interface ThreeScene {
-  add: (object: unknown) => void;
-}
-
-interface ThreeCamera {
-  position: { z: number };
-  aspect: number;
-  updateProjectionMatrix: () => void;
-}
-
-interface ThreeRenderer {
-  domElement: HTMLCanvasElement;
-  setPixelRatio: (value: number) => void;
-  setSize: (width: number, height: number) => void;
-  render: (scene: ThreeScene, camera: ThreeCamera) => void;
-  dispose: () => void;
-}
-
-interface ThreeTexture {
-  needsUpdate: boolean;
-  dispose: () => void;
-}
-
-interface ThreeGeometry {
-  dispose: () => void;
-}
-
-interface ThreeMaterial {
-  opacity: number;
-  dispose: () => void;
-}
-
-interface ThreeMesh {
-  position: { x: number; y: number };
-  rotation: { x: number };
-}
-
-interface ThreeModule {
-  Scene: new () => ThreeScene;
-  PerspectiveCamera: new (
-    fov: number,
-    aspect: number,
-    near: number,
-    far: number
-  ) => ThreeCamera;
-  WebGLRenderer: new (options: { alpha?: boolean; antialias?: boolean }) => ThreeRenderer;
-  CanvasTexture: new (canvas: HTMLCanvasElement) => ThreeTexture;
-  PlaneGeometry: new (width: number, height: number) => ThreeGeometry;
-  MeshBasicMaterial: new (options: {
-    map: ThreeTexture;
-    transparent?: boolean;
-    opacity?: number;
-  }) => ThreeMaterial;
-  Mesh: new (geometry: ThreeGeometry, material: ThreeMaterial) => ThreeMesh;
-}
-
-declare global {
-  interface Window {
-    THREE?: ThreeModule;
-  }
-}
-
-let threeLoaderPromise: Promise<ThreeModule | null> | null = null;
-const THREE_CDN_SOURCES = [
-  "https://unpkg.com/three@0.161.0/build/three.min.js",
-  "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.min.js",
-];
-
-const loadThreeScript = async (src: string): Promise<boolean> => {
-  const existingScript = document.querySelector<HTMLScriptElement>(
-    `script[data-threejs-src="${src}"]`
-  );
-
-  const attachLoadListeners = (script: HTMLScriptElement): Promise<boolean> => {
-    return new Promise<boolean>((resolve) => {
-      const scriptState = script.dataset.loadState;
-      if (scriptState === "loaded") {
-        resolve(true);
-        return;
-      }
-      if (scriptState === "failed") {
-        resolve(false);
-        return;
-      }
-
-      const handleLoad = (): void => {
-        window.clearTimeout(timeoutId);
-        script.dataset.loadState = window.THREE ? "loaded" : "failed";
-        resolve(Boolean(window.THREE));
-      };
-
-      const handleError = (): void => {
-        window.clearTimeout(timeoutId);
-        script.dataset.loadState = "failed";
-        resolve(false);
-      };
-
-      const timeoutId = window.setTimeout(() => {
-        script.dataset.loadState = window.THREE ? "loaded" : "failed";
-        resolve(Boolean(window.THREE));
-      }, 5000);
-
-      script.addEventListener("load", handleLoad, { once: true });
-      script.addEventListener("error", handleError, { once: true });
-    });
-  };
-
-  if (existingScript) {
-    return attachLoadListeners(existingScript);
-  }
-
-  const script = document.createElement("script");
-  script.src = src;
-  script.async = true;
-  script.defer = true;
-  script.dataset.threejsSrc = src;
-  script.dataset.loadState = "pending";
-  document.head.appendChild(script);
-
-  return attachLoadListeners(script);
-};
-
-const loadThreeFromCdn = async (): Promise<ThreeModule | null> => {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  if (window.THREE) {
-    return window.THREE;
-  }
-
-  if (!threeLoaderPromise) {
-    threeLoaderPromise = (async (): Promise<ThreeModule | null> => {
-      for (const source of THREE_CDN_SOURCES) {
-        const loaded = await loadThreeScript(source);
-        if (loaded && window.THREE) {
-          return window.THREE;
-        }
-      }
-      return null;
-    })();
-  }
-
-  return threeLoaderPromise;
-};
+const abrilFatface = Abril_Fatface({
+  subsets: ["latin"],
+  weight: "400",
+});
 
 interface ThreeHeroTextProps {
   text: string;
   className?: string;
 }
 
-const drawTextTexture = (canvas: HTMLCanvasElement, text: string): void => {
-  canvas.width = 2048;
-  canvas.height = 700;
+const BASE_COLOR = "#0f4f70";
+const HOVER_COLORS = [
+  "#38bdf8", // center     - sky-400
+  "#0ea5e9", // 1st ring   - sky-500
+  "#0284c7", // 2nd ring   - sky-600
+];
+const HOVER_OFFSETS = [-6, -3, -1];
+const HOVER_SHADOWS = [
+  "0 0 18px rgba(56,189,248,0.45), 0 0 6px rgba(56,189,248,0.25)",
+  "0 0 8px rgba(14,165,233,0.2)",
+  "none",
+];
 
-  const context = canvas.getContext("2d");
-  if (!context) {
-    return;
-  }
+const TRANSITION_STYLE = "0.3s color, 0.3s transform, 0.3s text-shadow";
 
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  context.fillStyle = "rgba(255,255,255,0)";
-  context.fillRect(0, 0, canvas.width, canvas.height);
-
-  context.textAlign = "center";
-  context.textBaseline = "middle";
-  context.shadowColor = "rgba(8, 38, 60, 0.2)";
-  context.shadowBlur = 14;
-  context.shadowOffsetY = 3;
-
-  let fontSize = 136;
-  let lines: string[] = [];
-  const words = text.trim().split(/\s+/);
-  const maxTextWidth = canvas.width * 0.86;
-
-  while (fontSize >= 96) {
-    context.font = `700 ${fontSize}px 'Abril Fatface', 'Times New Roman', serif`;
-    lines = [];
-    let currentLine = "";
-
-    words.forEach((word) => {
-      const testLine = currentLine ? `${currentLine} ${word}` : word;
-      if (context.measureText(testLine).width <= maxTextWidth || !currentLine) {
-        currentLine = testLine;
-      } else {
-        lines.push(currentLine);
-        currentLine = word;
-      }
-    });
-
-    if (currentLine) {
-      lines.push(currentLine);
-    }
-
-    if (lines.length <= 2) {
-      break;
-    }
-
-    fontSize -= 8;
-  }
-
-  if (lines.length > 2) {
-    lines = [lines[0], lines.slice(1).join(" ")];
-  }
-
-  const finalLines = lines.length === 1 ? [lines[0], ""] : lines;
-  const x = canvas.width / 2;
-  const lineOneY = canvas.height * 0.4;
-  const lineTwoY = canvas.height * 0.64;
-
-  context.lineJoin = "round";
-  context.lineWidth = 20;
-  context.strokeStyle = "rgba(255, 255, 255, 0.9)";
-  context.fillStyle = "#0f4f70";
-
-  if (finalLines[0]) {
-    context.strokeText(finalLines[0], x, lineOneY);
-    context.fillText(finalLines[0], x, lineOneY);
-  }
-
-  if (finalLines[1]) {
-    context.strokeText(finalLines[1], x, lineTwoY);
-    context.fillText(finalLines[1], x, lineTwoY);
-  }
-};
+// Wave auto-ripple timing
+const WAVE_PAUSE_MIN = 2500;
+const WAVE_PAUSE_MAX = 5000;
+const WAVE_STEP_MS = 60;
+const WAVE_HOLD_MS = 350;
 
 const ThreeHeroText = ({ text, className = "" }: ThreeHeroTextProps): ReactElement => {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [hasRenderError, setHasRenderError] = useState(false);
+  const spansRef = useRef<(HTMLSpanElement | null)[]>([]);
+  const isHoveringRef = useRef(false);
+  const mountedRef = useRef(true);
 
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) {
-      return;
-    }
+  const words = text.trim().split(/\s+/);
 
-    let disposed = false;
-    let frameId = 0;
-    let resizeObserver: ResizeObserver | null = null;
-    let observer: IntersectionObserver | null = null;
-    let disposeThreeResources: (() => void) | null = null;
+  const totalChars = words.reduce(
+    (sum, word, i) => sum + word.length + (i < words.length - 1 ? 1 : 0),
+    0,
+  );
 
-    const setupScene = async (): Promise<void> => {
-      try {
-        const THREE = await loadThreeFromCdn();
-        if (disposed || !container || !THREE) {
-          if (!THREE) {
-            setHasRenderError(true);
+  const resetSpan = useCallback((span: HTMLSpanElement): void => {
+    span.style.color = BASE_COLOR;
+    span.style.transform = "translateY(0px)";
+    span.style.textShadow = "none";
+  }, []);
+
+  const applyRipple = useCallback(
+    (index: number): void => {
+      const spans = spansRef.current;
+      for (let ring = 0; ring < HOVER_COLORS.length; ring++) {
+        const targets = ring === 0 ? [index] : [index - ring, index + ring];
+        targets.forEach((i) => {
+          if (i >= 0 && i < totalChars) {
+            const span = spans[i];
+            if (span) {
+              span.style.color = HOVER_COLORS[ring];
+              span.style.transform = `translateY(${HOVER_OFFSETS[ring]}px)`;
+              span.style.textShadow = HOVER_SHADOWS[ring];
+            }
           }
+        });
+      }
+    },
+    [totalChars],
+  );
+
+  const clearRipple = useCallback(
+    (index: number): void => {
+      const spans = spansRef.current;
+      const range = HOVER_COLORS.length;
+      for (let i = index - range; i <= index + range; i++) {
+        if (i >= 0 && i < totalChars) {
+          const span = spans[i];
+          if (span) resetSpan(span);
+        }
+      }
+    },
+    [totalChars, resetSpan],
+  );
+
+  // Set transitions + hover listeners on mount
+  useEffect(() => {
+    mountedRef.current = true;
+    const spans = spansRef.current;
+    const enterHandlers: (() => void)[] = [];
+    const leaveHandlers: (() => void)[] = [];
+
+    spans.forEach((span, i) => {
+      if (!span) return;
+      span.style.transition = TRANSITION_STYLE;
+
+      const onEnter = (): void => {
+        isHoveringRef.current = true;
+        applyRipple(i);
+      };
+      const onLeave = (): void => {
+        isHoveringRef.current = false;
+        clearRipple(i);
+      };
+
+      enterHandlers[i] = onEnter;
+      leaveHandlers[i] = onLeave;
+      span.addEventListener("mouseenter", onEnter);
+      span.addEventListener("mouseleave", onLeave);
+    });
+
+    return () => {
+      mountedRef.current = false;
+      spans.forEach((span, i) => {
+        if (!span) return;
+        if (enterHandlers[i]) span.removeEventListener("mouseenter", enterHandlers[i]);
+        if (leaveHandlers[i]) span.removeEventListener("mouseleave", leaveHandlers[i]);
+      });
+    };
+  }, [applyRipple, clearRipple]);
+
+  // Auto wave: sweeps a ripple across a random stretch of letters
+  useEffect(() => {
+    if (totalChars === 0) return;
+
+    let timeoutId: number;
+    let cancelled = false;
+
+    const runWave = (): void => {
+      if (cancelled) return;
+
+      // Pick a random start position and wave length (6-14 chars)
+      const waveLen = 6 + Math.floor(Math.random() * 9);
+      const start = Math.floor(Math.random() * totalChars);
+      // Randomly go left-to-right or right-to-left
+      const direction = Math.random() > 0.5 ? 1 : -1;
+
+      let step = 0;
+
+      const tick = (): void => {
+        if (cancelled || isHoveringRef.current) {
+          scheduleNext();
           return;
         }
 
-        const scene = new THREE.Scene();
-        const width = Math.max(container.clientWidth, 1);
-        const height = Math.max(container.clientHeight, 1);
-        const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-        camera.position.z = 4;
+        const idx = start + step * direction;
+        if (idx >= 0 && idx < totalChars) {
+          applyRipple(idx);
 
-        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-        renderer.setSize(width, height);
-        renderer.domElement.style.width = "100%";
-        renderer.domElement.style.height = "100%";
-        renderer.domElement.style.display = "block";
-        container.innerHTML = "";
-        container.appendChild(renderer.domElement);
-
-        const textCanvas = document.createElement("canvas");
-        drawTextTexture(textCanvas, text);
-
-        const texture = new THREE.CanvasTexture(textCanvas);
-        texture.needsUpdate = true;
-
-        const geometry = new THREE.PlaneGeometry(4.45, 1.56);
-        const material = new THREE.MeshBasicMaterial({
-          map: texture,
-          transparent: true,
-          opacity: 0,
-        });
-        const mesh = new THREE.Mesh(geometry, material);
-        mesh.position.y = -2.1;
-        mesh.rotation.x = 0.3;
-        scene.add(mesh);
-
-        let isVisible = false;
-        let animationStart: number | null = null;
-
-        observer = new IntersectionObserver(
-          (entries) => {
-            const [entry] = entries;
-            if (entry?.isIntersecting) {
-              isVisible = true;
-              observer?.disconnect();
+          // Clear this letter after the hold duration
+          window.setTimeout(() => {
+            if (!isHoveringRef.current && mountedRef.current) {
+              clearRipple(idx);
             }
-          },
-          { threshold: 0.45 }
-        );
-        observer.observe(container);
+          }, WAVE_HOLD_MS);
+        }
 
-        const animate = (timestamp: number): void => {
-          if (disposed) {
-            return;
-          }
+        step++;
+        if (step < waveLen) {
+          timeoutId = window.setTimeout(tick, WAVE_STEP_MS);
+        } else {
+          scheduleNext();
+        }
+      };
 
-          if (isVisible) {
-            if (animationStart === null) {
-              animationStart = timestamp;
-            }
-
-            const progress = Math.min((timestamp - animationStart) / 1300, 1);
-            const eased = 1 - Math.pow(1 - progress, 3);
-            const revealY = -2.1 + 2.1 * eased;
-            const floatY = progress >= 1 ? Math.sin(timestamp / 680) * 0.08 : 0;
-            const floatX = progress >= 1 ? Math.sin(timestamp / 1030) * 0.06 : 0;
-            mesh.position.y = revealY + floatY;
-            mesh.position.x = floatX;
-            mesh.rotation.x =
-              0.3 * (1 - eased) + (progress >= 1 ? Math.sin(timestamp / 1400) * 0.014 : 0);
-            material.opacity = eased;
-          }
-
-          renderer.render(scene, camera);
-          frameId = window.requestAnimationFrame(animate);
-        };
-
-        frameId = window.requestAnimationFrame(animate);
-
-        resizeObserver = new ResizeObserver((entries) => {
-          const entry = entries[0];
-          if (!entry) {
-            return;
-          }
-
-          const nextWidth = Math.max(entry.contentRect.width, 1);
-          const nextHeight = Math.max(entry.contentRect.height, 1);
-          camera.aspect = nextWidth / nextHeight;
-          camera.updateProjectionMatrix();
-          renderer.setSize(nextWidth, nextHeight);
-        });
-        resizeObserver.observe(container);
-
-        disposeThreeResources = () => {
-          geometry.dispose();
-          material.dispose();
-          texture.dispose();
-          renderer.dispose();
-        };
-      } catch (error: unknown) {
-        console.error("[ThreeHeroText-setupScene] Unable to initialize Three.js:", error);
-        setHasRenderError(true);
-      }
+      tick();
     };
 
-    void setupScene();
+    const scheduleNext = (): void => {
+      if (cancelled) return;
+      const pause = WAVE_PAUSE_MIN + Math.random() * (WAVE_PAUSE_MAX - WAVE_PAUSE_MIN);
+      timeoutId = window.setTimeout(runWave, pause);
+    };
+
+    // Initial delay before first wave
+    timeoutId = window.setTimeout(runWave, 1500);
 
     return () => {
-      disposed = true;
-      window.cancelAnimationFrame(frameId);
-      observer?.disconnect();
-      resizeObserver?.disconnect();
-      disposeThreeResources?.();
+      cancelled = true;
+      window.clearTimeout(timeoutId);
     };
-  }, [text]);
+  }, [totalChars, applyRipple, clearRipple]);
 
-  if (hasRenderError) {
-    return (
-      <h1 className="text-4xl sm:text-5xl md:text-6xl leading-tight text-primary font-bold">
-        {text}
-      </h1>
-    );
-  }
+  // Pre-compute word groups with stable global indices
+  const wordGroups: { chars: { char: string; idx: number }[]; spaceIdx: number | null }[] = [];
+  let idx = 0;
+  words.forEach((word, wordIdx) => {
+    const group: { chars: { char: string; idx: number }[]; spaceIdx: number | null } = {
+      chars: [],
+      spaceIdx: null,
+    };
+    Array.from(word).forEach((char) => {
+      group.chars.push({ char, idx: idx++ });
+    });
+    if (wordIdx < words.length - 1) {
+      group.spaceIdx = idx++;
+    }
+    wordGroups.push(group);
+  });
 
   return (
-    <div className={`relative h-full w-full ${className}`}>
-      <div ref={containerRef} className="h-full w-full" aria-hidden />
-      <h1 className="sr-only">{text}</h1>
+    <div className={`relative flex h-full w-full items-center justify-center ${className}`}>
+      <h1
+        className={`${abrilFatface.className} flex flex-wrap items-center justify-center px-4 text-center text-4xl leading-tight sm:text-5xl md:text-6xl`}
+        style={{ color: BASE_COLOR }}
+        aria-label={text}
+      >
+        {wordGroups.map((group, wordIdx) => (
+          <span
+            key={wordIdx}
+            className="inline-flex"
+            style={{ whiteSpace: "nowrap" }}
+          >
+            {group.chars.map(({ char, idx: charIdx }) => (
+              <span
+                key={charIdx}
+                ref={(el) => {
+                  spansRef.current[charIdx] = el;
+                }}
+                className="inline-block cursor-default"
+                style={{
+                  display: "inline-block",
+                  willChange: "transform, color",
+                }}
+              >
+                {char}
+              </span>
+            ))}
+            {group.spaceIdx !== null && (
+              <span
+                key={`space-${wordIdx}`}
+                ref={(el) => {
+                  spansRef.current[group.spaceIdx!] = el;
+                }}
+                className="inline-block"
+                style={{ minWidth: "0.6em", display: "inline-block" }}
+              >
+                {"\u00A0"}
+              </span>
+            )}
+          </span>
+        ))}
+      </h1>
     </div>
   );
 };

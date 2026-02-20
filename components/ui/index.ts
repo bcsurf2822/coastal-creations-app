@@ -6,3 +6,4 @@ export { Label, type LabelProps } from './Label';
 export { Card, type CardProps } from './Card';
 export { Badge, type BadgeProps } from './Badge';
 export { PriceBadge, type PriceBadgeProps } from './PriceBadge';
+export { Skeleton, type SkeletonProps } from './Skeleton';

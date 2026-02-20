@@ -22,6 +22,7 @@ import { Description, Settings } from "@mui/icons-material";
 import { motion } from "motion/react";
 import { FaCalendarAlt, FaClock, FaInstagram, FaGift } from "react-icons/fa";
 import { useEvent, useEventPictures } from "@/hooks/queries";
+import EventDetailSkeleton from "./EventDetailSkeleton";
 
 
 
@@ -305,25 +306,6 @@ const StyledImage = styled(Image, {
   },
 }));
 
-const LoadingContainer = styled("div")({
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "center",
-  alignItems: "center",
-  minHeight: "50vh",
-  gap: "1rem",
-});
-
-const LoadingText = styled(Typography)({
-  color: "#326C85",
-  fontSize: "1.1rem",
-  fontWeight: "700",
-  animation: "colorChange 2s ease-in-out infinite",
-  "@keyframes colorChange": {
-    "0%, 100%": { color: "#326C85" },
-    "50%": { color: "#42A5F5" },
-  },
-});
 
 const InstagramIcon = styled("div")({
   position: "absolute",
@@ -395,13 +377,7 @@ export default function EventDetails({
   }
 
   if (isLoading) {
-    return (
-      <StyledContainer>
-        <LoadingContainer>
-          <LoadingText>Loading event details... ✨</LoadingText>
-        </LoadingContainer>
-      </StyledContainer>
-    );
+    return <EventDetailSkeleton />;
   }
 
   if (error) {

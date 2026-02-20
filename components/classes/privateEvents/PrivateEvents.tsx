@@ -2,11 +2,13 @@
 
 import React from "react";
 import styled from "@emotion/styled";
-import { Box, Container, CircularProgress, Alert } from "@mui/material";
+import { Container, Alert } from "@mui/material";
 import { PrivateEvent } from "@/types/interfaces";
 import { FaEnvelope } from "react-icons/fa";
 import { usePrivateEvents } from "@/hooks/queries";
+import { motion } from "motion/react";
 import PrivateEventCard from "./PrivateEventCard";
+import PrivateEventCardSkeleton from "./PrivateEventCardSkeleton";
 
 const StyledContainer = styled(Container)({
   padding: "4rem 2rem",
@@ -81,25 +83,12 @@ const ContactIcon = styled("div")({
   },
 });
 
-const LoadingContainer = styled(Box)({
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "center",
-  alignItems: "center",
-  minHeight: "400px",
-  gap: "1rem",
-});
-
-const LoadingText = styled("div")({
-  color: "#1976D2",
-  fontSize: "1.25rem",
-  fontWeight: "700",
-  animation: "colorChange 2s ease-in-out infinite",
-  "@keyframes colorChange": {
-    "0%, 100%": { color: "#1976D2" },
-    "50%": { color: "#42A5F5" },
+const containerVariants = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.07 },
   },
-});
+};
 
 const PrivateEvents = () => {
   const {
@@ -112,16 +101,13 @@ const PrivateEvents = () => {
   if (loading) {
     return (
       <StyledContainer>
-        <LoadingContainer>
-          <CircularProgress
-            size={60}
-            sx={{
-              color: "#1976D2",
-              "& .MuiCircularProgress-circle": { strokeLinecap: "round" },
-            }}
-          />
-          <LoadingText>Loading...</LoadingText>
-        </LoadingContainer>
+        <GridContainer>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <GridItem key={i}>
+              <PrivateEventCardSkeleton />
+            </GridItem>
+          ))}
+        </GridContainer>
       </StyledContainer>
     );
   }
@@ -145,13 +131,20 @@ const PrivateEvents = () => {
 
   return (
     <StyledContainer>
-      <GridContainer>
-        {privateEvents.map((privateEvent, index) => (
-          <GridItem key={privateEvent._id}>
-            <PrivateEventCard privateEvent={privateEvent} index={index} />
-          </GridItem>
-        ))}
-      </GridContainer>
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        style={{ width: "100%" }}
+      >
+        <GridContainer>
+          {privateEvents.map((privateEvent, index) => (
+            <GridItem key={privateEvent._id}>
+              <PrivateEventCard privateEvent={privateEvent} index={index} />
+            </GridItem>
+          ))}
+        </GridContainer>
+      </motion.div>
 
       <ContactMessage>
         <ContactIcon>
