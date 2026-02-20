@@ -4,7 +4,7 @@ import GiftCardBalance from "@/components/gift-cards/GiftCardBalance";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Check Gift Card Balance | Coastal Creations Studio",
+  title: "Check Gift Card Balance",
   description: "Check the balance on your Coastal Creations Studio gift card.",
 };
 

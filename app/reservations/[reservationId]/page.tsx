@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { ReactElement } from "react";
 import Link from "next/link";
 import { CalendarSelection } from "@/components/reservations/CalendarSelection";
@@ -12,6 +13,30 @@ const ebGaramond = EB_Garamond({
 
 interface ReservationDetailPageProps {
   params: Promise<{ reservationId: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: ReservationDetailPageProps): Promise<Metadata> {
+  const { reservationId } = await params;
+
+  try {
+    await connectMongo();
+    const reservation = await Reservation.findById(reservationId, {
+      eventName: 1,
+    }).lean();
+    if (reservation) {
+      const name = reservation.eventName as string;
+      return {
+        title: name,
+        description: `Book your spot for ${name} at Coastal Creations Studio in Ocean City, NJ.`,
+      };
+    }
+  } catch {
+    // Fall through to default
+  }
+
+  return { title: "Reservation Details" };
 }
 
 // Helper to serialize a Date or return string as-is

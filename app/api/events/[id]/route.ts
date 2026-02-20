@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { connectMongo } from "@/lib/mongoose";
 import Event from "@/lib/models/Event";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
 
 export async function GET(
   request: Request,
@@ -41,6 +43,11 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     await connectMongo();
 

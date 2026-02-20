@@ -7,26 +7,20 @@ import { EB_Garamond } from "next/font/google";
 import { useCustomers, useEvents, usePageContent } from "@/hooks/queries";
 import { DEFAULT_TEXT } from "@/lib/constants/defaultPageContent";
 import { portableTextToPlainText } from "@/lib/utils/portableTextHelpers";
+import { motion } from "motion/react";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 import type { ApiEvent } from "@/types/interfaces";
-import { Button, Card, Skeleton } from "@/components/ui";
+import { Button } from "@/components/ui";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const ebGaramond = EB_Garamond({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
-
-const formatEventDate = (dateString: string): string => {
-  const parsedDate = new Date(dateString);
-  if (Number.isNaN(parsedDate.getTime())) {
-    return "Date TBA";
-  }
-
-  return parsedDate.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-};
 
 const formatEventTime = (startTime?: string): string => {
   if (!startTime) {
@@ -54,6 +48,27 @@ const formatEventType = (eventType: string): string => {
 
   return "Workshop";
 };
+
+const EVENT_TYPE_COLORS: Record<string, { bg: string; hover: string }> = {
+  "adult-class": { bg: "bg-[#326C85]", hover: "hover:bg-[#2a5b71]" },
+  "kid-class": { bg: "bg-[#5b9aab]", hover: "hover:bg-[#4d8999]" },
+  camp: { bg: "bg-[#e8875b]", hover: "hover:bg-[#d6764a]" },
+  artist: { bg: "bg-[#8b6aad]", hover: "hover:bg-[#7a5c9a]" },
+  event: { bg: "bg-[#326C85]", hover: "hover:bg-[#2a5b71]" },
+};
+
+const getEventColors = (eventType: string): { bg: string; hover: string } => {
+  return EVENT_TYPE_COLORS[eventType] || EVENT_TYPE_COLORS.event;
+};
+
+interface DaySlot {
+  date: dayjs.Dayjs;
+  dateKey: string;
+  weekday: string;
+  dayNum: string;
+  month: string;
+  events: ApiEvent[];
+}
 
 const Calendar = (): ReactElement => {
   const router = useRouter();
@@ -88,13 +103,12 @@ const Calendar = (): ReactElement => {
 
   const upcomingEvents = useMemo<ApiEvent[]>(() => {
     const events = eventsData || [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = dayjs().tz("America/New_York").startOf("day");
 
     return events
       .filter((event) => {
-        const startDate = new Date(event.dates.startDate);
-        return !Number.isNaN(startDate.getTime()) && startDate >= today;
+        const startDate = dayjs(event.dates.startDate).tz("America/New_York").startOf("day");
+        return !startDate.isBefore(today);
       })
       .sort(
         (firstEvent, secondEvent) =>
@@ -103,11 +117,50 @@ const Calendar = (): ReactElement => {
       );
   }, [eventsData]);
 
-  const previewEvents = upcomingEvents.slice(0, 4);
-  const hasSingleEvent = previewEvents.length === 1;
+  const weekSlots = useMemo<DaySlot[]>(() => {
+    const today = dayjs().tz("America/New_York").startOf("day");
+    const slots: DaySlot[] = [];
+
+    for (let i = 0; i < 7; i++) {
+      const date = today.add(i, "day");
+      const dateKey = date.format("YYYY-MM-DD");
+      const dayEvents = upcomingEvents.filter((event) => {
+        const eventStart = dayjs(event.dates.startDate).tz("America/New_York").startOf("day");
+        return eventStart.format("YYYY-MM-DD") === dateKey;
+      });
+
+      slots.push({
+        date,
+        dateKey,
+        weekday: date.format("ddd"),
+        dayNum: date.format("D"),
+        month: date.format("MMM"),
+        events: dayEvents,
+      });
+    }
+
+    return slots;
+  }, [upcomingEvents]);
+
+  const handleEventClick = (event: ApiEvent): void => {
+    if (event.eventType === "artist") {
+      router.push(`/events/live-artist/${event._id}`);
+      return;
+    }
+    const params = new URLSearchParams();
+    params.set("eventId", event._id);
+    params.set("eventTitle", event.eventName);
+    if (event.isFree || event.price === 0) {
+      params.set("price", "0");
+      params.set("isFree", "true");
+    } else if (event.price !== undefined) {
+      params.set("price", String(event.price));
+    }
+    router.push(`/payments?${params.toString()}`);
+  };
 
   return (
-    <section id="upcoming-workshops" className="bg-transparent py-16 md:py-24">
+    <section id="upcoming-workshops" className="bg-transparent py-10 md:py-16">
       <div className="mx-auto w-full max-w-[var(--container-max)] px-4 sm:px-6 lg:px-8">
         <div className="rounded-[2rem] border border-white/65 bg-white/82 p-6 shadow-[0_14px_26px_rgba(12,74,110,0.08)] backdrop-blur-[2px] md:p-10">
           <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-secondary">
@@ -123,132 +176,109 @@ const Calendar = (): ReactElement => {
           <p className="mb-8 max-w-3xl text-lg leading-relaxed text-slate-700">{subtitle}</p>
 
           {isLoading ? (
-            <div className="grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="flex h-full flex-col rounded-2xl border border-sky-100 bg-white p-5 shadow-[0_8px_18px_rgba(12,74,110,0.1)]"
-                >
-                  <div className="mb-4 flex items-center justify-between gap-3">
-                    <Skeleton variant="rounded" width={90} height={24} />
-                    <Skeleton variant="text" width={80} height={16} />
-                  </div>
-                  <Skeleton variant="text" height={28} className="mb-2 w-3/4" />
-                  <div className="mb-5 space-y-2">
-                    <Skeleton variant="text" height={16} className="w-full" />
-                    <Skeleton variant="text" height={16} className="w-full" />
-                    <Skeleton variant="text" height={16} className="w-2/3" />
-                  </div>
-                  <div className="mb-5 flex items-center justify-between">
-                    <Skeleton variant="text" width={70} height={14} />
-                    <Skeleton variant="text" width={80} height={14} />
-                  </div>
-                  <Skeleton variant="rounded" height={40} className="mt-auto w-full" />
-                </div>
-              ))}
+            <div className="flex justify-center items-center min-h-[200px]">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                style={{
+                  width: 40,
+                  height: 40,
+                  border: "3px solid rgba(50,108,133,0.15)",
+                  borderTopColor: "#326C85",
+                  borderRadius: "50%",
+                }}
+              />
             </div>
           ) : error ? (
             <p className="py-10 text-center text-lg font-semibold text-red-600">
               Error loading workshops. Please check the full calendar.
             </p>
-          ) : previewEvents.length === 0 ? (
-            <Card
-              variant="featured"
-              className="rounded-2xl border border-sky-100 bg-white py-12 text-center shadow-[0_8px_20px_rgba(12,74,110,0.08)]"
-            >
-              <p className="mb-4 text-lg font-semibold text-slate-700">
-                New workshops are on the way.
-              </p>
-              <p className="text-base text-slate-600">
-                Check the full calendar for the latest updates and new openings.
-              </p>
-            </Card>
           ) : (
-            <div
-              className={`grid gap-5 ${
-                hasSingleEvent ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2 xl:grid-cols-4"
-              }`}
-            >
-              {previewEvents.map((event) => {
-                const currentParticipants = eventParticipantCounts[event._id] || 0;
-                const capacity = event.numberOfParticipants || 20;
-                const isSoldOut =
-                  event.eventType !== "artist" && currentParticipants >= capacity;
-
+            <>
+            {/* Day headers */}
+            <div className="grid grid-cols-7 border-b border-slate-200">
+              {weekSlots.map((slot, slotIndex) => {
+                const isToday = slotIndex === 0;
                 return (
-                  <article
-                    key={event._id}
-                    className={`flex h-full flex-col rounded-2xl border border-sky-100 bg-white p-5 shadow-[0_8px_18px_rgba(12,74,110,0.1)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_24px_rgba(12,74,110,0.14)] ${
-                      hasSingleEvent ? "md:p-8" : ""
-                    }`}
+                  <div
+                    key={slot.dateKey}
+                    className={`py-3 text-center ${isToday ? "border-b-2 border-[#326C85]" : ""}`}
                   >
-                    <div className="mb-4 flex items-center justify-between gap-3">
-                      <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-primary">
-                        {formatEventType(event.eventType)}
-                      </span>
-                      <span className="text-sm font-semibold text-slate-600">
-                        {formatEventDate(event.dates.startDate)}
-                      </span>
-                    </div>
-
-                    <h3
-                      className={`${ebGaramond.className} mb-2 text-2xl font-semibold leading-tight text-primary`}
-                    >
-                      {event.eventName}
-                    </h3>
-
-                    <div
-                      className={`mb-5 rounded-lg border border-sky-100 bg-sky-50/60 px-3 py-2.5 text-sm leading-relaxed text-slate-600 ${
-                        hasSingleEvent
-                          ? ""
-                          : "max-h-[4.5rem] overflow-y-auto scrollbar-thin"
-                      }`}
-                    >
-                      <p>{event.description}</p>
-                    </div>
-
-                    <div className="mb-5 flex items-center justify-between text-sm font-semibold text-slate-600">
-                      <span>{formatEventTime(event.time.startTime)}</span>
-                      {event.eventType === "artist" ? (
-                        <span className="text-amber-700">Live Demo</span>
-                      ) : (
-                        <span>
-                          {Math.max(capacity - currentParticipants, 0)} spots left
-                        </span>
-                      )}
-                    </div>
-
-                    <Button
-                      variant={isSoldOut ? "secondary" : "primary"}
-                      className="mt-auto w-full transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
-                      disabled={isSoldOut}
-                      onClick={() => {
-                        if (event.eventType === "artist") {
-                          router.push(`/events/live-artist/${event._id}`);
-                          return;
-                        }
-                        const params = new URLSearchParams();
-                        params.set("eventId", event._id);
-                        params.set("eventTitle", event.eventName);
-                        if (event.isFree || event.price === 0) {
-                          params.set("price", "0");
-                          params.set("isFree", "true");
-                        } else if (event.price !== undefined) {
-                          params.set("price", String(event.price));
-                        }
-                        router.push(`/payments?${params.toString()}`);
-                      }}
-                    >
-                      {isSoldOut
-                        ? "Sold Out"
-                        : event.eventType === "artist"
-                          ? "View Event"
-                          : "Sign Up"}
-                    </Button>
-                  </article>
+                    <span className={`text-sm font-semibold ${isToday ? "text-[#326C85]" : "text-slate-500"}`}>
+                      {slot.weekday}
+                    </span>
+                    <span className={`ml-1.5 text-sm ${isToday ? "font-bold text-[#326C85]" : "text-slate-400"}`}>
+                      {slot.dayNum}
+                    </span>
+                  </div>
                 );
               })}
             </div>
+
+            {/* Day columns with events */}
+            <div className="grid grid-cols-7 min-h-[260px]">
+              {weekSlots.map((slot, slotIndex) => (
+                <div
+                  key={slot.dateKey}
+                  className={`flex flex-col gap-2.5 p-2 pt-3 ${slotIndex < 6 ? "border-r border-slate-100" : ""}`}
+                >
+                  {slot.events.length > 0 ? (
+                    slot.events.map((event) => {
+                      const currentParticipants = eventParticipantCounts[event._id] || 0;
+                      const capacity = event.numberOfParticipants || 20;
+                      const isSoldOut =
+                        event.eventType !== "artist" && currentParticipants >= capacity;
+                      const colors = getEventColors(event.eventType);
+                      const priceLabel = event.isFree || event.price === 0 ? "Free" : event.price ? `$${event.price}` : null;
+
+                      return (
+                        <button
+                          key={event._id}
+                          type="button"
+                          onClick={() => handleEventClick(event)}
+                          disabled={isSoldOut}
+                          className={`group relative flex flex-1 flex-col rounded-xl p-3 text-left text-white transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 ${colors.bg} ${colors.hover}`}
+                        >
+                          <span className="text-[10px] font-bold uppercase tracking-wide text-white/70">
+                            {formatEventType(event.eventType)}
+                          </span>
+                          <span className={`${ebGaramond.className} mt-1 text-base font-bold leading-tight`}>
+                            {event.eventName}
+                          </span>
+                          {event.description && (
+                            <div className="mt-2 flex-1 overflow-y-auto text-xs font-medium leading-relaxed text-white/90 scrollbar-thin" style={{ maxHeight: "140px" }}>
+                              {event.description}
+                            </div>
+                          )}
+                          <div className="mt-auto pt-3 flex items-center justify-between">
+                            <span className="text-xs font-semibold text-white/80">
+                              {formatEventTime(event.time.startTime)}
+                            </span>
+                            {priceLabel && (
+                              <span className="text-xs font-bold">
+                                {priceLabel}
+                              </span>
+                            )}
+                          </div>
+                          <span className={`mt-2 self-stretch rounded-lg py-1.5 text-center text-[11px] font-bold uppercase tracking-wide transition-colors ${
+                            isSoldOut
+                              ? "bg-white/20 text-white/60"
+                              : "bg-white/25 text-white group-hover:bg-white/35"
+                          }`}>
+                            {isSoldOut ? "Sold Out" : "Sign Up"}
+                          </span>
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <div className="flex flex-1 items-center justify-center">
+                      <span className="text-xs text-slate-300">--</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            </>
           )}
 
           <div className="mt-10 flex justify-center">

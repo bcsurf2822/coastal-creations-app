@@ -12,7 +12,6 @@ import { client } from "@/sanity/client";
 import { FaBirthdayCake, FaInstagram } from "react-icons/fa";
 import { GiBalloons, GiCupcake, GiPartyPopper } from "react-icons/gi";
 import { Button } from "@/components/ui";
-import { motion } from "motion/react";
 
 const { projectId, dataset } = client.config();
 const urlFor = (source: SanityImageSource) =>
@@ -145,13 +144,8 @@ const PrivateEventCard = ({
         ) + "..."
       : descriptionText;
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-  };
-
   return (
-    <motion.div variants={itemVariants} style={{ height: "100%" }}>
+    <div className="animate-fade-in-up" style={{ height: "100%", animationDelay: `${index * 60}ms` }}>
       <CardWrapper>
         <ImageContainer>
           {privateEvent.image ? (
@@ -275,7 +269,7 @@ const PrivateEventCard = ({
             </InstagramLink>
           )}
       </CardWrapper>
-    </motion.div>
+    </div>
   );
 };
 

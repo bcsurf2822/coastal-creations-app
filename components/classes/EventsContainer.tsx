@@ -14,7 +14,6 @@ import UniversalEventCard, {
 } from "./EventCard";
 import { getRandomIcon } from "./eventUtils";
 import { useEvents, useCustomers, useEventPictures } from "@/hooks/queries";
-import EventCardSkeleton from "./EventCardSkeleton";
 
 const { projectId, dataset } = client.config();
 const urlFor = (source: SanityImageSource) =>
@@ -137,12 +136,6 @@ const ListContainer = styled("div")({
   gap: "2rem",
 });
 
-const containerVariants = {
-  hidden: {},
-  show: {
-    transition: { staggerChildren: 0.07 },
-  },
-};
 
 const EventsContainer: React.FC<EventsContainerProps> = ({ config }) => {
   const { data: eventsData, isLoading, error } = useEvents();
@@ -192,20 +185,21 @@ const EventsContainer: React.FC<EventsContainerProps> = ({ config }) => {
     .sort(config.eventSort || defaultSort);
 
   if (isLoading) {
-    const skeletonLayout = config.cardConfig?.layout || "horizontal";
-    const skeletons = Array.from({ length: 3 }).map((_, i) => (
-      <EventCardSkeleton key={i} layout={skeletonLayout} />
-    ));
-
     return (
       <StyledContainer>
-        {config.layout === "grid" ? (
-          <GridContainer columns={config.gridColumns}>
-            {skeletons}
-          </GridContainer>
-        ) : (
-          <ListContainer>{skeletons}</ListContainer>
-        )}
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "300px" }}>
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            style={{
+              width: 40,
+              height: 40,
+              border: "3px solid rgba(50,108,133,0.15)",
+              borderTopColor: "#326C85",
+              borderRadius: "50%",
+            }}
+          />
+        </div>
       </StyledContainer>
     );
   }
@@ -242,27 +236,9 @@ const EventsContainer: React.FC<EventsContainerProps> = ({ config }) => {
     });
 
     if (config.layout === "grid") {
-      return (
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="show"
-          style={{ width: "100%" }}
-        >
-          <GridContainer columns={config.gridColumns}>{cards}</GridContainer>
-        </motion.div>
-      );
+      return <GridContainer columns={config.gridColumns}>{cards}</GridContainer>;
     } else {
-      return (
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="show"
-          style={{ width: "100%" }}
-        >
-          <ListContainer>{cards}</ListContainer>
-        </motion.div>
-      );
+      return <ListContainer>{cards}</ListContainer>;
     }
   };
 

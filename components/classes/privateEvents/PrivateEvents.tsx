@@ -8,7 +8,6 @@ import { FaEnvelope } from "react-icons/fa";
 import { usePrivateEvents } from "@/hooks/queries";
 import { motion } from "motion/react";
 import PrivateEventCard from "./PrivateEventCard";
-import PrivateEventCardSkeleton from "./PrivateEventCardSkeleton";
 
 const StyledContainer = styled(Container)({
   padding: "4rem 2rem",
@@ -83,13 +82,6 @@ const ContactIcon = styled("div")({
   },
 });
 
-const containerVariants = {
-  hidden: {},
-  show: {
-    transition: { staggerChildren: 0.07 },
-  },
-};
-
 const PrivateEvents = () => {
   const {
     data: privateEventsData = [],
@@ -101,13 +93,19 @@ const PrivateEvents = () => {
   if (loading) {
     return (
       <StyledContainer>
-        <GridContainer>
-          {Array.from({ length: 4 }).map((_, i) => (
-            <GridItem key={i}>
-              <PrivateEventCardSkeleton />
-            </GridItem>
-          ))}
-        </GridContainer>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "300px" }}>
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            style={{
+              width: 40,
+              height: 40,
+              border: "3px solid rgba(50,108,133,0.15)",
+              borderTopColor: "#326C85",
+              borderRadius: "50%",
+            }}
+          />
+        </div>
       </StyledContainer>
     );
   }
@@ -131,20 +129,13 @@ const PrivateEvents = () => {
 
   return (
     <StyledContainer>
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="show"
-        style={{ width: "100%" }}
-      >
-        <GridContainer>
-          {privateEvents.map((privateEvent, index) => (
-            <GridItem key={privateEvent._id}>
-              <PrivateEventCard privateEvent={privateEvent} index={index} />
-            </GridItem>
-          ))}
-        </GridContainer>
-      </motion.div>
+      <GridContainer>
+        {privateEvents.map((privateEvent, index) => (
+          <GridItem key={privateEvent._id}>
+            <PrivateEventCard privateEvent={privateEvent} index={index} />
+          </GridItem>
+        ))}
+      </GridContainer>
 
       <ContactMessage>
         <ContactIcon>

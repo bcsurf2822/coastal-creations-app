@@ -199,29 +199,26 @@ export async function POST(request: NextRequest) {
 
       const savedCustomer = await customer.save();
 
-      // 5. Update availability atomically for each date
+      // 5. Update availability with a single bulkWrite (instead of N queries per date)
+      const bulkOps: Parameters<typeof Reservation.bulkWrite>[0] = [];
+
       for (const selectedDate of selectedDates) {
-        // Normalize both dates to YYYY-MM-DD for comparison
         const selectedDateStr = normalizeDateString(selectedDate.date);
 
-        // Find the reservation to get the exact date object from dailyAvailability
-        const currentReservation = await Reservation.findById(eventId);
-        const matchingDayIndex = currentReservation?.dailyAvailability.findIndex(
-          (day: { date: Date }) => {
-            return normalizeDateString(day.date) === selectedDateStr;
-          }
+        const matchingDayIndex = reservation.dailyAvailability.findIndex(
+          (day: { date: Date }) =>
+            normalizeDateString(day.date) === selectedDateStr
         );
 
-        if (matchingDayIndex === undefined || matchingDayIndex === -1) {
+        if (matchingDayIndex === -1) {
           console.error(
             `[CUSTOMER-API-POST] Could not find matching date in dailyAvailability for ${selectedDateStr}`
           );
           continue;
         }
 
-        const matchingDay = currentReservation!.dailyAvailability[matchingDayIndex];
+        const matchingDay = reservation.dailyAvailability[matchingDayIndex];
 
-        // If time slots are enabled and a time slot was selected, update time slot availability
         if (hasTimeSlots && selectedDate.timeSlot && matchingDay.timeSlots) {
           const slotIndex = matchingDay.timeSlots.findIndex(
             (slot: { startTime: string; endTime: string }) =>
@@ -230,29 +227,20 @@ export async function POST(request: NextRequest) {
           );
 
           if (slotIndex !== -1) {
-            // Update the specific time slot's currentBookings
-            const updateResult = await Reservation.findOneAndUpdate(
-              {
-                _id: eventId,
-                "dailyAvailability.date": matchingDay.date,
-              },
-              {
-                $inc: {
-                  [`dailyAvailability.${matchingDayIndex}.timeSlots.${slotIndex}.currentBookings`]:
-                    selectedDate.numberOfParticipants,
+            bulkOps.push({
+              updateOne: {
+                filter: {
+                  _id: eventId,
+                  "dailyAvailability.date": matchingDay.date,
+                },
+                update: {
+                  $inc: {
+                    [`dailyAvailability.${matchingDayIndex}.timeSlots.${slotIndex}.currentBookings`]:
+                      selectedDate.numberOfParticipants,
+                  },
                 },
               },
-              { new: true }
-            );
-
-            if (!updateResult) {
-              console.error(
-                "[CUSTOMER-API-POST] Failed to update time slot availability for date:",
-                selectedDate.date,
-                "slot:",
-                selectedDate.timeSlot
-              );
-            }
+            });
           } else {
             console.error(
               "[CUSTOMER-API-POST] Time slot not found for update:",
@@ -260,28 +248,28 @@ export async function POST(request: NextRequest) {
             );
           }
         } else {
-          // Update day-level availability (no time slots)
-          const updateResult = await Reservation.findOneAndUpdate(
-            {
-              _id: eventId,
-              "dailyAvailability.date": matchingDay.date,
-            },
-            {
-              $inc: {
-                "dailyAvailability.$.currentBookings":
-                  selectedDate.numberOfParticipants,
+          bulkOps.push({
+            updateOne: {
+              filter: {
+                _id: eventId,
+                "dailyAvailability.date": matchingDay.date,
+              },
+              update: {
+                $inc: {
+                  "dailyAvailability.$.currentBookings":
+                    selectedDate.numberOfParticipants,
+                },
               },
             },
-            { new: true }
-          );
-
-          if (!updateResult) {
-            console.error(
-              "[CUSTOMER-API-POST] Failed to update availability for date:",
-              selectedDate.date
-            );
-          }
+          });
         }
+      }
+
+      if (bulkOps.length > 0) {
+        const bulkResult = await Reservation.bulkWrite(bulkOps);
+        console.log(
+          `[CUSTOMER-API-POST] Bulk updated ${bulkResult.modifiedCount} availability records`
+        );
       }
 
       return NextResponse.json(

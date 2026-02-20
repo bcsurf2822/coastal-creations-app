@@ -103,7 +103,7 @@ const MainSection = (): ReactElement => {
     : DEFAULT_TEXT.homepage.mainSection.description;
 
   return (
-    <section id="creative-space" className="bg-transparent py-16 md:py-24">
+    <section id="creative-space" className="bg-transparent py-10 md:py-16">
       <div className="mx-auto w-full max-w-[var(--container-max)] px-4 sm:px-6 lg:px-8">
         <div className="rounded-[2rem] border border-white/65 bg-white/78 p-6 shadow-[0_14px_30px_rgba(12,74,110,0.12)] backdrop-blur-[2px] md:p-10">
           <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">

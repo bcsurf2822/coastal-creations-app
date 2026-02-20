@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { client } from "@/sanity/client";
 import { buildGalleryQuery } from "@/lib/utils/galleryHelpers";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
 
 const options = { next: { revalidate: 30 } };
 
@@ -40,6 +42,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
  * POST - Upload new gallery images
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const formData = await request.formData();
     const title = formData.get("title") as string;
@@ -161,6 +168,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
  * PUT - Update gallery image metadata
  */
 export async function PUT(request: NextRequest): Promise<NextResponse> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const { id, title, description, destinations } = body;
@@ -226,6 +238,11 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
  * DELETE - Delete gallery image
  */
 export async function DELETE(request: NextRequest): Promise<NextResponse> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const id = searchParams.get("id");

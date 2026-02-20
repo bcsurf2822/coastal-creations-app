@@ -73,7 +73,7 @@ const Offerings = (): ReactElement => {
   ];
 
   return (
-    <section id="creative-experiences" className="bg-transparent py-16 md:py-24">
+    <section id="creative-experiences" className="bg-transparent py-10 md:py-16">
       <div className="mx-auto w-full max-w-[var(--container-max)] px-4 sm:px-6 lg:px-8">
         <div className="rounded-[2rem] border border-white/65 bg-white/74 p-6 shadow-[0_14px_28px_rgba(12,74,110,0.1)] backdrop-blur-[2px] md:p-8">
           <div className="mb-10 md:mb-12">

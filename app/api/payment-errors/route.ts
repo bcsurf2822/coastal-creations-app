@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 import { connectMongo } from "@/lib/mongoose";
 import PaymentError from "@/lib/models/PaymentError";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
 
 export async function GET(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     await connectMongo();
 
@@ -42,6 +49,11 @@ export async function GET(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     await connectMongo();
 

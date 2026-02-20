@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { client } from "@/sanity/client";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File;

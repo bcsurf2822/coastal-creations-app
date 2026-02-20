@@ -22,9 +22,6 @@ import { Description, Settings } from "@mui/icons-material";
 import { motion } from "motion/react";
 import { FaCalendarAlt, FaClock, FaInstagram, FaGift } from "react-icons/fa";
 import { useEvent, useEventPictures } from "@/hooks/queries";
-import EventDetailSkeleton from "./EventDetailSkeleton";
-
-
 
 // Setup Sanity image URL builder
 const { projectId, dataset } = client.config();
@@ -377,7 +374,23 @@ export default function EventDetails({
   }
 
   if (isLoading) {
-    return <EventDetailSkeleton />;
+    return (
+      <StyledContainer>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "400px" }}>
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            style={{
+              width: 40,
+              height: 40,
+              border: "3px solid rgba(50,108,133,0.15)",
+              borderTopColor: "#326C85",
+              borderRadius: "50%",
+            }}
+          />
+        </div>
+      </StyledContainer>
+    );
   }
 
   if (error) {

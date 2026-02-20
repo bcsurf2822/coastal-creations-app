@@ -179,21 +179,8 @@ export default function GalleryCarousel({
     setCurrentIndex(index);
   };
 
-  // Don't render if no images or still loading
-  if (loading) {
-    return (
-      <div className="w-full">
-        {title && (
-          <h2 className="mb-4 text-2xl font-bold text-gray-900 dark:text-white">
-            {title}
-          </h2>
-        )}
-        <div className={`relative rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 ${height} animate-pulse`} />
-      </div>
-    );
-  }
-
-  if (images.length === 0) {
+  // Don't render until images are ready
+  if (loading || images.length === 0) {
     return null;
   }
 

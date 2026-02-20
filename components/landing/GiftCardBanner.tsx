@@ -9,7 +9,7 @@ const GiftCardBanner = (): ReactElement => {
   const router = useRouter();
 
   return (
-    <section id="gift-cards" className="bg-transparent py-16 md:py-24">
+    <section id="gift-cards" className="bg-transparent py-10 md:py-16">
       <div className="mx-auto w-full max-w-[var(--container-max)] px-4 sm:px-6 lg:px-8">
         <div className="relative overflow-hidden rounded-[2rem] border border-white/65 bg-white/82 px-6 py-10 shadow-[0_18px_34px_rgba(12,74,110,0.14)] backdrop-blur-[2px] md:px-10 lg:px-14">
           <div className="pointer-events-none absolute -left-6 top-8 hidden md:block">

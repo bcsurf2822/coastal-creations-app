@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { client } from "@/sanity/client";
 import type { PageContent } from "@/types/pageContent";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
 
 export async function GET() {
   try {
@@ -22,6 +24,11 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const body: PageContent = await request.json();
     console.log("[API-PAGE-CONTENT-PUT] Received body:", JSON.stringify(body, null, 2));

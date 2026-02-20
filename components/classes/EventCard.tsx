@@ -4,7 +4,6 @@ import React from "react";
 import styled from "@emotion/styled";
 import { Box, Chip } from "@mui/material";
 import Link from "next/link";
-import { motion } from "motion/react";
 import Image from "next/image";
 import { FaCalendarAlt, FaClock, FaUsers, FaInstagram } from "react-icons/fa";
 import { IconType } from "react-icons";
@@ -351,17 +350,8 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
   const discountActive = isDiscountActive();
   const isSoldOut = currentParticipants >= (event.numberOfParticipants || 20);
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-  };
-
   return (
-    <motion.div
-      key={event._id}
-      variants={itemVariants}
-      style={{ height: "100%" }}
-    >
+    <div className="animate-fade-in-up" style={{ height: "100%", animationDelay: `${index * 60}ms` }}>
       <CardWrapper layout={layout}>
         {/* Image Section */}
         {showImage && (
@@ -525,7 +515,7 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
           </InstagramLink>
         )}
       </CardWrapper>
-    </motion.div>
+    </div>
   );
 };
 

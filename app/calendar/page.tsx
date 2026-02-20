@@ -1,7 +1,14 @@
+import type { Metadata } from "next";
 import PageHeader from "@/components/classes/PageHeader";
 import NewCalendar from "@/components/calendar/NewCalendar";
 import React from "react";
 import { FaCalendarAlt } from "react-icons/fa";
+
+export const metadata: Metadata = {
+  title: "Events Calendar",
+  description:
+    "Browse the full schedule of art classes, workshops, camps, and events at Coastal Creations Studio in Ocean City, NJ.",
+};
 
 export default function CalendarPage() {
   return (
