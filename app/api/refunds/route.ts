@@ -3,6 +3,8 @@ import { connectMongo } from "@/lib/mongoose";
 import Customer from "@/lib/models/Customer";
 import { Client, Environment } from "square/legacy";
 import { randomUUID } from "crypto";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
 
 const { refundsApi } = new Client({
   accessToken: process.env.ACCESS_TOKEN,
@@ -13,6 +15,11 @@ const { refundsApi } = new Client({
 });
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     await connectMongo();
     const { customerId, refundAmount, reason } = await request.json();
@@ -140,6 +147,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     await connectMongo();
 

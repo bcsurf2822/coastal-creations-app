@@ -35,7 +35,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     children,
     ...props
   }, ref) => {
-    const baseClasses = 'inline-flex items-center justify-center gap-2 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 disabled:opacity-50 disabled:cursor-not-allowed';
+    const baseClasses = 'inline-flex items-center justify-center gap-2 font-medium transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 disabled:opacity-50 disabled:cursor-not-allowed';
     const radiusClass = variant === 'pill' ? '' : 'rounded-[var(--radius-default)]';
 
     return (

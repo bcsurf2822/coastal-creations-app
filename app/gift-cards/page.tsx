@@ -4,7 +4,7 @@ import GiftCardPurchase from "@/components/gift-cards/GiftCardPurchase";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Purchase Gift Card | Coastal Creations Studio",
+  title: "Purchase Gift Card",
   description:
     "Give the gift of creativity! Purchase a digital gift card for Coastal Creations Studio.",
 };

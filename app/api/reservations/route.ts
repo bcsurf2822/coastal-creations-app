@@ -5,6 +5,8 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -152,35 +154,33 @@ function generateDailyAvailability(
   return dailyAvailability;
 }
 
-function isReservationExpired(reservation: { dates: { endDate?: Date; startDate: Date }; time: { endTime?: string } }): boolean {
-  const now = new Date();
-  const endDate = new Date(reservation.dates.endDate || reservation.dates.startDate);
-
-  if (reservation.time.endTime) {
-    const [hours, minutes] = reservation.time.endTime.split(":");
-    endDate.setHours(parseInt(hours), parseInt(minutes));
-  }
-
-  return now > endDate;
-}
-
-async function cleanupExpiredReservations() {
+// Clean up expired reservations using database-side filtering.
+// Uses start-of-today as cutoff (conservative: reservations linger ~24h
+// past their end time, but avoids loading the entire collection).
+async function cleanupExpiredReservations(): Promise<number> {
   try {
-    const reservations = await Reservation.find({});
-    const expiredReservationIds: string[] = [];
+    const todayStart = dayjs().tz(LOCAL_TIMEZONE).startOf("day").toDate();
 
-    reservations.forEach((reservation) => {
-      if (isReservationExpired(reservation)) {
-        expiredReservationIds.push(reservation._id.toString());
-      }
+    const result = await Reservation.deleteMany({
+      $or: [
+        // Reservations with an end date that has passed
+        {
+          "dates.endDate": { $ne: null, $lt: todayStart },
+        },
+        // Reservations without an end date, where start date has passed
+        {
+          "dates.endDate": null,
+          "dates.startDate": { $lt: todayStart },
+        },
+      ],
     });
 
-    if (expiredReservationIds.length > 0) {
-      const result = await Reservation.deleteMany({ _id: { $in: expiredReservationIds } });
-      return result.deletedCount;
+    if (result.deletedCount > 0) {
+      console.log(
+        `[RESERVATIONS-CLEANUP] Deleted ${result.deletedCount} expired reservations`
+      );
     }
-
-    return 0;
+    return result.deletedCount || 0;
   } catch (error) {
     console.error("[RESERVATIONS-CLEANUP] Error cleaning up expired reservations:", error);
     return 0;
@@ -188,6 +188,11 @@ async function cleanupExpiredReservations() {
 }
 
 export async function POST(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     await connectMongo();
     const data = await request.json();
@@ -312,6 +317,11 @@ export async function GET(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     await connectMongo();
     const { searchParams } = new URL(request.url);

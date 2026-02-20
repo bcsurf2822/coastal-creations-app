@@ -1,85 +1,70 @@
 "use client";
 
-import Link from "next/link";
+import type { ReactElement } from "react";
 import Image from "next/image";
-import { motion } from "motion/react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui";
 
-export default function GiftCardBanner() {
+const GiftCardBanner = (): ReactElement => {
+  const router = useRouter();
+
   return (
-    <section className="py-16 md:py-20 relative overflow-hidden my-12 md:my-16 rounded-3xl mx-4 md:mx-8">
-      <div className="container mx-auto px-6 md:px-12 relative z-10">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-8 max-w-6xl mx-auto">
-          {/* Text Content */}
-          <div className="flex-1 text-center md:text-left">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-            >
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/80 backdrop-blur-sm text-primary text-sm font-bold mb-4 shadow-sm">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-                </span>
-                New Arrival
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-800 font-serif mb-3">
-                Gift Cards
-              </h2>
-              <p className="text-gray-600 text-lg max-w-xl">
-                Our digital gift cards are redeemable for classes, camps,
-                workshops, and private events.
-              </p>
-            </motion.div>
+    <section id="gift-cards" className="bg-transparent py-10 md:py-16">
+      <div className="mx-auto w-full max-w-[var(--container-max)] px-4 sm:px-6 lg:px-8">
+        <div className="relative overflow-hidden rounded-[2rem] border border-white/65 bg-white/82 px-6 py-10 shadow-[0_18px_34px_rgba(12,74,110,0.14)] backdrop-blur-[2px] md:px-10 lg:px-14">
+          <div className="pointer-events-none absolute -left-6 top-8 hidden md:block">
+
           </div>
 
-          {/* CTA & Visual */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="flex-shrink-0"
-          >
-            <div className="bg-white p-2 rounded-2xl shadow-xl transform rotate-1 hover:rotate-0 transition-transform duration-300">
-              <div className="bg-gradient-to-br from-white via-gray-50 to-white p-8 rounded-xl w-80 relative overflow-hidden group border border-gray-200">
-                <div className="relative z-10">
-                  {/* Logo prominently displayed */}
-                  <div className="flex justify-center mb-6">
+          <div className="grid items-center gap-8 lg:grid-cols-[1.15fr_0.85fr]">
+            <div>
+              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-secondary">
+                Gift Cards
+              </p>
+              <h2 className="mb-4 text-4xl font-bold leading-tight text-primary md:text-5xl">
+                Give the gift of creativity.
+              </h2>
+              <p className="mb-7 max-w-xl text-lg leading-relaxed text-slate-700">
+                Send a digital gift card that can be used for classes, camps, workshops,
+                private events, and walk-in studio time.
+              </p>
+              <Button
+                variant="primary"
+                size="lg"
+                className="transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+                onClick={() => router.push("/gift-cards")}
+              >
+                Buy Gift Card
+              </Button>
+            </div>
+
+            <div className="flex justify-center lg:justify-end">
+              <div className="w-full max-w-sm rounded-2xl border border-sky-100 bg-white p-3 shadow-[0_14px_24px_rgba(12,74,110,0.14)]">
+                <div className="rounded-xl border border-slate-200 bg-[linear-gradient(155deg,#ffffff_0%,#f3f9fd_70%,#e7f3fa_100%)] p-7">
+                  <div className="mb-6 flex justify-center">
                     <Image
                       src="/assets/logos/coastalLogoFull.png"
-                      alt="Coastal Creations Studio"
-                      width={160}
-                      height={64}
-                      className="object-contain"
+                      alt="Coastal Creations Studio logo"
+                      width={180}
+                      height={70}
+                      className="h-auto w-auto object-contain"
                     />
                   </div>
-
-                  <div className="text-center mb-6">
-                    <h3 className="text-xl font-serif font-bold text-gray-800">
-                      Coastal Creations Studio
-                    </h3>
-                    <p className="text-primary font-semibold text-sm mt-1">Gift Card</p>
-                  </div>
-
-                  <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-                    <p className="font-mono text-gray-400 text-sm tracking-wider">
-                      **** **** ****
+                  <div className="space-y-2 text-center">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-secondary">
+                      Digital Gift Card
                     </p>
-                    <Link
-                      href="/gift-cards"
-                      className="bg-primary text-white px-5 py-2 rounded-lg font-bold text-sm hover:bg-primary/90 transition-colors shadow-md"
-                    >
-                      Buy Now
-                    </Link>
+                    <p className="text-2xl font-bold text-primary">Coastal Creations Studio</p>
                   </div>
+
                 </div>
               </div>
             </div>
-          </motion.div>
-        </div>
+          </div>
+        </div>  
       </div>
     </section>
   );
-}
+};
+
+export default GiftCardBanner;

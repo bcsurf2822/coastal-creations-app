@@ -23,8 +23,6 @@ import { motion } from "motion/react";
 import { FaCalendarAlt, FaClock, FaInstagram, FaGift } from "react-icons/fa";
 import { useEvent, useEventPictures } from "@/hooks/queries";
 
-
-
 // Setup Sanity image URL builder
 const { projectId, dataset } = client.config();
 const urlFor = (source: SanityImageSource) =>
@@ -305,25 +303,6 @@ const StyledImage = styled(Image, {
   },
 }));
 
-const LoadingContainer = styled("div")({
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "center",
-  alignItems: "center",
-  minHeight: "50vh",
-  gap: "1rem",
-});
-
-const LoadingText = styled(Typography)({
-  color: "#326C85",
-  fontSize: "1.1rem",
-  fontWeight: "700",
-  animation: "colorChange 2s ease-in-out infinite",
-  "@keyframes colorChange": {
-    "0%, 100%": { color: "#326C85" },
-    "50%": { color: "#42A5F5" },
-  },
-});
 
 const InstagramIcon = styled("div")({
   position: "absolute",
@@ -397,9 +376,19 @@ export default function EventDetails({
   if (isLoading) {
     return (
       <StyledContainer>
-        <LoadingContainer>
-          <LoadingText>Loading event details... ✨</LoadingText>
-        </LoadingContainer>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "400px" }}>
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            style={{
+              width: 40,
+              height: 40,
+              border: "3px solid rgba(50,108,133,0.15)",
+              borderTopColor: "#326C85",
+              borderRadius: "50%",
+            }}
+          />
+        </div>
       </StyledContainer>
     );
   }

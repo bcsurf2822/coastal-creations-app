@@ -4,6 +4,7 @@ import { submitPayment } from "@/app/actions/actions";
 import { useState, ChangeEvent, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import RegistrationHeader from "./RegistrationHeader";
+import EventPreview from "./EventPreview";
 import BillingForm from "./BillingForm";
 import PaymentProcessor from "./PaymentProcessor";
 import ReservationSummary from "./ReservationSummary";
@@ -99,6 +100,19 @@ export default function Payment() {
     eventName: string;
     description: string;
     eventType: string;
+    image?: string;
+    dates?: {
+      startDate: string;
+      endDate?: string;
+      isRecurring?: boolean;
+      recurringPattern?: string;
+      recurringEndDate?: string;
+    };
+    time?: {
+      startTime: string;
+      endTime?: string;
+    };
+    numberOfParticipants?: number;
   } | null>(null);
 
   const searchParams = useSearchParams();
@@ -662,6 +676,16 @@ export default function Payment() {
                   discount: eventData.discount,
                 });
               }
+
+              setEventDetails({
+                eventName: eventData.eventName || eventTitle,
+                description: eventData.description || "",
+                eventType: eventData.eventType || "",
+                image: eventData.image,
+                dates: eventData.dates,
+                time: eventData.time,
+                numberOfParticipants: eventData.numberOfParticipants,
+              });
             }
           }
         } catch (error) {
@@ -1034,17 +1058,32 @@ export default function Payment() {
         </div>
       ) : (
         <div className="bg-white rounded-xl shadow-2xl overflow-hidden">
-          {/* Event Header */}
+          {/* Event Header / Preview */}
           {eventTitle && (
-            <RegistrationHeader
-              eventTitle={eventTitle}
-              formattedPrice={formattedPrice}
-              isPriceAvailable={isPriceAvailable}
-              originalPrice={eventPrice}
-              discountInfo={discountInfo}
-              currentParticipantCount={currentParticipantCount}
-              numberOfPeople={billingDetails.numberOfPeople}
-            />
+            eventDetails ? (
+              <EventPreview
+                eventTitle={eventDetails.eventName || eventTitle}
+                description={eventDetails.description}
+                image={eventDetails.image}
+                dates={eventDetails.dates}
+                time={eventDetails.time}
+                formattedPrice={formattedPrice}
+                isPriceAvailable={isPriceAvailable}
+                originalPrice={eventPrice}
+                discountInfo={discountInfo}
+                numberOfPeople={billingDetails.numberOfPeople}
+              />
+            ) : (
+              <RegistrationHeader
+                eventTitle={eventTitle}
+                formattedPrice={formattedPrice}
+                isPriceAvailable={isPriceAvailable}
+                originalPrice={eventPrice}
+                discountInfo={discountInfo}
+                currentParticipantCount={currentParticipantCount}
+                numberOfPeople={billingDetails.numberOfPeople}
+              />
+            )
           )}
 
           {isPriceAvailable ? (

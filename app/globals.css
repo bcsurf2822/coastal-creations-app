@@ -66,6 +66,15 @@
   --radius-lg: 16px;
   --radius-full: 9999px;
 
+  /* Layout Tokens */
+  --container-max: 1180px;
+  --space-8: 0.5rem;
+  --space-16: 1rem;
+  --space-24: 1.5rem;
+  --space-40: 2.5rem;
+  --space-64: 4rem;
+  --nav-offset: 8rem;
+
   /* Base (legacy compatibility) */
   --background: #ffffff;
   --foreground: #171717;
@@ -75,6 +84,12 @@
   --light: #f0f9ff;
   --dark: #0f172a;
   --footer-height: 500px;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --nav-offset: 10.5rem;
+  }
 }
 
 @theme inline {
@@ -122,6 +137,16 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-eb-garamond), serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 /* Footer animation styles */
@@ -175,4 +200,49 @@ body {
 
 .animate-float-delayed {
   animation: float 3.5s ease-in-out infinite 0.5s;
+}
+
+/* Thin scrollbar for description overflow areas */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #bae6fd transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: #bae6fd;
+  border-radius: 9999px;
+}
+
+.scrollbar-thin:hover::-webkit-scrollbar-thumb {
+  background-color: #7dd3fc;
+}
+
+/* Fade-in-up entrance animation for list items */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up {
+    animation: none;
+  }
 }

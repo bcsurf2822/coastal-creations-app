@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
 import { useEvents } from "@/hooks/queries";
+import NavRippleText from "./NavRippleText";
 
 interface ClassDropdownItem {
   href: string;
@@ -47,8 +48,9 @@ export default function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isClassesDropdownOpen, setIsClassesDropdownOpen] = useState(false);
   const [hideNavbar, setHideNavbar] = useState(false);
-  const [lastScrollY, setLastScrollY] = useState(0);
   const navRef = useRef<HTMLElement>(null);
+  const lastScrollYRef = useRef(0);
+  const scrollRafRef = useRef<number | null>(null);
   const { data: eventsData = [], isLoading: isEventsLoading } = useEvents();
 
   const classDropdownItems = useMemo((): ClassDropdownItem[] => {
@@ -70,42 +72,75 @@ export default function NavBar() {
   const hasClassItems = classDropdownItems.length > 0;
 
   useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      const mainSection =
-        document.querySelector("main") ||
-        document.getElementById("main-section");
-
-      if (mainSection && navRef.current) {
-        const navHeight = navRef.current.offsetHeight;
-        const mainSectionTop = mainSection.getBoundingClientRect().top;
-
-        // When MainSection is about to hit the navbar
-        if (mainSectionTop <= navHeight && currentScrollY > lastScrollY) {
-          setHideNavbar(true);
-        } else if (currentScrollY < lastScrollY) {
-          // Show navbar when scrolling up
-          setHideNavbar(false);
-        }
-      } else {
-        // Fallback to standard scroll direction logic if elements aren't found
-        if (currentScrollY > lastScrollY && currentScrollY > 100) {
-          setHideNavbar(true);
-        } else {
-          setHideNavbar(false);
-        }
+    const updateNavOffset = () => {
+      if (!navRef.current || isMenuOpen) {
+        return;
       }
 
-      // Update scroll position
-      setLastScrollY(currentScrollY);
+      const navHeight = navRef.current.offsetHeight;
+      document.documentElement.style.setProperty(
+        "--nav-offset",
+        `${navHeight}px`
+      );
+    };
+
+    updateNavOffset();
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateNavOffset();
+    });
+
+    if (navRef.current) {
+      resizeObserver.observe(navRef.current);
+    }
+
+    window.addEventListener("resize", updateNavOffset);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateNavOffset);
+    };
+  }, [isMenuOpen]);
+
+  useEffect(() => {
+    if (isMenuOpen) {
+      setHideNavbar(false);
+      return;
+    }
+
+    const handleScroll = () => {
+      if (scrollRafRef.current !== null) {
+        return;
+      }
+
+      scrollRafRef.current = window.requestAnimationFrame(() => {
+        const currentScrollY = window.scrollY;
+        const scrollDelta = currentScrollY - lastScrollYRef.current;
+        const isNearTop = currentScrollY <= 32;
+        const shouldHide = currentScrollY > 140 && scrollDelta > 6;
+        const shouldShow = scrollDelta < -6 || isNearTop;
+
+        if (shouldHide) {
+          setHideNavbar((prevState) => (prevState ? prevState : true));
+        } else if (shouldShow) {
+          setHideNavbar((prevState) => (prevState ? false : prevState));
+        }
+
+        lastScrollYRef.current = currentScrollY;
+        scrollRafRef.current = null;
+      });
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
+      if (scrollRafRef.current !== null) {
+        window.cancelAnimationFrame(scrollRafRef.current);
+        scrollRafRef.current = null;
+      }
     };
-  }, [lastScrollY]);
+  }, [isMenuOpen]);
 
   const navVariants = {
     hidden: { opacity: 0, y: -20 },
@@ -193,13 +228,15 @@ export default function NavBar() {
   return (
     <motion.header
       ref={navRef}
-      className="fixed top-0 left-0 w-full border-b border-gray-100 bg-white/90 backdrop-blur-sm z-50"
+      className={`fixed top-0 left-0 z-50 w-full border-b border-gray-100 bg-white/90 backdrop-blur-sm shadow-[0_2px_12px_rgba(15,23,42,0.06)] ${
+        hideNavbar ? "pointer-events-none" : ""
+      }`}
       initial={{ opacity: 0, y: -20 }}
       animate={{
         opacity: hideNavbar ? 0 : 1,
-        y: hideNavbar ? -200 : 0,
+        y: hideNavbar ? "-105%" : 0,
       }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.32, ease: "easeOut" }}
     >
       <div className="container mx-auto px-6 lg:px-8 xl:px-12">
         <div className="flex justify-between items-center py-1">
@@ -213,9 +250,9 @@ export default function NavBar() {
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
-                Home
+                <NavRippleText text="Home" />
               </Link>
             </motion.div>
 
@@ -224,8 +261,8 @@ export default function NavBar() {
               whileHover="hover"
               className="relative group"
             >
-                <div className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase flex items-center gap-1 cursor-pointer">
-                  Classes
+                <div className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase flex items-center gap-1 cursor-pointer">
+                  <NavRippleText text="Classes" />
                   <motion.svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="14"
@@ -275,18 +312,18 @@ export default function NavBar() {
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/calendar"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
-                Calendar
+                <NavRippleText text="Calendar" />
               </Link>
             </motion.div>
 
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/events/private-events"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
-                Private Events
+                <NavRippleText text="Private Events" />
               </Link>
             </motion.div>
           </motion.nav>
@@ -322,36 +359,36 @@ export default function NavBar() {
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/reservations"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
-                Reservations
+                <NavRippleText text="Reservations" />
               </Link>
             </motion.div>
 
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/gallery"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
-                Gallery
+                <NavRippleText text="Gallery" />
               </Link>
             </motion.div>
 
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/about"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
-                About
+                <NavRippleText text="About" />
               </Link>
             </motion.div>
 
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/contact-us"
-                className="nav-link text-[#0f172a] hover:text-[#0369a1] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
-                Contact
+                <NavRippleText text="Contact" />
               </Link>
             </motion.div>
           </motion.nav>

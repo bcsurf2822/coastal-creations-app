@@ -34,7 +34,17 @@ export default function ImageGallery() {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[300px]">
-        <p className="text-lg font-bold">Loading gallery...</p>
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          style={{
+            width: 40,
+            height: 40,
+            border: "3px solid rgba(50,108,133,0.15)",
+            borderTopColor: "#326C85",
+            borderRadius: "50%",
+          }}
+        />
       </div>
     );
   }
@@ -58,7 +68,7 @@ export default function ImageGallery() {
   return (
     <div className="w-full max-w-6xl mx-auto">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-        {images.map((item) => {
+        {images.map((item, index) => {
           const imageUrl = item.image
             ? urlFor(item.image)?.width(800).url()
             : null;
@@ -69,7 +79,8 @@ export default function ImageGallery() {
             <div
               key={item._id}
               onClick={() => setSelectedImage(item)}
-              className="group relative overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer"
+              className="animate-fade-in-up group relative overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer"
+              style={{ animationDelay: `${index * 60}ms` }}
             >
               <div className="aspect-square relative w-full bg-black/5 dark:bg-white/5">
                 <Image

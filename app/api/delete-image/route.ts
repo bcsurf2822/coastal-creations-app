@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { client } from "@/sanity/client";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
 
 export async function DELETE(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const imageUrl = searchParams.get("imageUrl");
@@ -14,7 +21,10 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Try to find documents that reference this image URL directly
-    const documentsWithImageUrl = await client.fetch(`*[_type == "eventPictures" && image.asset->url == "${imageUrl}"]`);
+    const documentsWithImageUrl = await client.fetch(
+      `*[_type == "eventPictures" && image.asset->url == $imageUrl]`,
+      { imageUrl }
+    );
 
     let documentsToDelete = documentsWithImageUrl;
     let fullAssetId = null;
@@ -42,7 +52,10 @@ export async function DELETE(request: NextRequest) {
       fullAssetId = `image-${assetIdentifier}`;
 
       // Try to find documents with this asset ID
-      documentsToDelete = await client.fetch(`*[_type == "eventPictures" && image.asset._ref == "${fullAssetId}"]`);
+      documentsToDelete = await client.fetch(
+        `*[_type == "eventPictures" && image.asset._ref == $fullAssetId]`,
+        { fullAssetId }
+      );
     }
 
     // Delete all documents that reference this asset

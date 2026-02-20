@@ -40,7 +40,7 @@ export default function PageDescriptionsPage(): ReactElement {
       } catch (error) {
         console.error(
           "[PAGE-DESCRIPTIONS-FETCH] Error fetching content:",
-          error
+          error,
         );
         setError("Failed to load page content");
       } finally {
@@ -123,8 +123,7 @@ export default function PageDescriptionsPage(): ReactElement {
               Page Descriptions
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Manage text content across your website. Allow up to five minutes
-              for the Sanity update to complete.
+              Manage text content across your website.
             </p>
           </div>
         </div>
@@ -170,8 +169,7 @@ export default function PageDescriptionsPage(): ReactElement {
             Page Descriptions
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Manage text content across your website. Allow up to five minutes
-            for the Sanity update to complete.
+            Manage text content across your website.
           </p>
         </div>
       </div>
@@ -222,7 +220,7 @@ export default function PageDescriptionsPage(): ReactElement {
                           onChange={(e) =>
                             updateContent(
                               ["homepage", "hero", "heading"],
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -254,7 +252,7 @@ export default function PageDescriptionsPage(): ReactElement {
                           onChange={(e) =>
                             updateContent(
                               ["homepage", "mainSection", "title"],
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -270,7 +268,7 @@ export default function PageDescriptionsPage(): ReactElement {
                         onChange={(value) =>
                           updateContent(
                             ["homepage", "mainSection", "description"],
-                            value
+                            value,
                           )
                         }
                         rows={6}
@@ -301,7 +299,7 @@ export default function PageDescriptionsPage(): ReactElement {
                           onChange={(e) =>
                             updateContent(
                               ["homepage", "offerings", "sectionTitle"],
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -317,7 +315,7 @@ export default function PageDescriptionsPage(): ReactElement {
                         onChange={(value) =>
                           updateContent(
                             ["homepage", "offerings", "sectionSubtitle"],
-                            value
+                            value,
                           )
                         }
                         rows={3}
@@ -347,7 +345,7 @@ export default function PageDescriptionsPage(): ReactElement {
                                     "artCamps",
                                     "title",
                                   ],
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -369,7 +367,7 @@ export default function PageDescriptionsPage(): ReactElement {
                                   "artCamps",
                                   "description",
                                 ],
-                                value
+                                value,
                               )
                             }
                             rows={3}
@@ -402,7 +400,7 @@ export default function PageDescriptionsPage(): ReactElement {
                                     "classesWorkshops",
                                     "title",
                                   ],
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -424,7 +422,7 @@ export default function PageDescriptionsPage(): ReactElement {
                                   "classesWorkshops",
                                   "description",
                                 ],
-                                value
+                                value,
                               )
                             }
                             rows={3}
@@ -457,7 +455,7 @@ export default function PageDescriptionsPage(): ReactElement {
                                     "privateEvents",
                                     "title",
                                   ],
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -479,7 +477,7 @@ export default function PageDescriptionsPage(): ReactElement {
                                   "privateEvents",
                                   "description",
                                 ],
-                                value
+                                value,
                               )
                             }
                             rows={3}
@@ -511,7 +509,7 @@ export default function PageDescriptionsPage(): ReactElement {
                           onChange={(e) =>
                             updateContent(
                               ["homepage", "upcomingWorkshops", "label"],
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -530,7 +528,7 @@ export default function PageDescriptionsPage(): ReactElement {
                           onChange={(e) =>
                             updateContent(
                               ["homepage", "upcomingWorkshops", "title"],
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -546,7 +544,7 @@ export default function PageDescriptionsPage(): ReactElement {
                         onChange={(value) =>
                           updateContent(
                             ["homepage", "upcomingWorkshops", "subtitle"],
-                            value
+                            value,
                           )
                         }
                         rows={3}
@@ -582,7 +580,7 @@ export default function PageDescriptionsPage(): ReactElement {
                           onChange={(e) =>
                             updateContent(
                               ["eventPages", "adultClasses", "title"],
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -598,7 +596,7 @@ export default function PageDescriptionsPage(): ReactElement {
                         onChange={(value) =>
                           updateContent(
                             ["eventPages", "adultClasses", "description"],
-                            value
+                            value,
                           )
                         }
                         rows={4}
@@ -628,7 +626,7 @@ export default function PageDescriptionsPage(): ReactElement {
                           onChange={(e) =>
                             updateContent(
                               ["eventPages", "kidClasses", "title"],
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -644,7 +642,7 @@ export default function PageDescriptionsPage(): ReactElement {
                         onChange={(value) =>
                           updateContent(
                             ["eventPages", "kidClasses", "description"],
-                            value
+                            value,
                           )
                         }
                         rows={4}
@@ -674,7 +672,7 @@ export default function PageDescriptionsPage(): ReactElement {
                           onChange={(e) =>
                             updateContent(
                               ["eventPages", "camps", "title"],
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -690,7 +688,7 @@ export default function PageDescriptionsPage(): ReactElement {
                         onChange={(value) =>
                           updateContent(
                             ["eventPages", "camps", "description"],
-                            value
+                            value,
                           )
                         }
                         rows={4}
@@ -720,7 +718,7 @@ export default function PageDescriptionsPage(): ReactElement {
                           onChange={(e) =>
                             updateContent(
                               ["eventPages", "privateEvents", "title"],
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -736,7 +734,7 @@ export default function PageDescriptionsPage(): ReactElement {
                         onChange={(value) =>
                           updateContent(
                             ["eventPages", "privateEvents", "description"],
-                            value
+                            value,
                           )
                         }
                         rows={4}
@@ -771,7 +769,7 @@ export default function PageDescriptionsPage(): ReactElement {
                           onChange={(e) =>
                             updateContent(
                               ["otherPages", "reservations", "title"],
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -787,7 +785,7 @@ export default function PageDescriptionsPage(): ReactElement {
                         onChange={(value) =>
                           updateContent(
                             ["otherPages", "reservations", "description"],
-                            value
+                            value,
                           )
                         }
                         rows={4}
@@ -817,7 +815,7 @@ export default function PageDescriptionsPage(): ReactElement {
                           onChange={(e) =>
                             updateContent(
                               ["otherPages", "gallery", "title"],
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -833,7 +831,7 @@ export default function PageDescriptionsPage(): ReactElement {
                         onChange={(value) =>
                           updateContent(
                             ["otherPages", "gallery", "description"],
-                            value
+                            value,
                           )
                         }
                         rows={4}
@@ -863,7 +861,7 @@ export default function PageDescriptionsPage(): ReactElement {
                           onChange={(e) =>
                             updateContent(
                               ["otherPages", "about", "title"],
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -879,7 +877,7 @@ export default function PageDescriptionsPage(): ReactElement {
                         onChange={(value) =>
                           updateContent(
                             ["otherPages", "about", "description"],
-                            value
+                            value,
                           )
                         }
                         rows={6}

@@ -52,8 +52,17 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "Coastal Creations Studios",
-  description: "Coastal Creations Studio, Ocean City, NJ",
+  title: {
+    default: "Coastal Creations Studio | Art Classes & Workshops in Ocean City, NJ",
+    template: "%s | Coastal Creations Studio",
+  },
+  description:
+    "Art classes, workshops, camps, and private events in Ocean City, NJ. Book your creative experience at Coastal Creations Studio.",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    siteName: "Coastal Creations Studio",
+  },
 };
 
 export default function RootLayout({

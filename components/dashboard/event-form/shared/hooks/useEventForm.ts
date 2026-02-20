@@ -8,6 +8,7 @@ import {
   EventFormErrors,
   UseEventFormReturn,
   EventFormProps,
+  DiscountWarning,
 } from "../types/eventForm.types";
 import { validateEventForm } from "../utils/validationHelpers";
 import { prepareDateForSubmit } from "../utils/dateHelpers";
@@ -51,6 +52,8 @@ export const useEventForm = ({
   );
   const [errors, setErrors] = useState<EventFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [discountWarning, setDiscountWarning] = useState<DiscountWarning | null>(null);
+  const pendingSubmitEvent = useRef<React.FormEvent | null>(null);
 
   // Update form data when initialData changes (for edit mode)
   useEffect(() => {
@@ -239,20 +242,8 @@ export const useEventForm = ({
     [errors]
   );
 
-  const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-
-      if (isSubmittingRef.current) return;
-
-      if (!validateForm()) {
-        const firstError = Object.values(errors)[0];
-        if (firstError) {
-          toast.error(`Validation error: ${firstError}`);
-        }
-        return;
-      }
-
+  const submitForm = useCallback(
+    async () => {
       isSubmittingRef.current = true;
       setIsSubmitting(true);
 
@@ -338,8 +329,58 @@ export const useEventForm = ({
         setIsSubmitting(false);
       }
     },
-    [formData, errors, mode, eventId, validateForm, onSuccess, router]
+    [formData, mode, eventId, onSuccess, router]
   );
+
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+
+      if (isSubmittingRef.current) return;
+
+      if (!validateForm()) {
+        const firstError = Object.values(errors)[0];
+        if (firstError) {
+          toast.error(`Validation error: ${firstError}`);
+        }
+        return;
+      }
+
+      // Check if discount exceeds 30% of the price
+      const price = formData.price || 0;
+      const discountValue = formData.discount?.value || 0;
+
+      if (formData.isDiscountAvailable && price > 0 && discountValue > 0) {
+        const discountPercent = (discountValue / price) * 100;
+
+        if (discountPercent > 30) {
+          const discountedPrice = Math.max(price - discountValue, 0);
+          setDiscountWarning({
+            originalPrice: price,
+            discountValue,
+            discountedPrice,
+            discountPercent: Math.round(discountPercent),
+          });
+          pendingSubmitEvent.current = e;
+          return;
+        }
+      }
+
+      await submitForm();
+    },
+    [formData, errors, validateForm, submitForm]
+  );
+
+  const confirmDiscountSubmit = useCallback(() => {
+    setDiscountWarning(null);
+    pendingSubmitEvent.current = null;
+    submitForm();
+  }, [submitForm]);
+
+  const cancelDiscountSubmit = useCallback(() => {
+    setDiscountWarning(null);
+    pendingSubmitEvent.current = null;
+  }, []);
 
   const actions = {
     handleInputChange,
@@ -362,5 +403,8 @@ export const useEventForm = ({
     handleSubmit,
     validateForm,
     getFieldError,
+    discountWarning,
+    confirmDiscountSubmit,
+    cancelDiscountSubmit,
   };
 };

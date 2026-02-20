@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 import { connectMongo } from "@/lib/mongoose";
 import PrivateEvent from "@/lib/models/PrivateEvent";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
 
 export async function POST(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     await connectMongo();
     const data = await request.json();
@@ -32,6 +39,11 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     await connectMongo();
     const { searchParams } = new URL(request.url);
@@ -71,6 +83,11 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     await connectMongo();
     const { searchParams } = new URL(request.url);

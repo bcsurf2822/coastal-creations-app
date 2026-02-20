@@ -2,11 +2,7 @@
 
 import { ReactElement, useState, useEffect } from "react";
 import { RiTimeLine, RiSaveLine } from "react-icons/ri";
-import type {
-  HoursOfOperation,
-  DayOfWeek,
-  DaySchedule,
-} from "@/types/hours";
+import type { HoursOfOperation, DayOfWeek, DaySchedule } from "@/types/hours";
 import { generateTimeOptions } from "@/types/hours";
 
 const timeOptions = generateTimeOptions();
@@ -98,7 +94,7 @@ export default function HoursPage(): ReactElement {
   const handleTimeChange = (
     day: DayOfWeek,
     field: "open" | "close",
-    value: string
+    value: string,
   ): void => {
     if (!hours) return;
 
@@ -106,7 +102,10 @@ export default function HoursPage(): ReactElement {
       if (!prev) return prev;
 
       const currentDay = prev[day];
-      const currentHours = currentDay.hours || { open: "9:00 AM", close: "5:00 PM" };
+      const currentHours = currentDay.hours || {
+        open: "9:00 AM",
+        close: "5:00 PM",
+      };
 
       return {
         ...prev,
@@ -216,7 +215,7 @@ export default function HoursPage(): ReactElement {
             Business Hours
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Manage your studio&apos;s operating hours. Allow up to five minutes for the Sanity update to complete.
+            Manage your studio&apos;s operating hours.
           </p>
         </div>
       </div>

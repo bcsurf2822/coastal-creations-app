@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactElement, useMemo } from "react";
+import { motion } from "motion/react";
 import ReservationCard from "./ReservationCard";
 import { Reservation } from "@/lib/types/reservationTypes";
 import { useReservations } from "@/hooks/queries";
@@ -33,13 +34,18 @@ export default function ReservationList({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#326C85] mx-auto mb-4"></div>
-          <p className="text-[#326C85] font-semibold text-lg">
-            Loading reservations...
-          </p>
-        </div>
+      <div className="flex justify-center items-center min-h-[300px]">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          style={{
+            width: 40,
+            height: 40,
+            border: "3px solid rgba(50,108,133,0.15)",
+            borderTopColor: "#326C85",
+            borderRadius: "50%",
+          }}
+        />
       </div>
     );
   }
@@ -83,12 +89,17 @@ export default function ReservationList({
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {reservations.map((reservation, index) => (
-          <ReservationCard
+          <div
             key={reservation._id}
-            reservation={reservation}
-            baseUrl={baseUrl}
-            index={index}
-          />
+            className="animate-fade-in-up"
+            style={{ animationDelay: `${index * 60}ms` }}
+          >
+            <ReservationCard
+              reservation={reservation}
+              baseUrl={baseUrl}
+              index={index}
+            />
+          </div>
         ))}
       </div>
     </div>

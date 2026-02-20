@@ -1,0 +1,8 @@
+ can you review the entire site , ensure that there are no security vulnerabilities i don't want any console logs that       
+  could effect performance.\                                                                                                  
+  \                                                                                                                           
+  After you have completed the security over view i need you to create a sitemap:                                             
+  https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap#:~:text=%22Blogger%20RSS%22.-,Manually%  
+  20create%20a%20sitemap,of%20third%2Dparty%20sitemap%20generators.\                                                        
+  \                                                                                                                           
+  I want to help her any way possible with SEO.\ 

@@ -63,12 +63,6 @@ export default function Sidebar() {
       activeIcon: <RiTeamFill className="w-5 h-5" />,
     },
     {
-      path: "/admin/dashboard/error-logs",
-      label: "Error Logs",
-      icon: <RiPieChartLine className="w-5 h-5" />,
-      activeIcon: <RiPieChartFill className="w-5 h-5" />,
-    },
-    {
       path: "/admin/dashboard/hours",
       label: "Hours",
       icon: <RiTimeLine className="w-5 h-5" />,
@@ -79,6 +73,12 @@ export default function Sidebar() {
       label: "Page Descriptions",
       icon: <RiFileTextLine className="w-5 h-5" />,
       activeIcon: <RiFileTextFill className="w-5 h-5" />,
+    },
+    {
+      path: "/admin/dashboard/error-logs",
+      label: "Error Logs",
+      icon: <RiPieChartLine className="w-5 h-5" />,
+      activeIcon: <RiPieChartFill className="w-5 h-5" />,
     },
   ];
 

@@ -4,67 +4,52 @@ import Event from "@/lib/models/Event";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const LOCAL_TIMEZONE = "America/New_York";
 
-// Helper function to check if an event has passed
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function isEventPast(event: any): boolean {
-  const now = dayjs().tz(LOCAL_TIMEZONE);
-
-  // Use endTime if available, otherwise fall back to startTime
-  const timeString = event.time.endTime || event.time.startTime;
-  if (!timeString) {
-    // If no time info available, can't determine if past - assume not past
-    return false;
-  }
-  const [hours, minutes] = timeString.split(":");
-
-  // For recurring events, check if the recurring end date has passed
-  if (event.dates.isRecurring && event.dates.recurringEndDate) {
-    // Parse end date in local timezone
-    const recurringEndDate = dayjs.tz(event.dates.recurringEndDate, LOCAL_TIMEZONE);
-    // Add the end time to get the full end datetime
-    const endDateTime = recurringEndDate.hour(parseInt(hours)).minute(parseInt(minutes));
-    return now.isAfter(endDateTime);
-  }
-
-  // For single events, check if the event date + end time has passed
-  const eventDate = dayjs.tz(event.dates.startDate, LOCAL_TIMEZONE);
-  const endDateTime = eventDate.hour(parseInt(hours)).minute(parseInt(minutes));
-
-  return now.isAfter(endDateTime);
-}
-
-// Function to clean up past events
-async function cleanupPastEvents() {
+// Function to clean up past events using database-side filtering.
+// Compares against start-of-today (conservative: events linger ~24h max
+// past their end time, but avoids loading the entire collection into memory).
+async function cleanupPastEvents(): Promise<number> {
   try {
-    const events = await Event.find({});
-    const pastEventIds: string[] = [];
+    const todayStart = dayjs().tz(LOCAL_TIMEZONE).startOf("day").toDate();
 
-    events.forEach((event) => {
-      if (isEventPast(event)) {
-        pastEventIds.push(event._id.toString());
-      }
+    const result = await Event.deleteMany({
+      $or: [
+        // Recurring events whose recurring end date has passed
+        {
+          "dates.isRecurring": true,
+          "dates.recurringEndDate": { $lt: todayStart },
+        },
+        // Non-recurring events whose start date has passed
+        {
+          "dates.isRecurring": { $ne: true },
+          "dates.startDate": { $lt: todayStart },
+        },
+      ],
     });
 
-    if (pastEventIds.length > 0) {
-      const result = await Event.deleteMany({ _id: { $in: pastEventIds } });
-  
-      return result.deletedCount;
+    if (result.deletedCount > 0) {
+      console.log(`[EVENTS-CLEANUP] Deleted ${result.deletedCount} past events`);
     }
-
-    return 0;
+    return result.deletedCount || 0;
   } catch (error) {
-    console.error("Error cleaning up past events:", error);
+    console.error("[EVENTS-CLEANUP] Error cleaning up past events:", error);
     return 0;
   }
 }
 
 export async function POST(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     await connectMongo();
     const data = await request.json();
@@ -126,6 +111,11 @@ export async function GET(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     await connectMongo();
     const { searchParams } = new URL(request.url);
