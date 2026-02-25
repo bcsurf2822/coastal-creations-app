@@ -66,10 +66,6 @@ const ImageContainer = styled("div")({
   },
 });
 
-const PlaceholderIcon = styled("div")({
-  fontSize: "3rem",
-  color: "rgba(50, 108, 133, 0.2)",
-});
 
 const PartyTitle = styled("h2")({
   fontSize: "1.35rem",
