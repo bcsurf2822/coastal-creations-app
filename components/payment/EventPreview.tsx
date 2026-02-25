@@ -34,7 +34,7 @@ interface EventPreviewProps {
   numberOfPeople: number;
 }
 
-const PLACEHOLDER_IMAGE = "/assets/images/flowerPainting.jpeg";
+const PLACEHOLDER_IMAGE = "/assets/logos/coastalLogoFull.png";
 
 const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
@@ -99,7 +99,7 @@ const EventPreview: React.FC<EventPreviewProps> = ({
     <div className="border-b border-gray-200">
       <div className="flex flex-col sm:flex-row gap-5 p-6 sm:p-8">
         {/* Event Image */}
-        <div className="relative w-full sm:w-40 h-36 sm:h-32 flex-shrink-0 rounded-xl overflow-hidden bg-sky-50">
+        <div className={`relative w-full sm:w-40 h-36 sm:h-32 flex-shrink-0 rounded-xl overflow-hidden ${image ? "bg-sky-50" : "bg-white"}`}>
           <Image
             src={image || PLACEHOLDER_IMAGE}
             alt={eventTitle}

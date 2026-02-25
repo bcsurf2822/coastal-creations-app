@@ -4,6 +4,9 @@ import type { ReactElement } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { EB_Garamond } from "next/font/google";
+import imageUrlBuilder from "@sanity/image-url";
+import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
+import { client } from "@/sanity/client";
 import { usePageContent } from "@/hooks/queries";
 import { DEFAULT_TEXT } from "@/lib/constants/defaultPageContent";
 import { portableTextToPlainText } from "@/lib/utils/portableTextHelpers";
@@ -14,7 +17,18 @@ const ebGaramond = EB_Garamond({
   weight: ["400", "500", "600", "700"],
 });
 
-interface OfferingCard {
+// Sanity image URL builder
+const { projectId, dataset } = client.config();
+const urlFor = (source: SanityImageSource): string | null => {
+  if (!projectId || !dataset) return null;
+  return imageUrlBuilder({ projectId, dataset })
+    .image(source)
+    .width(800)
+    .quality(85)
+    .url();
+};
+
+interface OfferingCardData {
   image: string;
   alt: string;
   title: string;
@@ -22,6 +36,12 @@ interface OfferingCard {
   buttonLabel: string;
   href: string;
 }
+
+const DEFAULT_IMAGES = {
+  artCamps: "/assets/images/paintingAction1.jpeg",
+  classesWorkshops: "/assets/images/classes_workshops.jpeg",
+  privateEvents: "/assets/images/private_events.png",
+};
 
 const Offerings = (): ReactElement => {
   const router = useRouter();
@@ -31,9 +51,23 @@ const Offerings = (): ReactElement => {
     ? portableTextToPlainText(content.homepage.offerings.sectionSubtitle)
     : DEFAULT_TEXT.homepage.offerings.sectionSubtitle;
 
-  const cards: OfferingCard[] = [
+  const getCardImage = (
+    sanityImage: SanityImageSource | undefined,
+    fallback: string,
+  ): string => {
+    if (sanityImage) {
+      const url = urlFor(sanityImage);
+      if (url) return url;
+    }
+    return fallback;
+  };
+
+  const cards: OfferingCardData[] = [
     {
-      image: "/assets/images/paintingAction1.jpeg",
+      image: getCardImage(
+        content?.homepage?.offerings?.artCamps?.image,
+        DEFAULT_IMAGES.artCamps,
+      ),
       alt: "Kids creating art camp projects",
       title:
         content?.homepage?.offerings?.artCamps?.title ||
@@ -45,7 +79,10 @@ const Offerings = (): ReactElement => {
       href: "/events/camps",
     },
     {
-      image: "/assets/images/classes_workshops.jpeg",
+      image: getCardImage(
+        content?.homepage?.offerings?.classesWorkshops?.image,
+        DEFAULT_IMAGES.classesWorkshops,
+      ),
       alt: "Group classes and workshops",
       title:
         content?.homepage?.offerings?.classesWorkshops?.title ||
@@ -59,7 +96,10 @@ const Offerings = (): ReactElement => {
       href: "/events/classes-workshops",
     },
     {
-      image: "/assets/images/private_events.png",
+      image: getCardImage(
+        content?.homepage?.offerings?.privateEvents?.image,
+        DEFAULT_IMAGES.privateEvents,
+      ),
       alt: "Private events at Coastal Creations",
       title:
         content?.homepage?.offerings?.privateEvents?.title ||

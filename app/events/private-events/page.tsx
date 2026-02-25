@@ -2,7 +2,7 @@
 
 import PageHeader from "@/components/classes/PageHeader";
 import PrivateEvents from "@/components/classes/privateEvents/PrivateEvents";
-import GalleryCarousel from "@/components/gallery/GalleryCarousel";
+import PhotoCorral from "@/components/gallery/PhotoCorral";
 import { FaBirthdayCake } from "react-icons/fa";
 import { GiBalloons } from "react-icons/gi";
 
@@ -15,9 +15,7 @@ export default function PrivateEventsPage() {
         leftIcon={<FaBirthdayCake />}
         rightIcon={<GiBalloons />}
       />
-      <div className="mb-12 px-4">
-        <GalleryCarousel destination="private-event" height="h-64" />
-      </div>
+      <PhotoCorral destination="private-event" />
       <PrivateEvents />
     </div>
   );

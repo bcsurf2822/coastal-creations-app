@@ -28,10 +28,20 @@ export interface MainSectionContent {
   description?: PortableTextContent;
 }
 
+// Sanity Image Reference
+export interface SanityImageRef {
+  _type: 'image';
+  asset: {
+    _type: 'reference';
+    _ref: string;
+  };
+}
+
 // Offering Card
 export interface OfferingCard {
   title?: string;
   description?: PortableTextContent;
+  image?: SanityImageRef;
 }
 
 // Offerings Section

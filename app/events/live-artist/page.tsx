@@ -2,7 +2,7 @@
 
 import EventsContainer from "@/components/classes/EventsContainer";
 import PageHeader from "@/components/classes/PageHeader";
-import GalleryCarousel from "@/components/gallery/GalleryCarousel";
+import PhotoCorral from "@/components/gallery/PhotoCorral";
 import { FaPalette, FaUsers, FaEye } from "react-icons/fa";
 import { GiPaintBrush } from "react-icons/gi";
 
@@ -16,9 +16,7 @@ export default function LiveArtistPage() {
         leftIcon={<FaPalette />}
         rightIcon={<GiPaintBrush />}
       />
-      <div className="mb-12">
-        <GalleryCarousel destination="artist" title="Live Artist Gallery" height="h-96" />
-      </div>
+      <PhotoCorral destination="artist" />
       <EventsContainer
         config={{
           title: "",

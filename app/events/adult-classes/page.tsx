@@ -2,7 +2,7 @@
 
 import EventsContainer from "@/components/classes/EventsContainer";
 import PageHeader from "@/components/classes/PageHeader";
-import GalleryCarousel from "@/components/gallery/GalleryCarousel";
+import PhotoCorral from "@/components/gallery/PhotoCorral";
 import { FaPalette, FaUsers } from "react-icons/fa";
 import { GiPaintBrush } from "react-icons/gi";
 
@@ -18,14 +18,9 @@ export default function AdultClassesPage() {
         rightIcon={<GiPaintBrush />}
       />
 
-      <div className="py-8">
-        <div className="container mx-auto px-4">
-          {/* Gallery Carousel */}
-          <div className="mb-12">
-            <GalleryCarousel destination="adult-class" height="h-64" />
-          </div>
-        </div>
+      <PhotoCorral destination="adult-class" />
 
+      <div className="py-8">
         {/* Events List */}
         <EventsContainer
           config={{
