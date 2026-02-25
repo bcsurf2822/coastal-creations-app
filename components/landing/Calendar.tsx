@@ -195,88 +195,171 @@ const Calendar = (): ReactElement => {
             </p>
           ) : (
             <>
-            {/* Day headers */}
-            <div className="grid grid-cols-7 border-b border-slate-200">
-              {weekSlots.map((slot, slotIndex) => {
-                const isToday = slotIndex === 0;
-                return (
+            {/* Desktop: 7-column grid */}
+            <div className="hidden md:block">
+              {/* Day headers */}
+              <div className="grid grid-cols-7 border-b border-slate-200">
+                {weekSlots.map((slot, slotIndex) => {
+                  const isToday = slotIndex === 0;
+                  return (
+                    <div
+                      key={slot.dateKey}
+                      className={`py-3 text-center ${isToday ? "border-b-2 border-[#326C85]" : ""}`}
+                    >
+                      <span className={`text-sm font-semibold ${isToday ? "text-[#326C85]" : "text-slate-500"}`}>
+                        {slot.weekday}
+                      </span>
+                      <span className={`ml-1.5 text-sm ${isToday ? "font-bold text-[#326C85]" : "text-slate-400"}`}>
+                        {slot.dayNum}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Day columns with events */}
+              <div className="grid grid-cols-7 min-h-[260px]">
+                {weekSlots.map((slot, slotIndex) => (
                   <div
                     key={slot.dateKey}
-                    className={`py-3 text-center ${isToday ? "border-b-2 border-[#326C85]" : ""}`}
+                    className={`flex flex-col gap-2.5 p-2 pt-3 ${slotIndex < 6 ? "border-r border-slate-100" : ""}`}
                   >
-                    <span className={`text-sm font-semibold ${isToday ? "text-[#326C85]" : "text-slate-500"}`}>
-                      {slot.weekday}
-                    </span>
-                    <span className={`ml-1.5 text-sm ${isToday ? "font-bold text-[#326C85]" : "text-slate-400"}`}>
-                      {slot.dayNum}
-                    </span>
+                    {slot.events.length > 0 ? (
+                      slot.events.map((event) => {
+                        const currentParticipants = eventParticipantCounts[event._id] || 0;
+                        const capacity = event.numberOfParticipants || 20;
+                        const isSoldOut =
+                          event.eventType !== "artist" && currentParticipants >= capacity;
+                        const colors = getEventColors(event.eventType);
+                        const priceLabel = event.isFree || event.price === 0 ? "Free" : event.price ? `$${event.price}` : null;
+
+                        return (
+                          <button
+                            key={event._id}
+                            type="button"
+                            onClick={() => handleEventClick(event)}
+                            disabled={isSoldOut}
+                            className={`group relative flex flex-1 flex-col rounded-xl p-3 text-left text-white transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 ${colors.bg} ${colors.hover}`}
+                          >
+                            <span className="text-[10px] font-bold uppercase tracking-wide text-white/70">
+                              {formatEventType(event.eventType)}
+                            </span>
+                            <span className={`${ebGaramond.className} mt-1 text-base font-bold leading-tight`}>
+                              {event.eventName}
+                            </span>
+                            {event.description && (
+                              <div className="mt-2 flex-1 overflow-y-auto text-xs font-medium leading-relaxed text-white/90 scrollbar-thin" style={{ maxHeight: "140px" }}>
+                                {event.description}
+                              </div>
+                            )}
+                            <div className="mt-auto pt-3 flex items-center justify-between">
+                              <span className="text-xs font-semibold text-white/80">
+                                {formatEventTime(event.time.startTime)}
+                              </span>
+                              {priceLabel && (
+                                <span className="text-xs font-bold">
+                                  {priceLabel}
+                                </span>
+                              )}
+                            </div>
+                            <span className={`mt-2 self-stretch rounded-lg py-1.5 text-center text-[11px] font-bold uppercase tracking-wide transition-colors ${
+                              isSoldOut
+                                ? "bg-white/20 text-white/60"
+                                : "bg-white/25 text-white group-hover:bg-white/35"
+                            }`}>
+                              {isSoldOut ? "Sold Out" : "Sign Up"}
+                            </span>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="flex flex-1 items-center justify-center">
+                        <span className="text-xs text-slate-300">--</span>
+                      </div>
+                    )}
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
 
-            {/* Day columns with events */}
-            <div className="grid grid-cols-7 min-h-[260px]">
-              {weekSlots.map((slot, slotIndex) => (
-                <div
-                  key={slot.dateKey}
-                  className={`flex flex-col gap-2.5 p-2 pt-3 ${slotIndex < 6 ? "border-r border-slate-100" : ""}`}
-                >
-                  {slot.events.length > 0 ? (
-                    slot.events.map((event) => {
-                      const currentParticipants = eventParticipantCounts[event._id] || 0;
-                      const capacity = event.numberOfParticipants || 20;
-                      const isSoldOut =
-                        event.eventType !== "artist" && currentParticipants >= capacity;
-                      const colors = getEventColors(event.eventType);
-                      const priceLabel = event.isFree || event.price === 0 ? "Free" : event.price ? `$${event.price}` : null;
+            {/* Mobile: vertical card list */}
+            <div className="flex flex-col gap-3 md:hidden">
+              {weekSlots.some((slot) => slot.events.length > 0) ? (
+                weekSlots
+                  .filter((slot) => slot.events.length > 0)
+                  .map((slot) => (
+                    <div key={slot.dateKey}>
+                      <div className="mb-2 flex items-center gap-2">
+                        <span className="text-sm font-semibold text-[#326C85]">
+                          {slot.weekday}
+                        </span>
+                        <span className="text-sm font-bold text-[#326C85]">
+                          {slot.month} {slot.dayNum}
+                        </span>
+                        {slot.dateKey === weekSlots[0].dateKey && (
+                          <span className="rounded-full bg-[#326C85]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#326C85]">
+                            Today
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-2.5">
+                        {slot.events.map((event) => {
+                          const currentParticipants = eventParticipantCounts[event._id] || 0;
+                          const capacity = event.numberOfParticipants || 20;
+                          const isSoldOut =
+                            event.eventType !== "artist" && currentParticipants >= capacity;
+                          const colors = getEventColors(event.eventType);
+                          const priceLabel = event.isFree || event.price === 0 ? "Free" : event.price ? `$${event.price}` : null;
 
-                      return (
-                        <button
-                          key={event._id}
-                          type="button"
-                          onClick={() => handleEventClick(event)}
-                          disabled={isSoldOut}
-                          className={`group relative flex flex-1 flex-col rounded-xl p-3 text-left text-white transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 ${colors.bg} ${colors.hover}`}
-                        >
-                          <span className="text-[10px] font-bold uppercase tracking-wide text-white/70">
-                            {formatEventType(event.eventType)}
-                          </span>
-                          <span className={`${ebGaramond.className} mt-1 text-base font-bold leading-tight`}>
-                            {event.eventName}
-                          </span>
-                          {event.description && (
-                            <div className="mt-2 flex-1 overflow-y-auto text-xs font-medium leading-relaxed text-white/90 scrollbar-thin" style={{ maxHeight: "140px" }}>
-                              {event.description}
-                            </div>
-                          )}
-                          <div className="mt-auto pt-3 flex items-center justify-between">
-                            <span className="text-xs font-semibold text-white/80">
-                              {formatEventTime(event.time.startTime)}
-                            </span>
-                            {priceLabel && (
-                              <span className="text-xs font-bold">
-                                {priceLabel}
+                          return (
+                            <button
+                              key={event._id}
+                              type="button"
+                              onClick={() => handleEventClick(event)}
+                              disabled={isSoldOut}
+                              className={`group flex items-start gap-4 rounded-xl p-4 text-left text-white transition-all duration-200 cursor-pointer hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 ${colors.bg} ${colors.hover}`}
+                            >
+                              <div className="flex min-w-0 flex-1 flex-col">
+                                <span className="text-[10px] font-bold uppercase tracking-wide text-white/70">
+                                  {formatEventType(event.eventType)}
+                                </span>
+                                <span className={`${ebGaramond.className} mt-1 text-lg font-bold leading-tight`}>
+                                  {event.eventName}
+                                </span>
+                                {event.description && (
+                                  <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-white/85">
+                                    {event.description}
+                                  </p>
+                                )}
+                                <div className="mt-3 flex items-center gap-3">
+                                  <span className="text-xs font-semibold text-white/80">
+                                    {formatEventTime(event.time.startTime)}
+                                  </span>
+                                  {priceLabel && (
+                                    <span className="text-sm font-bold">
+                                      {priceLabel}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <span className={`mt-1 shrink-0 rounded-lg px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide transition-colors ${
+                                isSoldOut
+                                  ? "bg-white/20 text-white/60"
+                                  : "bg-white/25 text-white group-hover:bg-white/35"
+                              }`}>
+                                {isSoldOut ? "Sold Out" : "Sign Up"}
                               </span>
-                            )}
-                          </div>
-                          <span className={`mt-2 self-stretch rounded-lg py-1.5 text-center text-[11px] font-bold uppercase tracking-wide transition-colors ${
-                            isSoldOut
-                              ? "bg-white/20 text-white/60"
-                              : "bg-white/25 text-white group-hover:bg-white/35"
-                          }`}>
-                            {isSoldOut ? "Sold Out" : "Sign Up"}
-                          </span>
-                        </button>
-                      );
-                    })
-                  ) : (
-                    <div className="flex flex-1 items-center justify-center">
-                      <span className="text-xs text-slate-300">--</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  )}
+                  ))
+              ) : (
+                <div className="flex items-center justify-center py-10">
+                  <p className="text-sm text-slate-400">No upcoming workshops this week</p>
                 </div>
-              ))}
+              )}
             </div>
             </>
           )}
