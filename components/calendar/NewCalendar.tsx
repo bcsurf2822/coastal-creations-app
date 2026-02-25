@@ -23,6 +23,16 @@ export default function NewCalendar() {
   const [activeTooltip, setActiveTooltip] = useState<HTMLElement | null>(null);
   const [tooltipTimeoutId, setTooltipTimeoutId] =
     useState<NodeJS.Timeout | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<{
+    title: string;
+    eventType: string;
+    timeDisplay: string;
+    price?: number;
+    isFree?: boolean;
+    description?: string;
+    _id: string;
+    isSoldOut: boolean;
+  } | null>(null);
 
   const resources = [
     { id: "class", title: "Classes", eventColor: "#0c4a6e" },
@@ -445,6 +455,35 @@ export default function NewCalendar() {
             html: `<div class="fc-event-title">${arg.event.title}</div>`,
           };
         }}
+        eventClick={(info) => {
+          info.jsEvent.preventDefault();
+          // Dismiss any active tooltip
+          if (activeTooltip && document.body.contains(activeTooltip)) {
+            document.body.removeChild(activeTooltip);
+            setActiveTooltip(null);
+          }
+          if (tooltipTimeoutId) {
+            clearTimeout(tooltipTimeoutId);
+            setTooltipTimeoutId(null);
+          }
+          const props = info.event.extendedProps;
+          const eventId = props?._id || "";
+          const currentSignups = eventId
+            ? eventParticipantCounts[eventId] || 0
+            : 0;
+          const isSoldOut =
+            props?.eventType !== "artist" && currentSignups >= 20;
+          setSelectedEvent({
+            title: info.event.title,
+            eventType: props?.eventType || "",
+            timeDisplay: props?.timeDisplay || "",
+            price: props?.price,
+            isFree: props?.isFree,
+            description: props?.description,
+            _id: eventId,
+            isSoldOut,
+          });
+        }}
         eventMouseEnter={(info) => {
           // Remove any existing tooltip DOM element
           if (activeTooltip && document.body.contains(activeTooltip)) {
@@ -680,6 +719,87 @@ export default function NewCalendar() {
           }
         }}
       />
+
+      {selectedEvent && (
+        <div
+          className="event-sheet-overlay"
+          onClick={() => setSelectedEvent(null)}
+        >
+          <div
+            className="event-sheet"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="event-sheet-close"
+              onClick={() => setSelectedEvent(null)}
+              type="button"
+              aria-label="Close"
+            >
+              &times;
+            </button>
+            <span
+              className="event-sheet-type"
+              style={{
+                backgroundColor: getEventColor(selectedEvent.eventType),
+              }}
+            >
+              {selectedEvent.eventType === "artist"
+                ? "Live Demo"
+                : selectedEvent.eventType === "camp"
+                  ? "Art Camp"
+                  : "Workshop"}
+            </span>
+            <h3 className="event-sheet-title">{selectedEvent.title}</h3>
+            {selectedEvent.timeDisplay && (
+              <p className="event-sheet-time">{selectedEvent.timeDisplay}</p>
+            )}
+            {(selectedEvent.price || selectedEvent.isFree) && (
+              <p className="event-sheet-price">
+                {selectedEvent.isFree || selectedEvent.price === 0
+                  ? "Free"
+                  : `$${selectedEvent.price}`}
+              </p>
+            )}
+            {selectedEvent.description && (
+              <p className="event-sheet-description">
+                {selectedEvent.description}
+              </p>
+            )}
+            {selectedEvent.eventType === "artist" ? (
+              <button
+                className="event-sheet-signup"
+                type="button"
+                onClick={() => {
+                  setSelectedEvent(null);
+                  router.push(
+                    `/events/live-artist/${selectedEvent._id}`
+                  );
+                }}
+              >
+                View Details
+              </button>
+            ) : selectedEvent.isSoldOut ? (
+              <div className="event-sheet-soldout">Sold Out</div>
+            ) : (
+              <button
+                className="event-sheet-signup"
+                type="button"
+                onClick={() => {
+                  setSelectedEvent(null);
+                  navigateToPayment(
+                    selectedEvent._id,
+                    selectedEvent.title,
+                    selectedEvent.price,
+                    selectedEvent.isFree
+                  );
+                }}
+              >
+                Sign Up
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
