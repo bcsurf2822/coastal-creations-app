@@ -68,8 +68,8 @@ const StyledImage = styled(Image, {
 })<{ isPlaceholder?: boolean }>(({ isPlaceholder }) => ({
   objectFit: "contain",
   transition: "all 0.3s ease",
-  padding: isPlaceholder ? "1rem" : "0.5rem",
-  backgroundColor: isPlaceholder ? "transparent" : "#f8fafc",
+  padding: isPlaceholder ? "1.5rem" : "0.5rem",
+  backgroundColor: isPlaceholder ? "white" : "#f8fafc",
   "&:hover": {
     transform: "scale(1.02)",
   },

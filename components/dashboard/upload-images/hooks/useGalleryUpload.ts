@@ -30,12 +30,6 @@ export function useGalleryUpload(): UseGalleryUploadReturn {
   const uploadImages = async (
     formData: GalleryUploadFormData
   ): Promise<boolean> => {
-    console.log("[useGalleryUpload-uploadImages] Starting upload", {
-      title: formData.title,
-      destinations: formData.destinations,
-      fileCount: formData.files.length,
-    });
-
     setUploading(true);
     setError(null);
     setProgress({
@@ -46,10 +40,6 @@ export function useGalleryUpload(): UseGalleryUploadReturn {
 
     try {
       // Validate inputs
-      if (!formData.title.trim()) {
-        throw new Error("Title is required");
-      }
-
       if (formData.destinations.length === 0) {
         throw new Error("At least one destination must be selected");
       }
@@ -60,7 +50,9 @@ export function useGalleryUpload(): UseGalleryUploadReturn {
 
       // Prepare FormData for API
       const apiFormData = new FormData();
-      apiFormData.append("title", formData.title.trim());
+      if (formData.title?.trim()) {
+        apiFormData.append("title", formData.title.trim());
+      }
 
       if (formData.description?.trim()) {
         apiFormData.append("description", formData.description.trim());
@@ -71,12 +63,6 @@ export function useGalleryUpload(): UseGalleryUploadReturn {
       // Add all files
       formData.files.forEach((file, index) => {
         apiFormData.append(`file_${index}`, file);
-        console.log("[useGalleryUpload-uploadImages] Adding file", {
-          index,
-          name: file.name,
-          size: file.size,
-          type: file.type,
-        });
       });
 
       // Update progress
@@ -97,10 +83,6 @@ export function useGalleryUpload(): UseGalleryUploadReturn {
       if (!response.ok) {
         throw new Error(result.error || "Failed to upload images");
       }
-
-      console.log("[useGalleryUpload-uploadImages] Upload successful", {
-        uploadedCount: result.data?.length,
-      });
 
       // Update state with uploaded images
       setUploadedImages(result.data || []);

@@ -3,7 +3,7 @@
 import { ReactElement } from "react";
 import PageHeader from "@/components/classes/PageHeader";
 import ReservationList from "@/components/reservations/ReservationList";
-import GalleryCarousel from "@/components/gallery/GalleryCarousel";
+import PhotoCorral from "@/components/gallery/PhotoCorral";
 import { usePageContent } from "@/hooks/queries";
 import { DEFAULT_TEXT } from "@/lib/constants/defaultPageContent";
 import { portableTextToPlainText } from "@/lib/utils/portableTextHelpers";
@@ -29,11 +29,9 @@ export default function ReservationsPage(): ReactElement {
         rightIcon={<GiPaintBucket />}
       />
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-12 px-4">
-          <GalleryCarousel destination="reservation" height="h-64" />
-        </div>
+      <PhotoCorral destination="reservation" />
 
+      <div className="container mx-auto px-4 py-8">
         <ReservationList baseUrl="/reservations" />
       </div>
     </div>

@@ -22,11 +22,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // Build query with optional filter
     const query = buildGalleryQuery(destinations);
 
-    console.log("[GALLERY-GET] Fetching gallery images", {
-      destinations,
-      query,
-    });
-
     const gallery = await client.fetch(query, {}, options);
     return NextResponse.json({ success: true, data: gallery });
   } catch (error) {
@@ -53,13 +48,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const description = formData.get("description") as string | null;
     const destinationsJson = formData.get("destinations") as string;
 
-    // Validate required fields
-    if (!title) {
-      return NextResponse.json(
-        { error: "Title is required" },
-        { status: 400 }
-      );
-    }
+    // Title is optional – when omitted, each file uses its filename as the title
 
     if (!destinationsJson) {
       return NextResponse.json(
@@ -103,13 +92,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    console.log("[GALLERY-POST] Uploading images", {
-      title,
-      description,
-      destinations,
-      fileCount: files.length,
-    });
-
     // Upload each file and create documents
     const uploadedDocuments = [];
 
@@ -124,11 +106,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         contentType: file.type,
       });
 
-      // Create Sanity document
+      // Create Sanity document – title and description stay blank unless provided
       const document = await client.create({
         _type: "pictureGallery",
-        title: title,
-        description: description || undefined,
+        title: title?.trim() || "",
+        description: description?.trim() || "",
         destination: destinations,
         image: {
           _type: "image",
@@ -142,11 +124,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       uploadedDocuments.push({
         ...document,
         imageUrl: asset.url,
-      });
-
-      console.log("[GALLERY-POST] Image uploaded successfully", {
-        documentId: document._id,
-        assetId: asset._id,
       });
     }
 
@@ -199,13 +176,6 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    console.log("[GALLERY-PUT] Updating image metadata", {
-      id,
-      title,
-      description,
-      destinations,
-    });
-
     // Update document in Sanity
     const updatedDocument = await client
       .patch(id)
@@ -215,10 +185,6 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
         destination: destinations,
       })
       .commit();
-
-    console.log("[GALLERY-PUT] Image metadata updated successfully", {
-      documentId: updatedDocument._id,
-    });
 
     return NextResponse.json({
       success: true,
@@ -254,8 +220,6 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    console.log("[GALLERY-DELETE] Deleting image", { id });
-
     // Fetch the document to get asset reference
     const document = await client.fetch(
       `*[_type == "pictureGallery" && _id == $id][0]`,
@@ -276,9 +240,6 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     if (document.image?.asset?._ref) {
       try {
         await client.delete(document.image.asset._ref);
-        console.log("[GALLERY-DELETE] Asset deleted", {
-          assetId: document.image.asset._ref,
-        });
       } catch (assetError) {
         console.warn(
           "[GALLERY-DELETE] Could not delete asset (may be in use elsewhere)",
@@ -286,8 +247,6 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
         );
       }
     }
-
-    console.log("[GALLERY-DELETE] Image deleted successfully", { id });
 
     return NextResponse.json({
       success: true,

@@ -66,10 +66,6 @@ const ImageContainer = styled("div")({
   },
 });
 
-const PlaceholderIcon = styled("div")({
-  fontSize: "3rem",
-  color: "rgba(50, 108, 133, 0.2)",
-});
 
 const PartyTitle = styled("h2")({
   fontSize: "1.35rem",
@@ -148,20 +144,20 @@ const PrivateEventCard = ({
     <div className="animate-fade-in-up" style={{ height: "100%", animationDelay: `${index * 60}ms` }}>
       <CardWrapper>
         <ImageContainer>
-          {privateEvent.image ? (
-            <Image
-              src={
-                urlFor(privateEvent.image)?.width(600).height(280).url() || ""
-              }
-              alt={privateEvent.title || "Private event image"}
-              fill
-              style={{ objectFit: "cover" }}
-            />
-          ) : (
-            <PlaceholderIcon>
-              <GiPartyPopper />
-            </PlaceholderIcon>
-          )}
+          <Image
+            src={
+              privateEvent.image
+                ? urlFor(privateEvent.image)?.width(600).height(280).url() || "/assets/logos/coastalLogoFull.png"
+                : "/assets/logos/coastalLogoFull.png"
+            }
+            alt={privateEvent.title || "Private event image"}
+            fill
+            style={{
+              objectFit: privateEvent.image ? "cover" : "contain",
+              backgroundColor: privateEvent.image ? undefined : "white",
+              padding: privateEvent.image ? undefined : "1.5rem",
+            }}
+          />
         </ImageContainer>
 
         <CardContent>

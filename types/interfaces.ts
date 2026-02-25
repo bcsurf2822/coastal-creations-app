@@ -211,7 +211,7 @@ export interface PictureGalleryItem {
 
 // Gallery Upload Form Data
 export interface GalleryUploadFormData {
-  title: string;
+  title?: string;
   description?: string;
   destinations: GalleryDestination[];
   files: File[];

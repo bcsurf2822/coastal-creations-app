@@ -6,9 +6,14 @@ import type { PortableTextContent } from "@/types/pageContent";
  * @returns Plain text string
  */
 export function portableTextToPlainText(
-  blocks: PortableTextContent | undefined | null
+  blocks: PortableTextContent | string | undefined | null
 ): string {
-  if (!blocks || !Array.isArray(blocks)) return "";
+  if (!blocks) return "";
+
+  // Handle plain strings (e.g. saved before Portable Text conversion)
+  if (typeof blocks === "string") return blocks;
+
+  if (!Array.isArray(blocks)) return "";
 
   return blocks
     .map((block) => {

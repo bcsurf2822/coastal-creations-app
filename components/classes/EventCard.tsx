@@ -99,6 +99,9 @@ const CardWrapper = styled("div")<{ layout?: "horizontal" | "vertical" }>(
     "&:hover": {
       boxShadow: "0 4px 20px rgba(0, 0, 0, 0.12)",
     },
+    "@media (max-width: 600px)": {
+      flexDirection: "column",
+    },
   }),
 );
 
@@ -111,8 +114,9 @@ const ImageContainer = styled("div")<{ layout?: "horizontal" | "vertical" }>(
     flex: layout === "vertical" ? "0 0 auto" : "0 0 180px",
     backgroundColor: "#f3f4f6",
     "@media (max-width: 600px)": {
-      width: layout === "horizontal" ? "120px" : "100%",
-      flex: layout === "horizontal" ? "0 0 120px" : "0 0 auto",
+      width: "100%",
+      height: "180px",
+      flex: "0 0 auto",
     },
     "@media (min-width: 601px)": {
       width: layout === "horizontal" ? "140px" : "100%",
@@ -128,10 +132,15 @@ const ImageContainer = styled("div")<{ layout?: "horizontal" | "vertical" }>(
 const StyledImage = styled(Image, {
   shouldForwardProp: (prop) => prop !== "isPlaceholder",
 })<{ isPlaceholder?: boolean }>(({ isPlaceholder }) => ({
-  objectFit: "contain",
+  objectFit: isPlaceholder ? "contain" : "contain",
   borderRadius: "0",
-  padding: isPlaceholder ? "1rem" : "0.5rem",
-  backgroundColor: isPlaceholder ? "transparent" : "#f8fafc",
+  padding: isPlaceholder ? "1.5rem" : "0.5rem",
+  backgroundColor: isPlaceholder ? "white" : "#f8fafc",
+  "@media (max-width: 600px)": {
+    objectFit: isPlaceholder ? "contain" : "cover",
+    padding: isPlaceholder ? "1rem" : "0",
+    backgroundColor: isPlaceholder ? "white" : "transparent",
+  },
 }));
 
 const CardContent = styled(Box)<{ layout?: "horizontal" | "vertical" }>(
@@ -143,6 +152,9 @@ const CardContent = styled(Box)<{ layout?: "horizontal" | "vertical" }>(
     position: "relative",
     zIndex: 2,
     justifyContent: layout === "vertical" ? "space-between" : "flex-start",
+    "@media (max-width: 600px)": {
+      padding: "1rem",
+    },
   }),
 );
 
@@ -154,6 +166,9 @@ const EventTitle = styled("h3")({
   display: "flex",
   alignItems: "center",
   gap: "0.5rem",
+  "@media (max-width: 600px)": {
+    fontSize: "1.15rem",
+  },
 });
 
 const EventIcon = styled("span")({
@@ -273,7 +288,7 @@ const InstagramLink = styled("a")({
   },
 });
 
-const PLACEHOLDER_IMAGE = "/assets/images/flowerPainting.jpeg";
+const PLACEHOLDER_IMAGE = "/assets/logos/coastalLogoFull.png";
 
 const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
   event,
@@ -448,15 +463,8 @@ const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
           </div>
 
           {/* Bottom row: info pills left, button right */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-end",
-              justifyContent: "space-between",
-              gap: "1rem",
-              marginTop: "auto",
-            }}
-          >
+          <div className="mt-auto flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+
             <InfoGrid style={{ marginBottom: 0 }}>
               <InfoPill>
                 <FaCalendarAlt />

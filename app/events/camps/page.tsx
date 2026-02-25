@@ -2,7 +2,7 @@
 
 import EventsContainer from "@/components/classes/EventsContainer";
 import PageHeader from "@/components/classes/PageHeader";
-import GalleryCarousel from "@/components/gallery/GalleryCarousel";
+import PhotoCorral from "@/components/gallery/PhotoCorral";
 import { FaCampground, FaSun, FaMountain } from "react-icons/fa";
 
 export default function SummerCampsPage() {
@@ -17,14 +17,9 @@ export default function SummerCampsPage() {
         rightIcon={<FaSun />}
       />
 
-      <div className="py-8">
-        <div className="container mx-auto px-4">
-          {/* Gallery Carousel */}
-          <div className="mb-12">
-            <GalleryCarousel destination="camp" height="h-64" />
-          </div>
-        </div>
+      <PhotoCorral destination="camp" />
 
+      <div className="py-8">
         {/* Events List */}
         <EventsContainer
           config={{

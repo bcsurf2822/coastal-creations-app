@@ -294,7 +294,8 @@ const StyledImage = styled(Image, {
   width: "100%",
   maxWidth: "300px",
   height: "250px",
-  padding: isPlaceholder ? "1rem" : "0",
+  padding: isPlaceholder ? "1.5rem" : "0",
+  backgroundColor: isPlaceholder ? "white" : "transparent",
   transition: "all 0.3s ease",
   boxShadow: "0 6px 20px rgba(0,0,0,0.12)",
   "&:hover": {
