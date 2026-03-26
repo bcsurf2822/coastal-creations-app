@@ -5,7 +5,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import "./calendar.css";
 import { useRouter } from "next/navigation";
 import { CalendarEvent, ApiEvent } from "@/types/interfaces";
@@ -19,10 +19,9 @@ export default function NewCalendar() {
 
   const router = useRouter();
 
-  // Add state to track the currently visible tooltip
-  const [activeTooltip, setActiveTooltip] = useState<HTMLElement | null>(null);
-  const [tooltipTimeoutId, setTooltipTimeoutId] =
-    useState<NodeJS.Timeout | null>(null);
+  // Use refs for tooltip tracking so event listeners always see current values
+  const activeTooltipRef = useRef<HTMLElement | null>(null);
+  const tooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<{
     title: string;
     eventType: string;
@@ -257,8 +256,10 @@ export default function NewCalendar() {
         break;
     }
 
-    // Generate events until end date
-    while (currentDate <= endDate) {
+    // Generate events until end date (compare date portions only,
+    // since endDate may have earlier hours than the event start time)
+    const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59);
+    while (currentDate <= endDateOnly) {
       // Check if this date should be excluded
       if (!excludeDatesSet.has(currentDate.toDateString())) {
         let eventEnd;
@@ -411,11 +412,14 @@ export default function NewCalendar() {
   useEffect(() => {
     return () => {
       // Remove any tooltips when component unmounts
-      if (activeTooltip && document.body.contains(activeTooltip)) {
-        document.body.removeChild(activeTooltip);
+      if (activeTooltipRef.current && document.body.contains(activeTooltipRef.current)) {
+        document.body.removeChild(activeTooltipRef.current);
+      }
+      if (tooltipTimeoutRef.current) {
+        clearTimeout(tooltipTimeoutRef.current);
       }
     };
-  }, [activeTooltip]);
+  }, []);
 
   return (
     <div className="calendar-container">
@@ -458,13 +462,13 @@ export default function NewCalendar() {
         eventClick={(info) => {
           info.jsEvent.preventDefault();
           // Dismiss any active tooltip
-          if (activeTooltip && document.body.contains(activeTooltip)) {
-            document.body.removeChild(activeTooltip);
-            setActiveTooltip(null);
+          if (activeTooltipRef.current && document.body.contains(activeTooltipRef.current)) {
+            document.body.removeChild(activeTooltipRef.current);
+            activeTooltipRef.current = null;
           }
-          if (tooltipTimeoutId) {
-            clearTimeout(tooltipTimeoutId);
-            setTooltipTimeoutId(null);
+          if (tooltipTimeoutRef.current) {
+            clearTimeout(tooltipTimeoutRef.current);
+            tooltipTimeoutRef.current = null;
           }
           const props = info.event.extendedProps;
           const eventId = props?._id || "";
@@ -486,15 +490,15 @@ export default function NewCalendar() {
         }}
         eventMouseEnter={(info) => {
           // Remove any existing tooltip DOM element
-          if (activeTooltip && document.body.contains(activeTooltip)) {
-            document.body.removeChild(activeTooltip);
-            // Note: activeTooltip state will be updated by setActiveTooltip(tooltip) below
+          if (activeTooltipRef.current && document.body.contains(activeTooltipRef.current)) {
+            document.body.removeChild(activeTooltipRef.current);
+            activeTooltipRef.current = null;
           }
 
           // Clear any pending hide timeout for a previous tooltip, as we are showing a new one.
-          if (tooltipTimeoutId) {
-            clearTimeout(tooltipTimeoutId);
-            setTooltipTimeoutId(null);
+          if (tooltipTimeoutRef.current) {
+            clearTimeout(tooltipTimeoutRef.current);
+            tooltipTimeoutRef.current = null;
           }
 
           // Create new tooltip
@@ -636,14 +640,14 @@ export default function NewCalendar() {
           tooltip.style.zIndex = "99999";
           tooltip.style.display = "block";
 
-          setActiveTooltip(tooltip);
+          activeTooltipRef.current = tooltip;
 
           // Add event listeners to the tooltip itself
           tooltip.addEventListener("mouseenter", () => {
             // If a hide timer was set by eventMouseLeave, cancel it because mouse is now over tooltip
-            if (tooltipTimeoutId) {
-              clearTimeout(tooltipTimeoutId);
-              setTooltipTimeoutId(null);
+            if (tooltipTimeoutRef.current) {
+              clearTimeout(tooltipTimeoutRef.current);
+              tooltipTimeoutRef.current = null;
             }
           });
 
@@ -652,14 +656,12 @@ export default function NewCalendar() {
             if (document.body.contains(tooltip)) {
               document.body.removeChild(tooltip);
             }
-            // If this tooltip was the active one, update state
-            if (activeTooltip === tooltip) {
-              setActiveTooltip(null);
+            if (activeTooltipRef.current === tooltip) {
+              activeTooltipRef.current = null;
             }
-            // Clear any lingering timeout (safety measure)
-            if (tooltipTimeoutId) {
-              clearTimeout(tooltipTimeoutId);
-              setTooltipTimeoutId(null);
+            if (tooltipTimeoutRef.current) {
+              clearTimeout(tooltipTimeoutRef.current);
+              tooltipTimeoutRef.current = null;
             }
           });
 
@@ -685,26 +687,25 @@ export default function NewCalendar() {
           const relatedTarget = leaveInfo.jsEvent.relatedTarget as Node | null;
 
           if (
-            activeTooltip &&
+            activeTooltipRef.current &&
             relatedTarget &&
-            (activeTooltip === relatedTarget ||
-              activeTooltip.contains(relatedTarget))
+            (activeTooltipRef.current === relatedTarget ||
+              activeTooltipRef.current.contains(relatedTarget))
           ) {
-            if (tooltipTimeoutId) {
-              clearTimeout(tooltipTimeoutId);
-              setTooltipTimeoutId(null);
+            if (tooltipTimeoutRef.current) {
+              clearTimeout(tooltipTimeoutRef.current);
+              tooltipTimeoutRef.current = null;
             }
             return;
           }
 
-          const newTimeoutId = setTimeout(() => {
-            if (activeTooltip && document.body.contains(activeTooltip)) {
-              document.body.removeChild(activeTooltip);
-              setActiveTooltip(null);
+          tooltipTimeoutRef.current = setTimeout(() => {
+            if (activeTooltipRef.current && document.body.contains(activeTooltipRef.current)) {
+              document.body.removeChild(activeTooltipRef.current);
+              activeTooltipRef.current = null;
             }
-            setTooltipTimeoutId(null); // Clear the ID as the timeout has executed
-          }, 3000); // Adjust delay as needed (e.g., 150ms)
-          setTooltipTimeoutId(newTimeoutId);
+            tooltipTimeoutRef.current = null;
+          }, 400);
         }}
         eventDidMount={(info) => {
           // Set event color based on event type
