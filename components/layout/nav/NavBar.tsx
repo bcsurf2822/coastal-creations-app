@@ -242,7 +242,7 @@ export default function NavBar() {
         <div className="flex justify-between items-center py-1">
           {/* Left Navigation */}
           <motion.nav
-            className="hidden lg:flex items-center justify-center lg:space-x-3 xl:space-x-6 2xl:space-x-10 h-full flex-1"
+            className="hidden lg:flex items-center justify-center lg:space-x-2 xl:space-x-5 2xl:space-x-8 h-full flex-1"
             variants={navVariants}
             initial="hidden"
             animate="visible"
@@ -253,6 +253,15 @@ export default function NavBar() {
                 className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
                 <NavRippleText text="Home" />
+              </Link>
+            </motion.div>
+
+            <motion.div variants={itemVariants} whileHover="hover">
+              <Link
+                href="/walk-in"
+                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+              >
+                <NavRippleText text="Walk Ins" />
               </Link>
             </motion.div>
 
@@ -351,7 +360,7 @@ export default function NavBar() {
 
           {/* Right Navigation */}
           <motion.nav
-            className="hidden lg:flex items-center justify-center lg:space-x-3 xl:space-x-6 2xl:space-x-10 h-full flex-1"
+            className="hidden lg:flex items-center justify-center lg:space-x-2 xl:space-x-5 2xl:space-x-8 h-full flex-1"
             variants={navVariants}
             initial="hidden"
             animate="visible"
@@ -467,6 +476,19 @@ export default function NavBar() {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Home
+                  </Link>
+                </motion.div>
+                <motion.div
+                  variants={itemVariants}
+                  whileHover="hover"
+                  className="border-b border-gray-100 pb-2"
+                >
+                  <Link
+                    href="/walk-in"
+                    className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block uppercase"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Walk Ins
                   </Link>
                 </motion.div>
                 <motion.div
