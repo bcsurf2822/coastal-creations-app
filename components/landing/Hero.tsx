@@ -204,6 +204,11 @@ const Hero = (): ReactElement => {
                 Explore Classes
               </Button>
             </Link>
+            <Link href="/walk-in">
+              <Button variant="pill" size="lg" className={CTA_BUTTON_CLASS}>
+                Walk In and Create
+              </Button>
+            </Link>
             <Link href="/about">
               <Button variant="pill" size="lg" className={CTA_BUTTON_CLASS}>
                 About Us
