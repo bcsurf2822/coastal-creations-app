@@ -1,6 +1,6 @@
 # Coastal Creations Studio - Architecture Guide
 
-> Next.js 15 art studio booking & management platform with MongoDB, Square payments, and Sanity CMS
+> Next.js 16 art studio booking & management platform with MongoDB, Square payments, and Sanity CMS
 
 ## Project Purpose
 
@@ -38,6 +38,7 @@ coastal-creations-app/
 │   │   └── balance/              # Balance lookup page
 │   │
 │   ├── contact-us/               # Contact form
+│   ├── walk-in/                  # Walk-in offerings (Mosaics, Canvas Mixed Media, Art Kits)
 │   ├── gallery/                  # Photo gallery
 │   ├── payments/                 # Payment flows
 │   ├── payment-success/          # Success redirect
@@ -112,6 +113,7 @@ coastal-creations-app/
 │   ├── calendar/                 # Calendar views & event details
 │   ├── classes/                  # Event display (EventCard, PageHeader, etc.)
 │   ├── reservations/             # Reservation booking flow
+│   ├── walk-in/                  # Walk-in page (WalkIn, WalkInCard, WalkInImageSlot)
 │   ├── payment/                  # Square payment components
 │   ├── gift-cards/               # Gift card UI components
 │   ├── gallery/                  # Gallery display
@@ -325,11 +327,11 @@ RESEND_API_KEY           # Email service
 ### Scripts
 
 ```bash
-npm run dev         # Development with Turbopack
-npm run build       # Production build
-npm run lint        # ESLint check
-npm run test        # Run Vitest tests
-npm run test:run    # Run tests once
+pnpm run dev         # Development with Turbopack
+pnpm run build       # Production build
+pnpm run lint        # ESLint check
+pnpm run test        # Run Vitest tests
+pnpm run test:run    # Run tests once
 ```
 
 ## Development Guidelines
@@ -483,4 +485,3 @@ Each variant has specific SVG decorations from `/public/assets/svg/`.
 
 ---
 
-**Quick Start**: `npm run dev` -> http://localhost:3000
