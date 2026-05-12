@@ -1,5 +1,6 @@
 "use client";
 
+import EventCategoryNav from "@/components/classes/EventCategoryNav";
 import EventsContainer from "@/components/classes/EventsContainer";
 import PageHeader from "@/components/classes/PageHeader";
 import { FaPalette, FaUsers } from "react-icons/fa";
@@ -16,6 +17,8 @@ export default function AllEventsPage() {
         leftIcon={<FaPalette />}
         rightIcon={<GiPaintBrush />}
       />
+
+      <EventCategoryNav />
 
       <div className="py-8">
         <EventsContainer
