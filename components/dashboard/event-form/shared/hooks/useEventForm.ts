@@ -138,6 +138,7 @@ export const useEventForm = ({
     const newCategory = {
       categoryName: "",
       categoryDescription: "",
+      required: false,
       choices: [{ name: "", price: undefined as number | undefined }],
     };
 
@@ -185,7 +186,7 @@ export const useEventForm = ({
   );
 
   const updateOptionCategory = useCallback(
-    (categoryIndex: number, field: string, value: string) => {
+    (categoryIndex: number, field: string, value: string | boolean) => {
       setFormData((prev) => {
         const newCategories = [...prev.optionCategories];
         newCategories[categoryIndex] = {
@@ -276,6 +277,7 @@ export const useEventForm = ({
               options: formData.optionCategories.map((category) => ({
                 categoryName: category.categoryName,
                 categoryDescription: category.categoryDescription,
+                required: category.required || false,
                 choices: category.choices.map((choice) => ({
                   name: choice.name,
                   price: choice.price || 0,

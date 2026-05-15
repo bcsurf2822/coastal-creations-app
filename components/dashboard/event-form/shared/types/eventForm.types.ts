@@ -3,6 +3,7 @@ import { Dayjs } from "dayjs";
 export interface EventOptionCategory {
   categoryName: string;
   categoryDescription?: string;
+  required?: boolean;
   choices: Array<{ name: string; price?: number }>;
 }
 
@@ -62,7 +63,11 @@ export interface EventFormActions {
   removeOptionCategory: (index: number) => void;
   addChoiceToCategory: (categoryIndex: number) => void;
   removeChoiceFromCategory: (categoryIndex: number, choiceIndex: number) => void;
-  updateOptionCategory: (categoryIndex: number, field: string, value: string) => void;
+  updateOptionCategory: (
+    categoryIndex: number,
+    field: string,
+    value: string | boolean
+  ) => void;
   updateChoice: (
     categoryIndex: number,
     choiceIndex: number,

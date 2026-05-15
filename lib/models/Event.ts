@@ -32,6 +32,7 @@ export interface IEvent extends Document {
   options?: Array<{
     categoryName: string;
     categoryDescription?: string;
+    required?: boolean;
     choices: Array<{
       name: string;
       price?: number;
@@ -142,6 +143,10 @@ const OptionSchema = new Schema({
   },
   categoryDescription: {
     type: String,
+  },
+  required: {
+    type: Boolean,
+    default: false,
   },
   choices: {
     type: [OptionChoiceSchema],
