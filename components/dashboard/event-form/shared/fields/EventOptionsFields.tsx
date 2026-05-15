@@ -120,6 +120,28 @@ const EventOptionsFields = ({
                   />
                 </div>
 
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id={`category-required-${categoryIndex}`}
+                    checked={category.required || false}
+                    onChange={(e) =>
+                      actions.updateOptionCategory(
+                        categoryIndex,
+                        "required",
+                        e.target.checked
+                      )
+                    }
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label
+                    htmlFor={`category-required-${categoryIndex}`}
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Required - customer must choose an option at checkout
+                  </label>
+                </div>
+
                 {/* Choices */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">

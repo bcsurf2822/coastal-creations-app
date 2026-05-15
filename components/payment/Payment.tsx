@@ -1,7 +1,7 @@
 "use client";
 
 import { submitPayment } from "@/app/actions/actions";
-import { useState, ChangeEvent, useEffect } from "react";
+import { useState, ChangeEvent, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import RegistrationHeader from "./RegistrationHeader";
 import EventPreview from "./EventPreview";
@@ -38,6 +38,7 @@ interface ReservationBooking {
 interface EventOption {
   categoryName: string;
   categoryDescription?: string;
+  required?: boolean;
   choices: Array<{
     name: string;
     price?: number;
@@ -655,6 +656,7 @@ export default function Payment() {
             if (eventData) {
               if (eventData.options && eventData.options.length > 0) {
                 const newOptions = eventData.options;
+
                 if (
                   JSON.stringify(newOptions) !== JSON.stringify(eventOptions)
                 ) {
@@ -663,7 +665,12 @@ export default function Payment() {
                   const initialSelectedOptions = newOptions.map(
                     (option: EventOption) => ({
                       categoryName: option.categoryName,
-                      choiceName: option.choices[0]?.name || "",
+                      // Required categories start unselected so the customer
+                      // must make an explicit choice; optional categories
+                      // default to the first choice.
+                      choiceName: option.required
+                        ? ""
+                        : option.choices[0]?.name || "",
                     })
                   );
                   setSelectedOptions(initialSelectedOptions);
@@ -814,6 +821,41 @@ export default function Payment() {
     calculateTotalOptionCosts,
   ]);
 
+  // Returns an error message if any required option category has no choice
+  // selected (for the primary registrant or any participant), else null.
+  const getRequiredOptionsError = useCallback((): string | null => {
+    const requiredCategories = eventOptions.filter((o) => o.required);
+    if (requiredCategories.length === 0) return null;
+
+    const hasChoice = (
+      opts: Array<{ categoryName: string; choiceName: string }> | undefined,
+      categoryName: string
+    ): boolean => {
+      const selected = opts?.find((so) => so.categoryName === categoryName);
+      return !!selected && selected.choiceName.trim() !== "";
+    };
+
+    if (isSigningUpForSelf) {
+      const missing = requiredCategories.find(
+        (cat) => !hasChoice(selectedOptions, cat.categoryName)
+      );
+      if (missing) {
+        return `Please select an option for "${missing.categoryName}".`;
+      }
+    }
+
+    const participantMissing = participants.some((participant) =>
+      requiredCategories.some(
+        (cat) => !hasChoice(participant.selectedOptions, cat.categoryName)
+      )
+    );
+    if (participantMissing) {
+      return "Please select all required event options for each participant.";
+    }
+
+    return null;
+  }, [eventOptions, isSigningUpForSelf, selectedOptions, participants]);
+
   useEffect(() => {
     const isContactProvided =
       billingDetails.email.trim() !== "" ||
@@ -834,10 +876,17 @@ export default function Payment() {
         participant.lastName.trim() !== ""
     );
 
-    setFormValid(areRequiredFieldsFilled && areParticipantNamesFilled);
-  }, [billingDetails, participants]);
+    setFormValid(
+      areRequiredFieldsFilled &&
+        areParticipantNamesFilled &&
+        getRequiredOptionsError() === null
+    );
+  }, [billingDetails, participants, getRequiredOptionsError]);
 
   const getParticipantValidationError = (): string | null => {
+    const optionsError = getRequiredOptionsError();
+    if (optionsError) return optionsError;
+
     const missingNames = participants.filter(
       (participant) =>
         participant.firstName.trim() === "" ||
