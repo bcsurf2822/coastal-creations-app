@@ -32,3 +32,6 @@ Visit at: [https://coastalcreationsstudio.com/](https://coastalcreationsstudio.c
 Copyright © 2025 Coastal Creations Studio. All rights reserved.
 
 ---
+
+<!-- Deploys: production from `main`, staging (stg.coastalcreationsstudio.com) from `develop`. -->
+
