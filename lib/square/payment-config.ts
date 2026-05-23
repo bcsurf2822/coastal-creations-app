@@ -38,7 +38,7 @@ export interface PaymentRequest {
  */
 export function getPaymentConfig(): PaymentConfig {
   return {
-    applicationId: process.env.NEXT_PUBLIC_SQUARE_APPLICATION_ID || process.env.APPLICATION_ID || "",
+    applicationId: process.env.NEXT_PUBLIC_SQUARE_APPLICATION_ID || process.env.SQUARE_APPLICATION_ID || "",
     locationId: process.env.NEXT_PUBLIC_SQUARE_LOCATION_ID || "main",
     environment: (process.env.SQUARE_ENVIRONMENT as "sandbox" | "production") || "sandbox",
   };

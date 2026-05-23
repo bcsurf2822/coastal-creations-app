@@ -12,7 +12,6 @@ import ReservationSummary from "./ReservationSummary";
 interface PaymentConfig {
   applicationId: string;
   locationId: string;
-  redirectUrl: string;
 }
 
 interface ReservationBooking {
@@ -91,7 +90,6 @@ export default function Payment() {
   const [config, setConfig] = useState<PaymentConfig>({
     applicationId: "",
     locationId: "main",
-    redirectUrl: "",
   });
 
   const [reservationBooking, setReservationBooking] =

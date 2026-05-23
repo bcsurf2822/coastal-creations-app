@@ -7,7 +7,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 
 const { refundsApi } = new Client({
-  accessToken: process.env.ACCESS_TOKEN,
+  accessToken: process.env.SQUARE_ACCESS_TOKEN,
   environment:
     process.env.SQUARE_ENVIRONMENT === "sandbox"
       ? Environment.Sandbox

@@ -23,12 +23,12 @@ export const authOptions: AuthOptions = {
 
   callbacks: {
     async signIn({ user }) {
-      const allowedEmails = [
-        "crystaledgedev22@gmail.com",
-        "ashley@coastalcreationsstudio.com",
-      ];
+      const allowedEmails = (process.env.ADMIN_EMAILS || "")
+        .split(",")
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean);
 
-      if (user.email && allowedEmails.includes(user.email)) {
+      if (user.email && allowedEmails.includes(user.email.toLowerCase())) {
         const client = await clientPromise;
         const db = client.db();
 
