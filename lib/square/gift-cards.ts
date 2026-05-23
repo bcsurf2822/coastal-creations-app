@@ -7,7 +7,7 @@ import { randomUUID } from "crypto";
 
 // Initialize Square client
 const squareClient = new Client({
-  accessToken: process.env.ACCESS_TOKEN,
+  accessToken: process.env.SQUARE_ACCESS_TOKEN,
   environment:
     process.env.SQUARE_ENVIRONMENT === "sandbox"
       ? Environment.Sandbox

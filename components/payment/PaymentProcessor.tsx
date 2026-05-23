@@ -37,7 +37,6 @@ const DynamicCreditCard = dynamic(
 interface PaymentConfig {
   applicationId: string;
   locationId: string;
-  redirectUrl: string;
 }
 
 interface BillingDetails {
@@ -605,9 +604,9 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
                         // Add total price to success page
                         queryParams.set("totalPrice", totalPrice);
 
-                        // Use config for redirect URL
+                        // Relative path resolves to the current origin automatically
                         router.push(
-                          `${config.redirectUrl}?${queryParams.toString()}`
+                          `/payment-success?${queryParams.toString()}`
                         );
 
                         // Customer data is now handled in the main component via submitCustomerDetails

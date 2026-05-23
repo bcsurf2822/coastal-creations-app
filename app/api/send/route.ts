@@ -11,9 +11,21 @@ export async function POST() {
       React.createElement(EmailTemplate, { firstName: "John" })
     );
 
+    const recipient =
+      process.env.VERCEL_ENV === "production"
+        ? process.env.STUDIO_EMAIL
+        : process.env.DEV_EMAIL;
+
+    if (!recipient) {
+      return Response.json(
+        { error: "Email recipient is not configured" },
+        { status: 500 }
+      );
+    }
+
     const { data, error } = await resend.emails.send({
       from: "Coastal Creations <no-reply@resend.coastalcreationsstudio.com>",
-      to: [process.env.STUDIO_EMAIL || "info@coastalcreationsstudio.com"],
+      to: [recipient],
       subject: "Welcome to Coastal Creations Studio",
       html: emailHtml,
     });
@@ -34,9 +46,21 @@ export async function GET() {
       React.createElement(EmailTemplate, { firstName: "Visitor" })
     );
 
+    const recipient =
+      process.env.VERCEL_ENV === "production"
+        ? process.env.STUDIO_EMAIL
+        : process.env.DEV_EMAIL;
+
+    if (!recipient) {
+      return Response.json(
+        { error: "Email recipient is not configured" },
+        { status: 500 }
+      );
+    }
+
     const { data, error } = await resend.emails.send({
       from: "Coastal Creations <no-reply@resend.coastalcreationsstudio.com>",
-      to: [process.env.STUDIO_EMAIL || "info@coastalcreationsstudio.com"],
+      to: [recipient],
       subject: "Welcome to Coastal Creations Studio",
       html: emailHtml,
     });
