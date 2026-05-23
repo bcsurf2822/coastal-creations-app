@@ -54,10 +54,23 @@ export async function POST(request: Request) {
       event._id = event._id.toString();
     }
 
-    // Get the event name for the subject line
     const eventTitle = event.eventName || "your event";
 
-    // Array to store email sending results
+    const isProduction = process.env.VERCEL_ENV === "production";
+    const customerRecipient = isProduction
+      ? customer.billingInfo.emailAddress
+      : process.env.DEV_EMAIL;
+    const adminRecipient = isProduction
+      ? process.env.STUDIO_EMAIL
+      : process.env.DEV_EMAIL;
+
+    if (!adminRecipient) {
+      return NextResponse.json(
+        { error: "Admin email recipient is not configured" },
+        { status: 500 }
+      );
+    }
+
     const emailResults = [];
 
     // Only send customer email if they provided an email address
@@ -70,11 +83,9 @@ export async function POST(request: Request) {
         })
       );
 
-      // Send email to customer
       const customerEmailResult = await resend.emails.send({
         from: "Coastal Creations Studio <no-reply@resend.coastalcreationsstudio.com>",
-        to: [customer.billingInfo.emailAddress],
-        // to: ["crystaledgedev22@gmail.com"],
+        to: [customerRecipient],
         subject: `You've signed up for ${eventTitle}`,
         html: customerEmailHtml,
       });
@@ -97,7 +108,7 @@ export async function POST(request: Request) {
     // Send email to admin
     const adminEmailResult = await resend.emails.send({
       from: "Coastal Creations Studio <no-reply@resend.coastalcreationsstudio.com>",
-      to: [process.env.STUDIO_EMAIL || "ashley@coastalcreationsstudio.com"],
+      to: [adminRecipient],
       subject: `New Registration: ${eventTitle}`,
       html: adminEmailHtml,
     });

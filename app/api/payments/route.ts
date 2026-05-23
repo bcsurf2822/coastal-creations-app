@@ -8,7 +8,7 @@ import { randomUUID } from "crypto";
 import { giftCardService } from "@/lib/square/gift-cards";
 
 const squareClient = new Client({
-  accessToken: process.env.ACCESS_TOKEN,
+  accessToken: process.env.SQUARE_ACCESS_TOKEN,
   environment:
     process.env.SQUARE_ENVIRONMENT === "sandbox"
       ? Environment.Sandbox
