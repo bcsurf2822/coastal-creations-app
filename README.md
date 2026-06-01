@@ -2,7 +2,7 @@
 
 ## About
 
-Coastal Creations Studio is a vibrant art studio owned by Ashley Mathers, offering a variety of creative classes, workshops, camps, and birthday parties for all ages.
+Coastal Creations Studio is a vibrant art studio owned by Ashley Mathers, offering a variety of creative classes, workshops, camps, and birthday parties for all ages. Now offering E-Sales for Art Kits.
 
 ## Studio Information
 
