@@ -1,6 +1,11 @@
 "use client";
 
 import { submitPayment } from "@/app/actions/actions";
+import {
+  createOrFindSquareCustomer,
+  sendBookingConfirmation,
+  buildSuccessUrl,
+} from "@/lib/checkout/bookingFlow";
 import { useState, ChangeEvent, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import RegistrationHeader from "./RegistrationHeader";
@@ -274,42 +279,7 @@ export default function Payment() {
     }
 
     // Step 1: Create or find Square customer
-    let squareCustomerId: string | undefined;
-    try {
-      const customerResponse = await fetch("/api/square/customers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firstName: billingDetails.givenName,
-          lastName: billingDetails.familyName,
-          email: billingDetails.email || undefined,
-          phone: billingDetails.phoneNumber || undefined,
-          address: {
-            addressLine1: billingDetails.addressLine1,
-            addressLine2: billingDetails.addressLine2,
-            city: billingDetails.city,
-            state: billingDetails.state,
-            postalCode: billingDetails.postalCode,
-            country: billingDetails.countryCode,
-          },
-        }),
-      });
-
-      if (customerResponse.ok) {
-        const customerData = await customerResponse.json();
-        squareCustomerId = customerData.data?.customerId;
-        console.log(
-          "[PAYMENT-handleGiftCardOnlyOrder] Square customer:",
-          squareCustomerId,
-          customerData.data?.isNew ? "(new)" : "(existing)"
-        );
-      }
-    } catch (customerError) {
-      console.error(
-        "[PAYMENT-handleGiftCardOnlyOrder] Failed to create Square customer:",
-        customerError
-      );
-    }
+    const squareCustomerId = await createOrFindSquareCustomer(billingDetails);
 
     // Step 2: Redeem the gift card
     const redeemed = await redeemGiftCard(
@@ -334,41 +304,24 @@ export default function Payment() {
     }
 
     // Step 4: Send confirmation email
-    try {
-      await fetch("/api/send-confirmation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customerId: customerData.data._id,
-          eventId: eventId,
-        }),
-      });
-    } catch (emailError) {
-      console.error("[PAYMENT-handleGiftCardOnlyOrder] Error sending confirmation email:", emailError);
-    }
+    await sendBookingConfirmation(customerData.data._id, eventId);
 
     // Step 5: Redirect to success page
-    const queryParams = new URLSearchParams();
-    queryParams.set("paymentId", `GIFTCARD-${giftCardRedemption.giftCardId}`);
-    queryParams.set("status", "COMPLETED");
-    queryParams.set("firstName", billingDetails.givenName);
-    queryParams.set("lastName", billingDetails.familyName);
-    queryParams.set("eventTitle", eventTitle || "");
-    queryParams.set("eventId", eventId || "");
-    queryParams.set("amount", (giftCardRedemption.amountCents).toString());
-    queryParams.set("currency", "USD");
-    queryParams.set("paymentMethod", "gift_card");
-
-    if (billingDetails.email) {
-      queryParams.set("email", billingDetails.email);
-    }
-    if (billingDetails.phoneNumber) {
-      queryParams.set("phone", billingDetails.phoneNumber);
-    }
-    queryParams.set("numberOfPeople", billingDetails.numberOfPeople.toString());
-    queryParams.set("totalPrice", totalPrice);
-
-    router.push(`/payment-success?${queryParams.toString()}`);
+    router.push(
+      buildSuccessUrl({
+        paymentId: `GIFTCARD-${giftCardRedemption.giftCardId}`,
+        firstName: billingDetails.givenName,
+        lastName: billingDetails.familyName,
+        eventTitle,
+        eventId,
+        amount: giftCardRedemption.amountCents.toString(),
+        paymentMethod: "gift_card",
+        email: billingDetails.email,
+        phone: billingDetails.phoneNumber,
+        numberOfPeople: billingDetails.numberOfPeople,
+        totalPrice,
+      })
+    );
   };
 
   // Handle free event registration (no payment needed)
@@ -406,41 +359,7 @@ export default function Payment() {
 
     try {
       // Step 1: Create or find Square customer (for record keeping)
-      let squareCustomerId: string | undefined;
-      try {
-        const customerResponse = await fetch("/api/square/customers", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            firstName: billingDetails.givenName,
-            lastName: billingDetails.familyName,
-            email: billingDetails.email || undefined,
-            phone: billingDetails.phoneNumber || undefined,
-            address: {
-              addressLine1: billingDetails.addressLine1,
-              addressLine2: billingDetails.addressLine2,
-              city: billingDetails.city,
-              state: billingDetails.state,
-              postalCode: billingDetails.postalCode,
-              country: billingDetails.countryCode,
-            },
-          }),
-        });
-
-        if (customerResponse.ok) {
-          const customerData = await customerResponse.json();
-          squareCustomerId = customerData.data?.customerId;
-          console.log(
-            "[PAYMENT-handleFreeRegistration] Square customer:",
-            squareCustomerId
-          );
-        }
-      } catch (customerError) {
-        console.error(
-          "[PAYMENT-handleFreeRegistration] Failed to create Square customer:",
-          customerError
-        );
-      }
+      const squareCustomerId = await createOrFindSquareCustomer(billingDetails);
 
       // Step 2: Create customer/booking record
       const customerData = await submitCustomerDetails(
@@ -454,41 +373,24 @@ export default function Payment() {
       }
 
       // Step 3: Send confirmation email
-      try {
-        await fetch("/api/send-confirmation", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            customerId: customerData.data._id,
-            eventId: eventId,
-          }),
-        });
-      } catch (emailError) {
-        console.error("[PAYMENT-handleFreeRegistration] Error sending confirmation email:", emailError);
-      }
+      await sendBookingConfirmation(customerData.data._id, eventId);
 
       // Step 4: Redirect to success page
-      const queryParams = new URLSearchParams();
-      queryParams.set("paymentId", "FREE-EVENT");
-      queryParams.set("status", "COMPLETED");
-      queryParams.set("firstName", billingDetails.givenName);
-      queryParams.set("lastName", billingDetails.familyName);
-      queryParams.set("eventTitle", eventTitle || "");
-      queryParams.set("eventId", eventId || "");
-      queryParams.set("amount", "0");
-      queryParams.set("currency", "USD");
-      queryParams.set("paymentMethod", "free");
-
-      if (billingDetails.email) {
-        queryParams.set("email", billingDetails.email);
-      }
-      if (billingDetails.phoneNumber) {
-        queryParams.set("phone", billingDetails.phoneNumber);
-      }
-      queryParams.set("numberOfPeople", billingDetails.numberOfPeople.toString());
-      queryParams.set("totalPrice", "0.00");
-
-      router.push(`/payment-success?${queryParams.toString()}`);
+      router.push(
+        buildSuccessUrl({
+          paymentId: "FREE-EVENT",
+          firstName: billingDetails.givenName,
+          lastName: billingDetails.familyName,
+          eventTitle,
+          eventId,
+          amount: "0",
+          paymentMethod: "free",
+          email: billingDetails.email,
+          phone: billingDetails.phoneNumber,
+          numberOfPeople: billingDetails.numberOfPeople,
+          totalPrice: "0.00",
+        })
+      );
     } catch (err) {
       console.error("[PAYMENT-handleFreeRegistration] Error:", err);
       setError("Failed to complete registration. Please try again.");
@@ -504,43 +406,7 @@ export default function Payment() {
     try {
       // Create or find Square customer BEFORE processing payment
       // This ensures the payment is linked to the customer in Square Dashboard
-      let squareCustomerId: string | undefined;
-      try {
-        const customerResponse = await fetch("/api/square/customers", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            firstName: paymentData.givenName,
-            lastName: paymentData.familyName,
-            email: paymentData.email || undefined,
-            phone: paymentData.phoneNumber || undefined,
-            address: {
-              addressLine1: paymentData.addressLine1,
-              addressLine2: paymentData.addressLine2,
-              city: paymentData.city,
-              state: paymentData.state,
-              postalCode: paymentData.postalCode,
-              country: paymentData.countryCode,
-            },
-          }),
-        });
-
-        if (customerResponse.ok) {
-          const customerData = await customerResponse.json();
-          squareCustomerId = customerData.data?.customerId;
-          console.log(
-            "[PAYMENT-handleSubmitPayment] Square customer:",
-            squareCustomerId,
-            customerData.data?.isNew ? "(new)" : "(existing)"
-          );
-        }
-      } catch (customerError) {
-        // Log but don't fail - payment can proceed without customer link
-        console.error(
-          "[PAYMENT-handleSubmitPayment] Failed to create Square customer:",
-          customerError
-        );
-      }
+      const squareCustomerId = await createOrFindSquareCustomer(paymentData);
 
       const result = await submitPayment(token, {
         addressLine1: paymentData.addressLine1,
@@ -593,20 +459,10 @@ export default function Payment() {
         );
 
         if (customerData && customerData.data && customerData.data._id) {
-          try {
-            await fetch("/api/send-confirmation", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                customerId: customerData.data._id,
-                eventId: paymentData.eventId,
-              }),
-            });
-          } catch (error) {
-            console.error("Error sending confirmation email:", error);
-          }
+          await sendBookingConfirmation(
+            customerData.data._id,
+            paymentData.eventId
+          );
         }
       }
 
