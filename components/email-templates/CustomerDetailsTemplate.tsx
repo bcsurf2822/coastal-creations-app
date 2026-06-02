@@ -144,7 +144,10 @@ export const CustomerDetailsTemplate = ({
   };
 
   return (
-    <EmailShell preview={`New registration: ${getEventName()}`}>
+    <EmailShell
+      preview={`New registration: ${getEventName()}`}
+      showDisclaimer={false}
+    >
       <Text style={emailText.heroTitle}>New customer registration</Text>
       <Text style={emailText.paragraph}>
         A new customer has registered for an event at Coastal Creations Studio.
@@ -230,12 +233,6 @@ export const CustomerDetailsTemplate = ({
           )}
         </InfoCard>
       )}
-
-      <Text style={emailText.subParagraph}>
-        Recorded on {new Date().toLocaleDateString()} at{" "}
-        {new Date().toLocaleTimeString()}. View all registrations in your admin
-        dashboard.
-      </Text>
     </EmailShell>
   );
 };

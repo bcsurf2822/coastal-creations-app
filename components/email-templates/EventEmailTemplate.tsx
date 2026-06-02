@@ -202,11 +202,6 @@ export const EventEmailTemplate = ({
           <DetailRow label="Description">{event.description}</DetailRow>
         )}
       </InfoCard>
-
-      <Text style={emailText.subParagraph}>
-        Questions about your booking? Just reply to this email and our team will
-        be happy to help.
-      </Text>
     </EmailShell>
   );
 };

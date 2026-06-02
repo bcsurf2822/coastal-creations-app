@@ -46,13 +46,20 @@ const LOGO_SRC =
 interface EmailShellProps {
   preview: string;
   children: React.ReactNode;
+  /** Show the "you received this because you registered/purchased" line.
+   *  Defaults to true (customer emails); pass false for internal/admin emails. */
+  showDisclaimer?: boolean;
 }
 
 /**
  * Outer email chrome: head, preview text, page background, centered white
  * card with a branded header band and a standard footer.
  */
-export const EmailShell = ({ preview, children }: EmailShellProps) => (
+export const EmailShell = ({
+  preview,
+  children,
+  showDisclaimer = true,
+}: EmailShellProps) => (
   <Html lang="en" dir="ltr">
     <Head />
     <Preview>{preview}</Preview>
@@ -69,10 +76,12 @@ export const EmailShell = ({ preview, children }: EmailShellProps) => (
         <Section style={shell.content}>{children}</Section>
         <EmailFooter />
       </Container>
-      <Text style={shell.disclaimer}>
-        You received this email because you registered or made a purchase at
-        Coastal Creations Studio.
-      </Text>
+      {showDisclaimer && (
+        <Text style={shell.disclaimer}>
+          You received this email because you registered or made a purchase at
+          Coastal Creations Studio.
+        </Text>
+      )}
     </Body>
   </Html>
 );
