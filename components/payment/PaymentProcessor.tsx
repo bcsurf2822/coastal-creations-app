@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import React, { useState } from "react";
 // import WalletPayButtons from "./WalletPayButtons";
 import GiftCardRedemption from "./GiftCardRedemption";
+import { buildSuccessUrl } from "@/lib/checkout/bookingFlow";
 
 // Dynamically import Square payment components with SSR disabled
 const DynamicPaymentForm = dynamic(
@@ -572,41 +573,25 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
                           result.result.payment.cardDetails?.card?.cardBrand ||
                           "";
 
-                        // Build query parameters with all relevant information
-                        const queryParams = new URLSearchParams();
-                        queryParams.set("paymentId", paymentId || "");
-                        queryParams.set("status", "COMPLETED");
-                        queryParams.set("receiptUrl", receiptUrl);
-                        queryParams.set("firstName", billingDetails.givenName);
-                        queryParams.set("lastName", billingDetails.familyName);
-                        queryParams.set("eventTitle", eventTitle || "");
-                        queryParams.set("eventId", eventId || "");
-                        queryParams.set("note", note);
-                        queryParams.set("amount", amount);
-                        queryParams.set("currency", currency);
-                        queryParams.set("last4", last4);
-                        queryParams.set("cardBrand", cardBrand);
-
-                        // Add contact information to success page
-                        if (billingDetails.email) {
-                          queryParams.set("email", billingDetails.email);
-                        }
-                        if (billingDetails.phoneNumber) {
-                          queryParams.set("phone", billingDetails.phoneNumber);
-                        }
-
-                        // Add number of people to success page
-                        queryParams.set(
-                          "numberOfPeople",
-                          billingDetails.numberOfPeople.toString()
-                        );
-
-                        // Add total price to success page
-                        queryParams.set("totalPrice", totalPrice);
-
                         // Relative path resolves to the current origin automatically
                         router.push(
-                          `/payment-success?${queryParams.toString()}`
+                          buildSuccessUrl({
+                            paymentId: paymentId || "",
+                            receiptUrl,
+                            firstName: billingDetails.givenName,
+                            lastName: billingDetails.familyName,
+                            eventTitle,
+                            eventId,
+                            note,
+                            amount,
+                            currency,
+                            last4,
+                            cardBrand,
+                            email: billingDetails.email,
+                            phone: billingDetails.phoneNumber,
+                            numberOfPeople: billingDetails.numberOfPeople,
+                            totalPrice,
+                          })
                         );
 
                         // Customer data is now handled in the main component via submitCustomerDetails
