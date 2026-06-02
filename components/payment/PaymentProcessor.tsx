@@ -305,23 +305,35 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
 
   return (
     <div className="mb-8">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6 mr-2"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"
-          />
-        </svg>
-        Payment Details
-      </h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6 mr-2 text-[var(--color-primary)]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"
+            />
+          </svg>
+          Payment Details
+        </h2>
+        <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 border border-green-200 rounded-full text-xs font-semibold text-green-700">
+          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fillRule="evenodd"
+              d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+              clipRule="evenodd"
+            />
+          </svg>
+          Secure &amp; Encrypted
+        </span>
+      </div>
 
       {/* Error Alert */}
       {error && (
@@ -726,10 +738,33 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
               </DynamicPaymentForm>
 
               {/* Trust Badges */}
-              <div className="mt-6 pt-6 border-t border-gray-200">
+              <div className="mt-6 pt-5 border-t border-gray-200">
                 <div className="flex flex-col items-center gap-3">
-                  {/* Security Text */}
-                  <div className="flex items-center gap-2 text-gray-500 text-xs"></div>
+                  <div className="flex items-center flex-wrap justify-center gap-2">
+                    {["Visa", "Mastercard", "Amex", "Discover"].map((brand) => (
+                      <span
+                        key={brand}
+                        className="px-2.5 py-1 bg-white border border-gray-200 rounded-md text-[0.65rem] font-semibold text-gray-500 uppercase tracking-wide"
+                      >
+                        {brand}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-gray-400 text-xs">
+                    <svg
+                      className="w-3.5 h-3.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    256-bit SSL encrypted &middot; Your card details never touch
+                    our servers
+                  </div>
                 </div>
               </div>
             </>
