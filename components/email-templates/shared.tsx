@@ -138,6 +138,16 @@ export const DetailRow = ({
   </tr>
 );
 
+/**
+ * Full-width free-text block inside an InfoCard (e.g. a message body).
+ * Renders as a single-cell row so it spans the card. Preserves line breaks.
+ */
+export const CardText = ({ children }: { children: React.ReactNode }) => (
+  <tr>
+    <td style={detail.blockCell}>{children}</td>
+  </tr>
+);
+
 export const EmailFooter = () => {
   const studioEmail = process.env.STUDIO_EMAIL || "info@coastalcreationsstudio.com";
   return (
@@ -240,6 +250,14 @@ const detail = {
     fontSize: "15px",
     lineHeight: "22px",
     fontFamily: emailTheme.font,
+  },
+  blockCell: {
+    padding: "4px 0",
+    color: c.ink,
+    fontSize: "15px",
+    lineHeight: "23px",
+    fontFamily: emailTheme.font,
+    whiteSpace: "pre-wrap" as const,
   },
 };
 
