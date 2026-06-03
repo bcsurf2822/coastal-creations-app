@@ -2,8 +2,10 @@ import { Resend } from "resend";
 import { render } from "@react-email/render";
 import * as React from "react";
 import { NewsletterEmailTemplate } from "@/components/email-templates/NewsletterEmailTemplate";
+import { NewsletterWelcomeTemplate } from "@/components/email-templates/NewsletterWelcomeTemplate";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+const FROM = "Coastal Creations <no-reply@resend.coastalcreationsstudio.com>";
 
 export async function POST(request: Request) {
   try {
@@ -19,37 +21,54 @@ export async function POST(request: Request) {
       return Response.json({ error: "Invalid email format" }, { status: 400 });
     }
 
-    // Render email template
-    const emailHtml = await render(
-      React.createElement(NewsletterEmailTemplate, { subscriberEmail: email })
-    );
+    const isProduction = process.env.VERCEL_ENV === "production";
+    const adminRecipient = isProduction
+      ? process.env.STUDIO_EMAIL
+      : process.env.DEV_EMAIL;
+    const customerRecipient = isProduction ? email : process.env.DEV_EMAIL;
 
-    const recipient =
-      process.env.VERCEL_ENV === "production"
-        ? process.env.STUDIO_EMAIL
-        : process.env.DEV_EMAIL;
-
-    if (!recipient) {
+    if (!adminRecipient) {
       return Response.json(
         { error: "Email recipient is not configured" },
         { status: 500 }
       );
     }
 
-    const { error } = await resend.emails.send({
-      from: "Coastal Creations <no-reply@resend.coastalcreationsstudio.com>",
-      to: [recipient],
+    // Admin notification
+    const adminHtml = await render(
+      React.createElement(NewsletterEmailTemplate, { subscriberEmail: email })
+    );
+    const { error: adminError } = await resend.emails.send({
+      from: FROM,
+      to: [adminRecipient],
       subject: "New Newsletter Subscriber",
-      html: emailHtml,
+      html: adminHtml,
     });
 
-    if (error) {
-      console.error("Error sending email:", error);
+    if (adminError) {
+      console.error("[SUBSCRIBE-POST] Admin email error:", adminError);
       return Response.json({ error: "Failed to send email" }, { status: 500 });
     }
 
-    // Here you would typically also add the email to your newsletter service
-    // e.g., Mailchimp, ConvertKit, etc.
+    // Customer welcome email
+    if (customerRecipient) {
+      const welcomeHtml = await render(
+        React.createElement(NewsletterWelcomeTemplate, {
+          subscriberEmail: email,
+        })
+      );
+      const { error: welcomeError } = await resend.emails.send({
+        from: FROM,
+        to: [customerRecipient],
+        subject: "Welcome to Coastal Creations Studio",
+        html: welcomeHtml,
+      });
+
+      if (welcomeError) {
+        // Don't fail the subscription if only the welcome email fails
+        console.error("[SUBSCRIBE-POST] Welcome email error:", welcomeError);
+      }
+    }
 
     return Response.json({
       success: true,

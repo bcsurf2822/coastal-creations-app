@@ -1,38 +1,25 @@
+/**
+ * Products API Route (Storefront)
+ * GET: List all Square catalog items with variations, pricing, and stock counts
+ */
 import { NextResponse } from "next/server";
-import { connectMongo } from "@/lib/mongoose";
-import Product from "@/lib/models/Product";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
+import { productService } from "@/lib/square/products";
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(): Promise<Response> {
   try {
-    await connectMongo();
-    const products = await Product.find().sort({ createdAt: -1 });
-    return NextResponse.json({ success: true, products });
-  } catch (error) {
-    console.error("[PRODUCTS-GET] Error fetching products:", error);
-    return NextResponse.json(
-      { success: false, error: (error as Error).message },
-      { status: 500 }
-    );
-  }
-}
+    console.log("[API-PRODUCTS] Fetching products");
 
-export async function POST(request: Request): Promise<NextResponse> {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.isAdmin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    const { products } = await productService.listProducts();
 
-  try {
-    await connectMongo();
-    const data = await request.json();
-    const product = await Product.create(data);
-    return NextResponse.json({ success: true, product }, { status: 201 });
+    return NextResponse.json({
+      success: true,
+      products,
+      count: products.length,
+    });
   } catch (error) {
-    console.error("[PRODUCTS-POST] Error creating product:", error);
+    console.error("[API-PRODUCTS] Error fetching products:", error);
     return NextResponse.json(
-      { success: false, error: (error as Error).message },
+      { error: "Failed to fetch products" },
       { status: 500 }
     );
   }

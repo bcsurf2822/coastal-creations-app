@@ -1,4 +1,6 @@
 import * as React from "react";
+import { Text } from "@react-email/components";
+import { EmailShell, InfoCard, DetailRow, emailText } from "./shared";
 
 interface EmailTemplateProps {
   firstName: string;
@@ -6,61 +8,29 @@ interface EmailTemplateProps {
 
 export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
   firstName,
-}) => (
-  <div
-    style={{
-      fontFamily: "Arial, sans-serif",
-      maxWidth: "600px",
-      margin: "0 auto",
-    }}
-  >
-    <div
-      style={{
-        backgroundColor: "#87CEEB",
-        padding: "20px",
-        textAlign: "center",
-        color: "#000",
-      }}
-    >
-      <h1 style={{ margin: 0 }}>Coastal Creations Studio</h1>
-    </div>
-    <div style={{ padding: "20px" }}>
-      <h2>Welcome, {firstName}!</h2>
-      <p>
-        Thank you for joining the Coastal Creations community. We&apos;re
-        excited to have you with us!
-      </p>
-      <p>
-        Here at Coastal Creations Studio, we offer a variety of creative classes
-        and events that celebrate the beauty of coastal living.
-      </p>
-      <p>Feel free to visit our studio at:</p>
-      <p style={{ fontWeight: "bold" }}>
-        411 E 8th Street
-        <br />
-        Ocean City, NJ 08226
-      </p>
-      <p>
-        If you have any questions, please don&apos;t hesitate to contact us at:
-      </p>
-      <p style={{ fontWeight: "bold" }}>
-        Phone: (609) 399-0030
-        <br />
-        Email: {process.env.STUDIO_EMAIL || "info@coastalcreationsstudio.com"}
-      </p>
-    </div>
-    <div
-      style={{
-        backgroundColor: "#f5f5f5",
-        padding: "15px",
-        textAlign: "center",
-        fontSize: "12px",
-      }}
-    >
-      <p>
-        &copy; {new Date().getFullYear()} Coastal Creation Studios. All rights
-        reserved.
-      </p>
-    </div>
-  </div>
-);
+}) => {
+  const studioEmail =
+    process.env.STUDIO_EMAIL || "info@coastalcreationsstudio.com";
+  return (
+    <EmailShell preview={`Welcome to Coastal Creations Studio, ${firstName}`}>
+      <Text style={emailText.heroTitle}>Welcome, {firstName}!</Text>
+      <Text style={emailText.paragraph}>
+        Thanks for joining the Coastal Creations community. We offer creative
+        classes, camps, and workshops that celebrate coastal living &mdash; come
+        make something with us.
+      </Text>
+
+      <InfoCard title="Visit Us">
+        <DetailRow label="Studio">
+          411 E 8th Street
+          <br />
+          Ocean City, NJ 08226
+        </DetailRow>
+        <DetailRow label="Phone">(609) 399-0030</DetailRow>
+        <DetailRow label="Email">{studioEmail}</DetailRow>
+      </InfoCard>
+    </EmailShell>
+  );
+};
+
+export default EmailTemplate;
