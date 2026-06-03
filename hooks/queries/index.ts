@@ -24,3 +24,6 @@ export { usePrivateEventPictures } from "./use-private-event-pictures";
 export { usePaymentConfig } from "./use-payment-config";
 export { usePaymentErrors } from "./use-payment-errors";
 export type { PaymentErrorLog } from "./use-payment-errors";
+
+// Products
+export { useProducts } from "./use-products";
