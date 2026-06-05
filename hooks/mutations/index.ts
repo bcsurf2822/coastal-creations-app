@@ -33,7 +33,3 @@ export { useDeleteGalleryImage } from "./use-delete-gallery-image";
 // Payment error mutations
 export { useDeletePaymentError } from "./use-delete-payment-error";
 
-// Product mutations
-export { useCreateProduct } from "./use-create-product";
-export { useUpdateProduct } from "./use-update-product";
-export { useDeleteProduct } from "./use-delete-product";

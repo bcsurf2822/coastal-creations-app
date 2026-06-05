@@ -225,22 +225,6 @@ export interface GalleryUpdateData {
   destinations: GalleryDestination[];
 }
 
-// Product interface (ecommerce store)
-export interface ApiProduct {
-  _id: string;
-  name: string;
-  description: string;
-  price: number;
-  category: "art-kits" | "supplies" | "classes" | "other";
-  customCategory?: string;
-  image?: string;
-  stock: number;
-  isActive: boolean;
-  squareCatalogId?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 // Customer booking interface
 export interface ICustomer {
   _id?: string;

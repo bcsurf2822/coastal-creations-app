@@ -1,15 +1,20 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import type { ApiProduct } from "@/types/interfaces";
+import type { StoreProduct, StoreProductSummary } from "@/lib/types/storeTypes";
 
 interface ProductsResponse {
   success: boolean;
-  products: ApiProduct[];
+  products: StoreProductSummary[];
 }
 
-async function fetchProducts(): Promise<ApiProduct[]> {
-  const response = await fetch("/api/products");
+interface ProductResponse {
+  success: boolean;
+  product: StoreProduct;
+}
+
+async function fetchProducts(): Promise<StoreProductSummary[]> {
+  const response = await fetch("/api/store/products");
 
   if (!response.ok) {
     throw new Error("Failed to fetch products");
@@ -17,18 +22,39 @@ async function fetchProducts(): Promise<ApiProduct[]> {
 
   const result: ProductsResponse = await response.json();
 
-  if (!result.success) {
+  if (!result.success && !result.products) {
     throw new Error("API returned unsuccessful response");
   }
 
-  return result.products || [];
+  return result.products ?? [];
+}
+
+async function fetchProduct(squareItemId: string): Promise<StoreProduct> {
+  const response = await fetch(`/api/store/products/${squareItemId}`);
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch product");
+  }
+
+  const result: ProductResponse = await response.json();
+  return result.product;
 }
 
 export function useProducts() {
-  return useQuery<ApiProduct[], Error>({
-    queryKey: ["products"],
+  return useQuery<StoreProductSummary[], Error>({
+    queryKey: ["store-products"],
     queryFn: fetchProducts,
     staleTime: 2 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
+  });
+}
+
+export function useProduct(squareItemId: string) {
+  return useQuery<StoreProduct, Error>({
+    queryKey: ["store-product", squareItemId],
+    queryFn: () => fetchProduct(squareItemId),
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    enabled: !!squareItemId,
   });
 }

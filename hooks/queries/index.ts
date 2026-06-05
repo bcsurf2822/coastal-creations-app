@@ -25,5 +25,6 @@ export { usePaymentConfig } from "./use-payment-config";
 export { usePaymentErrors } from "./use-payment-errors";
 export type { PaymentErrorLog } from "./use-payment-errors";
 
-// Products
-export { useProducts } from "./use-products";
+// Store
+export { useProducts, useProduct } from "./use-products";
+
