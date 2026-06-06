@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/store/CartProvider";
 import { usePaymentConfig } from "@/hooks/queries/use-payment-config";
@@ -38,6 +38,7 @@ export default function CheckoutForm(): ReactElement {
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const orderCompleted = useRef(false);
 
   const updateField = (field: keyof AddressFormValues, value: string): void => {
     setAddress((prev) => ({ ...prev, [field]: value }));
@@ -117,6 +118,7 @@ export default function CheckoutForm(): ReactElement {
         setIsProcessing(false);
         return;
       }
+      orderCompleted.current = true;
       clearCart();
       router.push(`/order-confirmation?orderNumber=${data.orderNumber}`);
     } catch {
@@ -126,12 +128,12 @@ export default function CheckoutForm(): ReactElement {
   };
 
   useEffect(() => {
-    if (items.length === 0) {
+    if (items.length === 0 && !orderCompleted.current) {
       router.replace("/cart");
     }
   }, [items.length, router]);
 
-  if (items.length === 0) return null;
+  if (items.length === 0 && !orderCompleted.current) return null;
 
   return (
     <div className="w-full">
