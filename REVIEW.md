@@ -84,3 +84,93 @@ npx tsc --noEmit
 - **`.next/dev/types/validator.ts` "Cannot find module .../app/api/products/route.js":** a stale
   artifact from local `next dev` referencing a route removed when the store moved to Square. It does
   **not** occur in a clean build (`rm -rf .next`) and never appears on Vercel.
+
+---
+
+## 3. UI: "Add to Cart" buttons are uneven across product cards
+
+On the store grid the **"Add to Cart" buttons do not line up** — they sit at different
+vertical positions from card to card because product descriptions and price rows have
+different heights. The buttons should be **even (aligned) across the row**.
+
+![Uneven Add to Cart buttons](public/assets/review/uneven.png)
+
+- **Cause:** cards size to their content, so a shorter description pushes its button up
+  relative to a taller neighbor.
+- **Fix direction:** make each card a full-height flex column (`flex flex-col h-full`) and
+  push the button to the bottom (e.g. `mt-auto` on the button, or wrap the body so the CTA
+  is in a footer that sticks to the bottom). With equal-height cards in the grid, the CTAs
+  will align across the row regardless of description length.
+
+---
+
+## 4. Show REAL product images in the `/store` grid (replace mock data)
+
+### Background — why `/store` shows emoji placeholders today
+`/store` → `components/store/Store.tsx` renders a **temporary design-preview** (variant
+selector + `VariantA–F`). Every variant imports `MOCK_PRODUCTS` from
+`components/store/mockProducts.ts`, which uses an `icon` (emoji) + `accentColor` (gradient).
+That is the only reason you see placeholders — it's mock data, not a broken image pipeline.
+
+The real pipeline already works end-to-end:
+`useProducts()` → `/api/store/products` → Square catalog → `primaryImage.url` → `next/image`.
+
+### Where the images come from
+- **Production (the live client site):** items already have images in **production Square**.
+  Once a variant is wired to `useProducts()`, production renders real photos automatically —
+  **no seeding needed.**
+- **Local sandbox dev:** the sandbox catalog had **no** images, so they were copied once from
+  production (20 items, primary image each). No re-seeding is needed for normal work.
+
+### Steps to make `/store` show real images
+1. **Wire the chosen variant to live data** — use `components/store/variants/VariantBReal.tsx`
+   as the worked template (it is `VariantB`/"Coastal" converted to real data). The changes per
+   variant:
+
+   | Mock (`VariantX`) | Real (`useProducts()`) |
+   |---|---|
+   | `MOCK_PRODUCTS` | `const { data: products, isLoading, isError } = useProducts()` + states |
+   | emoji + `accentColor` block | `<Image src={product.primaryImage.url} fill ... />` (+ "No image" fallback) |
+   | `$product.price` / `originalPrice` | `formatPriceRange(product.priceRange)` |
+   | mock category enum + `CATEGORY_LABELS` | categories derived from real `product.categoryName` |
+   | `product.tag` (Bestseller/New/Sale) | availability badge from `product.availability` (`available`/`low_stock`/`sold_out`) |
+   | `product.description` on card | **not available** in the list endpoint — see gap below |
+   | `key={product.id}` | `key={product.squareItemId}` |
+
+2. **Finalize `/store`** — once the client picks a variant, delete the selector in `Store.tsx`
+   and render only the chosen (now real-data) variant. Wire the "Add to Cart" button to the
+   real `CartProvider` (currently visual-only in the mock variants).
+
+### Known gap to decide on
+`StoreProductSummary` (the list endpoint) does **not** include `description` — only the
+detail endpoint (`/api/store/products/[id]`) does. So card descriptions need a decision:
+either add a short `description` to `/api/store/products` (in `toStoreProductSummary`,
+`lib/utils/catalogHelpers.ts`), or drop descriptions from the cards. `VariantBReal.tsx` shows
+the category name in that slot as a stand-in.
+
+### Live previews in this branch
+- `/store/preview-real` → the plain real `StoreGrid` (proves the data + images work).
+- `/store/preview-coastal` → the Coastal design wired to real data (`VariantBReal`).
+
+---
+
+## 5. Store design consistency (applies to whichever variant is chosen)
+
+### 5a. Price text must always be black — no color change
+The variant cards render the price in the accent/orange color
+(`style={{ color: "var(--color-accent)" }}`). Price should **always be black** — use
+`var(--color-text-primary)` (`#111827`) — regardless of variant, tag, or sale state.
+(The `VariantBReal.tsx` example in this branch has been set to black as the reference.)
+
+### 5b. Page background must stay consistent across all pages
+The page background is already defined globally in the layout —
+`app/globals.css` → `body { background: var(--background); }` (currently `#ffffff`). Each
+store variant overrides it with its own `background` on the `<section>` (e.g. the **Studio**
+variant uses a dark navy gradient — see screenshot — and Coastal a light-blue gradient).
+This makes the store page's background inconsistent with the rest of the site.
+
+**Fix:** remove the per-variant `background` style on the `<section>` and let the global
+layout background show through, so every page matches. (Card separation comes from each
+card's shadow, not the page background.)
+
+![Store background differs from the rest of the site (Studio variant)](public/assets/review/bgcolor.png)
