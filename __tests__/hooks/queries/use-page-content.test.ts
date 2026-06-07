@@ -1,10 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { usePageContent, useInvalidatePageContent } from "@/hooks/queries/use-page-content";
-import { createWrapper, createTestQueryClient, mockFetch } from "../../utils/test-utils";
+import { createWrapper, mockFetch } from "../../utils/test-utils";
 import { mockPageContent } from "../../utils/mock-data";
-import { QueryClientProvider } from "@tanstack/react-query";
-import type { ReactElement, ReactNode } from "react";
 
 describe("usePageContent", () => {
   beforeEach(() => {

@@ -150,6 +150,4 @@ export async function DELETE(request: Request) {
   }
 }
 
-export const config = {
-  maxDuration: 60, // Maximum execution time in seconds (default is 10s)
-};
+export const maxDuration = 60; // Maximum execution time in seconds (default is 10s)
