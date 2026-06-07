@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import PageHeader from "@/components/classes/PageHeader";
-import StoreGrid from "@/components/store/StoreGrid";
+import Store from "@/components/store/Store";
 import { FaShoppingBag } from "react-icons/fa";
 import { GiPaintBrush } from "react-icons/gi";
 
@@ -19,7 +19,7 @@ export default function StorePage(): ReactElement {
         leftIcon={<FaShoppingBag />}
         rightIcon={<GiPaintBrush />}
       />
-      <StoreGrid />
+      <Store />
     </div>
   );
 }

@@ -8,13 +8,19 @@ import { useState } from "react";
 import VariantA from "./variants/VariantA";
 import VariantB from "./variants/VariantB";
 import VariantC from "./variants/VariantC";
+import VariantD from "./variants/VariantD";
+import VariantE from "./variants/VariantE";
+import VariantF from "./variants/VariantF";
 
-type Variant = "a" | "b" | "c";
+type Variant = "a" | "b" | "c" | "d" | "e" | "f";
 
 const VARIANTS: { id: Variant; label: string; description: string }[] = [
   { id: "a", label: "Classic", description: "Clean & simple" },
   { id: "b", label: "Coastal", description: "Brand-aligned" },
   { id: "c", label: "Studio", description: "Bold & artsy" },
+  { id: "d", label: "Warm", description: "Craft-market feel" },
+  { id: "e", label: "List", description: "Boutique row view" },
+  { id: "f", label: "Spotlight", description: "Featured hero" },
 ];
 
 export default function Store(): ReactElement {
@@ -63,6 +69,9 @@ export default function Store(): ReactElement {
       {variant === "a" && <VariantA />}
       {variant === "b" && <VariantB />}
       {variant === "c" && <VariantC />}
+      {variant === "d" && <VariantD />}
+      {variant === "e" && <VariantE />}
+      {variant === "f" && <VariantF />}
     </div>
   );
 }
