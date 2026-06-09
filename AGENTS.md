@@ -8,13 +8,13 @@ Full-featured event booking system for Coastal Creations Studio (Ocean City, NJ)
 
 - **Customer-facing**: Browse/book classes, camps, workshops, private events, reservations with Square payments
 - **Admin**: Event management, customer tracking, payment monitoring, refunds, content management
-- **Tech Stack**: Next.js 15, React 18, TypeScript, MongoDB (Mongoose), NextAuth, Square, Sanity CMS, Resend, TanStack Query
+- **Tech Stack**: Next.js 16, React 18, TypeScript, MongoDB (Mongoose), NextAuth, Square, Sanity CMS, Resend, TanStack Query
 
 ## Project Structure
 
 ```
 coastal-creations-app/
-├── app/                          # Next.js 15 App Router
+├── app/                          # Next.js 16 App Router
 │   ├── [slug]/                   # CMS dynamic pages (Sanity)
 │   ├── about/                    # About page
 │   ├── blog/                     # Blog pages
