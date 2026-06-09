@@ -101,7 +101,7 @@ export default function VariantC(): ReactElement {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.94 }}
                 transition={{ duration: 0.28, delay: i * 0.05 }}
-                className="group relative rounded-2xl overflow-hidden border border-white/15 hover:-translate-y-1.5 transition-all duration-300"
+                className="group relative rounded-2xl overflow-hidden border border-white/15 hover:-translate-y-1.5 transition-all duration-300 flex flex-col"
                 style={{
                   background: "rgba(255,255,255,0.08)",
                   backdropFilter: "blur(12px)",
@@ -131,9 +131,9 @@ export default function VariantC(): ReactElement {
                   </span>
                 </div>
 
-                <div className="p-5">
+                <div className="p-5 flex flex-col flex-1">
                   <h3
-                    className="text-lg font-semibold text-white leading-tight mb-1.5"
+                    className="text-lg font-semibold text-white leading-tight line-clamp-2 mb-1.5"
                     style={{ fontFamily: "var(--font-eb-garamond)" }}
                   >
                     {product.name}
@@ -142,7 +142,7 @@ export default function VariantC(): ReactElement {
                     {product.description}
                   </p>
 
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="mt-auto flex items-center justify-between mb-4">
                     <div className="flex items-baseline gap-2">
                       <span className="text-2xl font-bold text-orange-400">
                         ${product.price}

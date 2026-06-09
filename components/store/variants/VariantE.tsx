@@ -99,7 +99,7 @@ export default function VariantE(): ReactElement {
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 line-clamp-1">
+                  <p className="text-xs text-gray-500 line-clamp-2">
                     {product.description}
                   </p>
                   {product.stockCount <= 5 && (
