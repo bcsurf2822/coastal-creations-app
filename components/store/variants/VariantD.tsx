@@ -55,7 +55,7 @@ export default function VariantD(): ReactElement {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: i * 0.05 }}
-              className="group rounded-2xl overflow-hidden bg-white border border-amber-100 hover:shadow-lg transition-shadow duration-300 flex flex-col"
+              className="group rounded-2xl overflow-hidden bg-white border border-amber-100 hover:shadow-lg transition-shadow duration-300"
             >
               {/* Tall image area */}
               <div
@@ -70,7 +70,7 @@ export default function VariantD(): ReactElement {
                 </span>
               </div>
 
-              <div className="p-4 flex flex-col flex-1">
+              <div className="p-4">
                 {product.tag && (
                   <span
                     className="inline-block text-xs font-semibold tracking-wide uppercase px-2 py-0.5 rounded mb-2"
@@ -81,7 +81,7 @@ export default function VariantD(): ReactElement {
                 )}
 
                 <h3
-                  className="font-semibold text-base leading-snug line-clamp-2 mb-1"
+                  className="font-semibold text-base leading-snug mb-1"
                   style={{
                     color: "#1c1917",
                     fontFamily: "var(--font-eb-garamond)",
@@ -93,7 +93,7 @@ export default function VariantD(): ReactElement {
                   {product.description}
                 </p>
 
-                <div className="mt-auto flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-3">
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-lg font-bold text-amber-700">
                       ${product.price}

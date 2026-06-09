@@ -70,7 +70,7 @@ export default function VariantB(): ReactElement {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, delay: i * 0.06 }}
-              className="bg-white rounded-2xl overflow-hidden hover:-translate-y-1 transition-all duration-200 flex flex-col"
+              className="bg-white rounded-2xl overflow-hidden hover:-translate-y-1 transition-all duration-200"
               style={{ boxShadow: "0 4px 16px rgba(12,74,110,0.08)" }}
             >
               {/* Image placeholder */}
@@ -83,7 +83,7 @@ export default function VariantB(): ReactElement {
                 {product.icon}
               </div>
 
-              <div className="p-4 flex flex-col flex-1">
+              <div className="p-4">
                 {product.tag && (
                   <span
                     className="inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full mb-2"
@@ -94,7 +94,7 @@ export default function VariantB(): ReactElement {
                 )}
 
                 <h3
-                  className="font-semibold text-base leading-tight line-clamp-2"
+                  className="font-semibold text-base leading-tight"
                   style={{
                     color: "var(--color-primary)",
                     fontFamily: "var(--font-eb-garamond)",
@@ -109,7 +109,7 @@ export default function VariantB(): ReactElement {
                   {product.description}
                 </p>
 
-                <div className="mt-auto pt-2 flex items-end justify-between">
+                <div className="mt-3 flex items-end justify-between">
                   <div>
                     <span
                       className="text-xl font-bold"

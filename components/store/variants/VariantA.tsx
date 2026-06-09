@@ -71,7 +71,7 @@ export default function VariantA(): ReactElement {
             {filtered.map((product) => (
               <div
                 key={product.id}
-                className="group border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col"
+                className="group border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200"
               >
                 {/* Image placeholder */}
                 <div
@@ -81,20 +81,20 @@ export default function VariantA(): ReactElement {
                   {product.icon}
                 </div>
 
-                <div className="p-3 flex flex-col flex-1">
+                <div className="p-3">
                   {product.tag && (
                     <p className="text-xs font-medium uppercase tracking-wide text-gray-400 mb-0.5">
                       {product.tag}
                     </p>
                   )}
-                  <h3 className="text-sm font-medium text-gray-900 leading-tight line-clamp-2">
+                  <h3 className="text-sm font-medium text-gray-900 leading-tight">
                     {product.name}
                   </h3>
                   <p className="text-xs text-gray-500 mt-1 line-clamp-2">
                     {product.description}
                   </p>
 
-                  <div className="mt-auto pt-2 flex items-center justify-between">
+                  <div className="mt-2 flex items-center justify-between">
                     <span className="text-sm font-semibold text-gray-900">
                       ${product.price}
                       {product.originalPrice && (

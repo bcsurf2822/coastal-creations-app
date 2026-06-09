@@ -159,7 +159,7 @@ export default function VariantF(): ReactElement {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: i * 0.05 }}
-                className="group bg-white rounded-2xl overflow-hidden border border-gray-100 hover:-translate-y-1 transition-all duration-200 flex flex-col"
+                className="group bg-white rounded-2xl overflow-hidden border border-gray-100 hover:-translate-y-1 transition-all duration-200"
                 style={{ boxShadow: "0 2px 12px rgba(12,74,110,0.06)" }}
               >
                 <div
@@ -173,14 +173,14 @@ export default function VariantF(): ReactElement {
                   </span>
                 </div>
 
-                <div className="p-4 flex flex-col flex-1">
+                <div className="p-4">
                   {product.tag && (
                     <span className="inline-block text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">
                       {product.tag}
                     </span>
                   )}
                   <h3
-                    className="font-semibold text-sm leading-snug line-clamp-2 mb-1"
+                    className="font-semibold text-sm leading-snug mb-1"
                     style={{ color: "var(--color-primary)", fontFamily: "var(--font-eb-garamond)" }}
                   >
                     {product.name}
@@ -189,7 +189,7 @@ export default function VariantF(): ReactElement {
                     {product.description}
                   </p>
 
-                  <div className="mt-auto flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between mb-3">
                     <span
                       className="font-bold text-base"
                       style={{ color: "var(--color-accent)" }}
