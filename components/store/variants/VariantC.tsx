@@ -3,7 +3,8 @@
 import type { ReactElement } from "react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { FaShoppingCart, FaStar } from "react-icons/fa";
+import { FaStar } from "react-icons/fa";
+import { AddToCartButton } from "../AddToCartButton";
 import {
   MOCK_PRODUCTS,
   CATEGORY_LABELS,
@@ -96,7 +97,6 @@ export default function VariantC(): ReactElement {
             {filtered.map((product, i) => (
               <motion.div
                 key={product.id}
-                layout
                 initial={{ opacity: 0, scale: 0.94 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.94 }}
@@ -138,7 +138,7 @@ export default function VariantC(): ReactElement {
                   >
                     {product.name}
                   </h3>
-                  <p className="text-xs text-sky-200 leading-relaxed line-clamp-2 mb-4">
+                  <p className="text-xs text-sky-200 leading-relaxed mb-4">
                     {product.description}
                   </p>
 
@@ -160,17 +160,12 @@ export default function VariantC(): ReactElement {
                     )}
                   </div>
 
-                  <button
-                    className="w-full py-2.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-95"
-                    style={{
-                      background:
-                        "linear-gradient(135deg, #fb923c, #f97316)",
-                      boxShadow: "0 4px 12px rgba(251,146,60,0.3)",
-                    }}
-                  >
-                    <FaShoppingCart className="text-xs" />
-                    Add to Cart
-                  </button>
+                  <AddToCartButton
+                    product={product}
+                    className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95"
+                    style={{ background: "linear-gradient(135deg, #fb923c, #f97316)", boxShadow: "0 4px 12px rgba(251,146,60,0.3)" }}
+                    showCartIcon
+                  />
                 </div>
               </motion.div>
             ))}

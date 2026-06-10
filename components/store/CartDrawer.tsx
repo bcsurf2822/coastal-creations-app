@@ -18,7 +18,7 @@ export default function CartDrawer(): ReactElement {
     updateQuantity,
     isDrawerOpen,
     closeDrawer,
-    subtotalCents,
+    subtotalCents
   } = useCart();
 
   // Close on ESC key
@@ -62,7 +62,7 @@ export default function CartDrawer(): ReactElement {
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
-            transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
+            transition={{ type: "tween", duration: 0.5, ease: "easeInOut" }}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border-lighter)]">
@@ -98,7 +98,9 @@ export default function CartDrawer(): ReactElement {
                     key={item.squareVariationId}
                     item={item}
                     compact
-                    onUpdateQty={(qty) => updateQuantity(item.squareVariationId, qty)}
+                    onUpdateQty={(qty) =>
+                      updateQuantity(item.squareVariationId, qty)
+                    }
                     onRemove={() => removeItem(item.squareVariationId)}
                   />
                 ))
@@ -124,7 +126,10 @@ export default function CartDrawer(): ReactElement {
                 <Button
                   variant="primary"
                   className="w-full"
-                  onClick={() => { closeDrawer(); router.push("/checkout"); }}
+                  onClick={() => {
+                    closeDrawer();
+                    router.push("/checkout");
+                  }}
                 >
                   Checkout
                 </Button>

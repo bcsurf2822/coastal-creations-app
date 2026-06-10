@@ -2,8 +2,9 @@
 
 import type { ReactElement } from "react";
 import { useState } from "react";
-import { motion } from "motion/react";
-import { FaShoppingCart, FaStar } from "react-icons/fa";
+import { motion, AnimatePresence } from "motion/react";
+import { FaStar } from "react-icons/fa";
+import { AddToCartButton } from "../AddToCartButton";
 import {
   MOCK_PRODUCTS,
   CATEGORY_LABELS,
@@ -136,16 +137,12 @@ export default function VariantF(): ReactElement {
                 )}
               </div>
 
-              <button
-                className="mt-5 self-start flex items-center gap-2 px-7 py-3 rounded-2xl text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95"
-                style={{
-                  background: "var(--gradient-button)",
-                  boxShadow: "0 4px 14px rgba(12,74,110,0.2)",
-                }}
-              >
-                <FaShoppingCart className="text-xs" />
-                Add to Cart
-              </button>
+              <AddToCartButton
+                product={spotlight}
+                className="mt-5 self-start px-7 py-3 rounded-2xl text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95"
+                style={{ background: "var(--gradient-button)", boxShadow: "0 4px 14px rgba(12,74,110,0.2)" }}
+                showCartIcon
+              />
             </div>
           </motion.div>
         )}
@@ -153,11 +150,13 @@ export default function VariantF(): ReactElement {
         {/* Rest of grid */}
         {rest.length > 0 && (
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
+            <AnimatePresence mode="popLayout">
             {rest.map((product, i) => (
               <motion.div
                 key={product.id}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.15, delay: 0 } }}
                 transition={{ duration: 0.3, delay: i * 0.05 }}
                 className="group bg-white rounded-2xl overflow-hidden border border-gray-100 hover:-translate-y-1 transition-all duration-200 flex flex-col"
                 style={{ boxShadow: "0 2px 12px rgba(12,74,110,0.06)" }}
@@ -174,18 +173,16 @@ export default function VariantF(): ReactElement {
                 </div>
 
                 <div className="p-4 flex flex-col flex-1">
-                  {product.tag && (
-                    <span className="inline-block text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">
-                      {product.tag}
-                    </span>
-                  )}
+                  <span className={`inline-block text-xs font-medium text-gray-400 uppercase tracking-wide mb-1${!product.tag ? " invisible" : ""}`}>
+                    {product.tag ?? " "}
+                  </span>
                   <h3
                     className="font-semibold text-sm leading-snug line-clamp-2 mb-1"
                     style={{ color: "var(--color-primary)", fontFamily: "var(--font-eb-garamond)" }}
                   >
                     {product.name}
                   </h3>
-                  <p className="text-xs text-gray-400 line-clamp-2 mb-3">
+                  <p className="text-xs text-gray-400 mb-3">
                     {product.description}
                   </p>
 
@@ -203,15 +200,15 @@ export default function VariantF(): ReactElement {
                     )}
                   </div>
 
-                  <button
+                  <AddToCartButton
+                    product={product}
                     className="w-full py-2 rounded-xl text-xs font-semibold text-white transition-opacity hover:opacity-90"
                     style={{ background: "var(--gradient-button)" }}
-                  >
-                    Add to Cart
-                  </button>
+                  />
                 </div>
               </motion.div>
             ))}
+            </AnimatePresence>
           </div>
         )}
       </div>

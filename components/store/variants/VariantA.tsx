@@ -2,6 +2,7 @@
 
 import type { ReactElement } from "react";
 import { useState } from "react";
+import { AddToCartButton } from "../AddToCartButton";
 import {
   MOCK_PRODUCTS,
   CATEGORY_LABELS,
@@ -82,15 +83,13 @@ export default function VariantA(): ReactElement {
                 </div>
 
                 <div className="p-3 flex flex-col flex-1">
-                  {product.tag && (
-                    <p className="text-xs font-medium uppercase tracking-wide text-gray-400 mb-0.5">
-                      {product.tag}
-                    </p>
-                  )}
+                  <p className={`text-xs font-medium uppercase tracking-wide text-gray-400 mb-0.5${!product.tag ? " invisible" : ""}`}>
+                    {product.tag ?? " "}
+                  </p>
                   <h3 className="text-sm font-medium text-gray-900 leading-tight line-clamp-2">
                     {product.name}
                   </h3>
-                  <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                  <p className="text-xs text-gray-500 mt-1">
                     {product.description}
                   </p>
 
@@ -110,9 +109,7 @@ export default function VariantA(): ReactElement {
                     )}
                   </div>
 
-                  <button className="mt-2.5 w-full py-1.5 text-xs border border-gray-900 text-gray-900 rounded hover:bg-gray-900 hover:text-white transition-colors duration-150">
-                    Add to Cart
-                  </button>
+                  <AddToCartButton product={product} className="mt-2.5 w-full py-1.5 text-xs border border-gray-900 text-gray-900 rounded hover:bg-gray-900 hover:text-white transition-colors duration-150" />
                 </div>
               </div>
             ))}

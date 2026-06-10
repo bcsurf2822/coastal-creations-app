@@ -3,7 +3,7 @@
 import type { ReactElement } from "react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { FaShoppingCart } from "react-icons/fa";
+import { AddToCartButton } from "../AddToCartButton";
 import {
   MOCK_PRODUCTS,
   CATEGORY_LABELS,
@@ -61,7 +61,6 @@ export default function VariantE(): ReactElement {
             {filtered.map((product, i) => (
               <motion.div
                 key={product.id}
-                layout
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -10 }}
@@ -99,7 +98,7 @@ export default function VariantE(): ReactElement {
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 line-clamp-2">
+                  <p className="text-xs text-gray-500">
                     {product.description}
                   </p>
                   {product.stockCount <= 5 && (
@@ -124,13 +123,14 @@ export default function VariantE(): ReactElement {
                       </span>
                     )}
                   </div>
-                  <button
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-95"
+                  <AddToCartButton
+                    product={product}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-95"
                     style={{ background: "var(--gradient-button)" }}
-                  >
-                    <FaShoppingCart className="text-[10px]" />
-                    Add
-                  </button>
+                    showCartIcon
+                    iconClassName="text-[10px]"
+                    label="Add"
+                  />
                 </div>
               </motion.div>
             ))}

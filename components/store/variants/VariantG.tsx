@@ -10,7 +10,7 @@ import {
   type ProductCategory,
 } from "../mockProducts";
 
-export default function VariantB(): ReactElement {
+export default function VariantG(): ReactElement {
   const [activeCategory, setActiveCategory] =
     useState<ProductCategory>("all");
 
@@ -73,29 +73,47 @@ export default function VariantB(): ReactElement {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.15, delay: 0 } }}
               transition={{ duration: 0.35, delay: i * 0.06 }}
-              className="bg-white rounded-2xl overflow-hidden hover:-translate-y-1 transition-all duration-200 flex flex-col"
+              className="group bg-white rounded-2xl overflow-hidden flex flex-col hover:-translate-y-1 transition-all duration-200"
               style={{ boxShadow: "0 4px 16px rgba(12,74,110,0.08)" }}
             >
-              {/* Image placeholder */}
-              <div
-                className="aspect-square flex items-center justify-center text-6xl"
-                style={{
-                  background: `linear-gradient(135deg, ${product.accentColor} 0%, white 100%)`,
-                }}
-              >
-                {product.icon}
+              {/* Image area with description overlay on hover */}
+              <div className="relative aspect-square overflow-hidden">
+                <div
+                  className="w-full h-full flex items-center justify-center text-6xl"
+                  style={{
+                    background: `linear-gradient(135deg, ${product.accentColor} 0%, white 100%)`,
+                  }}
+                >
+                  {product.icon}
+                </div>
+
+                {/* Description slides up over image on hover */}
+                <div
+                  className="absolute inset-0 flex flex-col justify-end translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"
+                  style={{
+                    background:
+                      "linear-gradient(to top, rgba(12,74,110,0.95) 0%, rgba(12,74,110,0.7) 65%, transparent 100%)",
+                  }}
+                >
+                  <p className="px-4 pb-5 text-white text-xs leading-relaxed">
+                    {product.description}
+                  </p>
+                </div>
               </div>
 
+              {/* Card footer — always visible, tags aligned */}
               <div className="p-4 flex flex-col flex-1">
                 <span
-                  className={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full mb-2${!product.tag ? " invisible" : ""}`}
+                  className={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full mb-2${
+                    !product.tag ? " invisible" : ""
+                  }`}
                   style={product.tag ? tagStyles[product.tag] : {}}
                 >
-                  {product.tag ?? " "}
+                  {product.tag ?? " "}
                 </span>
 
                 <h3
-                  className="font-semibold text-base leading-tight line-clamp-2"
+                  className="font-semibold text-base leading-tight"
                   style={{
                     color: "var(--color-primary)",
                     fontFamily: "var(--font-eb-garamond)",
@@ -103,14 +121,8 @@ export default function VariantB(): ReactElement {
                 >
                   {product.name}
                 </h3>
-                <p
-                  className="text-xs mt-1 leading-relaxed"
-                  style={{ color: "var(--color-text-subtle)" }}
-                >
-                  {product.description}
-                </p>
 
-                <div className="mt-auto pt-2 flex items-end justify-between">
+                <div className="mt-auto pt-3 flex items-center justify-between">
                   <div>
                     <span
                       className="text-xl font-bold"
@@ -141,6 +153,7 @@ export default function VariantB(): ReactElement {
                   product={product}
                   className="mt-3 w-full py-2.5 rounded-xl text-sm font-medium text-white transition-opacity hover:opacity-90"
                   style={{ background: "var(--gradient-button)" }}
+                  showCartIcon
                 />
               </div>
             </motion.div>

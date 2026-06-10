@@ -2,7 +2,8 @@
 
 import type { ReactElement } from "react";
 import { useState } from "react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
+import { AddToCartButton } from "../AddToCartButton";
 import {
   MOCK_PRODUCTS,
   CATEGORY_LABELS,
@@ -49,11 +50,13 @@ export default function VariantD(): ReactElement {
 
         {/* Product grid — tall cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
+          <AnimatePresence mode="popLayout">
           {filtered.map((product, i) => (
             <motion.div
               key={product.id}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.15, delay: 0 } }}
               transition={{ duration: 0.3, delay: i * 0.05 }}
               className="group rounded-2xl overflow-hidden bg-white border border-amber-100 hover:shadow-lg transition-shadow duration-300 flex flex-col"
             >
@@ -71,14 +74,12 @@ export default function VariantD(): ReactElement {
               </div>
 
               <div className="p-4 flex flex-col flex-1">
-                {product.tag && (
-                  <span
-                    className="inline-block text-xs font-semibold tracking-wide uppercase px-2 py-0.5 rounded mb-2"
-                    style={{ background: "#fef3c7", color: "#92400e" }}
-                  >
-                    {product.tag}
-                  </span>
-                )}
+                <span
+                  className={`inline-block text-xs font-semibold tracking-wide uppercase px-2 py-0.5 rounded mb-2${!product.tag ? " invisible" : ""}`}
+                  style={product.tag ? { background: "#fef3c7", color: "#92400e" } : {}}
+                >
+                  {product.tag ?? " "}
+                </span>
 
                 <h3
                   className="font-semibold text-base leading-snug line-clamp-2 mb-1"
@@ -89,7 +90,7 @@ export default function VariantD(): ReactElement {
                 >
                   {product.name}
                 </h3>
-                <p className="text-xs text-stone-400 line-clamp-2 leading-relaxed mb-3">
+                <p className="text-xs text-stone-400 leading-relaxed mb-3">
                   {product.description}
                 </p>
 
@@ -111,15 +112,15 @@ export default function VariantD(): ReactElement {
                   )}
                 </div>
 
-                <button
+                <AddToCartButton
+                  product={product}
                   className="w-full py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
                   style={{ background: "linear-gradient(135deg, #d97706, #b45309)" }}
-                >
-                  Add to Cart
-                </button>
+                />
               </div>
             </motion.div>
           ))}
+          </AnimatePresence>
         </div>
       </div>
     </section>

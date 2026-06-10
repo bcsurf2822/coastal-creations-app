@@ -29,6 +29,7 @@ export const CATEGORY_LABELS: Record<ProductCategory, string> = {
   merchandise: "Merchandise",
 };
 
+// Bestsellers and Sale items first, then New, then untagged
 export const MOCK_PRODUCTS: Product[] = [
   {
     id: "1",
@@ -44,16 +45,31 @@ export const MOCK_PRODUCTS: Product[] = [
     icon: "🎨",
   },
   {
-    id: "2",
-    name: "Mini Canvas Set",
+    id: "5",
+    name: "Mixed Media Exploration Box",
     description:
-      "Three 6×6 stretched canvases with acrylic paint sampler and a step-by-step guide included.",
-    price: 28,
-    category: "paint-kits",
+      "Our most popular kit — watercolor, collage, and acrylic combined in one guided creative experience.",
+    price: 65,
+    category: "mixed-media",
+    tag: "Bestseller",
     inStock: true,
-    stockCount: 14,
-    accentColor: "#fde68a",
-    icon: "🖼️",
+    stockCount: 10,
+    accentColor: "#c4b5fd",
+    icon: "🎭",
+  },
+  {
+    id: "8",
+    name: "Take-Home Acrylic Set",
+    description:
+      "24 professional acrylic colors, 5 brushes, and a palette. Studio quality for your home studio.",
+    price: 45,
+    originalPrice: 60,
+    category: "supplies",
+    tag: "Sale",
+    inStock: true,
+    stockCount: 3,
+    accentColor: "#fecaca",
+    icon: "🖌️",
   },
   {
     id: "3",
@@ -69,6 +85,18 @@ export const MOCK_PRODUCTS: Product[] = [
     icon: "🧩",
   },
   {
+    id: "2",
+    name: "Mini Canvas Set",
+    description:
+      "Three 6×6 stretched canvases with acrylic paint sampler and a step-by-step guide included.",
+    price: 28,
+    category: "paint-kits",
+    inStock: true,
+    stockCount: 14,
+    accentColor: "#fde68a",
+    icon: "🖼️",
+  },
+  {
     id: "4",
     name: "Glass Mosaic Starter Kit",
     description:
@@ -79,19 +107,6 @@ export const MOCK_PRODUCTS: Product[] = [
     stockCount: 4,
     accentColor: "#fbcfe8",
     icon: "✨",
-  },
-  {
-    id: "5",
-    name: "Mixed Media Exploration Box",
-    description:
-      "Our most popular kit — watercolor, collage, and acrylic combined in one guided creative experience.",
-    price: 65,
-    category: "mixed-media",
-    tag: "Bestseller",
-    inStock: true,
-    stockCount: 10,
-    accentColor: "#c4b5fd",
-    icon: "🎭",
   },
   {
     id: "6",
@@ -116,19 +131,5 @@ export const MOCK_PRODUCTS: Product[] = [
     stockCount: 15,
     accentColor: "#fed7aa",
     icon: "👕",
-  },
-  {
-    id: "8",
-    name: "Take-Home Acrylic Set",
-    description:
-      "24 professional acrylic colors, 5 brushes, and a palette. Studio quality for your home studio.",
-    price: 45,
-    originalPrice: 60,
-    category: "supplies",
-    tag: "Sale",
-    inStock: true,
-    stockCount: 3,
-    accentColor: "#fecaca",
-    icon: "🖌️",
   },
 ];
