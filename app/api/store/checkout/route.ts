@@ -19,6 +19,7 @@ import * as React from "react";
 import { connectMongo } from "@/lib/mongoose";
 import Order from "@/lib/models/Order";
 import { OrderConfirmationEmail } from "@/components/email-templates/OrderConfirmationEmail";
+import { StoreOrderAdminEmail } from "@/components/email-templates/StoreOrderAdminEmail";
 import type { CartItem } from "@/lib/types/cartTypes";
 import type { ShippingRate } from "@/lib/shippo/rates";
 
@@ -177,6 +178,26 @@ export async function POST(request: Request): Promise<Response> {
         })
       );
 
+      const adminEmailHtml = await render(
+        React.createElement(StoreOrderAdminEmail, {
+          orderNumber: newOrder.orderNumber,
+          customer,
+          items: orderItems,
+          subtotalCents,
+          shippingCents: selectedRate.rateCents,
+          totalCents,
+          shippingAddress: {
+            name: shippingAddress.name,
+            addressLine1: shippingAddress.addressLine1,
+            addressLine2: shippingAddress.addressLine2,
+            city: shippingAddress.city,
+            stateProvince: shippingAddress.stateProvince,
+            postalCode: shippingAddress.postalCode,
+          },
+          shippingMethod: selectedRate.serviceName,
+        })
+      );
+
       await Promise.allSettled([
         resend.emails.send({
           from: "Coastal Creations Studio <no-reply@resend.coastalcreationsstudio.com>",
@@ -188,11 +209,9 @@ export async function POST(request: Request): Promise<Response> {
           from: "Coastal Creations Studio <no-reply@resend.coastalcreationsstudio.com>",
           to: [adminRecipient],
           subject: `New Store Order: ${newOrder.orderNumber} — ${customer.firstName} ${customer.lastName}`,
-          html: emailHtml,
+          html: adminEmailHtml,
         }),
       ]);
-
-      await Order.findByIdAndUpdate(newOrder._id, { emailSent: true });
     } catch (emailError) {
       console.error("[API-STORE-CHECKOUT-POST] Email send failed (order still saved):", emailError);
     }

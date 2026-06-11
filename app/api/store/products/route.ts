@@ -15,7 +15,7 @@ export async function GET(): Promise<Response> {
 
     const settings = (await StoreProductSettings.find({
       isOnlineSellable: true,
-    }).lean()) as IStoreProductSettings[];
+    }).lean()) as unknown as IStoreProductSettings[];
 
     if (settings.length === 0) {
       return NextResponse.json({ success: true, products: [] });

@@ -26,7 +26,7 @@ const EMPTY_ADDRESS: AddressFormValues = {
 
 const STEP_LABELS = ["Contact & Shipping", "Shipping Method", "Payment"];
 
-export default function CheckoutForm(): ReactElement {
+export default function CheckoutForm(): ReactElement | null {
   const router = useRouter();
   const { items, subtotalCents, clearCart } = useCart();
   const { data: paymentConfig } = usePaymentConfig();

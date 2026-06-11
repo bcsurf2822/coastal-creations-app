@@ -16,6 +16,7 @@ export default function CartDrawer(): ReactElement {
     items,
     removeItem,
     updateQuantity,
+    clearCart,
     isDrawerOpen,
     closeDrawer,
     subtotalCents
@@ -118,6 +119,15 @@ export default function CartDrawer(): ReactElement {
                     {formatCents(subtotalCents)}
                   </span>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (confirm("Remove all items from your cart?")) clearCart();
+                  }}
+                  className="text-xs text-[var(--color-error)] hover:underline self-end"
+                >
+                  Clear cart
+                </button>
                 <Link href="/cart" onClick={closeDrawer}>
                   <Button variant="secondary" className="w-full">
                     View Full Cart
