@@ -10,9 +10,11 @@ React 18 → **19**. After you `git pull`, you MUST:
    in place. If anything looks off: `rm -rf node_modules && pnpm install`.
 
 2. **Check your Node version** — Next 16 requires **Node ≥ 20.9**.
+
    ```bash
    node --version
    ```
+
    - Node 20.9+ / 22 / 24 → you're fine, no action.
    - Node 18 or older → **upgrade Node** (e.g. `nvm install 22 && nvm use 22`) or Next 16 won't run.
 
@@ -107,6 +109,7 @@ different heights. The buttons should be **even (aligned) across the row**.
 ## 4. Show REAL product images in the `/store` grid (replace mock data)
 
 ### Background — why `/store` shows emoji placeholders today
+
 `/store` → `components/store/Store.tsx` renders a **temporary design-preview** (variant
 selector + `VariantA–F`). Every variant imports `MOCK_PRODUCTS` from
 `components/store/mockProducts.ts`, which uses an `icon` (emoji) + `accentColor` (gradient).
@@ -116,6 +119,7 @@ The real pipeline already works end-to-end:
 `useProducts()` → `/api/store/products` → Square catalog → `primaryImage.url` → `next/image`.
 
 ### Where the images come from
+
 - **Production (the live client site):** items already have images in **production Square**.
   Once a variant is wired to `useProducts()`, production renders real photos automatically —
   **no seeding needed.**
@@ -123,25 +127,27 @@ The real pipeline already works end-to-end:
   production (20 items, primary image each). No re-seeding is needed for normal work.
 
 ### Steps to make `/store` show real images
+
 1. **Wire the chosen variant to live data** — use `components/store/variants/VariantBReal.tsx`
    as the worked template (it is `VariantB`/"Coastal" converted to real data). The changes per
    variant:
 
-   | Mock (`VariantX`) | Real (`useProducts()`) |
-   |---|---|
-   | `MOCK_PRODUCTS` | `const { data: products, isLoading, isError } = useProducts()` + states |
-   | emoji + `accentColor` block | `<Image src={product.primaryImage.url} fill ... />` (+ "No image" fallback) |
-   | `$product.price` / `originalPrice` | `formatPriceRange(product.priceRange)` |
-   | mock category enum + `CATEGORY_LABELS` | categories derived from real `product.categoryName` |
-   | `product.tag` (Bestseller/New/Sale) | availability badge from `product.availability` (`available`/`low_stock`/`sold_out`) |
-   | `product.description` on card | **not available** in the list endpoint — see gap below |
-   | `key={product.id}` | `key={product.squareItemId}` |
+   | Mock (`VariantX`)                      | Real (`useProducts()`)                                                              |
+   | -------------------------------------- | ----------------------------------------------------------------------------------- |
+   | `MOCK_PRODUCTS`                        | `const { data: products, isLoading, isError } = useProducts()` + states             |
+   | emoji + `accentColor` block            | `<Image src={product.primaryImage.url} fill ... />` (+ "No image" fallback)         |
+   | `$product.price` / `originalPrice`     | `formatPriceRange(product.priceRange)`                                              |
+   | mock category enum + `CATEGORY_LABELS` | categories derived from real `product.categoryName`                                 |
+   | `product.tag` (Bestseller/New/Sale)    | availability badge from `product.availability` (`available`/`low_stock`/`sold_out`) |
+   | `product.description` on card          | **not available** in the list endpoint — see gap below                              |
+   | `key={product.id}`                     | `key={product.squareItemId}`                                                        |
 
 2. **Finalize `/store`** — once the client picks a variant, delete the selector in `Store.tsx`
    and render only the chosen (now real-data) variant. Wire the "Add to Cart" button to the
    real `CartProvider` (currently visual-only in the mock variants).
 
 ### Known gap to decide on
+
 `StoreProductSummary` (the list endpoint) does **not** include `description` — only the
 detail endpoint (`/api/store/products/[id]`) does. So card descriptions need a decision:
 either add a short `description` to `/api/store/products` (in `toStoreProductSummary`,
@@ -149,6 +155,7 @@ either add a short `description` to `/api/store/products` (in `toStoreProductSum
 the category name in that slot as a stand-in.
 
 ### Live previews in this branch
+
 - `/store/preview-real` → the plain real `StoreGrid` (proves the data + images work).
 - `/store/preview-coastal` → the Coastal design wired to real data (`VariantBReal`).
 
@@ -157,12 +164,14 @@ the category name in that slot as a stand-in.
 ## 5. Store design consistency (applies to whichever variant is chosen)
 
 ### 5a. Price text must always be black — no color change
+
 The variant cards render the price in the accent/orange color
 (`style={{ color: "var(--color-accent)" }}`). Price should **always be black** — use
 `var(--color-text-primary)` (`#111827`) — regardless of variant, tag, or sale state.
 (The `VariantBReal.tsx` example in this branch has been set to black as the reference.)
 
 ### 5b. Page background must stay consistent across all pages
+
 The page background is already defined globally in the layout —
 `app/globals.css` → `body { background: var(--background); }` (currently `#ffffff`). Each
 store variant overrides it with its own `background` on the `<section>` (e.g. the **Studio**
