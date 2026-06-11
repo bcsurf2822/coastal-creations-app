@@ -100,7 +100,9 @@ function mapRawItem(
       descriptionHtml?: string | null;
       isArchived?: boolean | null;
       productType?: string | null;
-      categoryId?: string | null;
+      categoryId?: string | null; // deprecated by Square; kept as a fallback
+      reportingCategory?: { id?: string | null } | null;
+      categories?: ({ id?: string | null } | null)[] | null;
       imageIds?: (string | null)[] | null;
       variations?: unknown[] | null;
     } | null;
@@ -144,10 +146,19 @@ function mapRawItem(
     .map((id) => imageById.get(id as string))
     .filter(Boolean) as string[];
 
+  // Square exposes an item's category via the `categories` array and
+  // `reportingCategory` (the legacy single `categoryId` is a last-resort fallback).
+  // The reporting category is preferred as the primary "type" used for filtering.
   const categoryNames: string[] = [];
-  if (d.categoryId) {
-    const name = categoryById.get(d.categoryId);
-    if (name) categoryNames.push(name);
+  const categoryIds: string[] = [];
+  if (d.reportingCategory?.id) categoryIds.push(d.reportingCategory.id);
+  for (const c of d.categories ?? []) {
+    if (c?.id) categoryIds.push(c.id);
+  }
+  if (d.categoryId) categoryIds.push(d.categoryId);
+  for (const cid of categoryIds) {
+    const name = categoryById.get(cid);
+    if (name && !categoryNames.includes(name)) categoryNames.push(name);
   }
 
   return {

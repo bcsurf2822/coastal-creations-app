@@ -133,6 +133,64 @@
   --font-eb-garamond: var(--font-eb-garamond);
 }
 
+/* ── shadcn/ui semantic tokens ──────────────────────────────────────────────
+   Maps shadcn primitives (components/ui/shadcn) onto the Coastal Creations
+   palette so they render on-brand. `--color-accent` (brand orange) is left
+   untouched; shadcn's Skeleton is repointed to `bg-muted` (see skeleton.tsx)
+   so loading states stay soft-sky rather than orange. */
+@theme {
+  --color-card: #ffffff;
+  --color-card-foreground: #171717;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #171717;
+  --color-muted: #f0f9ff;
+  --color-muted-foreground: #4b5563;
+  --color-primary-foreground: #ffffff;
+  --color-secondary-foreground: #ffffff;
+  --color-accent-foreground: #ffffff;
+  --color-destructive: #dc2626;
+  --color-input: #d1d5db;
+  --color-ring: #0c4a6e;
+}
+
+/* shadcn primitives use a bare `border` utility that expects a default border
+   color from shadcn's global base layer. We deliberately did NOT inject that
+   global layer (to avoid altering the rest of the app), so scope the default
+   border color to shadcn component roots only. */
+@layer base {
+  [data-slot] {
+    border-color: var(--color-border);
+  }
+}
+
+/* Cart "item added" feedback — badge / button pop. */
+@keyframes cartBump {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.35);
+  }
+  60% {
+    transform: scale(0.92);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Cart row entry — a newly added item slides + fades into the drawer. */
+@keyframes cartRowIn {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

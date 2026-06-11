@@ -52,7 +52,7 @@ export default function CartItemRow({
 
   if (compact) {
     return (
-      <div className="flex items-start gap-3 py-3 border-b border-[var(--color-border-lighter)] last:border-0">
+      <div className="flex animate-[cartRowIn_0.3s_ease] items-start gap-3 py-3 border-b border-[var(--color-border-lighter)] last:border-0">
         {/* Image */}
         <div
           className="relative flex-shrink-0 rounded-[var(--radius-md)] overflow-hidden bg-[var(--color-light)]"

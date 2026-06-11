@@ -110,16 +110,25 @@ export function toStoreProductSummary(
       ? { id: `img-${item.id}-0`, url: item.imageUrls[0], altText: item.name }
       : undefined;
 
+  // First variation by ordinal — lets the grid card add to cart directly with a
+  // real Square variation id (checkout-correct) without loading the detail payload.
+  const firstRaw = [...item.variations].sort((a, b) => a.ordinal - b.ordinal)[0];
+  const defaultVariation = firstRaw
+    ? toStoreProductVariation(firstRaw, stock.get(firstRaw.id))
+    : undefined;
+
   return {
     squareItemId: item.id,
     name: item.name,
     slug,
     primaryImage,
     categoryName: item.categoryNames[0],
+    description: item.descriptionHtml ? stripHtml(item.descriptionHtml) : undefined,
     priceRange: priceRange(item.variations),
     hasMultipleVariations: item.variations.length > 1,
     availability: rollupAvailability(item.variations, stock),
     displayOrder: (settings.displayOrder as number | undefined) ?? 0,
+    defaultVariation,
   };
 }
 

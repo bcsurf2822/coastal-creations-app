@@ -17,10 +17,17 @@ import type {
 
 const CART_STORAGE_KEY = "cc_cart";
 
+// The cart only needs these identity/display fields off a product, so it accepts
+// either a full StoreProduct or the lightweight StoreProductSummary from the grid.
+type CartProductRef = Pick<
+  StoreProduct,
+  "squareItemId" | "name" | "slug" | "primaryImage"
+>;
+
 interface CartContextValue {
   items: CartItem[];
   addItem: (
-    product: StoreProduct,
+    product: CartProductRef,
     variation: StoreProductVariation,
     qty?: number
   ) => void;
@@ -66,7 +73,7 @@ export function CartProvider({ children }: CartProviderProps): ReactElement {
   }, [items]);
 
   const addItem = useCallback(
-    (product: StoreProduct, variation: StoreProductVariation, qty = 1) => {
+    (product: CartProductRef, variation: StoreProductVariation, qty = 1) => {
       if (variation.availability === "sold_out") return;
 
       setItems((prev) => {
