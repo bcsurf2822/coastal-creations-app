@@ -42,3 +42,26 @@ export function extractEventIdFromSlug(slugWithId: string): string {
   // Fallback: return the whole string (for backward compatibility)
   return slugWithId;
 }
+
+/**
+ * Creates a product slug with the Square item ID appended for uniqueness.
+ * Square item IDs are uppercase alphanumeric with no hyphens (e.g. "MLRF3K3G71HW5").
+ * @param name - The product name
+ * @param squareItemId - The Square Catalog ITEM id
+ * @returns Combined slug-id string (e.g. "animals-watercolor-workbook-MLRF3K3G71HW5")
+ */
+export function createProductSlug(name: string, squareItemId: string): string {
+  return `${slugify(name)}-${squareItemId}`;
+}
+
+/**
+ * Extracts the Square item ID from a product slug.
+ * Since Square item IDs contain no hyphens, the id is everything after the last hyphen.
+ * @param slugWithId - The combined product slug-id string
+ * @returns The Square Catalog ITEM id
+ */
+export function extractSquareItemIdFromSlug(slugWithId: string): string {
+  const lastHyphen = slugWithId.lastIndexOf('-');
+  if (lastHyphen === -1) return slugWithId;
+  return slugWithId.slice(lastHyphen + 1);
+}

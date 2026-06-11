@@ -14,10 +14,10 @@ vi.mock("next/navigation", () => ({
     replace: vi.fn(),
     prefetch: vi.fn(),
     back: vi.fn(),
-    forward: vi.fn(),
+    forward: vi.fn()
   }),
   useSearchParams: () => new URLSearchParams(),
-  usePathname: () => "/",
+  usePathname: () => "/"
 }));
 
 // Reset fetch mock before each test

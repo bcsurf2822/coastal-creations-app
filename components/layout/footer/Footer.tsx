@@ -239,7 +239,7 @@ export default function Footer() {
             <p className="mb-4 text-sm leading-relaxed text-[var(--color-text-subtle)]">
               Sign up for updates on classes, events, and workshops.
             </p>
-            <form className="flex flex-col gap-3" onSubmit={handleSubscribe}>
+            <form className="flex flex-col gap-3" onSubmit={handleSubscribe} suppressHydrationWarning>
               <input
                 type="email"
                 placeholder="Enter your email"
@@ -247,11 +247,13 @@ export default function Footer() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                suppressHydrationWarning
               />
               <button
                 type="submit"
                 disabled={isSubmitting}
                 className="h-10 rounded-lg bg-[var(--color-accent)] px-4 text-sm font-semibold text-white transition-colors hover:brightness-110 disabled:opacity-50"
+                suppressHydrationWarning
               >
                 {isSubmitting ? "Subscribing..." : "Subscribe"}
               </button>

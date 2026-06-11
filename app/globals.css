@@ -241,6 +241,19 @@ html {
   animation: fade-in-up 0.4s ease-out both;
 }
 
+@keyframes btn-shine {
+  0%   { transform: translateX(-150%) skewX(-15deg); }
+  100% { transform: translateX(200%) skewX(-15deg); }
+}
+
+.btn-shine-sweep {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.38) 50%, transparent 100%);
+  animation: btn-shine 0.55s ease-out forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in-up {
     animation: none;

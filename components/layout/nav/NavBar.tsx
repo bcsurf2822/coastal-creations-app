@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
 import NavRippleText from "./NavRippleText";
+import CartIcon from "@/components/store/CartIcon";
 
 interface OfferDropdownItem {
   href: string;
@@ -282,6 +283,15 @@ export default function NavBar() {
 
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
+                href="/store"
+                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+              >
+                <NavRippleText text="Store" />
+              </Link>
+            </motion.div>
+
+            <motion.div variants={itemVariants} whileHover="hover">
+              <Link
                 href="/gallery"
                 className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
@@ -297,11 +307,17 @@ export default function NavBar() {
                 <NavRippleText text="Contact" />
               </Link>
             </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <CartIcon />
+            </motion.div>
           </motion.nav>
 
           {/* Mobile Menu Button */}
-          <motion.button
-            className="lg:hidden flex items-center"
+          <div className="lg:hidden flex items-center gap-3">
+            <CartIcon />
+            <motion.button
+            className="flex items-center"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Toggle menu"
             whileTap={{ scale: 0.9 }}
@@ -344,6 +360,7 @@ export default function NavBar() {
               </svg>
             )}
           </motion.button>
+          </div>
         </div>
 
         {/* Mobile Menu */}
@@ -458,6 +475,19 @@ export default function NavBar() {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Gallery
+                  </Link>
+                </motion.div>
+                <motion.div
+                  variants={itemVariants}
+                  whileHover="hover"
+                  className="border-b border-gray-100 pb-2"
+                >
+                  <Link
+                    href="/store"
+                    className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block uppercase"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Store
                   </Link>
                 </motion.div>
                 <motion.div variants={itemVariants} whileHover="hover">
