@@ -1,31 +1,42 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import Image from "next/image";
 import { AddToCartButton } from "../AddToCartButton";
-import {
-  MOCK_PRODUCTS,
-  CATEGORY_LABELS,
-  type ProductCategory,
-} from "../mockProducts";
+import { useProducts } from "@/hooks/queries/use-products";
+import { formatPriceRange } from "@/lib/utils/catalogHelpers";
+import type { StoreProductAvailability } from "@/lib/types/storeTypes";
+
+const ALL = "All Products";
+const availabilityTag: Record<StoreProductAvailability, string | null> = {
+  available: null,
+  low_stock: "Low stock",
+  sold_out: "Sold out",
+};
 
 export default function VariantD(): ReactElement {
-  const [activeCategory, setActiveCategory] =
-    useState<ProductCategory>("all");
+  const { data: products, isLoading, isError } = useProducts();
+  const [activeCategory, setActiveCategory] = useState<string>(ALL);
 
-  const filtered =
-    activeCategory === "all"
-      ? MOCK_PRODUCTS
-      : MOCK_PRODUCTS.filter((p) => p.category === activeCategory);
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    (products ?? []).forEach((p) => {
+      if (p.categoryName) set.add(p.categoryName);
+    });
+    return [ALL, ...Array.from(set).sort()];
+  }, [products]);
 
-  const categories = Object.keys(CATEGORY_LABELS) as ProductCategory[];
+  const filtered = (products ?? []).filter(
+    (p) => activeCategory === ALL || p.categoryName === activeCategory
+  );
 
   return (
-    <section className="min-h-screen py-12" style={{ background: "#fdf6ed" }}>
+    <section className="min-h-screen py-12 bg-white">
       <div className="mx-auto max-w-7xl px-4">
         {/* Category tab strip */}
-        <div className="flex gap-0 border-b border-amber-200 mb-10 overflow-x-auto">
+        <div className="flex gap-0 border-b border-gray-200 mb-10 overflow-x-auto">
           {categories.map((cat) => (
             <button
               key={cat}
@@ -34,8 +45,8 @@ export default function VariantD(): ReactElement {
               style={
                 activeCategory === cat
                   ? {
-                      borderBottomColor: "#b45309",
-                      color: "#b45309",
+                      borderBottomColor: "var(--color-primary)",
+                      color: "var(--color-primary)",
                     }
                   : {
                       borderBottomColor: "transparent",
@@ -43,85 +54,104 @@ export default function VariantD(): ReactElement {
                     }
               }
             >
-              {CATEGORY_LABELS[cat]}
+              {cat}
             </button>
           ))}
         </div>
 
-        {/* Product grid — tall cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
-          <AnimatePresence mode="popLayout">
-          {filtered.map((product, i) => (
-            <motion.div
-              key={product.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.15, delay: 0 } }}
-              transition={{ duration: 0.3, delay: i * 0.05 }}
-              className="group rounded-2xl overflow-hidden bg-white border border-amber-100 hover:shadow-lg transition-shadow duration-300 flex flex-col"
-            >
-              {/* Tall image area */}
+        {isError && (
+          <p className="text-center text-[var(--color-error)] text-lg py-16">
+            Unable to load products. Please try again later.
+          </p>
+        )}
+
+        {isLoading && (
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
+            {Array.from({ length: 8 }).map((_, i) => (
               <div
-                className="w-full flex items-center justify-center text-6xl"
-                style={{
-                  aspectRatio: "3/4",
-                  background: `linear-gradient(160deg, ${product.accentColor}55, ${product.accentColor}cc)`,
-                }}
-              >
-                <span className="group-hover:scale-110 transition-transform duration-300 drop-shadow">
-                  {product.icon}
-                </span>
-              </div>
+                key={i}
+                className="rounded-2xl bg-gray-100 animate-pulse"
+                style={{ aspectRatio: "3/4" }}
+              />
+            ))}
+          </div>
+        )}
 
-              <div className="p-4 flex flex-col flex-1">
-                <span
-                  className={`inline-block text-xs font-semibold tracking-wide uppercase px-2 py-0.5 rounded mb-2${!product.tag ? " invisible" : ""}`}
-                  style={product.tag ? { background: "#fef3c7", color: "#92400e" } : {}}
-                >
-                  {product.tag ?? " "}
-                </span>
+        {/* Product grid — tall cards */}
+        {!isLoading && !isError && (
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
+            <AnimatePresence mode="popLayout">
+              {filtered.map((product, i) => {
+                const tag = availabilityTag[product.availability];
+                return (
+                  <motion.div
+                    key={product.squareItemId}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.15, delay: 0 } }}
+                    transition={{ duration: 0.3, delay: i * 0.05 }}
+                    className="group rounded-2xl overflow-hidden bg-white border border-gray-100 hover:shadow-lg transition-shadow duration-300 flex flex-col"
+                  >
+                    {/* Tall real image area */}
+                    <div
+                      className="relative w-full bg-[var(--color-light)]"
+                      style={{ aspectRatio: "3/4" }}
+                    >
+                      {product.primaryImage ? (
+                        <Image
+                          src={product.primaryImage.url}
+                          alt={product.primaryImage.altText ?? product.name}
+                          fill
+                          sizes="(max-width: 768px) 50vw, 25vw"
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-xs text-[var(--color-text-subtle)]">
+                          No image
+                        </div>
+                      )}
+                    </div>
 
-                <h3
-                  className="font-semibold text-base leading-snug line-clamp-2 mb-1"
-                  style={{
-                    color: "#1c1917",
-                    fontFamily: "var(--font-eb-garamond)",
-                  }}
-                >
-                  {product.name}
-                </h3>
-                <p className="text-xs text-stone-400 leading-relaxed mb-3">
-                  {product.description}
-                </p>
-
-                <div className="mt-auto flex items-center justify-between mb-3">
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-lg font-bold text-amber-700">
-                      ${product.price}
-                    </span>
-                    {product.originalPrice && (
-                      <span className="text-xs text-stone-400 line-through">
-                        ${product.originalPrice}
+                    <div className="p-4 flex flex-col flex-1">
+                      <span
+                        className={`inline-block text-xs font-semibold tracking-wide uppercase px-2 py-0.5 rounded mb-2${!tag ? " invisible" : ""}`}
+                        style={tag ? { background: "var(--color-light)", color: "var(--color-primary)" } : {}}
+                      >
+                        {tag ?? " "}
                       </span>
-                    )}
-                  </div>
-                  {product.stockCount <= 5 && (
-                    <span className="text-xs text-orange-600">
-                      {product.stockCount} left
-                    </span>
-                  )}
-                </div>
 
-                <AddToCartButton
-                  product={product}
-                  className="w-full py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
-                  style={{ background: "linear-gradient(135deg, #d97706, #b45309)" }}
-                />
-              </div>
-            </motion.div>
-          ))}
-          </AnimatePresence>
-        </div>
+                      <h3
+                        className="font-semibold text-base leading-snug line-clamp-2 mb-1"
+                        style={{
+                          color: "#1c1917",
+                          fontFamily: "var(--font-eb-garamond)",
+                        }}
+                      >
+                        {product.name}
+                      </h3>
+                      {product.description && (
+                        <p className="text-xs text-gray-600 leading-relaxed line-clamp-2 mb-3">
+                          {product.description}
+                        </p>
+                      )}
+
+                      <div className="mt-auto flex items-center justify-between mb-3">
+                        <span className="text-lg font-bold text-black">
+                          {formatPriceRange(product.priceRange)}
+                        </span>
+                      </div>
+
+                      <AddToCartButton
+                        product={product}
+                        className="w-full py-2 rounded-xl text-sm font-semibold text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] transition-colors active:scale-95"
+                      />
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
     </section>
   );

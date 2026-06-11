@@ -1,24 +1,35 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import Image from "next/image";
 import { AddToCartButton } from "../AddToCartButton";
-import {
-  MOCK_PRODUCTS,
-  CATEGORY_LABELS,
-  type ProductCategory,
-} from "../mockProducts";
+import { useProducts } from "@/hooks/queries/use-products";
+import { formatPriceRange } from "@/lib/utils/catalogHelpers";
+import type { StoreProductAvailability } from "@/lib/types/storeTypes";
+
+const ALL = "All Products";
+const availabilityTag: Record<StoreProductAvailability, string | null> = {
+  available: null,
+  low_stock: "Low stock",
+  sold_out: "Sold out",
+};
 
 export default function VariantA(): ReactElement {
-  const [activeCategory, setActiveCategory] =
-    useState<ProductCategory>("all");
+  const { data: products, isLoading, isError } = useProducts();
+  const [activeCategory, setActiveCategory] = useState<string>(ALL);
 
-  const filtered =
-    activeCategory === "all"
-      ? MOCK_PRODUCTS
-      : MOCK_PRODUCTS.filter((p) => p.category === activeCategory);
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    (products ?? []).forEach((p) => {
+      if (p.categoryName) set.add(p.categoryName);
+    });
+    return [ALL, ...Array.from(set).sort()];
+  }, [products]);
 
-  const categories = Object.keys(CATEGORY_LABELS) as ProductCategory[];
+  const filtered = (products ?? []).filter(
+    (p) => activeCategory === ALL || p.categoryName === activeCategory
+  );
 
   return (
     <div className="min-h-screen bg-white">
@@ -40,7 +51,7 @@ export default function VariantA(): ReactElement {
                     : "border-gray-300 text-gray-600 hover:border-gray-500"
                 }`}
               >
-                {CATEGORY_LABELS[cat]}
+                {cat}
               </button>
             ))}
           </div>
@@ -56,7 +67,7 @@ export default function VariantA(): ReactElement {
                       : "text-gray-600 hover:bg-gray-100"
                   }`}
                 >
-                  {CATEGORY_LABELS[cat]}
+                  {cat}
                 </button>
               </li>
             ))}
@@ -65,55 +76,87 @@ export default function VariantA(): ReactElement {
 
         {/* Product grid */}
         <main className="flex-1">
-          <p className="text-sm text-gray-400 mb-5">
-            {filtered.length} product{filtered.length !== 1 ? "s" : ""}
-          </p>
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filtered.map((product) => (
-              <div
-                key={product.id}
-                className="group border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col"
-              >
-                {/* Image placeholder */}
+          {isError && (
+            <p className="text-sm text-[var(--color-error)] py-10">
+              Unable to load products. Please try again later.
+            </p>
+          )}
+
+          {isLoading && (
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
                 <div
-                  className="aspect-square flex items-center justify-center text-5xl"
-                  style={{ background: product.accentColor }}
-                >
-                  {product.icon}
-                </div>
+                  key={i}
+                  className="aspect-square rounded-lg bg-gray-100 animate-pulse"
+                />
+              ))}
+            </div>
+          )}
 
-                <div className="p-3 flex flex-col flex-1">
-                  <p className={`text-xs font-medium uppercase tracking-wide text-gray-400 mb-0.5${!product.tag ? " invisible" : ""}`}>
-                    {product.tag ?? " "}
-                  </p>
-                  <h3 className="text-sm font-medium text-gray-900 leading-tight line-clamp-2">
-                    {product.name}
-                  </h3>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {product.description}
-                  </p>
+          {!isLoading && !isError && (
+            <>
+              <p className="text-sm text-gray-500 mb-5">
+                {filtered.length} product{filtered.length !== 1 ? "s" : ""}
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                {filtered.map((product) => {
+                  const tag = availabilityTag[product.availability];
+                  return (
+                    <div
+                      key={product.squareItemId}
+                      className="group border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col"
+                    >
+                      {/* Real product image */}
+                      <div className="relative aspect-square bg-gray-50">
+                        {product.primaryImage ? (
+                          <Image
+                            src={product.primaryImage.url}
+                            alt={product.primaryImage.altText ?? product.name}
+                            fill
+                            sizes="(max-width: 768px) 50vw, 25vw"
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full text-xs text-gray-500">
+                            No image
+                          </div>
+                        )}
+                      </div>
 
-                  <div className="mt-auto pt-2 flex items-center justify-between">
-                    <span className="text-sm font-semibold text-gray-900">
-                      ${product.price}
-                      {product.originalPrice && (
-                        <span className="ml-1.5 text-xs font-normal text-gray-400 line-through">
-                          ${product.originalPrice}
-                        </span>
-                      )}
-                    </span>
-                    {product.stockCount <= 5 && (
-                      <span className="text-xs text-orange-500">
-                        Only {product.stockCount} left
-                      </span>
-                    )}
-                  </div>
+                      <div className="p-3 flex flex-col flex-1">
+                        <p
+                          className={`text-xs font-semibold uppercase tracking-wide text-gray-500 mb-0.5${
+                            !tag ? " invisible" : ""
+                          }`}
+                        >
+                          {tag ?? " "}
+                        </p>
+                        <h3 className="text-sm font-medium text-gray-900 leading-tight line-clamp-2">
+                          {product.name}
+                        </h3>
+                        {product.description && (
+                          <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                            {product.description}
+                          </p>
+                        )}
 
-                  <AddToCartButton product={product} className="mt-2.5 w-full py-1.5 text-xs border border-gray-900 text-gray-900 rounded hover:bg-gray-900 hover:text-white transition-colors duration-150" />
-                </div>
+                        <div className="mt-auto pt-2 flex items-center justify-between">
+                          <span className="text-sm font-semibold text-black">
+                            {formatPriceRange(product.priceRange)}
+                          </span>
+                        </div>
+
+                        <AddToCartButton
+                          product={product}
+                          className="mt-2.5 w-full py-1.5 text-xs border border-gray-900 text-gray-900 rounded hover:bg-gray-900 hover:text-white transition-colors duration-150"
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </main>
       </div>
     </div>
