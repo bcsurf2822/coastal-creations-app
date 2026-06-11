@@ -61,6 +61,7 @@ export default function OrderDetailPage(): ReactElement {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
+  const [creatingLabel, setCreatingLabel] = useState(false);
 
   useEffect(() => {
     async function fetchOrder() {
@@ -94,6 +95,39 @@ export default function OrderDetailPage(): ReactElement {
       alert(err instanceof Error ? err.message : "Update failed");
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const createLabel = async () => {
+    if (!order) return;
+    if (!confirm("Purchase a shipping label for this order via Shippo?")) return;
+    setCreatingLabel(true);
+    try {
+      const res = await fetch("/api/store/shipping-label", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: order._id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Label creation failed");
+      setOrder((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: "label_created",
+              shippo: {
+                ...prev.shippo,
+                labelUrl: data.labelUrl,
+                trackingNumber: data.trackingNumber,
+                trackingUrlProvider: data.trackingUrlProvider,
+              },
+            }
+          : prev
+      );
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Label creation failed");
+    } finally {
+      setCreatingLabel(false);
     }
   };
 
@@ -228,6 +262,14 @@ export default function OrderDetailPage(): ReactElement {
                 </Link>
               )}
             </div>
+          ) : order.status === "paid" ? (
+            <button
+              onClick={createLabel}
+              disabled={creatingLabel}
+              className="mt-1 px-4 py-2 bg-[var(--color-primary)] text-white text-sm font-medium rounded-md hover:bg-[var(--color-primary-dark)] disabled:opacity-50"
+            >
+              {creatingLabel ? "Creating label..." : "Create Shipping Label"}
+            </button>
           ) : (
             <p className="text-sm text-gray-400">No tracking info yet</p>
           )}
