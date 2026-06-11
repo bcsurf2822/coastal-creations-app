@@ -205,11 +205,12 @@ export default function NavBar() {
               animate="animate"
               whileHover="hover"
             >
-              <Link className="cursor-pointer" href="/">
+              <Link className="relative block h-full w-full cursor-pointer" href="/">
                 <Image
                   src="/assets/logos/coastalLogoFull.png"
                   alt="Coastal Creations Studio Logo"
                   fill
+                  sizes="(min-width: 1536px) 288px, (min-width: 1280px) 240px, (min-width: 1024px) 208px, 192px"
                   className="object-contain"
                   priority
                 />

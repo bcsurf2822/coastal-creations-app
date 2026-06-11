@@ -88,7 +88,7 @@ export default function VariantI(): ReactElement {
 
         {!isLoading &&
           !isError &&
-          sections.map(([category, items]) => (
+          sections.map(([category, items], sectionIndex) => (
             <div key={category} className="mb-14">
               {/* Section header with sand accent bar */}
               <div className="mb-6 flex items-end gap-4">
@@ -115,7 +115,7 @@ export default function VariantI(): ReactElement {
 
               {/* Boxed cards */}
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {items.map((product) => {
+                {items.map((product, idx) => {
                   const tag = availabilityTag[product.availability];
                   return (
                     <Card
@@ -129,6 +129,7 @@ export default function VariantI(): ReactElement {
                             alt={product.primaryImage.altText ?? product.name}
                             fill
                             sizes="(max-width: 768px) 100vw, 33vw"
+                            priority={sectionIndex === 0 && idx < 3}
                             className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                           />
                         ) : (

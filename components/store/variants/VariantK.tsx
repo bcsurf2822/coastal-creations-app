@@ -74,7 +74,7 @@ export default function VariantK(): ReactElement {
 
         {!isLoading && !isError && (
           <div className="grid grid-cols-1 items-stretch gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filtered.map((product) => {
+            {filtered.map((product, index) => {
               const tag = availabilityTag[product.availability];
               return (
                 <Card
@@ -88,6 +88,7 @@ export default function VariantK(): ReactElement {
                         alt={product.primaryImage.altText ?? product.name}
                         fill
                         sizes="(max-width: 768px) 100vw, 25vw"
+                        priority={index < 4}
                         className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                       />
                     ) : (

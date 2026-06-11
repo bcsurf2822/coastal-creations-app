@@ -102,6 +102,7 @@ export default function VariantB(): ReactElement {
                           alt={product.primaryImage.altText ?? product.name}
                           fill
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                          priority={i < 4}
                           className="object-cover"
                         />
                       ) : (

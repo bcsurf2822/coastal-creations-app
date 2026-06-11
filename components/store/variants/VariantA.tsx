@@ -99,7 +99,7 @@ export default function VariantA(): ReactElement {
                 {filtered.length} product{filtered.length !== 1 ? "s" : ""}
               </p>
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filtered.map((product) => {
+                {filtered.map((product, index) => {
                   const tag = availabilityTag[product.availability];
                   return (
                     <div
@@ -114,6 +114,7 @@ export default function VariantA(): ReactElement {
                             alt={product.primaryImage.altText ?? product.name}
                             fill
                             sizes="(max-width: 768px) 50vw, 25vw"
+                            priority={index < 4}
                             className="object-cover"
                           />
                         ) : (

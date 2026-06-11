@@ -104,6 +104,7 @@ export default function VariantE(): ReactElement {
                             alt={product.primaryImage.altText ?? product.name}
                             fill
                             sizes="80px"
+                            priority={i < 6}
                             className="object-cover"
                           />
                         ) : (
