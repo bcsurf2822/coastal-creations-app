@@ -3,6 +3,7 @@
 import type { ReactElement } from "react";
 import { useState } from "react";
 import { AddToCartButton } from "../AddToCartButton";
+import { StockCounter } from "../StockCounter";
 import {
   MOCK_PRODUCTS,
   CATEGORY_LABELS,
@@ -102,11 +103,7 @@ export default function VariantA(): ReactElement {
                         </span>
                       )}
                     </span>
-                    {product.stockCount <= 5 && (
-                      <span className="text-xs text-orange-500">
-                        Only {product.stockCount} left
-                      </span>
-                    )}
+                    <StockCounter productId={product.id} stockCount={product.stockCount} />
                   </div>
 
                   <AddToCartButton product={product} className="mt-2.5 w-full py-1.5 text-xs border border-gray-900 text-gray-900 rounded hover:bg-gray-900 hover:text-white transition-colors duration-150" />

@@ -72,9 +72,19 @@ export default function CartDrawer(): ReactElement {
               </h2>
               <button
                 type="button"
-                onClick={closeDrawer}
-                aria-label="Close cart"
-                className="p-1.5 rounded text-[var(--color-text-subtle)] hover:text-[var(--color-primary)] hover:bg-[var(--color-light)] transition-colors"
+                onClick={() => {
+                  if (items.length > 0) {
+                    if (confirm("Remove all items from your cart?")) {
+                      clearCart();
+                      closeDrawer();
+                    }
+                  } else {
+                    closeDrawer();
+                  }
+                }}
+                aria-label={items.length > 0 ? "Clear cart" : "Close cart"}
+                className="p-1.5 rounded text-[var(--color-text-subtle)] hover:text-[var(--color-error)] hover:bg-[var(--color-light)] transition-colors"
+                title={items.length > 0 ? "Clear all items" : "Close"}
               >
                 ✕
               </button>
@@ -119,15 +129,6 @@ export default function CartDrawer(): ReactElement {
                     {formatCents(subtotalCents)}
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (confirm("Remove all items from your cart?")) clearCart();
-                  }}
-                  className="text-xs text-[var(--color-error)] hover:underline self-end"
-                >
-                  Clear cart
-                </button>
                 <Link href="/cart" onClick={closeDrawer}>
                   <Button variant="secondary" className="w-full">
                     View Full Cart

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { FaStar } from "react-icons/fa";
 import { AddToCartButton } from "../AddToCartButton";
+import { StockCounter } from "../StockCounter";
 import {
   MOCK_PRODUCTS,
   CATEGORY_LABELS,
@@ -130,11 +131,7 @@ export default function VariantF(): ReactElement {
                     </span>
                   )}
                 </div>
-                {spotlight.stockCount <= 5 && (
-                  <span className="text-xs text-orange-500">
-                    Only {spotlight.stockCount} left
-                  </span>
-                )}
+                <StockCounter productId={spotlight.id} stockCount={spotlight.stockCount} />
               </div>
 
               <AddToCartButton
@@ -193,11 +190,7 @@ export default function VariantF(): ReactElement {
                     >
                       ${product.price}
                     </span>
-                    {product.stockCount <= 5 && (
-                      <span className="text-xs text-orange-500">
-                        {product.stockCount} left
-                      </span>
-                    )}
+                    <StockCounter productId={product.id} stockCount={product.stockCount} prefix="" />
                   </div>
 
                   <AddToCartButton

@@ -4,6 +4,7 @@ import type { ReactElement } from "react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { AddToCartButton } from "../AddToCartButton";
+import { StockCounter } from "../StockCounter";
 import {
   MOCK_PRODUCTS,
   CATEGORY_LABELS,
@@ -101,11 +102,7 @@ export default function VariantE(): ReactElement {
                   <p className="text-xs text-gray-500">
                     {product.description}
                   </p>
-                  {product.stockCount <= 5 && (
-                    <p className="text-xs text-orange-500 mt-0.5">
-                      Only {product.stockCount} left
-                    </p>
-                  )}
+                  <StockCounter productId={product.id} stockCount={product.stockCount} />
                 </div>
 
                 {/* Price + CTA */}
