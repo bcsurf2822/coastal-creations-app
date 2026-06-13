@@ -19,8 +19,9 @@ export async function PATCH(
   const { id } = await params;
 
   try {
+    // Shop visibility is controlled by Square categories, not here. This route only
+    // persists the optional shipping/display overrides for an item.
     const body = (await request.json()) as {
-      isOnlineSellable?: boolean;
       parcelPreset?: ParcelPreset;
       slug?: string;
       displayOrder?: number;

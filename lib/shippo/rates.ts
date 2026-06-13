@@ -6,17 +6,27 @@ const shippoClient = new Shippo({
   apiKeyHeader: process.env.SHIPPO_API_KEY ?? "",
 });
 
-// Coastal Creations Studio — the ship-from address for all outbound orders.
-const STUDIO_ADDRESS = {
-  name: "Coastal Creations Studio",
-  street1: "411 E 8th Street",
-  city: "Ocean City",
-  state: "NJ",
-  zip: "08226",
-  country: "US",
-  phone: "",
-  email: "ashley@coastalcreationsstudio.com",
+// Ship-from (merchant origin) for all outbound orders + rate calc. Sourced from env so
+// no merchant PII is hardcoded. NOTE: USPS requires BOTH a sender email AND phone, or the
+// label purchase fails with "sender_info_missing" — keep MERCHANT_SHIP_FROM_EMAIL and
+// MERCHANT_SHIP_FROM_PHONE populated.
+const MERCHANT_SHIP_FROM = {
+  name: process.env.MERCHANT_SHIP_FROM_NAME ?? "",
+  street1: process.env.MERCHANT_SHIP_FROM_STREET ?? "",
+  city: process.env.MERCHANT_SHIP_FROM_CITY ?? "",
+  state: process.env.MERCHANT_SHIP_FROM_STATE ?? "",
+  zip: process.env.MERCHANT_SHIP_FROM_ZIP ?? "",
+  country: process.env.MERCHANT_SHIP_FROM_COUNTRY ?? "US",
+  phone: process.env.MERCHANT_SHIP_FROM_PHONE ?? "",
+  email: process.env.MERCHANT_SHIP_FROM_EMAIL ?? "",
 };
+
+// Surface a clear server log if the origin is misconfigured (rates/labels will fail).
+if (!MERCHANT_SHIP_FROM.street1 || !MERCHANT_SHIP_FROM.phone || !MERCHANT_SHIP_FROM.email) {
+  console.warn(
+    "[SHIPPO-RATES] Incomplete MERCHANT_SHIP_FROM_* env — Shippo rates/labels may fail (USPS needs sender email + phone)."
+  );
+}
 
 export interface ShipToAddress {
   name: string;
@@ -54,7 +64,7 @@ export async function getShippingRates(
   const dims = getParcelDimensions(preset);
 
   const shipment = await shippoClient.shipments.create({
-    addressFrom: STUDIO_ADDRESS,
+    addressFrom: MERCHANT_SHIP_FROM,
     addressTo: {
       name: destination.name,
       street1: destination.street1,

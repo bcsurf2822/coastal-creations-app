@@ -15,6 +15,16 @@ This document is the source for generating phased PRPs. It is organized into two
 > email; near-identical earlier draft: `spec/ecommerce/ecommerce-order-flow.drawio.png`)
 > Companion tickets: `spec/ecommerce/01-customer-storefront-shop.md`, `spec/ecommerce/02-admin-sales-page.md`
 
+> **⚠️ Amendments since authoring — see `00-STATUS.md` for the live state.** This document is the
+> original vision; two decisions have since changed in implementation:
+> 1. **Shop visibility is driven by Square categories ("Online Sales …"), not the
+>    `isOnlineSellable` flag.** The merchant controls the storefront entirely from the Square
+>    dashboard (add an item to an "Online Sales …" category → it appears). The `StoreProductSettings`
+>    model and its `isOnlineSellable` field still exist but the flag is unused. See `00-STATUS.md` B0.
+> 2. **Carriers:** USPS is in play (cheapest for light goods) alongside UPS/FedEx. Rates must be
+>    filtered to carriers whose labels can actually be purchased. See `07` + `08`.
+> The shipping-notification flow (A4/A5) was reworked and **verified end-to-end** — see `03`.
+
 ## Flow → Phase Map (every part of the diagram is covered)
 
 | Diagram element | Lane | Phase |
@@ -27,7 +37,7 @@ This document is the source for generating phased PRPs. It is organized into two
 | 2. Checkout & pay (live rates + card) | Customer | A3 |
 | 3. Order recorded (sale saved + label auto-created) | Automatic | A4 |
 | 4. Order confirmed (Order Confirmation email) | Customer | A4 |
-| 5. Label in your inbox (PDF email to merchant) | Merchant | A4 |
+| 5. Label in inbox (PDF email to merchant) | Merchant | A4 |
 | 6. Pack & ship (print label, tape, drop off) | Merchant | B2 |
 | 7. Mark it shipped — tap in Admin → sends customer Shipping email w/ tracking link | Merchant / Admin | A5 + B2 |
 | 8. Delivered (auto Delivery Confirmation email) | Customer | A5 |
@@ -67,11 +77,11 @@ Do **not** modify or remove the existing MongoDB `Event`, `Customer`, `Reservati
 physical-product orders alongside the existing class/registration/reservation system. The
 admin Sales page (B1) *reads across* all of these but must not alter their schemas.
 
-## Catalog-driven design — support ANY product she lists
+## Catalog-driven design — support ANY product the merchant lists
 
 **Square Catalog is the single source of truth for products.** The merchant's live catalog
 already holds 53 items (workbooks, stickers, paint-by-number kits, mosaic boards with 36
-variations, art kits, etc.) and she must be able to add/sell **any new item** in the future
+variations, art kits, etc.) and the merchant must be able to add/sell **any new item** in the future
 without a code change. Therefore:
 
 - **Never hardcode products, categories, or prices.** The Shop renders whatever the Catalog
@@ -108,7 +118,7 @@ sub-schemas for nested shapes (like `BillingInfoSchema`), `{ timestamps: true }`
 2. **`StoreProductSettings.ts`** — per-Square-item app-side metadata that Square doesn't hold:
    - `squareItemId` (unique), `isOnlineSellable` (the visibility flag that drives the Shop
      filter), `shipping` (weight + L/W/H + unit, used to build Shippo parcels), optional
-     `displayOrder`, optional `slug`. This is what lets her sell **any** catalog item online by
+     `displayOrder`, optional `slug`. This is what lets the merchant sell **any** catalog item online by
      toggling a flag — no code change.
 
 ### Shippo (`lib/shippo/`, new — mirror `lib/square/` structure)
@@ -125,7 +135,7 @@ sub-schemas for nested shapes (like `BillingInfoSchema`), `{ timestamps: true }`
 - **`parcelHelpers.ts`** — build a Shippo parcel from a product's assigned **parcel preset**.
   Define a small set of presets (e.g. `SMALL` ~1lb, `MEDIUM` ~5lb, `LARGE` ~10lb, each with
   default L/W/H), plus optional carrier flat-rate-box presets. **Default = `MEDIUM` (5lb)** so a
-  newly added product always rates correctly with zero merchant input; she can override the
+  newly added product always rates correctly with zero merchant input; the merchant can override the
   preset per item in admin B0. Cart parcels combine line items (sum weights / largest box).
   Rationale: art kits are ~5lb but mosaic boards can be larger — presets handle both without
   per-item measuring and without a single flat number that would undercharge big items.
@@ -220,20 +230,20 @@ Per `coastal-creations-order-flow.drawio.png`, the **shipping email is merchant-
 > Lives under `app/admin/dashboard/` (NextAuth-protected, same whitelist as the rest of admin).
 > Not added to the public nav.
 
-### Admin Console — Required Functionalities (what she needs to run the store)
+### Admin Console — Required Functionalities (what the merchant needs to run the store)
 
-Per the diagram she runs **everything from one private console**. Required capabilities:
+Per the diagram the merchant runs **everything from one private console**. Required capabilities:
 
 1. **Product management (Store catalog control)** — Phase B0 below
    - See every Square catalog item synced into the app.
    - Toggle **`isOnlineSellable`** per item to choose what appears in the Shop (filters out
-     services/classes/test items; lets her sell **any** item by flipping a switch).
+     services/classes/test items; lets the merchant sell **any** item by flipping a switch).
    - Assign a **parcel preset** (default `MEDIUM`/5lb) per item; optional exact weight/dims
-     override (required only if she wants tighter Shippo rates).
+     override (required only if the merchant wants tighter Shippo rates).
    - Optional: set display order / slug; see Square inventory stock + low-stock awareness.
-   - **"Adds the online-store layer" = ** she still *creates/prices/photographs/stocks* products
-     in the **Square dashboard** ("You add and manage your products here"). Square does not store
-     (a) whether an item shows on *her* website or (b) its shipping box/weight. This screen
+   - **"Adds the online-store layer" = ** the merchant still *creates/prices/photographs/stocks* products
+     in the **Square dashboard** (products are added and managed there). Square does not store
+     (a) whether an item shows on *the merchant's* website or (b) its shipping box/weight. This screen
      attaches exactly those two website-only fields on top of each Square item — no re-entry,
      no duplication of the catalog.
 2. **Sales ledger** — Phase B1: every sale across all sources, filter/search, detail, **refund**.
@@ -241,14 +251,14 @@ Per the diagram she runs **everything from one private console**. Required capab
    tracking link, optional manual mark-shipped, void/reprint label. **Mostly automatic:** label
    PDF + tracking number + carrier come back from Shippo at label purchase; shipped/delivered
    statuses arrive via the Shippo tracking webhook from carrier scans. The only manual step is
-   the physical print/pack/drop-off (diagram step 6) — she never types tracking numbers.
+   the physical print/pack/drop-off (diagram step 6) — the merchant never types tracking numbers.
 4. **Order detail actions** — resend confirmation/shipping email, view payment + customer,
    issue **full refund** (Square) and optionally void the Shippo label on cancel.
    **v1: full refunds only** (no partial).
-5. **Store settings** — ship-from / origin address (her studio or UPS Store drop-off origin),
+5. **Store settings** — ship-from / origin address (the merchant's studio or UPS Store drop-off origin),
    carriers limited to **UPS and FedEx**, parcel presets, **no free shipping**, **sales tax
    always on**. (Backed by env + a small settings doc.) Setup caveat: UPS/FedEx live rates
-   typically require connecting her carrier accounts in the Shippo dashboard.
+   typically require connecting the merchant's carrier accounts in the Shippo dashboard.
 6. **Customers** — **reuse the existing Square Customers integration** (`lib/square/customers.ts`,
    `/api/square/customers`): online buyers sync to a Square customer and link into the existing
    customer-management screen. No new customer UI required; orders reference the customer.
@@ -281,7 +291,7 @@ Per the diagram she runs **everything from one private console**. Required capab
 - **Columns/states**: needs-printing → shipped → delivered — sourced from `Order.status`/Shippo.
 - **One-click label PDF** download (`labelUrl`) and **tracking link** per order.
 - **"Mark Shipped" button (first-class action, not optional)** — this is diagram **step 7**. After
-  she packs & ships (step 6), tapping it sets the order to `shipped` and sends the customer the
+  the merchant packs & ships (step 6), tapping it sets the order to `shipped` and sends the customer the
   Shipping email with tracking link (see A5). This is the deliberate control point the diagram
   specifies.
 - Delivered status flips automatically from the Shippo tracking webhook (step 8).
@@ -408,7 +418,7 @@ Update `.env.example` accordingly.
 - **Tax**: **always on** — apply sales tax to every order (prefer Square Orders tax computation).
 - **Refunds + label voids**: **v1 is full refunds only**; a refunded/cancelled order should
   optionally void/refund its Shippo label.
-- **Carriers**: UPS and FedEx only; both typically require her own carrier accounts connected in
+- **Carriers**: UPS and FedEx only; both typically require the merchant's own carrier accounts connected in
   the Shippo dashboard before live rates return.
 - **Design system**: all new UI uses `components/ui/` + tokens per `AGENTS.md`.
 - **TypeScript strict**: explicit return types, no `any`, `ReactElement` over `JSX.Element`.

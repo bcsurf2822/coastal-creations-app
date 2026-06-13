@@ -20,6 +20,8 @@ import { connectMongo } from "@/lib/mongoose";
 import Order from "@/lib/models/Order";
 import { OrderConfirmationEmail } from "@/components/email-templates/OrderConfirmationEmail";
 import { StoreOrderAdminEmail } from "@/components/email-templates/StoreOrderAdminEmail";
+import { purchaseLabelForOrder } from "@/lib/shippo/labels";
+import type { LabelResult } from "@/lib/shippo/labels";
 import type { CartItem } from "@/lib/types/cartTypes";
 import type { ShippingRate } from "@/lib/shippo/rates";
 
@@ -142,7 +144,21 @@ export async function POST(request: Request): Promise<Response> {
 
     console.log("[API-STORE-CHECKOUT-POST] Order saved:", newOrder.orderNumber);
 
-    // Step 3: Send confirmation email (non-blocking — a failure here shouldn't fail the order)
+    // Step 3: Auto-create the Shippo shipping label (diagram step 3 → "label_created").
+    // Non-fatal: if Shippo fails, the order stays "paid" and the merchant can create the
+    // label manually from the admin order page (POST /api/store/shipping-label fallback).
+    // This NEVER emails the customer — that happens only at "Mark Shipped".
+    let label: LabelResult | null = null;
+    try {
+      label = await purchaseLabelForOrder(newOrder._id.toString());
+    } catch (labelError) {
+      console.error(
+        "[API-STORE-CHECKOUT-POST] Auto-label failed (order saved as paid):",
+        labelError
+      );
+    }
+
+    // Step 4: Send emails (non-blocking — a failure here shouldn't fail the order)
     const isProduction = process.env.VERCEL_ENV === "production";
     const customerRecipient = isProduction ? customer.email : (process.env.DEV_EMAIL ?? customer.email);
     const adminRecipient = isProduction
@@ -195,6 +211,9 @@ export async function POST(request: Request): Promise<Response> {
             postalCode: shippingAddress.postalCode,
           },
           shippingMethod: selectedRate.serviceName,
+          labelUrl: label?.labelUrl,
+          trackingNumber: label?.trackingNumber,
+          labelFailed: label === null,
         })
       );
 

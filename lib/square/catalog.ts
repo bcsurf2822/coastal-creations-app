@@ -86,6 +86,32 @@ function mapRelatedObjects(relatedObjects: unknown[]): {
   return { imageById, categoryById };
 }
 
+/**
+ * Fetch a COMPLETE category id → name map from the catalog.
+ *
+ * Square's `includeRelatedObjects` only returns categories referenced via an item's
+ * `reporting_category` (or the legacy `category_id`) — NOT categories assigned via the
+ * `categories` array (additional/secondary categories). Since Shop visibility is driven
+ * by an "Online Sales …" category that may be assigned as a secondary category, names
+ * must be resolved from the full category list, not just related objects.
+ */
+async function fetchCategoryNames(): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  let cursor: string | undefined;
+  do {
+    const resp = await catalogApi.listCatalog(cursor, "CATEGORY");
+    for (const obj of resp.result.objects ?? []) {
+      const o = obj as {
+        id?: string | null;
+        categoryData?: { name?: string | null } | null;
+      };
+      if (o.id && o.categoryData?.name) map.set(o.id, o.categoryData.name);
+    }
+    cursor = resp.result.cursor ?? undefined;
+  } while (cursor);
+  return map;
+}
+
 function mapRawItem(
   obj: unknown,
   imageById: Map<string, string>,
@@ -216,6 +242,10 @@ export async function listCatalogItems(
     }
 
     const { imageById, categoryById } = mapRelatedObjects(relatedObjects);
+    // Merge in the complete category map so secondary-category names resolve too.
+    const fullCategories = await fetchCategoryNames();
+    for (const [id, name] of fullCategories) categoryById.set(id, name);
+
     const items = rawObjects
       .map((obj) => mapRawItem(obj, imageById, categoryById))
       .filter((item): item is RawCatalogItem => item !== null);
@@ -249,6 +279,10 @@ export async function retrieveCatalogItem(
     if (!obj) return null;
 
     const { imageById, categoryById } = mapRelatedObjects(related);
+    // Merge in the complete category map so secondary-category names resolve too.
+    const fullCategories = await fetchCategoryNames();
+    for (const [id, name] of fullCategories) categoryById.set(id, name);
+
     return mapRawItem(obj as unknown, imageById, categoryById);
   } catch (e) {
     if (e instanceof ApiError) {
