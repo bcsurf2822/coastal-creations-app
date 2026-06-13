@@ -6,7 +6,6 @@ import type { RawCatalogItem } from "@/lib/square/catalog";
 
 type ProductSettings = {
   squareItemId: string;
-  isOnlineSellable: boolean;
   parcelPreset: "SMALL" | "MEDIUM" | "LARGE";
   slug?: string;
   displayOrder?: number;
@@ -70,7 +69,11 @@ export default function StoreProductsTable(): ReactElement {
     }
   };
 
-  const onlineCount = products.filter((p) => p.settings?.isOnlineSellable).length;
+  const onlineCount = products.filter((p) =>
+    p.catalogItem.categoryNames.some((n) =>
+      n.toLowerCase().startsWith("online sales")
+    )
+  ).length;
 
   if (loading) {
     return <div className="py-12 text-center text-gray-500">Loading products from Square...</div>;
@@ -103,22 +106,19 @@ export default function StoreProductsTable(): ReactElement {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Variations</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Online Shop</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Parcel Size</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {products.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={2} className="px-4 py-8 text-center text-gray-500">
                     No catalog items found in Square
                   </td>
                 </tr>
               ) : (
                 products.map(({ catalogItem, settings }) => {
                   const isSaving = saving.has(catalogItem.id);
-                  const isOnline = settings?.isOnlineSellable ?? false;
                   const preset = settings?.parcelPreset ?? "MEDIUM";
 
                   return (
@@ -143,25 +143,6 @@ export default function StoreProductsTable(): ReactElement {
                             )}
                           </div>
                         </div>
-                      </td>
-                      <td className="px-4 py-4 text-sm text-gray-500">
-                        {catalogItem.variations.length} variation{catalogItem.variations.length !== 1 ? "s" : ""}
-                      </td>
-                      <td className="px-4 py-4 text-center">
-                        <button
-                          onClick={() => updateSettings(catalogItem.id, { isOnlineSellable: !isOnline })}
-                          disabled={isSaving}
-                          aria-label={isOnline ? "Remove from shop" : "Add to shop"}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${
-                            isOnline ? "bg-green-500" : "bg-gray-300"
-                          }`}
-                        >
-                          <span
-                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                              isOnline ? "translate-x-6" : "translate-x-1"
-                            }`}
-                          />
-                        </button>
                       </td>
                       <td className="px-4 py-4">
                         <select

@@ -1,19 +1,18 @@
+/**
+ * Manual shipping-label FALLBACK (admin-only).
+ *
+ * The label is normally bought automatically at checkout (app/api/store/checkout).
+ * This endpoint exists for the case where that auto-purchase failed and the order is
+ * still "paid" — the merchant taps "Create Shipping Label" in the admin order page to
+ * retry. It does NOT email the customer; the customer "your order shipped" email is
+ * sent only by the mark_shipped action. See spec/ecommerce/03-shipping-notification-flow.md.
+ */
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
-import { Shippo } from "shippo";
-import { Resend } from "resend";
-import { render } from "@react-email/render";
-import * as React from "react";
 import { connectMongo } from "@/lib/mongoose";
 import Order from "@/lib/models/Order";
-import { ShippingConfirmationEmail } from "@/components/email-templates/ShippingConfirmationEmail";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-const shippoClient = new Shippo({
-  apiKeyHeader: process.env.SHIPPO_API_KEY ?? "",
-});
+import { purchaseLabelForOrder } from "@/lib/shippo/labels";
 
 export async function POST(request: Request): Promise<Response> {
   if (process.env.NODE_ENV !== "development") {
@@ -37,6 +36,9 @@ export async function POST(request: Request): Promise<Response> {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
+    // Only valid as a fallback for orders that are paid but have no label yet.
+    // (label_created/shipped/delivered already have one; purchaseLabelForOrder is
+    // idempotent, but we guard here to give a clear admin error.)
     if (order.status !== "paid") {
       return NextResponse.json(
         { error: `Cannot create label for order in status: ${order.status}` },
@@ -44,79 +46,13 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
 
-    if (!order.shippo.rateId) {
-      return NextResponse.json(
-        { error: "Order has no Shippo rateId — cannot purchase label" },
-        { status: 400 }
-      );
-    }
-
-    console.log("[API-STORE-SHIPPING-LABEL-POST] Purchasing label for order:", order.orderNumber);
-
-    const transaction = await shippoClient.transactions.create({
-      rate: order.shippo.rateId,
-      async: false,
-    });
-
-    if (transaction.status !== "SUCCESS") {
-      console.error(
-        "[API-STORE-SHIPPING-LABEL-POST] Shippo transaction failed:",
-        transaction.status,
-        transaction.messages
-      );
-      return NextResponse.json(
-        { error: "Shippo label purchase failed", messages: transaction.messages },
-        { status: 502 }
-      );
-    }
-
-    await Order.findByIdAndUpdate(orderId, {
-      "shippo.transactionId": transaction.objectId,
-      "shippo.labelUrl": transaction.labelUrl,
-      "shippo.trackingNumber": transaction.trackingNumber,
-      "shippo.trackingUrlProvider": transaction.trackingUrlProvider,
-      status: "label_created",
-    });
-
-    console.log(
-      "[API-STORE-SHIPPING-LABEL-POST] Label created for:",
-      order.orderNumber,
-      "tracking:",
-      transaction.trackingNumber
-    );
-
-    // Send tracking email to customer (non-blocking — label is already saved)
-    const isProduction = process.env.VERCEL_ENV === "production";
-    const customerRecipient = isProduction
-      ? order.customer.email
-      : (process.env.DEV_EMAIL ?? order.customer.email);
-
-    try {
-      const emailHtml = await render(
-        React.createElement(ShippingConfirmationEmail, {
-          customerFirstName: order.customer.firstName,
-          orderNumber: order.orderNumber,
-          carrier: order.shippo.carrier ?? "carrier",
-          trackingNumber: transaction.trackingNumber ?? "",
-          trackingUrlProvider: transaction.trackingUrlProvider,
-        })
-      );
-
-      await resend.emails.send({
-        from: "Coastal Creations Studio <no-reply@resend.coastalcreationsstudio.com>",
-        to: [customerRecipient],
-        subject: `Your order ${order.orderNumber} has shipped!`,
-        html: emailHtml,
-      });
-    } catch (emailError) {
-      console.error("[API-STORE-SHIPPING-LABEL-POST] Tracking email failed (label still created):", emailError);
-    }
+    const label = await purchaseLabelForOrder(orderId);
 
     return NextResponse.json({
       success: true,
-      labelUrl: transaction.labelUrl,
-      trackingNumber: transaction.trackingNumber,
-      trackingUrlProvider: transaction.trackingUrlProvider,
+      labelUrl: label.labelUrl,
+      trackingNumber: label.trackingNumber,
+      trackingUrlProvider: label.trackingUrlProvider,
     });
   } catch (error) {
     console.error("[API-STORE-SHIPPING-LABEL-POST] Error:", error);

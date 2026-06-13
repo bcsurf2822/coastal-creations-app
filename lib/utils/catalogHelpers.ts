@@ -17,11 +17,29 @@ import { formatCents } from "@/lib/utils/moneyHelpers";
 const LOW_STOCK_THRESHOLD = 3;
 
 /**
+ * Square category-name prefix that controls Shop visibility. The merchant adds an
+ * item to any Square category whose name starts with this prefix (e.g.
+ * "Online Sales - Art Kits", "Online Sales - Stickers") to put it in the online Shop.
+ * This is the SINGLE source of truth for what is sellable online — managed entirely
+ * from the Square dashboard, no app-side toggle. See spec/ecommerce/00-STATUS.md.
+ */
+export const ONLINE_SALES_CATEGORY_PREFIX = "Online Sales";
+
+/**
  * Returns true for items that should be allowed in the Shop:
  * REGULAR physical goods, not archived, present at the merchant's location.
  */
 export function isSellablePhysicalGood(item: RawCatalogItem): boolean {
   return item.productType === "REGULAR" && !item.isArchived;
+}
+
+/**
+ * True when the item belongs to an "Online Sales …" Square category — i.e. the
+ * merchant has flagged it for the online Shop from the Square dashboard.
+ */
+export function isInOnlineSalesCategory(item: RawCatalogItem): boolean {
+  const prefix = ONLINE_SALES_CATEGORY_PREFIX.toLowerCase();
+  return item.categoryNames.some((name) => name.toLowerCase().startsWith(prefix));
 }
 
 /**
@@ -98,11 +116,11 @@ function rollupAvailability(
  */
 export function toStoreProductSummary(
   item: RawCatalogItem,
-  settings: IStoreProductSettings,
+  settings: IStoreProductSettings | undefined,
   stock: Map<string, number>
 ): StoreProductSummary {
   const slug =
-    (settings.slug as string | undefined) ||
+    (settings?.slug as string | undefined) ||
     createProductSlug(item.name, item.id);
 
   const primaryImage: StoreProductImage | undefined =
@@ -127,7 +145,7 @@ export function toStoreProductSummary(
     priceRange: priceRange(item.variations),
     hasMultipleVariations: item.variations.length > 1,
     availability: rollupAvailability(item.variations, stock),
-    displayOrder: (settings.displayOrder as number | undefined) ?? 0,
+    displayOrder: (settings?.displayOrder as number | undefined) ?? 0,
     defaultVariation,
   };
 }
@@ -137,7 +155,7 @@ export function toStoreProductSummary(
  */
 export function toStoreProduct(
   item: RawCatalogItem,
-  settings: IStoreProductSettings,
+  settings: IStoreProductSettings | undefined,
   stock: Map<string, number>
 ): StoreProduct {
   const summary = toStoreProductSummary(item, settings, stock);
