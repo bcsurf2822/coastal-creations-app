@@ -8,6 +8,7 @@ import EventPreview from "./EventPreview";
 import BillingForm from "./BillingForm";
 import PaymentProcessor from "./PaymentProcessor";
 import ReservationSummary from "./ReservationSummary";
+import { ensureFreeOptions } from "@/lib/utils/optionHelpers";
 
 interface PaymentConfig {
   applicationId: string;
@@ -653,7 +654,11 @@ export default function Payment() {
 
             if (eventData) {
               if (eventData.options && eventData.options.length > 0) {
-                const newOptions = eventData.options;
+                // Normalize so each category has a free option (choices[0]),
+                // including legacy events saved before this rule existed.
+                const newOptions = ensureFreeOptions(
+                  eventData.options
+                ) as EventOption[];
 
                 if (
                   JSON.stringify(newOptions) !== JSON.stringify(eventOptions)
@@ -663,12 +668,9 @@ export default function Payment() {
                   const initialSelectedOptions = newOptions.map(
                     (option: EventOption) => ({
                       categoryName: option.categoryName,
-                      // Required categories start unselected so the customer
-                      // must make an explicit choice; optional categories
-                      // default to the first choice.
-                      choiceName: option.required
-                        ? ""
-                        : option.choices[0]?.name || "",
+                      // All categories require an explicit choice, so start
+                      // unselected. The free option is always available.
+                      choiceName: "",
                     })
                   );
                   setSelectedOptions(initialSelectedOptions);
@@ -822,7 +824,8 @@ export default function Payment() {
   // Returns an error message if any required option category has no choice
   // selected (for the primary registrant or any participant), else null.
   const getRequiredOptionsError = useCallback((): string | null => {
-    const requiredCategories = eventOptions.filter((o) => o.required);
+    // Every option category now requires an explicit choice from the customer.
+    const requiredCategories = eventOptions;
     if (requiredCategories.length === 0) return null;
 
     const hasChoice = (
@@ -914,7 +917,8 @@ export default function Payment() {
           lastName: "",
           selectedOptions: eventOptions.map((option) => ({
             categoryName: option.categoryName,
-            choiceName: option.choices[0]?.name || "",
+            // Start unselected so the customer must explicitly choose.
+            choiceName: "",
           })),
         }));
       setParticipants(newParticipants);
@@ -926,7 +930,8 @@ export default function Payment() {
           lastName: "",
           selectedOptions: eventOptions.map((option) => ({
             categoryName: option.categoryName,
-            choiceName: option.choices[0]?.name || "",
+            // Start unselected so the customer must explicitly choose.
+            choiceName: "",
           })),
         }));
       setParticipants(newParticipants);

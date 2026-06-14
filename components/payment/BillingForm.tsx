@@ -322,9 +322,7 @@ const BillingForm: React.FC<BillingFormProps> = ({
                 >
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     {option.categoryName}
-                    {option.required && (
-                      <span className="text-red-500 ml-0.5">*</span>
-                    )}
+                    <span className="text-red-500 ml-0.5">*</span>
                     {option.categoryDescription && (
                       <span className="text-gray-500 text-xs ml-1">
                         - {option.categoryDescription}
@@ -342,9 +340,7 @@ const BillingForm: React.FC<BillingFormProps> = ({
                     }
                     className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition"
                   >
-                    {option.required && (
-                      <option value="">-- Select an option --</option>
-                    )}
+                    <option value="">-- Select an option --</option>
                     {option.choices.map((choice, choiceIndex) => (
                       <option key={choiceIndex} value={choice.name}>
                         {formatChoiceDisplay(choice)}
@@ -419,22 +415,14 @@ const BillingForm: React.FC<BillingFormProps> = ({
                             <div key={optionIndex}>
                               <label className="block text-sm text-gray-700 mb-1">
                                 {option.categoryName}
-                                {option.required && (
-                                  <span className="text-red-500 ml-0.5">
-                                    *
-                                  </span>
-                                )}
+                                <span className="text-red-500 ml-0.5">*</span>
                               </label>
                               <select
                                 value={
                                   participant.selectedOptions?.find(
                                     (so) =>
                                       so.categoryName === option.categoryName
-                                  )?.choiceName ||
-                                  (option.required
-                                    ? ""
-                                    : option.choices[0]?.name) ||
-                                  ""
+                                  )?.choiceName || ""
                                 }
                                 onChange={(e) => {
                                   const newParticipants = [...participants];
@@ -472,11 +460,9 @@ const BillingForm: React.FC<BillingFormProps> = ({
                                 }}
                                 className="w-full p-2 border border-gray-300 rounded-md"
                               >
-                                {option.required && (
-                                  <option value="">
-                                    -- Select an option --
-                                  </option>
-                                )}
+                                <option value="">
+                                  -- Select an option --
+                                </option>
                                 {option.choices.map((choice, choiceIndex) => (
                                   <option key={choiceIndex} value={choice.name}>
                                     {formatChoiceDisplay(choice)}
@@ -585,22 +571,14 @@ const BillingForm: React.FC<BillingFormProps> = ({
                               <div key={optionIndex}>
                                 <label className="block text-sm text-gray-700 mb-1">
                                   {option.categoryName}
-                                  {option.required && (
-                                    <span className="text-red-500 ml-0.5">
-                                      *
-                                    </span>
-                                  )}
+                                  <span className="text-red-500 ml-0.5">*</span>
                                 </label>
                                 <select
                                   value={
                                     participant.selectedOptions?.find(
                                       (so) =>
                                         so.categoryName === option.categoryName
-                                    )?.choiceName ||
-                                    (option.required
-                                      ? ""
-                                      : option.choices[0]?.name) ||
-                                    ""
+                                    )?.choiceName || ""
                                   }
                                   onChange={(e) => {
                                     const newParticipants = [...participants];
@@ -656,11 +634,9 @@ const BillingForm: React.FC<BillingFormProps> = ({
                                   }}
                                   className="w-full p-2 border border-gray-300 rounded-md"
                                 >
-                                  {option.required && (
-                                    <option value="">
-                                      -- Select an option --
-                                    </option>
-                                  )}
+                                  <option value="">
+                                    -- Select an option --
+                                  </option>
                                   {option.choices.map((choice, choiceIndex) => (
                                     <option
                                       key={choiceIndex}

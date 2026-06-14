@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { EventFormState } from "../types/eventForm.types";
 import { formatDateForInput } from "../utils/dateHelpers";
+import { ensureFreeOptions } from "@/lib/utils/optionHelpers";
 import dayjs from "dayjs";
 
 interface UseEventDataReturn {
@@ -62,7 +63,8 @@ export const useEventData = (eventId: string | null): UseEventDataReturn => {
             ? formatDateForInput(event.dates.recurringEndDate)
             : "",
           hasOptions: Boolean(event.options && event.options.length > 0),
-          optionCategories: event.options || [],
+          // Normalize legacy categories so each has a free option (choices[0]).
+          optionCategories: ensureFreeOptions(event.options),
           isDiscountAvailable: event.isDiscountAvailable || false,
           discount: event.discount,
           image: undefined,

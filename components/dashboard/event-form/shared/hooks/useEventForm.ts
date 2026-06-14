@@ -12,6 +12,10 @@ import {
 } from "../types/eventForm.types";
 import { validateEventForm } from "../utils/validationHelpers";
 import { prepareDateForSubmit } from "../utils/dateHelpers";
+import {
+  ensureFreeOptions,
+  DEFAULT_FREE_CHOICE_NAME,
+} from "@/lib/utils/optionHelpers";
 
 const getInitialFormState = (
   eventType: EventFormState["eventType"] = "adult-class"
@@ -138,8 +142,14 @@ export const useEventForm = ({
     const newCategory = {
       categoryName: "",
       categoryDescription: "",
-      required: false,
-      choices: [{ name: "", price: undefined as number | undefined }],
+      // Every category is always required for the customer to choose; a free
+      // option is always included so they can opt out without paying.
+      required: true,
+      choices: [
+        // choices[0] is the guaranteed free option (renameable, always $0).
+        { name: DEFAULT_FREE_CHOICE_NAME, price: 0 as number | undefined },
+        { name: "", price: undefined as number | undefined },
+      ],
     };
 
     setFormData((prev) => ({
@@ -274,15 +284,23 @@ export const useEventForm = ({
           },
           ...(formData.hasOptions &&
             formData.optionCategories.length > 0 && {
-              options: formData.optionCategories.map((category) => ({
-                categoryName: category.categoryName,
-                categoryDescription: category.categoryDescription,
-                required: category.required || false,
-                choices: category.choices.map((choice) => ({
-                  name: choice.name,
-                  price: choice.price || 0,
-                })),
-              })),
+              options: ensureFreeOptions(formData.optionCategories).map(
+                (category) => ({
+                  categoryName: category.categoryName,
+                  categoryDescription: category.categoryDescription,
+                  // All categories are always required for the customer.
+                  required: true,
+                  choices: category.choices.map((choice, choiceIndex) => ({
+                    // The free option (choices[0]) defaults to "None" if the
+                    // admin left its name blank, and is always priced $0.
+                    name:
+                      choiceIndex === 0
+                        ? choice.name?.trim() || DEFAULT_FREE_CHOICE_NAME
+                        : choice.name,
+                    price: choiceIndex === 0 ? 0 : choice.price || 0,
+                  })),
+                })
+              ),
             }),
           ...(formData.isDiscountAvailable &&
             formData.discount && {
