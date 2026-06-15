@@ -11,8 +11,14 @@
  * Shippo dashboard (Settings → Webhooks).
  */
 import { NextResponse } from "next/server";
+import { Resend } from "resend";
+import { render } from "@react-email/render";
+import * as React from "react";
 import { connectMongo } from "@/lib/mongoose";
 import Order from "@/lib/models/Order";
+import { DeliveryConfirmationEmail } from "@/components/email-templates/DeliveryConfirmationEmail";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 interface ShippoTrackingStatus {
   status: string; // "DELIVERED" | "TRANSIT" | "FAILURE" | "RETURNED" | "UNKNOWN"
@@ -73,27 +79,49 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     const carrierStatus = tracking_status?.status?.toUpperCase();
-    const updates: Record<string, unknown> = {};
 
+    // NOTE: we do NOT auto-advance to "shipped" on TRANSIT. "shipped" is the merchant's
+    // deliberate "Mark Shipped" action (which sends the customer tracking email). The
+    // webhook only owns the automatic DELIVERED transition + delivery email (step 8).
     if (carrierStatus === "DELIVERED") {
-      updates.status = "delivered";
-      updates.deliveredAt = new Date();
-    } else if (
-      carrierStatus === "TRANSIT" &&
-      order.status === "label_created"
-    ) {
-      updates.status = "shipped";
-      updates.shippedAt = new Date();
-    }
+      // Idempotent: only act + email once per order.
+      if (order.status === "delivered" || order.deliveredAt) {
+        return NextResponse.json({ received: true });
+      }
 
-    if (Object.keys(updates).length > 0) {
-      await Order.findByIdAndUpdate(order._id, updates);
-      console.log(
-        "[WEBHOOKS-SHIPPO] Updated order",
-        order.orderNumber,
-        "→ status:",
-        updates.status
-      );
+      await Order.findByIdAndUpdate(order._id, {
+        status: "delivered",
+        deliveredAt: new Date(),
+      });
+      console.log("[WEBHOOKS-SHIPPO] Order delivered:", order.orderNumber);
+
+      const isProduction = process.env.VERCEL_ENV === "production";
+      const customerRecipient = isProduction
+        ? order.customer.email
+        : (process.env.DEV_EMAIL ?? order.customer.email);
+
+      try {
+        const emailHtml = await render(
+          React.createElement(DeliveryConfirmationEmail, {
+            customerFirstName: order.customer.firstName,
+            orderNumber: order.orderNumber,
+            carrier: order.shippo.carrier,
+            trackingNumber: order.shippo.trackingNumber,
+          })
+        );
+
+        await resend.emails.send({
+          from: "Coastal Creations Studio <no-reply@resend.coastalcreationsstudio.com>",
+          to: [customerRecipient],
+          subject: `Your order ${order.orderNumber} was delivered`,
+          html: emailHtml,
+        });
+      } catch (emailError) {
+        console.error(
+          "[WEBHOOKS-SHIPPO] Delivery email failed (order still marked delivered):",
+          emailError
+        );
+      }
     }
   }
 

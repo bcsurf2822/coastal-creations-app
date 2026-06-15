@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Text } from "@react-email/components";
+import { Text, Button } from "@react-email/components";
 import { EmailShell, InfoCard, DetailRow, emailText } from "./shared";
 
 interface OrderItem {
@@ -31,6 +31,11 @@ interface StoreOrderAdminEmailProps {
     postalCode: string;
   };
   shippingMethod: string;
+  /** Shippo label PDF — present when the label was auto-created at checkout. */
+  labelUrl?: string;
+  trackingNumber?: string;
+  /** true when auto-label failed and the merchant must create it manually in admin. */
+  labelFailed?: boolean;
 }
 
 const fmt = (cents: number) =>
@@ -46,6 +51,9 @@ export function StoreOrderAdminEmail({
   totalCents,
   shippingAddress,
   shippingMethod,
+  labelUrl,
+  trackingNumber,
+  labelFailed,
 }: StoreOrderAdminEmailProps): React.ReactElement {
   return (
     <EmailShell preview={`New store order: ${orderNumber}`} showDisclaimer={false}>
@@ -53,6 +61,42 @@ export function StoreOrderAdminEmail({
       <Text style={emailText.paragraph}>
         Order <strong>{orderNumber}</strong> has been placed and payment confirmed.
       </Text>
+
+      {labelUrl ? (
+        <InfoCard title="Shipping Label — Ready to Print">
+          <DetailRow label="Carrier">{shippingMethod}</DetailRow>
+          {trackingNumber && <DetailRow label="Tracking">{trackingNumber}</DetailRow>}
+          <tr>
+            <td colSpan={2} style={{ paddingTop: "8px" }}>
+              <Button
+                href={labelUrl}
+                style={{
+                  display: "inline-block",
+                  backgroundColor: "#0c4a6e",
+                  color: "#ffffff",
+                  fontSize: "15px",
+                  fontWeight: 700,
+                  padding: "12px 28px",
+                  borderRadius: "8px",
+                  textDecoration: "none",
+                }}
+              >
+                Print Shipping Label (PDF) →
+              </Button>
+            </td>
+          </tr>
+        </InfoCard>
+      ) : (
+        <InfoCard title="Shipping Label — Action Needed">
+          <tr>
+            <td colSpan={2} style={{ color: "#b45309", fontSize: "14px", lineHeight: "21px" }}>
+              {labelFailed
+                ? "The label could not be created automatically. Open this order in the admin dashboard and tap “Create Shipping Label” to generate it."
+                : "Label pending — check the order in the admin dashboard."}
+            </td>
+          </tr>
+        </InfoCard>
+      )}
 
       <InfoCard title="Customer">
         <DetailRow label="Name">{customer.firstName} {customer.lastName}</DetailRow>

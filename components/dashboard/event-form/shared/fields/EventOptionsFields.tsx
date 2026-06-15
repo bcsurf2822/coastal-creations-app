@@ -120,27 +120,9 @@ const EventOptionsFields = ({
                   />
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id={`category-required-${categoryIndex}`}
-                    checked={category.required || false}
-                    onChange={(e) =>
-                      actions.updateOptionCategory(
-                        categoryIndex,
-                        "required",
-                        e.target.checked
-                      )
-                    }
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label
-                    htmlFor={`category-required-${categoryIndex}`}
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    Required - customer must choose an option at checkout
-                  </label>
-                </div>
+                <p className="text-xs text-gray-500">
+                  Customers must choose one option in this category at checkout.
+                </p>
 
                 {/* Choices */}
                 <div>
@@ -148,74 +130,90 @@ const EventOptionsFields = ({
                     Choices <span className="text-red-500">*</span>
                   </label>
                   <div className="space-y-2">
-                    {category.choices.map((choice, choiceIndex) => (
-                      <div
-                        key={choiceIndex}
-                        className="flex space-x-2 items-end"
-                      >
-                        <div className="flex-1">
-                          <input
-                            type="text"
-                            value={choice.name}
-                            onChange={(e) =>
-                              actions.updateChoice(
-                                categoryIndex,
-                                choiceIndex,
-                                "name",
-                                e.target.value
-                              )
-                            }
-                            autoComplete="new-password"
-                            autoCapitalize="none"
-                            autoCorrect="off"
-                            spellCheck="false"
-                            data-lpignore="true"
-                            data-form-type="other"
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Choice name and price (optional)"
-                          />
-                        </div>
-                        <div className="w-32">
-                          <input
-                            type="text"
-                            value={choice.price?.toString() || ""}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              if (formatNumberInput(value) === value) {
+                    {category.choices.map((choice, choiceIndex) => {
+                      // choices[0] is the guaranteed free option: renameable,
+                      // always $0, and not removable.
+                      const isFreeOption = choiceIndex === 0;
+
+                      return (
+                        <div
+                          key={choiceIndex}
+                          className="flex space-x-2 items-end"
+                        >
+                          <div className="flex-1">
+                            <input
+                              type="text"
+                              value={choice.name}
+                              onChange={(e) =>
                                 actions.updateChoice(
                                   categoryIndex,
                                   choiceIndex,
-                                  "price",
-                                  value ? Number(value) : undefined
-                                );
+                                  "name",
+                                  e.target.value
+                                )
                               }
-                            }}
-                            autoComplete="new-password"
-                            autoCapitalize="none"
-                            autoCorrect="off"
-                            spellCheck="false"
-                            data-lpignore="true"
-                            data-form-type="other"
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="0.00"
-                          />
+                              autoComplete="new-password"
+                              autoCapitalize="none"
+                              autoCorrect="off"
+                              spellCheck="false"
+                              data-lpignore="true"
+                              data-form-type="other"
+                              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder={
+                                isFreeOption
+                                  ? "None"
+                                  : "Choice name and price (optional)"
+                              }
+                            />
+                          </div>
+                          <div className="w-32">
+                            {isFreeOption ? (
+                              <div className="w-full border border-gray-200 bg-gray-100 text-gray-500 rounded-md px-3 py-2 text-center">
+                                Free
+                              </div>
+                            ) : (
+                              <input
+                                type="text"
+                                value={choice.price?.toString() || ""}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  if (formatNumberInput(value) === value) {
+                                    actions.updateChoice(
+                                      categoryIndex,
+                                      choiceIndex,
+                                      "price",
+                                      value ? Number(value) : undefined
+                                    );
+                                  }
+                                }}
+                                autoComplete="new-password"
+                                autoCapitalize="none"
+                                autoCorrect="off"
+                                spellCheck="false"
+                                data-lpignore="true"
+                                data-form-type="other"
+                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="0.00"
+                              />
+                            )}
+                          </div>
+                          {!isFreeOption && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                actions.removeChoiceFromCategory(
+                                  categoryIndex,
+                                  choiceIndex
+                                )
+                              }
+                              className="px-3 py-2 text-red-600 hover:text-red-800"
+                            >
+                              Remove
+                            </button>
+                          )}
                         </div>
-                        {category.choices.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              actions.removeChoiceFromCategory(
-                                categoryIndex,
-                                choiceIndex
-                              )
-                            }
-                            className="px-3 py-2 text-red-600 hover:text-red-800"
-                          >
-                            Remove
-                          </button>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   <button

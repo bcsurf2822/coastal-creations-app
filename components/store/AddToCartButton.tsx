@@ -5,44 +5,15 @@ import type { ReactElement, CSSProperties } from "react";
 import { FaCheck } from "react-icons/fa";
 import { FaShoppingCart } from "react-icons/fa";
 import { useCart } from "./CartProvider";
-import type { Product } from "./mockProducts";
-import type { StoreProduct, StoreProductVariation } from "@/lib/types/storeTypes";
+import type { StoreProductSummary } from "@/lib/types/storeTypes";
 
 interface AddToCartButtonProps {
-  product: Product;
+  product: StoreProductSummary;
   className: string;
   style?: CSSProperties;
   showCartIcon?: boolean;
   iconClassName?: string;
   label?: string;
-}
-
-function toStoreProduct(p: Product): StoreProduct {
-  const variation: StoreProductVariation = {
-    id: `mock-${p.id}-default`,
-    name: "Default",
-    priceCents: Math.round(p.price * 100),
-    availability: p.inStock ? "available" : "sold_out",
-    inStockQuantity: p.stockCount,
-    ordinal: 0,
-  };
-  return {
-    squareItemId: `mock-${p.id}`,
-    name: p.name,
-    slug: p.id,
-    primaryImage: undefined,
-    categoryName: p.category,
-    priceRange: {
-      minCents: Math.round(p.price * 100),
-      maxCents: Math.round(p.price * 100),
-    },
-    hasMultipleVariations: false,
-    availability: p.inStock ? "available" : "sold_out",
-    displayOrder: 0,
-    description: p.description,
-    images: [],
-    variations: [variation],
-  };
 }
 
 export function AddToCartButton({
@@ -56,19 +27,22 @@ export function AddToCartButton({
   const { addItem, openDrawer } = useCart();
   const [added, setAdded] = useState(false);
 
+  const variation = product.defaultVariation;
+  const soldOut = product.availability === "sold_out" || !variation;
+
   const handleClick = useCallback(() => {
-    if (added) return;
-    const storeProduct = toStoreProduct(product);
-    addItem(storeProduct, storeProduct.variations[0]);
+    if (added || !variation || soldOut) return;
+    addItem(product, variation);
     openDrawer();
     setAdded(true);
     setTimeout(() => setAdded(false), 1800);
-  }, [added, product, addItem, openDrawer]);
+  }, [added, variation, soldOut, product, addItem, openDrawer]);
 
   return (
     <button
       onClick={handleClick}
-      className={`relative overflow-hidden ${className}`}
+      disabled={soldOut}
+      className={`relative overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
       style={style}
     >
       {added && <span className="btn-shine-sweep" />}
@@ -78,6 +52,8 @@ export function AddToCartButton({
             <FaCheck className={iconClassName} />
             Added!
           </>
+        ) : soldOut ? (
+          "Sold Out"
         ) : (
           <>
             {showCartIcon && <FaShoppingCart className={iconClassName} />}

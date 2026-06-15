@@ -44,10 +44,16 @@ export interface StoreProductSummary {
   slug: string; // resolved route segment for /store/[slug]
   primaryImage?: StoreProductImage;
   categoryName?: string;
+  description?: string; // plain-text, for grid cards that show a blurb
   priceRange: { minCents: number; maxCents: number };
   hasMultipleVariations: boolean;
   availability: StoreProductAvailability; // rolled up across variations
   displayOrder: number;
+  /**
+   * The item's first (lowest-ordinal) variation, so the grid card can add to cart
+   * with a real Square variation id without fetching the full detail payload.
+   */
+  defaultVariation?: StoreProductVariation;
 }
 
 /**

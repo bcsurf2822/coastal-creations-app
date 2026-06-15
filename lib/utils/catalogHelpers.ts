@@ -17,11 +17,29 @@ import { formatCents } from "@/lib/utils/moneyHelpers";
 const LOW_STOCK_THRESHOLD = 3;
 
 /**
+ * Square category-name prefix that controls Shop visibility. The merchant adds an
+ * item to any Square category whose name starts with this prefix (e.g.
+ * "Online Sales - Art Kits", "Online Sales - Stickers") to put it in the online Shop.
+ * This is the SINGLE source of truth for what is sellable online — managed entirely
+ * from the Square dashboard, no app-side toggle. See spec/ecommerce/00-STATUS.md.
+ */
+export const ONLINE_SALES_CATEGORY_PREFIX = "Online Sales";
+
+/**
  * Returns true for items that should be allowed in the Shop:
  * REGULAR physical goods, not archived, present at the merchant's location.
  */
 export function isSellablePhysicalGood(item: RawCatalogItem): boolean {
   return item.productType === "REGULAR" && !item.isArchived;
+}
+
+/**
+ * True when the item belongs to an "Online Sales …" Square category — i.e. the
+ * merchant has flagged it for the online Shop from the Square dashboard.
+ */
+export function isInOnlineSalesCategory(item: RawCatalogItem): boolean {
+  const prefix = ONLINE_SALES_CATEGORY_PREFIX.toLowerCase();
+  return item.categoryNames.some((name) => name.toLowerCase().startsWith(prefix));
 }
 
 /**
@@ -98,11 +116,11 @@ function rollupAvailability(
  */
 export function toStoreProductSummary(
   item: RawCatalogItem,
-  settings: IStoreProductSettings,
+  settings: IStoreProductSettings | undefined,
   stock: Map<string, number>
 ): StoreProductSummary {
   const slug =
-    (settings.slug as string | undefined) ||
+    (settings?.slug as string | undefined) ||
     createProductSlug(item.name, item.id);
 
   const primaryImage: StoreProductImage | undefined =
@@ -110,16 +128,25 @@ export function toStoreProductSummary(
       ? { id: `img-${item.id}-0`, url: item.imageUrls[0], altText: item.name }
       : undefined;
 
+  // First variation by ordinal — lets the grid card add to cart directly with a
+  // real Square variation id (checkout-correct) without loading the detail payload.
+  const firstRaw = [...item.variations].sort((a, b) => a.ordinal - b.ordinal)[0];
+  const defaultVariation = firstRaw
+    ? toStoreProductVariation(firstRaw, stock.get(firstRaw.id))
+    : undefined;
+
   return {
     squareItemId: item.id,
     name: item.name,
     slug,
     primaryImage,
     categoryName: item.categoryNames[0],
+    description: item.descriptionHtml ? stripHtml(item.descriptionHtml) : undefined,
     priceRange: priceRange(item.variations),
     hasMultipleVariations: item.variations.length > 1,
     availability: rollupAvailability(item.variations, stock),
-    displayOrder: (settings.displayOrder as number | undefined) ?? 0,
+    displayOrder: (settings?.displayOrder as number | undefined) ?? 0,
+    defaultVariation,
   };
 }
 
@@ -128,7 +155,7 @@ export function toStoreProductSummary(
  */
 export function toStoreProduct(
   item: RawCatalogItem,
-  settings: IStoreProductSettings,
+  settings: IStoreProductSettings | undefined,
   stock: Map<string, number>
 ): StoreProduct {
   const summary = toStoreProductSummary(item, settings, stock);

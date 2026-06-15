@@ -144,13 +144,14 @@ export default function Footer() {
               animate="animate"
               whileHover="hover"
             >
-              <Link href="/" className="cursor-pointer">
+              <Link href="/" className="relative block h-full w-full cursor-pointer">
                 <Image
                   src="/assets/logos/coastalLogoFull.png"
                   alt="Coastal Creations Logo"
                   fill
+                  sizes="(min-width: 1280px) 160px, 144px"
                   className="object-contain"
-                  priority
+                  loading="lazy"
                 />
               </Link>
             </motion.div>

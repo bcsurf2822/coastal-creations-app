@@ -205,11 +205,12 @@ export default function NavBar() {
               animate="animate"
               whileHover="hover"
             >
-              <Link className="cursor-pointer" href="/">
+              <Link className="relative block h-full w-full cursor-pointer" href="/">
                 <Image
                   src="/assets/logos/coastalLogoFull.png"
                   alt="Coastal Creations Studio Logo"
                   fill
+                  sizes="(min-width: 1536px) 288px, (min-width: 1280px) 240px, (min-width: 1024px) 208px, 192px"
                   className="object-contain"
                   priority
                 />
@@ -286,7 +287,7 @@ export default function NavBar() {
                 href="/store"
                 className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
-                <NavRippleText text="Store" />
+                <NavRippleText text="Shop" />
               </Link>
             </motion.div>
 
@@ -487,7 +488,7 @@ export default function NavBar() {
                     className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block uppercase"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Store
+                    Shop
                   </Link>
                 </motion.div>
                 <motion.div variants={itemVariants} whileHover="hover">

@@ -4,7 +4,7 @@
 
 ## Status
 
-- **State**: Not started
+- **State**: ✅ Completed — `/store` page + nav link shipped (nav later renamed "Shop", commit `cc32ab6`). Storefront, product grid, cart, and checkout all built beyond this ticket's original scope. See `00-STATUS.md` for the full build status.
 - **Scope**: Customer-facing storefront landing page + public nav entry
 - **Related (separate ticket)**: Admin Sales page — see `spec/ecommerce/02-admin-sales-page.md`
 

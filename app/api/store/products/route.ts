@@ -4,6 +4,7 @@ import StoreProductSettings from "@/lib/models/StoreProductSettings";
 import { listCatalogItems, getInventoryCounts } from "@/lib/square/catalog";
 import {
   isSellablePhysicalGood,
+  isInOnlineSalesCategory,
   toStoreProductSummary,
 } from "@/lib/utils/catalogHelpers";
 import type { StoreProductSummary } from "@/lib/types/storeTypes";
@@ -11,26 +12,30 @@ import type { IStoreProductSettings } from "@/lib/models/StoreProductSettings";
 
 export async function GET(): Promise<Response> {
   try {
-    await connectMongo();
+    // Shop visibility is driven entirely by Square: an item appears online when the
+    // merchant adds it to an "Online Sales …" category in the Square dashboard. No
+    // app-side toggle. StoreProductSettings is now only an OPTIONAL layer for parcel
+    // size / slug / display order overrides.
+    const allItems = await listCatalogItems();
+    const items = allItems.filter(
+      (item) => isSellablePhysicalGood(item) && isInOnlineSalesCategory(item)
+    );
 
-    const settings = (await StoreProductSettings.find({
-      isOnlineSellable: true,
-    }).lean()) as unknown as IStoreProductSettings[];
-
-    if (settings.length === 0) {
+    if (items.length === 0) {
       return NextResponse.json({ success: true, products: [] });
     }
 
+    await connectMongo();
+    const settings = (await StoreProductSettings.find({
+      squareItemId: { $in: items.map((i) => i.id) },
+    }).lean()) as unknown as IStoreProductSettings[];
     const byId = new Map(settings.map((s) => [s.squareItemId, s]));
-
-    const allItems = await listCatalogItems([...byId.keys()]);
-    const items = allItems.filter(isSellablePhysicalGood);
 
     const variationIds = items.flatMap((i) => i.variations.map((v) => v.id));
     const stock = await getInventoryCounts(variationIds);
 
     const products: StoreProductSummary[] = items
-      .map((item) => toStoreProductSummary(item, byId.get(item.id)!, stock))
+      .map((item) => toStoreProductSummary(item, byId.get(item.id), stock))
       .sort((a, b) => a.displayOrder - b.displayOrder);
 
     return NextResponse.json({ success: true, products });
