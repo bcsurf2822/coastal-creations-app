@@ -21,6 +21,7 @@ interface ShippingAddressStepProps {
   onNext: () => void;
   isLoading: boolean;
   error: string | null;
+  hasRates?: boolean;
 }
 
 const US_STATES = [
@@ -36,6 +37,7 @@ export default function ShippingAddressStep({
   onNext,
   isLoading,
   error,
+  hasRates = false,
 }: ShippingAddressStepProps): ReactElement {
   const isValid =
     values.firstName.trim() &&
@@ -157,7 +159,7 @@ export default function ShippingAddressStep({
         disabled={!isValid || isLoading}
         onClick={onNext}
       >
-        {isLoading ? "Getting shipping rates…" : "Continue to Shipping"}
+        {isLoading ? "Getting shipping rates…" : hasRates ? "Update Rates" : "Get Shipping Rates"}
       </Button>
     </div>
   );

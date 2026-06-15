@@ -28,6 +28,8 @@ interface PaymentStepProps {
   applicationId: string;
   locationId: string;
   subtotalCents: number;
+  taxCents: number;
+  taxStateLabel: string;
   selectedRate: ShippingRate;
   onToken: (token: string) => Promise<void>;
   onBack: () => void;
@@ -39,13 +41,15 @@ export default function PaymentStep({
   applicationId,
   locationId,
   subtotalCents,
+  taxCents,
+  taxStateLabel,
   selectedRate,
   onToken,
   onBack,
   isProcessing,
   error,
 }: PaymentStepProps): ReactElement {
-  const totalCents = subtotalCents + selectedRate.rateCents;
+  const totalCents = subtotalCents + selectedRate.rateCents + taxCents;
   const totalDollars = (totalCents / 100).toFixed(2);
 
   return (
@@ -56,9 +60,13 @@ export default function PaymentStep({
           <span>Subtotal</span>
           <span>{formatCents(subtotalCents)}</span>
         </div>
-        <div className="flex justify-between text-[var(--color-text-primary)] mb-2">
+        <div className="flex justify-between text-[var(--color-text-primary)] mb-1">
           <span>{selectedRate.serviceName}</span>
           <span>{formatCents(selectedRate.rateCents)}</span>
+        </div>
+        <div className="flex justify-between text-[var(--color-text-primary)] mb-2">
+          <span>Sales Tax{taxStateLabel ? ` (${taxStateLabel})` : ""}</span>
+          <span>{formatCents(taxCents)}</span>
         </div>
         <div className="border-t border-[var(--color-border-lighter)] pt-2 flex justify-between font-bold text-[var(--color-primary)]">
           <span>Total</span>

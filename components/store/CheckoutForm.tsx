@@ -5,11 +5,13 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/store/CartProvider";
 import { usePaymentConfig } from "@/hooks/queries/use-payment-config";
+import { Button } from "@/components/ui";
 import ShippingAddressStep, {
   type AddressFormValues,
 } from "@/components/store/ShippingAddressStep";
-import ShippingRateStep from "@/components/store/ShippingRateStep";
 import PaymentStep from "@/components/store/PaymentStep";
+import { formatCents } from "@/lib/utils/moneyHelpers";
+import { computeTaxCents, taxLabel as getTaxLabel } from "@/lib/utils/taxHelpers";
 import type { ShippingRate } from "@/lib/shippo/rates";
 
 const EMPTY_ADDRESS: AddressFormValues = {
@@ -24,14 +26,14 @@ const EMPTY_ADDRESS: AddressFormValues = {
   zip: "",
 };
 
-const STEP_LABELS = ["Contact & Shipping", "Shipping Method", "Payment"];
+const STEP_LABELS = ["Shipping", "Payment"];
 
 export default function CheckoutForm(): ReactElement | null {
   const router = useRouter();
   const { items, subtotalCents, clearCart } = useCart();
   const { data: paymentConfig } = usePaymentConfig();
 
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2>(1);
   const [address, setAddress] = useState<AddressFormValues>(EMPTY_ADDRESS);
   const [rates, setRates] = useState<ShippingRate[]>([]);
   const [selectedRate, setSelectedRate] = useState<ShippingRate | null>(null);
@@ -40,8 +42,15 @@ export default function CheckoutForm(): ReactElement | null {
   const [error, setError] = useState<string | null>(null);
   const orderCompleted = useRef(false);
 
+  const taxCents = address.state ? computeTaxCents(subtotalCents, address.state) : 0;
+  const taxStateLabel = address.state ? getTaxLabel(address.state) : "";
+
   const updateField = (field: keyof AddressFormValues, value: string): void => {
     setAddress((prev) => ({ ...prev, [field]: value }));
+    if (rates.length > 0) {
+      setRates([]);
+      setSelectedRate(null);
+    }
   };
 
   const handleFetchRates = async (): Promise<void> => {
@@ -74,7 +83,6 @@ export default function CheckoutForm(): ReactElement | null {
       }
       setRates(data.rates);
       setSelectedRate(data.rates[0] ?? null);
-      setStep(2);
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -171,33 +179,86 @@ export default function CheckoutForm(): ReactElement | null {
         })}
       </div>
 
-      {/* Step content */}
+      {/* Step 1: Shipping address + rate selection */}
       {step === 1 && (
-        <ShippingAddressStep
-          values={address}
-          onChange={updateField}
-          onNext={handleFetchRates}
-          isLoading={isLoading}
-          error={error}
-        />
+        <div className="flex flex-col gap-6">
+          <ShippingAddressStep
+            values={address}
+            onChange={updateField}
+            onNext={handleFetchRates}
+            isLoading={isLoading}
+            error={rates.length === 0 ? error : null}
+            hasRates={rates.length > 0}
+          />
+
+          {rates.length > 0 && (
+            <div className="flex flex-col gap-4">
+              <h3 className="font-semibold text-[var(--color-text-primary)] text-sm">
+                Choose Shipping Method
+              </h3>
+              <div className="flex flex-col gap-3">
+                {rates.map((rate) => {
+                  const isSelected = selectedRate?.rateId === rate.rateId;
+                  return (
+                    <button
+                      key={rate.rateId}
+                      onClick={() => setSelectedRate(rate)}
+                      className={`w-full text-left px-4 py-3 rounded-[var(--radius-lg)] border-2 transition-colors ${
+                        isSelected
+                          ? "border-[var(--color-primary)] bg-[var(--color-light)]"
+                          : "border-[var(--color-border-lighter)] hover:border-[var(--color-secondary)]"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-[var(--color-text-primary)] text-sm">
+                            {rate.serviceName}
+                          </p>
+                          {rate.estimatedDays != null && (
+                            <p className="text-xs text-[var(--color-text-subtle)] mt-0.5">
+                              Est. {rate.estimatedDays} business day{rate.estimatedDays !== 1 ? "s" : ""}
+                            </p>
+                          )}
+                        </div>
+                        <span className="font-bold text-[var(--color-primary)] ml-4">
+                          {formatCents(rate.rateCents)}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {error && (
+                <p className="text-[var(--color-error)] text-sm bg-red-50 border border-red-200 rounded-[var(--radius-md)] px-3 py-2">
+                  {error}
+                </p>
+              )}
+
+              <Button
+                variant="primary"
+                className="w-full"
+                disabled={!selectedRate}
+                onClick={() => setStep(2)}
+              >
+                Continue to Payment →
+              </Button>
+            </div>
+          )}
+        </div>
       )}
-      {step === 2 && (
-        <ShippingRateStep
-          rates={rates}
-          selectedRate={selectedRate}
-          onSelect={setSelectedRate}
-          onBack={() => setStep(1)}
-          onNext={() => setStep(3)}
-        />
-      )}
-      {step === 3 && selectedRate && paymentConfig && (
+
+      {/* Step 2: Payment */}
+      {step === 2 && selectedRate && paymentConfig && (
         <PaymentStep
           applicationId={paymentConfig.applicationId}
           locationId={paymentConfig.locationId}
           subtotalCents={subtotalCents}
+          taxCents={taxCents}
+          taxStateLabel={taxStateLabel}
           selectedRate={selectedRate}
           onToken={handlePayment}
-          onBack={() => setStep(2)}
+          onBack={() => setStep(1)}
           isProcessing={isProcessing}
           error={error}
         />

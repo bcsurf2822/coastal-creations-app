@@ -22,6 +22,7 @@ import { OrderConfirmationEmail } from "@/components/email-templates/OrderConfir
 import { StoreOrderAdminEmail } from "@/components/email-templates/StoreOrderAdminEmail";
 import type { CartItem } from "@/lib/types/cartTypes";
 import type { ShippingRate } from "@/lib/shippo/rates";
+import { computeTaxCents } from "@/lib/utils/taxHelpers";
 
 const squareClient = new Client({
   accessToken: process.env.SQUARE_ACCESS_TOKEN,
@@ -67,7 +68,8 @@ export async function POST(request: Request): Promise<Response> {
       return NextResponse.json({ error: "Missing required checkout fields" }, { status: 400 });
     }
 
-    const totalCents = subtotalCents + selectedRate.rateCents;
+    const taxCents = computeTaxCents(subtotalCents, shippingAddress.stateProvince);
+    const totalCents = subtotalCents + selectedRate.rateCents + taxCents;
 
     console.log("[API-STORE-CHECKOUT-POST] Processing checkout for:", customer.email, "Total:", totalCents);
 
@@ -119,7 +121,7 @@ export async function POST(request: Request): Promise<Response> {
       items: orderItems,
       subtotalCents,
       shippingCents: selectedRate.rateCents,
-      taxCents: 0,
+      taxCents,
       totalCents,
       customer: {
         firstName: customer.firstName,
@@ -164,6 +166,7 @@ export async function POST(request: Request): Promise<Response> {
             })),
             subtotalCents,
             shippingCents: selectedRate.rateCents,
+            taxCents,
             totalCents,
             shippingAddress: {
               name: shippingAddress.name,
@@ -185,6 +188,7 @@ export async function POST(request: Request): Promise<Response> {
           items: orderItems,
           subtotalCents,
           shippingCents: selectedRate.rateCents,
+          taxCents,
           totalCents,
           shippingAddress: {
             name: shippingAddress.name,
