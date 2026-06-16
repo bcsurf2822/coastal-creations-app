@@ -35,5 +35,6 @@ Copyright © 2025 Coastal Creations Studio. All rights reserved.
 
 <!-- Deploys: production from `main`, staging (stg.coastalcreationsstudio.com) from `develop`. -->
 <!-- Sanity datasets: production (prod), stage (staging). -->
+<!-- Docs last reviewed: 2026-06-16. -->
 
 
