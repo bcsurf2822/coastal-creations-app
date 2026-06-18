@@ -57,7 +57,10 @@ export default function Store(): ReactElement {
           in z-order (z-40 < the nav's z-50) so the nav always wins on overlap. */}
       <div
         className="sticky top-0 z-40 border-b border-gray-200 py-3 px-4"
-        style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(8px)" }}
+        style={{
+          background: "rgba(255,255,255,0.97)",
+          backdropFilter: "blur(8px)",
+        }}
       >
         <div className="mx-auto max-w-7xl flex items-center flex-wrap gap-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 mr-2">
@@ -85,9 +88,6 @@ export default function Store(): ReactElement {
               {v.label}
             </button>
           ))}
-          <span className="ml-auto text-xs italic text-gray-400 hidden sm:block">
-            Client review mode
-          </span>
         </div>
       </div>
 
