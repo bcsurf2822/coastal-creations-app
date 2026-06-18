@@ -4,11 +4,13 @@
 
 ## Project Purpose
 
-Full-featured event booking system for Coastal Creations Studio (Ocean City, NJ):
+Full-featured event booking + e-commerce platform for Coastal Creations Studio (Ocean City, NJ):
 
-- **Customer-facing**: Browse/book classes, camps, workshops, private events, reservations with Square payments
-- **Admin**: Event management, customer tracking, payment monitoring, refunds, content management
-- **Tech Stack**: Next.js 16, React 18, TypeScript, MongoDB (Mongoose), NextAuth, Square, Sanity CMS, Resend, TanStack Query
+- **Customer-facing**: Browse/book classes, camps, workshops, private events, reservations with Square payments; shop physical products (Art Kits, etc.) through a Square-catalog-driven online store with Shippo-rated shipping
+- **Admin**: Event management, customer tracking, payment monitoring, refunds, content management, store product/order management
+- **Tech Stack**: Next.js 16, React 19, TypeScript, MongoDB (Mongoose), NextAuth, Square (Payments + Catalog), Shippo (shipping), Sanity CMS, Resend, TanStack Query
+
+> **Two independent systems share this codebase:** the original **booking** system (Events / Customers / Reservations / Private Events) and an **additive, independent online store** (Square Catalog + Shippo). The store does not touch the booking models. See the [Online Store](#online-store-e-commerce) section.
 
 ## Project Structure
 
@@ -37,6 +39,12 @@ coastal-creations-app/
 │   ├── gift-cards/               # Gift card purchase & balance check
 │   │   └── balance/              # Balance lookup page
 │   │
+│   ├── store/                    # Online store (physical products)
+│   │   └── [slug]/               # Product detail page
+│   ├── cart/                     # Shopping cart page
+│   ├── checkout/                 # 3-step checkout (address → rate → payment)
+│   ├── order-confirmation/       # Post-purchase confirmation
+│   │
 │   ├── contact-us/               # Contact form
 │   ├── walk-in/                  # Walk-in offerings (Mosaics, Canvas Mixed Media, Art Kits)
 │   ├── gallery/                  # Photo gallery
@@ -60,6 +68,9 @@ coastal-creations-app/
 │   │   ├── upload-images/        # Gallery upload
 │   │   ├── page-descriptions/    # CMS content editing
 │   │   ├── hours/                # Business hours
+│   │   ├── store/                # Store admin (products + orders)
+│   │   │   ├── products/         # Toggle online-sellable, parcel preset
+│   │   │   └── orders/[id]/      # Order detail (auto-refreshing) + status
 │   │   └── error-logs/           # Error monitoring
 │   │
 │   ├── api/                      # API Routes
@@ -90,7 +101,14 @@ coastal-creations-app/
 │   │   ├── contact/              # Contact form submission
 │   │   ├── subscribe/            # Newsletter subscription
 │   │   ├── hours/                # Business hours management
-│   │   └── page-content/         # CMS page content
+│   │   ├── page-content/         # CMS page content
+│   │   ├── store/                # Store APIs (customer-facing)
+│   │   │   ├── products/         # List sellable catalog items + [id]
+│   │   │   ├── shipping-rates/   # Shippo live rate quotes
+│   │   │   ├── shipping-label/   # Manual label purchase (admin fallback)
+│   │   │   └── checkout/         # Square payment + Order + auto-label
+│   │   ├── admin/store/          # Admin store APIs (products, orders, status)
+│   │   └── webhooks/shippo/      # Shippo tracking webhook receiver
 │   │
 │   ├── actions/actions.ts        # Server Actions
 │   ├── providers.tsx             # React Query + Auth providers
@@ -116,6 +134,7 @@ coastal-creations-app/
 │   ├── walk-in/                  # Walk-in page (WalkIn, WalkInCard, WalkInImageSlot)
 │   ├── payment/                  # Square payment components
 │   ├── gift-cards/               # Gift card UI components
+│   ├── store/                    # Storefront, cart, checkout (CartProvider, CheckoutForm, ShippingRateStep, PaymentStep, etc.)
 │   ├── gallery/                  # Gallery display
 │   ├── contact/                  # Contact form
 │   ├── about/                    # About page
@@ -184,7 +203,16 @@ coastal-creations-app/
 │   │   ├── Customer.ts           # Customer bookings with refunds
 │   │   ├── Reservations.ts       # Day-by-day reservations
 │   │   ├── PrivateEvent.ts       # Private event offerings
+│   │   ├── Order.ts              # Store orders (Square + Shippo lifecycle)
+│   │   ├── StoreProductSettings.ts # Website overlay on Square catalog items
 │   │   └── PaymentError.ts       # Error tracking
+│   │
+│   ├── shippo/                   # Shippo shipping SDK utilities
+│   │   ├── rates.ts             # getShippingRates (live rate quotes)
+│   │   └── labels.ts            # purchaseLabelForOrder (buy label)
+│   │
+│   ├── square/                   # Square SDK utilities (see also below)
+│   │   └── catalog.ts           # listCatalogItems, getInventoryCounts
 │   │
 │   ├── types/                    # Type definitions
 │   │   ├── eventTypes.ts         # Event type definitions
@@ -235,6 +263,8 @@ coastal-creations-app/
 | **Customer.ts** | Booking/registration | event (ref), eventType, selectedDates, participants[], billingInfo, squarePaymentId, refundStatus |
 | **Reservations.ts** | Day-by-day availability | eventName, pricePerDayPerParticipant, dailyAvailability[], timeType |
 | **PrivateEvent.ts** | Private party offerings | options, deposit, image |
+| **Order.ts** | Online store orders | orderNumber, items[], customer, shippingAddress, square{}, shippo{}, status, shippedAt, deliveredAt (money in **cents**) |
+| **StoreProductSettings.ts** | Website overlay on a Square catalog item | squareItemId, isOnlineSellable, parcelPreset (SMALL/MEDIUM/LARGE), slug, displayOrder |
 | **PaymentError.ts** | Payment failure tracking | error details, customer info |
 
 ## API Routes Summary
@@ -259,6 +289,14 @@ coastal-creations-app/
 | `/api/page-content` | GET, PUT | CMS content |
 | `/api/send-confirmation` | POST | Booking confirmation email |
 | `/api/contact` | POST | Contact form |
+| `/api/store/products` | GET | List online-sellable Square catalog items |
+| `/api/store/shipping-rates` | POST | Shippo live rate quotes for a destination + cart |
+| `/api/store/checkout` | POST | Square payment → create Order → auto-buy label → emails |
+| `/api/store/shipping-label` | POST | Manual label purchase (admin fallback) |
+| `/api/admin/store/products` | GET, POST, PUT | Manage store product settings (visibility, parcel) |
+| `/api/admin/store/orders` | GET | List store orders |
+| `/api/admin/store/orders/[id]` | GET, PATCH | Order detail; PATCH `mark_shipped` or status override |
+| `/api/webhooks/shippo` | POST | Shippo tracking webhook → drive order status + emails |
 
 ## React Query Hooks
 
@@ -298,8 +336,9 @@ Cache invalidation is automatic - mutations invalidate related queries.
 | `@tanstack/react-query` | Server state management, caching |
 | `next-auth` | Authentication (Google OAuth) |
 | `mongoose` | MongoDB ODM |
-| `square` | Payment processing |
+| `square` | Payment processing + Catalog (store products) |
 | `react-square-web-payments-sdk` | Payment UI |
+| `shippo` | Shipping rate quotes, label purchase, tracking webhooks |
 | `resend` | Transactional emails |
 | `next-sanity` | CMS integration |
 | `@fullcalendar/*` | Calendar UI |
@@ -322,6 +361,22 @@ SQUARE_LOCATION_ID       # Square location
 SANITY_PROJECT_ID        # Sanity CMS
 SANITY_DATASET           # Sanity dataset
 RESEND_API_KEY           # Email service
+
+# --- Online store (Shippo shipping) ---
+SHIPPO_API_KEY           # Shippo API (test key for dev/stage, live for prod)
+SHIPPO_WEBHOOK_SECRET    # Shared secret echoed in the webhook URL (?token=)
+MERCHANT_SHIP_FROM_NAME  # Ship-from origin (rates + labels)
+MERCHANT_SHIP_FROM_STREET
+MERCHANT_SHIP_FROM_CITY
+MERCHANT_SHIP_FROM_STATE
+MERCHANT_SHIP_FROM_ZIP
+MERCHANT_SHIP_FROM_COUNTRY   # default US
+MERCHANT_SHIP_FROM_PHONE     # REQUIRED by USPS or label purchase fails
+MERCHANT_SHIP_FROM_EMAIL     # REQUIRED by USPS or label purchase fails
+
+# --- Email routing ---
+STUDIO_EMAIL             # Admin/owner recipient in production
+DEV_EMAIL                # In dev/stage, ALL store emails redirect here
 ```
 
 ### Scripts
@@ -391,10 +446,71 @@ const date = dayjs.tz(dateString, "America/New_York");
 | Customers | `lib/models/Customer.ts` | `/api/customer/` | `app/admin/dashboard/customers/` | `components/dashboard/customers/` |
 | Reservations | `lib/models/Reservations.ts` | `/api/reservations/` | `app/reservations/` | `components/reservations/` |
 | Private Events | `lib/models/PrivateEvent.ts` | `/api/private-events/` | `app/events/private-events/` | `components/dashboard/private-event-form/` |
+| Store Orders | `lib/models/Order.ts` | `/api/store/checkout/`, `/api/admin/store/orders/` | `app/checkout/`, `app/admin/dashboard/store/orders/` | `components/store/` |
+| Store Products | `lib/models/StoreProductSettings.ts` | `/api/store/products/`, `/api/admin/store/products/` | `app/store/`, `app/admin/dashboard/store/products/` | `components/store/` |
+| Shipping | - | `/api/store/shipping-rates/`, `/api/webhooks/shippo/` | - | `lib/shippo/`, `lib/utils/parcelHelpers.ts` |
 | Payments | - | `/api/payments/`, `/api/refunds/` | `app/payments/` | `components/payment/` |
 | Gift Cards | - | `/api/gift-cards/` | `app/gift-cards/` | `components/gift-cards/` |
 | Gallery | - | `/api/gallery/` | `app/gallery/` | `components/gallery/` |
 | CMS Content | - | `/api/page-content/`, `/api/hours/` | - | `components/dashboard/page-descriptions/` |
+
+## Online Store (E-commerce)
+
+An **additive, independent** physical-product store layered on the existing app. It does **not** touch the Event/Customer/Reservation booking models. Money is stored in **cents** everywhere (Square-native); convert only at the UI boundary via `lib/utils/moneyHelpers.ts`.
+
+### Catalog-driven (Square owns the products)
+
+- **Square Catalog** is the source of truth for products: name, price, photos, variations, inventory.
+- **`StoreProductSettings`** (`lib/models/StoreProductSettings.ts`) is a thin website overlay keyed by `squareItemId`, holding only website-only fields: `isOnlineSellable` (the Shop visibility flag), `parcelPreset` (box size for Shippo), optional `slug`, `displayOrder`, and an optional exact shipping override.
+- To sell any catalog item online, the merchant flips `isOnlineSellable` — no code change. `/api/store/products` lists items that are both a sellable physical good (`lib/utils/catalogHelpers.ts`) and online-enabled.
+
+### Order lifecycle (`lib/models/Order.ts`, `status` field)
+
+```
+pending -> paid -> label_created -> shipped -> delivered
+(cancelled and refunded are terminal off-ramps reachable by admin action)
+```
+
+| Status | Set by |
+|--------|--------|
+| `pending` → `paid` | `/api/store/checkout` after Square captures payment |
+| `label_created` | Shippo label auto-purchased at checkout (or manual fallback) |
+| `shipped` | **Shippo webhook** on first carrier scan (TRANSIT) — auto |
+| `delivered` | **Shippo webhook** on DELIVERED — auto |
+| `cancelled` / `refunded` | Admin action |
+
+`shipped`/`delivered` are driven automatically by carrier tracking — the admin no longer toggles them manually. A manual status dropdown remains in admin as a fallback/override.
+
+### Shipping (Shippo)
+
+- **Rates**: `lib/shippo/rates.ts` → `getShippingRates()` quotes live rates from the merchant origin (`MERCHANT_SHIP_FROM_*`) to the customer, using the cart's heaviest parcel preset. Rates are sorted cheapest-first; checkout pre-selects the cheapest.
+- **Labels**: `lib/shippo/labels.ts` → `purchaseLabelForOrder()` buys the label (idempotent — returns the existing label if already bought). Auto-invoked at checkout; `/api/store/shipping-label` is the admin-only manual fallback.
+- **Parcel presets**: SMALL/MEDIUM/LARGE dimensions+weights in `lib/utils/parcelHelpers.ts` (default MEDIUM ~3lb).
+- **Tracking webhook**: `/api/webhooks/shippo` receives `track_updated` events and drives the order:
+  - `TRANSIT` (first scan) → mark `shipped`, email customer tracking + notify admin
+  - `DELIVERED` → mark `delivered`, email customer (backfills `shippedAt` if no prior TRANSIT)
+  - `FAILURE` / `RETURNED` → admin-only exception alert, **no** status change
+  - Handlers are idempotent on `shippedAt`/`deliveredAt`. Auth: Shippo can't sign requests, so the secret rides in the URL as `?token=` and is checked against `SHIPPO_WEBHOOK_SECRET`. Register the webhook in the Shippo dashboard (Event: Track Updated; **Test** mode for stage, **Live** for prod) pointing at `<origin>/api/webhooks/shippo?token=<secret>`.
+
+### Checkout flow (`components/store/CheckoutForm.tsx`)
+
+3 steps: **Contact & Shipping** (`ShippingAddressStep`) → **Shipping Method** (`ShippingRateStep`, collapsed to the recommended rate with a "choose another" toggle) → **Payment** (`PaymentStep`, Square Web Payments SDK). Cart state lives in `CartProvider` (React Context, persisted client-side).
+
+### Transactional emails (`components/email-templates/`)
+
+| Template | Trigger | Recipient |
+|----------|---------|-----------|
+| `OrderConfirmationEmail` | checkout success | customer |
+| `StoreOrderAdminEmail` | checkout success | admin (label link / action-needed) |
+| `ShippingConfirmationEmail` | TRANSIT → shipped | customer + admin |
+| `DeliveryConfirmationEmail` | DELIVERED | customer |
+| `ShipmentExceptionEmail` | FAILURE / RETURNED | admin only |
+
+In dev/stage, **all** store emails redirect to `DEV_EMAIL`; in production, customer emails go to the customer and admin emails to `STUDIO_EMAIL`.
+
+### Admin
+
+`app/admin/dashboard/store/` — product visibility/parcel management and an order list + detail view. The order detail page **auto-refreshes** (15s polling) so webhook-driven status changes appear without a manual refresh; polling stops on terminal statuses and pauses when the tab is hidden.
 
 ## Authentication
 
