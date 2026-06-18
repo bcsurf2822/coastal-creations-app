@@ -1,9 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { ReactElement } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+
+// How often the page re-pulls the order so webhook-driven status changes
+// (shipped / delivered) appear without a manual refresh.
+const POLL_INTERVAL_MS = 15000;
+
+// Once an order reaches one of these, nothing more will change — stop polling.
+const TERMINAL_STATUSES: ReadonlySet<string> = new Set([
+  "delivered",
+  "cancelled",
+  "refunded",
+]);
 
 type OrderStatus =
   | "pending" | "paid" | "label_created" | "shipped"
@@ -63,21 +74,53 @@ export default function OrderDetailPage(): ReactElement {
   const [updating, setUpdating] = useState(false);
   const [creatingLabel, setCreatingLabel] = useState(false);
 
+  // Track in-flight admin actions so a background poll can't clobber an
+  // optimistic update mid-request.
+  const busyRef = useRef(false);
   useEffect(() => {
-    async function fetchOrder() {
+    busyRef.current = updating || creatingLabel;
+  }, [updating, creatingLabel]);
+
+  // `silent` polls skip the loading spinner and swallow transient errors so a
+  // single failed background refresh doesn't blank out the page.
+  const fetchOrder = useCallback(
+    async (silent = false): Promise<void> => {
+      if (silent && busyRef.current) return;
       try {
         const res = await fetch(`/api/admin/store/orders/${id}`);
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to load order");
         setOrder(data.order);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
+        if (!silent) setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
-        setLoading(false);
+        if (!silent) setLoading(false);
       }
-    }
+    },
+    [id]
+  );
+
+  // Initial load (runs once per order id).
+  useEffect(() => {
     fetchOrder();
-  }, [id]);
+  }, [fetchOrder]);
+
+  // Background polling — only while the order is still in motion AND the tab is
+  // visible. Switching back to the tab triggers an immediate refresh so you're
+  // never looking at a stale status after coming back.
+  const isTerminal = order ? TERMINAL_STATUSES.has(order.status) : false;
+  useEffect(() => {
+    if (isTerminal) return;
+    const tick = (): void => {
+      if (document.visibilityState === "visible") fetchOrder(true);
+    };
+    const interval = setInterval(tick, POLL_INTERVAL_MS);
+    document.addEventListener("visibilitychange", tick);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", tick);
+    };
+  }, [fetchOrder, isTerminal]);
 
   const updateStatus = async (status: OrderStatus) => {
     if (!order) return;
