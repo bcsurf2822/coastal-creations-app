@@ -8,19 +8,14 @@
  * sent only by the mark_shipped action. See spec/ecommerce/03-shipping-notification-flow.md.
  */
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
+import { requireAdmin } from "@/lib/auth/guards";
 import { connectMongo } from "@/lib/mongoose";
 import Order from "@/lib/models/Order";
 import { purchaseLabelForOrder } from "@/lib/shippo/labels";
 
 export async function POST(request: Request): Promise<Response> {
-  if (process.env.NODE_ENV !== "development") {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-  }
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
 
   try {
     const { orderId } = (await request.json()) as { orderId: string };

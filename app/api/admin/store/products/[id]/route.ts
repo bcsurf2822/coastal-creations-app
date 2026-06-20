@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
+import { requireAdmin } from "@/lib/auth/guards";
 import { connectMongo } from "@/lib/mongoose";
 import StoreProductSettings from "@/lib/models/StoreProductSettings";
 import type { ParcelPreset } from "@/lib/models/StoreProductSettings";
@@ -9,12 +8,8 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<Response> {
-  if (process.env.NODE_ENV !== "development") {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-  }
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;
 
