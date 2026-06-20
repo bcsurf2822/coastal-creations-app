@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
@@ -20,6 +21,8 @@ const OFFER_DROPDOWN_ITEMS: OfferDropdownItem[] = [
 ];
 
 export default function NavBar() {
+  const pathname = usePathname();
+  const isCheckout = pathname === "/checkout";
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isOfferDropdownOpen, setIsOfferDropdownOpen] = useState(false);
   const [hideNavbar, setHideNavbar] = useState(false);
@@ -184,7 +187,7 @@ export default function NavBar() {
   return (
     <motion.header
       ref={navRef}
-      className={`fixed top-0 left-0 z-50 w-full border-b border-gray-100 bg-white/90 backdrop-blur-sm shadow-[0_2px_12px_rgba(15,23,42,0.06)] ${
+      className={`${isCheckout ? "relative" : "fixed top-0"} left-0 z-50 w-full border-b border-gray-100 bg-white/90 backdrop-blur-sm shadow-[0_2px_12px_rgba(15,23,42,0.06)] ${
         hideNavbar ? "pointer-events-none" : ""
       }`}
       initial={{ opacity: 0, y: -20 }}
