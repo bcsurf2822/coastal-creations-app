@@ -40,6 +40,8 @@ function validateField(field: keyof AddressFormValues, value: string): string | 
     return "Enter a valid email address";
   if (field === "zip" && value.trim() && !/^\d{5}(-\d{4})?$/.test(value))
     return "Enter a valid ZIP code";
+  if (field === "phone" && value.trim() && !/^\+?[\d\s\-().]{7,}$/.test(value))
+    return "Enter a valid phone number";
   return null;
 }
 
@@ -49,11 +51,12 @@ interface FieldWrapperProps {
   required?: boolean;
   touched: boolean;
   error: string | null;
+  value?: string;
   children: ReactElement;
 }
 
-function FieldWrapper({ id, label, required, touched, error, children }: FieldWrapperProps): ReactElement {
-  const isValid = touched && !error;
+function FieldWrapper({ id, label, required, touched, error, value, children }: FieldWrapperProps): ReactElement {
+  const isValid = !!value && !error;
   return (
     <div>
       <Label htmlFor={id} required={required}>{label}</Label>
@@ -99,6 +102,7 @@ export default function ShippingAddressStep({
           required
           touched={!!touched.firstName}
           error={validateField("firstName", values.firstName)}
+          value={values.firstName}
         >
           <Input
             id="firstName"
@@ -113,6 +117,7 @@ export default function ShippingAddressStep({
           required
           touched={!!touched.lastName}
           error={validateField("lastName", values.lastName)}
+          value={values.lastName}
         >
           <Input
             id="lastName"
@@ -128,6 +133,7 @@ export default function ShippingAddressStep({
         required
         touched={!!touched.email}
         error={validateField("email", values.email)}
+        value={values.email}
       >
         <Input
           id="email"
@@ -137,16 +143,20 @@ export default function ShippingAddressStep({
         />
       </FieldWrapper>
 
-      <div>
-        <Label htmlFor="phone">Phone (optional)</Label>
+      <FieldWrapper
+        id="phone"
+        label="Phone (optional)"
+        touched={!!touched.phone}
+        error={validateField("phone", values.phone)}
+        value={values.phone}
+      >
         <Input
           id="phone"
           type="tel"
-          value={values.phone}
-          onChange={(e) => onChange("phone", e.target.value)}
           autoComplete="tel"
+          {...fieldProps("phone")}
         />
-      </div>
+      </FieldWrapper>
 
       <FieldWrapper
         id="addressLine1"
@@ -154,6 +164,7 @@ export default function ShippingAddressStep({
         required
         touched={!!touched.addressLine1}
         error={validateField("addressLine1", values.addressLine1)}
+        value={values.addressLine1}
       >
         <Input
           id="addressLine1"
@@ -179,6 +190,7 @@ export default function ShippingAddressStep({
           required
           touched={!!touched.city}
           error={validateField("city", values.city)}
+          value={values.city}
         >
           <Input
             id="city"
@@ -205,7 +217,7 @@ export default function ShippingAddressStep({
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
-            {touched.state && values.state && (
+            {values.state && (
               <span className="absolute right-7 top-1/2 -translate-y-1/2 text-green-500 text-sm pointer-events-none">
                 ✓
               </span>
@@ -222,6 +234,7 @@ export default function ShippingAddressStep({
           required
           touched={!!touched.zip}
           error={validateField("zip", values.zip)}
+          value={values.zip}
         >
           <Input
             id="zip"
