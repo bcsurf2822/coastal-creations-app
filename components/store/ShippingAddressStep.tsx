@@ -198,7 +198,7 @@ export default function ShippingAddressStep({
                 touch("state");
               }}
               onBlur={() => touch("state")}
-              className="w-full px-3 py-2 border border-[var(--color-border-lighter)] rounded-[var(--radius-md)] text-[var(--color-text-primary)] bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] text-sm"
+              className="w-full h-[50px] px-4 bg-[var(--color-light)] border border-[var(--color-border)] rounded-[var(--radius-default)] text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:outline-none transition-colors text-sm appearance-none"
             >
               <option value="">State</option>
               {US_STATES.map((s) => (
