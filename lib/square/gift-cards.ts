@@ -4,6 +4,7 @@
  */
 import { Client, Environment, ApiError } from "square/legacy";
 import { randomUUID } from "crypto";
+import { normalizeIdempotencyKey } from "@/lib/checkout/idempotency";
 
 // Initialize Square client
 const squareClient = new Client({
@@ -80,11 +81,15 @@ export class GiftCardService {
    * @param amountCents - Gift card amount in cents
    * @param sourceId - Card token from Square payment form
    * @param customerId - Optional Square customer ID to link payment
+   * @param paymentIdempotencyKey - Optional client-stable key for the PAYMENT step
+   *   (retry-safe double-charge protection). The order/create/activate steps keep
+   *   their own fresh keys — only the money-movement call needs the stable key.
    */
   async createAndActivateGiftCard(
     amountCents: number,
     sourceId?: string,
-    customerId?: string
+    customerId?: string,
+    paymentIdempotencyKey?: string
   ): Promise<{ gan: string; giftCardId: string; orderId: string; paymentId?: string }> {
     console.log("[GIFT-CARDS-createAndActivate] Creating gift card for amount:", amountCents);
     console.log("[GIFT-CARDS-createAndActivate] Location ID:", this.locationId);
@@ -133,7 +138,7 @@ export class GiftCardService {
         console.log("[GIFT-CARDS-createAndActivate] Linking payment to customer:", customerId);
       }
       const paymentResponse = await paymentsApi.createPayment({
-        idempotencyKey: randomUUID(),
+        idempotencyKey: normalizeIdempotencyKey(paymentIdempotencyKey),
         sourceId: sourceId,
         amountMoney: {
           amount: BigInt(amountCents),

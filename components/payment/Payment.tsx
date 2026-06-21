@@ -98,6 +98,12 @@ export default function Payment() {
     locationId: "main",
   });
 
+  // One stable idempotency key per mount — reused across re-tokenizations within
+  // this booking attempt so a lost-response retry returns the original charge.
+  // Navigating to the success page unmounts the component, so a new attempt
+  // gets a fresh key.
+  const [idempotencyKey] = useState(() => crypto.randomUUID());
+
   const [reservationBooking, setReservationBooking] =
     useState<ReservationBooking | null>(null);
   const [isReservationBooking, setIsReservationBooking] = useState(false);
@@ -444,7 +450,8 @@ export default function Payment() {
                 amountCents: appliedGiftCard.amountApplied,
               }
             : undefined,
-        }
+        },
+        idempotencyKey
       );
 
       if (!result) {

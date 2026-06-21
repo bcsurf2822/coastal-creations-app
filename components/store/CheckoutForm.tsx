@@ -37,6 +37,10 @@ export default function CheckoutForm(): ReactElement | null {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [orderCompleted, setOrderCompleted] = useState(false);
+  // One stable idempotency key per mount — reused across retries of THIS cart
+  // attempt so a lost-response retry returns the original charge (no double
+  // charge). A new mount (new cart attempt after clearCart) gets a fresh key.
+  const [idempotencyKey] = useState(() => crypto.randomUUID());
 
   const updateField = (field: keyof AddressFormValues, value: string): void => {
     setAddress((prev) => ({ ...prev, [field]: value }));
@@ -111,6 +115,7 @@ export default function CheckoutForm(): ReactElement | null {
           selectedRate,
           items,
           subtotalCents,
+          idempotencyKey,
         }),
       });
       const data = await res.json();

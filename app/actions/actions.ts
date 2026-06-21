@@ -1,5 +1,4 @@
 "use server";
-import { randomUUID } from "crypto";
 import {
   Client,
   Environment,
@@ -20,6 +19,7 @@ import {
   type BookingParticipant,
 } from "@/lib/checkout/eventPricing";
 import { PriceIntegrityError } from "@/lib/checkout/errors";
+import { normalizeIdempotencyKey } from "@/lib/checkout/idempotency";
 
 const { paymentsApi } = new Client({
   accessToken: process.env.SQUARE_ACCESS_TOKEN,
@@ -137,7 +137,8 @@ export async function submitPayment(
     eventPrice?: string;
     squareCustomerId?: string;
   },
-  booking?: BookingSelectionInput
+  booking?: BookingSelectionInput,
+  idempotencyKey?: string
 ): Promise<ApiResponse<CreatePaymentResponse> | undefined> {
   try {
     // PRICE INTEGRITY: the charge is recomputed server-side from the DB. The
@@ -176,7 +177,7 @@ export async function submitPayment(
     const priceInCents = BigInt(chargeCents);
 
     const result = await paymentsApi.createPayment({
-      idempotencyKey: randomUUID(),
+      idempotencyKey: normalizeIdempotencyKey(idempotencyKey),
       sourceId,
       referenceId: billingDetails.eventId,
       note,
