@@ -76,6 +76,10 @@ export default function PaymentForm({
   const [applicationId, setApplicationId] = useState<string>("");
   const [locationId, setLocationId] = useState<string>("");
   const [baseUrl, setBaseUrl] = useState<string>("");
+  // One stable idempotency key per mount — reused across re-tokenizations within
+  // this reservation attempt so a lost-response retry returns the original charge.
+  // Redirecting to the confirmation page unmounts → a new attempt gets a fresh key.
+  const [idempotencyKey] = useState(() => crypto.randomUUID());
 
   // Gift card state
   const [appliedGiftCard, setAppliedGiftCard] =
@@ -511,7 +515,8 @@ export default function PaymentForm({
                 amountCents: appliedGiftCard.amountApplied,
               }
             : undefined,
-        }
+        },
+        idempotencyKey
       );
 
       if (

@@ -19,7 +19,6 @@
  */
 import { NextResponse } from "next/server";
 import { Client, Environment } from "square/legacy";
-import { randomUUID } from "crypto";
 import { Resend } from "resend";
 import { render } from "@react-email/render";
 import * as React from "react";
@@ -34,6 +33,7 @@ import {
   resolveShippingRate,
   PriceIntegrityError,
 } from "@/lib/checkout/storePricing";
+import { normalizeIdempotencyKey } from "@/lib/checkout/idempotency";
 import type { LabelResult } from "@/lib/shippo/labels";
 import type { CartItem } from "@/lib/types/cartTypes";
 import type { ShippingRate } from "@/lib/shippo/rates";
@@ -70,6 +70,7 @@ interface CheckoutRequest {
   selectedRate: ShippingRate;
   items: CartItem[];
   subtotalCents: number;
+  idempotencyKey?: string;
 }
 
 export async function POST(request: Request): Promise<Response> {
@@ -115,7 +116,7 @@ export async function POST(request: Request): Promise<Response> {
 
     // Step 1: Charge Square
     const paymentResult = await squareClient.paymentsApi.createPayment({
-      idempotencyKey: randomUUID(),
+      idempotencyKey: normalizeIdempotencyKey(body.idempotencyKey),
       sourceId: paymentToken,
       amountMoney: {
         amount: BigInt(totalCents),
