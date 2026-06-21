@@ -22,6 +22,7 @@ export interface OrderConfirmationData {
   items: OrderConfirmationItem[];
   subtotalCents: number;
   shippingCents: number;
+  taxCents?: number;
   totalCents: number;
   shippingAddress: {
     name: string;
@@ -66,6 +67,9 @@ export const OrderConfirmationEmail = ({
       ))}
       <DetailRow label="Subtotal">{formatCents(order.subtotalCents)}</DetailRow>
       <DetailRow label="Shipping">{formatCents(order.shippingCents)}</DetailRow>
+      {(order.taxCents ?? 0) > 0 && (
+        <DetailRow label="Sales Tax">{formatCents(order.taxCents ?? 0)}</DetailRow>
+      )}
       <DetailRow label="Total">
         <strong>{formatCents(order.totalCents)}</strong>
       </DetailRow>
