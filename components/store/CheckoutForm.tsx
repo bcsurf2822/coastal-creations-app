@@ -186,9 +186,11 @@ export default function CheckoutForm(): ReactElement | null {
           />
         </div>
 
+        <hr className="border-0 border-t border-[var(--color-border-lighter)]" />
+
         {/* Shipping Method — always visible; fills in once the address is complete */}
         <div className="flex flex-col gap-4">
-          <h2 className="text-base font-semibold text-[var(--color-primary)] text-center">
+          <h2 className="text-base font-semibold text-[var(--color-primary)]">
             Shipping Method
           </h2>
 
@@ -210,7 +212,7 @@ export default function CheckoutForm(): ReactElement | null {
               {rates.length > 1 && (
                 <label
                   htmlFor="shipping-rate"
-                  className="text-xs text-[var(--color-text-subtle)] text-center"
+                  className="text-xs text-[var(--color-text-subtle)]"
                 >
                   Need it sooner? Choose a different option:
                 </label>
@@ -247,12 +249,19 @@ export default function CheckoutForm(): ReactElement | null {
           )}
         </div>
 
+        <hr className="border-0 border-t border-[var(--color-border-lighter)]" />
+
         {/* Payment — the Square SDK mounts as soon as config loads (on page init);
             it stays disabled until contact/shipping details are complete. */}
         <div className="flex flex-col gap-4">
-          <h2 className="text-base font-semibold text-[var(--color-primary)] text-center">
-            Payment
-          </h2>
+          <div>
+            <h2 className="text-base font-semibold text-[var(--color-primary)]">
+              Payment
+            </h2>
+            <p className="text-xs text-[var(--color-text-subtle)] mt-0.5">
+              All transactions are secure and encrypted.
+            </p>
+          </div>
           {paymentConfig ? (
             <PaymentStep
               applicationId={paymentConfig.applicationId}

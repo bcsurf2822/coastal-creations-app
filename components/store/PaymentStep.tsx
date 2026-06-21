@@ -3,10 +3,17 @@
 import type { ReactElement } from "react";
 import React, { Suspense, useCallback, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { PiSquareLogoFill } from "react-icons/pi";
-import { FaLock, FaShieldAlt } from "react-icons/fa";
+import { FaLock } from "react-icons/fa";
 import type { ShippingRate } from "@/lib/shippo/rates";
+
+// Real colored brand logos (local SVG assets in /public/assets/cards).
+const ACCEPTED_CARDS = [
+  { src: "/assets/cards/visa.svg", alt: "Visa" },
+  { src: "/assets/cards/mastercard.svg", alt: "Mastercard" },
+  { src: "/assets/cards/amex.svg", alt: "American Express" },
+  { src: "/assets/cards/discover.svg", alt: "Discover" },
+];
 
 const DynamicPaymentForm = dynamic(
   async () => {
@@ -112,11 +119,6 @@ export default function PaymentStep({
               their contact/shipping details and chosen a method, the payment
               area is dimmed and non-interactive (and the Pay button stays
               disabled). Once ready, it activates and the button reads "Pay $X". */}
-          {!ready && (
-            <p className="text-center text-sm text-[var(--color-text-subtle)] mb-3">
-              Enter your contact &amp; shipping details above to enable payment.
-            </p>
-          )}
           <div
             className={
               ready
@@ -147,26 +149,30 @@ export default function PaymentStep({
         </div>
       )}
 
-      {/* Trust block */}
-      <div className="rounded-[var(--radius-lg)] border border-[var(--color-border-lighter)] bg-[var(--color-light)] px-4 py-4 flex flex-col gap-2.5 text-xs text-[var(--color-text-subtle)] w-full items-center text-center">
-        <div className="flex items-center gap-2">
+      {/* Secure-checkout trust block: real accepted-card logos +
+          "Secure checkout by Square". */}
+      <div className="flex flex-col items-center gap-3 w-full pt-1">
+        {/* Accepted card logos (real colored brand SVGs) */}
+        <div className="flex items-center justify-center gap-2">
+          {ACCEPTED_CARDS.map((card) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={card.alt}
+              src={card.src}
+              alt={card.alt}
+              className="h-7 w-auto"
+              loading="lazy"
+            />
+          ))}
+        </div>
+
+        {/* Secure checkout by Square */}
+        <div className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-subtle)]">
           <FaLock className="shrink-0 text-green-600" />
-          <span>256-bit SSL encryption — your data is fully protected</span>
-        </div>
-        <div className="flex items-center gap-2">
+          <span>Secure checkout by</span>
           <PiSquareLogoFill className="shrink-0 text-[var(--color-primary)] text-base" />
-          <span>Powered by Square — PCI DSS Level 1 Certified</span>
+          <span className="text-[var(--color-primary)] font-semibold">Square</span>
         </div>
-        <div className="flex items-center gap-2">
-          <FaShieldAlt className="shrink-0 text-[var(--color-secondary)]" />
-          <span>We never store your card details</span>
-        </div>
-        <p className="pt-1 border-t border-[var(--color-border-lighter)]">
-          Free returns within 30 days &middot;{" "}
-          <Link href="/contact-us" className="underline hover:text-[var(--color-primary)]">
-            Questions? Contact us
-          </Link>
-        </p>
       </div>
     </div>
   );
