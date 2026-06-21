@@ -46,6 +46,8 @@ export function buildContentSecurityPolicy(
       "'self'",
       "'unsafe-inline'",
       "https://www.googletagmanager.com",
+      // @vercel/analytics loads its script from this host (dev + prod).
+      "https://va.vercel-scripts.com",
       squareHost,
       ...(isDev ? ["'unsafe-eval'"] : []),
     ],
