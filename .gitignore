@@ -48,6 +48,9 @@ yarn-error.log*
 next-env.d.ts
 
 # reference files
-referenceFiles/
-spec/
-PRPs/
+# referenceFiles/
+# spec/
+# PRPs/
+
+# Local MCP server configs (contain secrets — never commit)
+spec/mcp/
