@@ -13,10 +13,11 @@ import { normalizeIdempotencyKey } from "@/lib/checkout/idempotency";
 const client = getSquareClient();
 
 /**
- * Legacy-shaped payment result. v44 returns `{ payment }` directly, but the client
- * components (Payment.tsx, PaymentProcessor.tsx, PaymentForm.tsx) read
+ * Legacy-shaped payment result. v44 returns `{ payment }` directly, but the
+ * reservation client (components/reservations/PaymentForm.tsx) still reads
  * `result.result?.payment` / `result.result?.errors`. We wrap the v44 response in
- * `{ result }` so the migration stays server-contained and those components are unchanged.
+ * `{ result }` so the migration stays server-contained and that component is unchanged.
+ * (Events now use /api/checkout/booking; submitPayment remains for reservations.)
  */
 export interface SubmitPaymentResult {
   result: Square.CreatePaymentResponse;
