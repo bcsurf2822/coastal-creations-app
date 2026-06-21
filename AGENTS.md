@@ -6,9 +6,12 @@
 
 Full-featured event booking + e-commerce platform for Coastal Creations Studio (Ocean City, NJ):
 
-- **Customer-facing**: Browse/book classes, camps, workshops, private events, reservations with Square payments; shop physical products (Art Kits, etc.) through a Square-catalog-driven online store with Shippo-rated shipping; optionally sign in (Google or passwordless magic link) to track bookings & orders in a customer account
+- **Customer-facing**: Browse/book classes, camps, workshops, private events, reservations with Square payments; shop physical products (Art Kits, etc.) through a Square-catalog-driven online store with Shippo-rated shipping; **apply gift cards at any checkout** (events, store, reservations); optionally sign in (Google or passwordless magic link) to track bookings & orders in a customer account
 - **Admin**: Event management, customer tracking, payment monitoring, refunds, content management, store product/order management
-- **Tech Stack**: Next.js 16, React 19, TypeScript, MongoDB (Mongoose), NextAuth (Google + magic link, DB-backed roles), Square (Payments + Catalog), Shippo (shipping), Sanity CMS, Resend, shadcn/ui (customer console), TanStack Query
+- **Tech Stack**: Next.js 16, React 19, TypeScript, MongoDB (Mongoose), NextAuth (Google + magic link, DB-backed roles), **Square v44 native SDK** (Payments + Catalog), Shippo (shipping), Sanity CMS, Resend, shadcn/ui (customer console), TanStack Query
+
+> **Square SDK:** all server Square code uses the **v44 native client** via `lib/square/client.ts` (`getSquareClient()`) — `square/legacy` is no longer used. The client Web Payments SDK (`react-square-web-payments-sdk`) is unaffected.
+> **Unified checkout:** events, the store, and reservations share `components/checkout/*` (summary-right / payment-left layout). Event/booking checkout is server-orchestrated through the atomic `/api/checkout/booking` route; the store keeps `/api/store/checkout`. See [Unified Checkout](#unified-checkout).
 
 > **Two independent systems share this codebase:** the original **booking** system (Events / Customers / Reservations / Private Events) and an **additive, independent online store** (Square Catalog + Shippo). The store does not touch the booking models. See the [Online Store](#online-store-e-commerce) section.
 
@@ -86,7 +89,7 @@ coastal-creations-app/
 │   │   ├── customer/             # Customer bookings
 │   │   ├── reservations/         # Reservation CRUD + [id]
 │   │   ├── private-events/       # Private event CRUD + [id]
-│   │   ├── payments/             # Process payments
+│   │   ├── checkout/booking/     # Atomic booking checkout (charge + Customer + gift card + email)
 │   │   ├── payment-config/       # Square SDK config
 │   │   ├── payment-errors/       # Error logging
 │   │   ├── refunds/              # Square refund processing
@@ -140,9 +143,10 @@ coastal-creations-app/
 │   ├── classes/                  # Event display (EventCard, PageHeader, etc.)
 │   ├── reservations/             # Reservation booking flow
 │   ├── walk-in/                  # Walk-in page (WalkIn, WalkInCard, WalkInImageSlot)
-│   ├── payment/                  # Square payment components
+│   ├── checkout/                 # Unified checkout: CheckoutLayout, ContactForm, PaymentStep, GiftCardRedemption, EventCheckout, EventParticipantsFields, EventSummary
+│   ├── payment/                  # Shared payment bits (EventPreview, WalletPayButtons)
 │   ├── gift-cards/               # Gift card UI components
-│   ├── store/                    # Storefront, cart, checkout (CartProvider, CheckoutForm, ShippingRateStep, PaymentStep, etc.)
+│   ├── store/                    # Storefront + cart (CartProvider, CheckoutForm, ShippingRateStep, CartSummary); payment via components/checkout
 │   ├── gallery/                  # Gallery display
 │   ├── contact/                  # Contact form
 │   ├── about/                    # About page
@@ -222,8 +226,19 @@ coastal-creations-app/
 │   │   ├── rates.ts             # getShippingRates (live rate quotes)
 │   │   └── labels.ts            # purchaseLabelForOrder (buy label)
 │   │
-│   ├── square/                   # Square SDK utilities (see also below)
+│   ├── square/                   # Square v44 native SDK utilities (off square/legacy; see also below)
+│   │   ├── client.ts            # getSquareClient() — single configured SquareClient (v44)
 │   │   └── catalog.ts           # listCatalogItems, getInventoryCounts
+│   │
+│   ├── checkout/                 # Pricing + booking helpers
+│   │   ├── resolveBookingCharge.ts # authoritative server charge (price recompute + gift-card validate)
+│   │   ├── eventPricing.ts      # compute{Event,PrivateEvent,Reservation}ChargeCents
+│   │   ├── storePricing.ts      # priceCartFromCatalog, resolveShippingRate (price integrity)
+│   │   ├── reservationAvailability.ts # validate + bulkWrite decrement ops
+│   │   ├── idempotency.ts       # normalizeIdempotencyKey
+│   │   ├── bookingFlow.ts       # client booking helpers + buildSuccessUrl
+│   │   └── errors.ts            # PriceIntegrityError
+│   ├── email/                   # sendBookingConfirmation (booking confirmation emails)
 │   │
 │   ├── types/                    # Type definitions
 │   │   ├── eventTypes.ts         # Event type definitions
@@ -236,6 +251,8 @@ coastal-creations-app/
 │   │
 │   ├── utils/                    # Helper utilities
 │   │   ├── eventTypeHelpers.ts   # Event type utilities
+│   │   ├── moneyHelpers.ts       # cents↔dollars, formatCents, BigInt money conversions
+│   │   ├── isCheckoutRoute.ts    # checkout-page detection (nav/layout share it)
 │   │   ├── slugify.ts            # URL slug generation
 │   │   ├── galleryHelpers.ts     # Gallery utilities
 │   │   └── portableTextHelpers.ts # Sanity content helpers
@@ -272,10 +289,10 @@ coastal-creations-app/
 | Model | Purpose | Key Fields |
 |-------|---------|------------|
 | **Event.ts** | Classes, camps, workshops | eventName, eventType, price, dates, time, recurring, options, discount |
-| **Customer.ts** | Booking/registration | event (ref), eventType, selectedDates, participants[], billingInfo, squarePaymentId, refundStatus |
+| **Customer.ts** | Booking/registration | event (ref), eventType, selectedDates, participants[], billingInfo, squarePaymentId, refundStatus. **billingInfo address fields are OPTIONAL** — bookings collect only name + email + phone (Square needs no billing address to charge; the card form captures the postal code for AVS) |
 | **Reservations.ts** | Day-by-day availability | eventName, pricePerDayPerParticipant, dailyAvailability[], timeType |
 | **PrivateEvent.ts** | Private party offerings | options, deposit, image |
-| **Order.ts** | Online store orders | orderNumber, items[], customer, shippingAddress, square{}, shippo{}, status, shippedAt, deliveredAt (money in **cents**) |
+| **Order.ts** | Online store orders | orderNumber, items[], customer, shippingAddress, square{}, **giftCard{ giftCardId, amountCents }**, shippo{}, status, shippedAt, deliveredAt (money in **cents**) |
 | **StoreProductSettings.ts** | Website overlay on a Square catalog item | squareItemId, isOnlineSellable, parcelPreset (SMALL/MEDIUM/LARGE), slug, displayOrder |
 | **PaymentError.ts** | Payment failure tracking | error details, customer info |
 
@@ -294,7 +311,7 @@ coastal-creations-app/
 | `/api/reservations` | GET, POST | Reservation CRUD |
 | `/api/reservations/[id]` | GET, PUT, DELETE | Single reservation |
 | `/api/private-events` | GET, POST, PUT, DELETE | Private event offerings |
-| `/api/payments` | POST | Process Square payments |
+| `/api/checkout/booking` | POST | Atomic event/private-event/reservation checkout: recompute charge → Square charge → create Customer → redeem gift card → confirmation email |
 | `/api/payment-config` | GET | Square SDK config |
 | `/api/refunds` | GET, POST | Process refunds |
 | `/api/gift-cards` | GET, POST | Gift card operations |
@@ -355,8 +372,8 @@ Cache invalidation is automatic - mutations invalidate related queries.
 | `nodemailer` | Dormant peer dep of NextAuth EmailProvider (we send magic links via Resend, not SMTP) |
 | `radix-ui` + `lucide-react` | Primitives/icons for shadcn/ui (customer console) |
 | `mongoose` | MongoDB ODM |
-| `square` | Payment processing + Catalog (store products) |
-| `react-square-web-payments-sdk` | Payment UI |
+| `square` (v44) | Payments + Catalog — **v44 native client** (`lib/square/client.ts`); `square/legacy` not used |
+| `react-square-web-payments-sdk` | Payment UI (client card form) |
 | `shippo` | Shipping rate quotes, label purchase, tracking webhooks |
 | `resend` | Transactional emails |
 | `next-sanity` | CMS integration |
@@ -475,11 +492,50 @@ const date = dayjs.tz(dateString, "America/New_York");
 | Store Orders | `lib/models/Order.ts` | `/api/store/checkout/`, `/api/admin/store/orders/` | `app/checkout/`, `app/admin/dashboard/store/orders/` | `components/store/` |
 | Store Products | `lib/models/StoreProductSettings.ts` | `/api/store/products/`, `/api/admin/store/products/` | `app/store/`, `app/admin/dashboard/store/products/` | `components/store/` |
 | Shipping | - | `/api/store/shipping-rates/`, `/api/webhooks/shippo/` | - | `lib/shippo/`, `lib/utils/parcelHelpers.ts` |
-| Payments | - | `/api/payments/`, `/api/refunds/` | `app/payments/` | `components/payment/` |
-| Gift Cards | - | `/api/gift-cards/` | `app/gift-cards/` | `components/gift-cards/` |
+| Checkout (events/booking) | `lib/models/Customer.ts` | `/api/checkout/booking/` | `app/payments/` | `components/checkout/` (EventCheckout) |
+| Checkout (shared UI) | - | - | - | `components/checkout/` (CheckoutLayout, ContactForm, PaymentStep, GiftCardRedemption) |
+| Payments / Refunds | - | `/api/refunds/`, `/api/payment-config/` | `app/payments/` | `components/payment/`, `lib/square/` |
+| Gift Cards | - | `/api/gift-cards/` (purchase, balance, redeem) | `app/gift-cards/` | `components/gift-cards/`, `components/checkout/GiftCardRedemption.tsx` |
 | Gallery | - | `/api/gallery/` | `app/gallery/` | `components/gallery/` |
 | CMS Content | - | `/api/page-content/`, `/api/hours/` | - | `components/dashboard/page-descriptions/` |
 | Auth & Accounts | NextAuth `users` (`role`) | `/api/auth/*` | `app/login/`, `app/account/` | `lib/auth/`, `lib/account/`, `components/authentication/`, `components/account/` |
+
+## Unified Checkout
+
+All three checkout surfaces (events/private events, the store, and reservations) share one
+visual pattern and one set of building blocks in `components/checkout/`: a **summary-right /
+payment-left** `CheckoutLayout`, a Square card widget (`PaymentStep`), a minimal `ContactForm`
+(name + email + phone, **no billing address**), and a reusable `GiftCardRedemption`. Money is in
+**cents**; the client total is display-only — the server always recomputes the authoritative charge.
+
+### Event / booking checkout (server-orchestrated)
+- **Page:** `app/payments` renders `components/checkout/EventCheckout.tsx` (reads `eventId` /
+  `eventTitle` / `price` / `isPrivateEvent` / `isFree` from search params).
+- **Route:** `POST /api/checkout/booking` does everything atomically (mirrors the store):
+  `resolveBookingCharge` (price recompute + gift-card balance validation) → reservation
+  availability check (if applicable) → Square customer link → charge the card portion (skipped
+  when free or fully gift-card-covered) → redeem gift card → create `Customer` → decrement
+  reservation availability → confirmation email (`lib/email/sendBookingConfirmation`). This
+  replaced the old fragile client orchestration (`submitPayment` action → `/api/customer` →
+  `/api/send-confirmation`), where a successful charge could be followed by a failed booking write.
+- **Reservations** still render their own page (`app/reservations/[id]/payment` →
+  `components/reservations/PaymentForm.tsx`) on the `submitPayment` **server action**
+  (`app/actions/actions.ts`) + `/api/customer`; they use the shared `GiftCardRedemption`. Migrating
+  this page onto `EventCheckout` + `/api/checkout/booking` is the remaining consolidation step.
+
+### Gift cards (everywhere)
+Apply at events, the store, and reservations via `components/checkout/GiftCardRedemption.tsx`
+(GAN → `GET /api/gift-cards/balance` → apply). The server (`resolveBookingCharge` for bookings,
+inline in `/api/store/checkout` for the store) re-validates against Square's real balance and
+clamps `min(requested, available, total)`, then redeems (`giftCardService.redeem`). A card that
+fully covers the total swaps the card form for a "Complete / Place order with gift card" button
+(no Square charge). The redeemed amount is recorded on `Order.giftCard` / the booking record.
+
+### Price integrity (both checkouts)
+Client-supplied prices are never trusted. Bookings recompute from the DB via
+`lib/checkout/eventPricing.ts`; the store recomputes the subtotal from the Square catalog and
+shipping from a fresh Shippo re-quote via `lib/checkout/storePricing.ts`. A mismatch / unsellable
+item / vanished rate throws `PriceIntegrityError` → 400 (no charge).
 
 ## Online Store (E-commerce)
 
@@ -521,7 +577,7 @@ pending -> paid -> label_created -> shipped -> delivered
 
 ### Checkout flow (`components/store/CheckoutForm.tsx`)
 
-3 steps: **Contact & Shipping** (`ShippingAddressStep`) → **Shipping Method** (`ShippingRateStep`, collapsed to the recommended rate with a "choose another" toggle) → **Payment** (`PaymentStep`, Square Web Payments SDK). Cart state lives in `CartProvider` (React Context, persisted client-side).
+3 steps: **Contact & Shipping** (`ShippingAddressStep`) → **Shipping Method** (`ShippingRateStep`, collapsed to the recommended rate with a "choose another" toggle) → **Payment** (the shared `components/checkout/PaymentStep`, Square Web Payments SDK). A `GiftCardRedemption` appears once shipping is known; `/api/store/checkout` validates + redeems it and charges only the remainder (or skips Square entirely when fully covered → no `square.paymentId`). Cart state lives in `CartProvider` (React Context, persisted client-side). See [Unified Checkout](#unified-checkout).
 
 ### Transactional emails (`components/email-templates/`)
 
