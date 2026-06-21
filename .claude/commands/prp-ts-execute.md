@@ -4,7 +4,14 @@
 
 ## Mission: One-Pass TypeScript Implementation Success
 
-## BE SURE TO USE THE @spec/tasks to create a folder related to the PRP that will help you track your progress, shard the PRP File into manageable traceable tasks
+## Task Tracking & Archon (optional)
+
+> **Default (no Archon):** Shard the PRP into traceable tasks using the built-in task tools —
+> `TaskCreate` / `TaskUpdate` (or `TodoWrite`) — and optionally a folder under `spec/tasks/`
+> for the PRP. Archon is **not** required.
+>
+> **Opt-in (Archon):** Only if the user explicitly asks, mirror the tasks into Archon
+> (`mcp__archon__*`). If Archon is not connected, fall back to native tasks — never block on it.
 
 PRPs enable working TypeScript/React code on the first attempt through:
 
@@ -45,25 +52,23 @@ PRPs enable working TypeScript/React code on the first attempt through:
 
 4. **Progressive Validation**
 
-   **Execute the 4-level validation system from the TypeScript PRP:**
-   - **Level 1**: Run TypeScript syntax & style validation commands from PRP
-     - `npm run type-check` or `tsc --noEmit` - TypeScript compilation check
-     - `npm run lint` - ESLint validation
-     - `npm run format:check` - Prettier formatting check
-   - **Level 2**: Execute component and hook unit test validation from PRP
-     - `npm test` or `npm run test` - Jest unit tests
-     - `npm run test:coverage` - Jest with coverage reporting (minimum 80%)
-     - `npm run test:watch` - Jest in watch mode during development
-   - **Level 3**: Run Next.js integration testing commands from PRP
-     - `npm run build` - Next.js production build validation
-     - `npm run start` - Production server start test
-     - API route testing with Jest for server actions and endpoints
-   - **Level 4**: Execute TypeScript/React-specific validation from PRP
-     - E2E testing (if specified in PRP)
-     - Performance testing with Lighthouse (if specified)
-     - Accessibility testing (if specified)
+   **Execute the 4-level validation system from the TypeScript PRP.** This project uses
+   **pnpm + Vitest + ESLint** (NOT npm/Jest/Prettier) — use these actual commands:
+   - **Level 1**: TypeScript syntax & style
+     - `npx tsc --noEmit` - TypeScript compilation check
+     - `pnpm run lint` - ESLint validation
+   - **Level 2**: Unit tests (Vitest)
+     - `pnpm run test:run` - run the Vitest suite once (CI-style)
+     - `pnpm run test` - watch mode during development
+     - (There is no enforced coverage gate; add `--coverage` only if the PRP requires it.)
+   - **Level 3**: Integration / build
+     - `pnpm run build` - Next.js production build validation
+     - API route + server-action testing via Vitest, plus sandbox manual checks for payment flows
+   - **Level 4**: Feature-specific validation from the PRP
+     - E2E / browser checks, Lighthouse, accessibility — only if specified in the PRP
 
-   **Each level must pass before proceeding to the next.**
+   **Each level must pass before proceeding to the next.** Always prefer the exact commands the
+   PRP's own Validation Loop specifies over these defaults.
 
 5. **Completion Verification**
    - Work through the Final Validation Checklist in the PRP
@@ -76,7 +81,7 @@ PRPs enable working TypeScript/React code on the first attempt through:
 **Failure Protocol**: When validation fails, use the TypeScript/React patterns and gotchas from the PRP to fix issues, then re-run validation until passing. Pay special attention to:
 
 - TypeScript compilation errors and type mismatches
-- Jest test failures and missing test coverage (minimum 80% required)
+- Vitest test failures (and missing tests for new logic)
 - React hydration issues between server and client
 - Next.js App Router specific requirements
 - Component prop interface violations

@@ -65,6 +65,9 @@ export function GiftCardPurchase(): ReactElement {
   const [error, setError] = useState("");
   const [config, setConfig] = useState<PaymentConfig | null>(null);
   const [purchasedGan, setPurchasedGan] = useState("");
+  // One stable idempotency key per mount — reused across retries of THIS gift-card
+  // purchase so a lost-response retry returns the original charge (no double charge).
+  const [idempotencyKey] = useState(() => crypto.randomUUID());
   const [billingDetails, setBillingDetails] = useState<BillingDetails>({
     givenName: "",
     familyName: "",
@@ -163,6 +166,7 @@ export function GiftCardPurchase(): ReactElement {
           senderName,
           personalMessage: personalMessage || undefined,
           purchaserEmail: purchaserEmail || recipientEmail,
+          idempotencyKey,
         }),
       });
 

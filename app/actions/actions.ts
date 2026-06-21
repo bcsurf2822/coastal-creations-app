@@ -1,21 +1,27 @@
 "use server";
-import { randomUUID } from "crypto";
-import {
-  Client,
-  Environment,
-  ApiResponse,
-  CreatePaymentResponse,
-} from "square/legacy";
+import { getSquareClient } from "@/lib/square/client";
+import { SquareError, type Square } from "square";
 import { connectMongo } from "@/lib/mongoose";
 import PaymentError, { SquareErrorCode } from "@/lib/models/PaymentError";
+import {
+  resolveBookingCharge,
+  type BookingSelectionInput,
+} from "@/lib/checkout/resolveBookingCharge";
+import { PriceIntegrityError } from "@/lib/checkout/errors";
+import { normalizeIdempotencyKey } from "@/lib/checkout/idempotency";
 
-const { paymentsApi } = new Client({
-  accessToken: process.env.SQUARE_ACCESS_TOKEN,
-  environment:
-    process.env.SQUARE_ENVIRONMENT === "sandbox"
-      ? Environment.Sandbox
-      : Environment.Production,
-});
+const client = getSquareClient();
+
+/**
+ * Legacy-shaped payment result. v44 returns `{ payment }` directly, but the
+ * reservation client (components/reservations/PaymentForm.tsx) still reads
+ * `result.result?.payment` / `result.result?.errors`. We wrap the v44 response in
+ * `{ result }` so the migration stays server-contained and that component is unchanged.
+ * (Events now use /api/checkout/booking; submitPayment remains for reservations.)
+ */
+export interface SubmitPaymentResult {
+  result: Square.CreatePaymentResponse;
+}
 
 export async function submitPayment(
   sourceId: string,
@@ -34,11 +40,25 @@ export async function submitPayment(
     eventTitle?: string;
     eventPrice?: string;
     squareCustomerId?: string;
-  }
-): Promise<ApiResponse<CreatePaymentResponse> | undefined> {
+  },
+  booking?: BookingSelectionInput,
+  idempotencyKey?: string
+): Promise<SubmitPaymentResult | undefined> {
   try {
-    // Check if price is provided
-    if (!billingDetails.eventPrice) {
+    // PRICE INTEGRITY: the charge is recomputed server-side from the DB. The
+    // client-supplied `eventPrice` is no longer trusted. A booking selection is
+    // required so we know what to price. See ecommerce/09-checkout-price-integrity.md.
+    if (!booking?.eventId) {
+      console.error("[ACTIONS-submitPayment] Missing booking selection — refusing to charge");
+      return undefined;
+    }
+
+    const { chargeCents } = await resolveBookingCharge(booking);
+
+    // Nothing to charge on the card (e.g. a gift card covers it, or free) — the
+    // card flow should not have been invoked; do not call Square with amount 0.
+    if (chargeCents <= 0) {
+      console.error("[ACTIONS-submitPayment] Computed card charge is 0 — refusing to charge");
       return undefined;
     }
 
@@ -58,13 +78,10 @@ export async function submitPayment(
 
     const note = [eventInfo, ...contactInfo].join(" | ");
 
-    // Convert price from dollars to cents (multiply by 100)
-    const priceInCents = BigInt(
-      Math.round(parseFloat(billingDetails.eventPrice) * 100)
-    );
+    const priceInCents = BigInt(chargeCents);
 
-    const result = await paymentsApi.createPayment({
-      idempotencyKey: randomUUID(),
+    const response = await client.payments.create({
+      idempotencyKey: normalizeIdempotencyKey(idempotencyKey),
       sourceId,
       referenceId: billingDetails.eventId,
       note,
@@ -75,7 +92,7 @@ export async function submitPayment(
         addressLine2: billingDetails.addressLine2 || "",
         firstName: billingDetails.givenName,
         lastName: billingDetails.familyName,
-        country: billingDetails.countryCode,
+        country: billingDetails.countryCode as Square.Country,
         postalCode: billingDetails.postalCode,
       },
       amountMoney: {
@@ -84,13 +101,17 @@ export async function submitPayment(
       },
     });
 
-    // console.log(
-    //   "Payment processing result:",
-    //   result.statusCode,
-    //   result.result?.payment?.status
-    // );
-    return result;
+    // Wrap in the legacy `{ result }` shape so the client components are unchanged.
+    return { result: response };
   } catch (error) {
+    // A price-integrity rejection means we refused to charge BEFORE hitting Square
+    // (booking unpriceable / not found). Not a Square payment failure — don't log
+    // it as one; the caller treats undefined as a failed payment.
+    if (error instanceof PriceIntegrityError) {
+      console.error("[ACTIONS-submitPayment] Price integrity rejection:", error.message);
+      return undefined;
+    }
+
     console.error("Payment processing error:", error);
 
     // Log payment error to MongoDB
@@ -144,26 +165,14 @@ async function logPaymentError(
       return SquareErrorCode.INTERNAL_SERVER_ERROR;
     };
 
-    // Check if it's a Square API error with the expected structure
-    if (error && typeof error === "object" && "result" in error) {
-      const errorObj = error as {
-        result?: {
-          errors?: Array<{
-            code?: string;
-            detail?: string;
-            field?: string;
-            category?: string;
-          }>;
-        };
-      };
-      if (errorObj.result?.errors && Array.isArray(errorObj.result.errors)) {
-        errors = errorObj.result.errors.map((err) => ({
-          code: validateErrorCode(err.code),
-          detail: err.detail || "Unknown error occurred",
-          field: err.field,
-          category: err.category || "UNKNOWN_CATEGORY",
-        }));
-      }
+    // v44 Square errors are SquareError instances carrying a structured `errors` array.
+    if (error instanceof SquareError) {
+      errors = error.errors.map((err) => ({
+        code: validateErrorCode(err.code),
+        detail: err.detail || "Unknown error occurred",
+        field: err.field,
+        category: err.category || "UNKNOWN_CATEGORY",
+      }));
     } else if (error && typeof error === "object" && "errors" in error) {
       // Handle direct errors array
       const errorObj = error as {

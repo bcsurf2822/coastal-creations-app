@@ -8,8 +8,11 @@ import { usePaymentConfig } from "@/hooks/queries/use-payment-config";
 import ShippingAddressStep, {
   type AddressFormValues,
 } from "@/components/store/ShippingAddressStep";
-import PaymentStep from "@/components/store/PaymentStep";
+import PaymentStep from "@/components/checkout/PaymentStep";
+import GiftCardRedemption from "@/components/checkout/GiftCardRedemption";
+import type { AppliedGiftCard } from "@/components/checkout/eventCheckoutTypes";
 import CartSummary from "@/components/store/CartSummary";
+import { Button } from "@/components/ui";
 import { formatCents } from "@/lib/utils/moneyHelpers";
 import type { ShippingRate } from "@/lib/shippo/rates";
 
@@ -37,6 +40,19 @@ export default function CheckoutForm(): ReactElement | null {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [orderCompleted, setOrderCompleted] = useState(false);
+  const [appliedGiftCard, setAppliedGiftCard] = useState<AppliedGiftCard | null>(null);
+  // One stable idempotency key per mount — reused across retries of THIS cart
+  // attempt so a lost-response retry returns the original charge (no double
+  // charge). A new mount (new cart attempt after clearCart) gets a fresh key.
+  const [idempotencyKey] = useState(() => crypto.randomUUID());
+
+  // Order total (subtotal + shipping once known) and the card amount due after any
+  // applied gift card. The server re-validates + clamps; this only drives the UI.
+  const orderTotalCents = subtotalCents + (selectedRate?.rateCents ?? 0);
+  const giftCardCents = appliedGiftCard
+    ? Math.min(appliedGiftCard.amountApplied, orderTotalCents)
+    : 0;
+  const amountDueCents = Math.max(0, orderTotalCents - giftCardCents);
 
   const updateField = (field: keyof AddressFormValues, value: string): void => {
     setAddress((prev) => ({ ...prev, [field]: value }));
@@ -83,7 +99,7 @@ export default function CheckoutForm(): ReactElement | null {
     }
   };
 
-  const handlePayment = async (token: string): Promise<void> => {
+  const placeOrder = async (token?: string): Promise<void> => {
     if (!selectedRate) return;
     setIsProcessing(true);
     setError(null);
@@ -111,6 +127,10 @@ export default function CheckoutForm(): ReactElement | null {
           selectedRate,
           items,
           subtotalCents,
+          idempotencyKey,
+          giftCard: appliedGiftCard
+            ? { giftCardId: appliedGiftCard.giftCardId, amountCents: giftCardCents }
+            : undefined,
         }),
       });
       const data = await res.json();
@@ -128,17 +148,19 @@ export default function CheckoutForm(): ReactElement | null {
     }
   };
 
-  // Auto-fetch rates when all required address fields are complete (600ms debounce)
-  useEffect(() => {
-    const addressComplete =
-      address.firstName.trim() &&
+  // All required contact/shipping fields filled — gates rate-fetching AND payment.
+  const addressComplete = Boolean(
+    address.firstName.trim() &&
       address.lastName.trim() &&
       address.email.trim() &&
       address.addressLine1.trim() &&
       address.city.trim() &&
       address.state.trim() &&
-      address.zip.trim();
+      address.zip.trim()
+  );
 
+  // Auto-fetch rates when all required address fields are complete (600ms debounce)
+  useEffect(() => {
     if (!addressComplete || rates.length > 0) return;
 
     const timer = setTimeout(() => {
@@ -164,7 +186,7 @@ export default function CheckoutForm(): ReactElement | null {
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10 items-start">
 
       {/* Left column: form */}
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-8 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-white p-6 sm:p-8 shadow-[var(--shadow-card)]">
 
         {/* Contact & Shipping */}
         <div className="flex flex-col gap-5">
@@ -179,9 +201,11 @@ export default function CheckoutForm(): ReactElement | null {
           />
         </div>
 
+        <hr className="border-0 border-t border-[var(--color-border)]" />
+
         {/* Shipping Method — always visible; fills in once the address is complete */}
         <div className="flex flex-col gap-4">
-          <h2 className="text-base font-semibold text-[var(--color-primary)] text-center">
+          <h2 className="text-base font-semibold text-[var(--color-primary)]">
             Shipping Method
           </h2>
 
@@ -203,7 +227,7 @@ export default function CheckoutForm(): ReactElement | null {
               {rates.length > 1 && (
                 <label
                   htmlFor="shipping-rate"
-                  className="text-xs text-[var(--color-text-subtle)] text-center"
+                  className="text-xs text-[var(--color-text-subtle)]"
                 >
                   Need it sooner? Choose a different option:
                 </label>
@@ -240,24 +264,57 @@ export default function CheckoutForm(): ReactElement | null {
           )}
         </div>
 
-        {/* Payment — always visible; unlocks once a shipping method is selected */}
+        <hr className="border-0 border-t border-[var(--color-border)]" />
+
+        {/* Payment — the Square SDK mounts as soon as config loads (on page init);
+            it stays disabled until contact/shipping details are complete. */}
         <div className="flex flex-col gap-4">
-          <h2 className="text-base font-semibold text-[var(--color-primary)] text-center">
-            Payment
-          </h2>
-          {selectedRate && paymentConfig ? (
+          <div>
+            <h2 className="text-base font-semibold text-[var(--color-primary)]">
+              Payment
+            </h2>
+            <p className="text-xs text-[var(--color-text-subtle)] mt-0.5">
+              All transactions are secure and encrypted.
+            </p>
+          </div>
+          {/* Gift card — apply once shipping is known so the total is final. */}
+          {selectedRate && (
+            <GiftCardRedemption
+              totalAmount={orderTotalCents}
+              appliedCard={appliedGiftCard}
+              onApply={setAppliedGiftCard}
+              onRemove={() => setAppliedGiftCard(null)}
+            />
+          )}
+
+          {amountDueCents <= 0 && appliedGiftCard && selectedRate ? (
+            <>
+              {error && (
+                <p className="text-[var(--color-error)] text-sm bg-red-50 border border-red-200 rounded-[var(--radius-md)] px-3 py-2">
+                  {error}
+                </p>
+              )}
+              <Button
+                variant="primary"
+                disabled={isProcessing}
+                onClick={() => void placeOrder()}
+              >
+                {isProcessing ? "Placing order…" : "Place order with gift card"}
+              </Button>
+            </>
+          ) : paymentConfig ? (
             <PaymentStep
               applicationId={paymentConfig.applicationId}
               locationId={paymentConfig.locationId}
-              subtotalCents={subtotalCents}
-              selectedRate={selectedRate}
-              onToken={handlePayment}
+              amountDollars={selectedRate ? (amountDueCents / 100).toFixed(2) : null}
+              ready={addressComplete && !!selectedRate}
+              onToken={placeOrder}
               isProcessing={isProcessing}
               error={error}
             />
           ) : (
             <div className="rounded-[var(--radius-lg)] border-2 border-dashed border-[var(--color-border-lighter)] px-4 py-6 text-center text-sm text-[var(--color-text-subtle)]">
-              Choose a shipping method above to continue to payment.
+              Loading secure payment…
             </div>
           )}
         </div>
@@ -268,6 +325,7 @@ export default function CheckoutForm(): ReactElement | null {
         items={items}
         subtotalCents={subtotalCents}
         selectedRate={selectedRate}
+        giftCardCents={giftCardCents}
       />
     </div>
   );

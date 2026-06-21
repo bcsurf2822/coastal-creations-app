@@ -28,12 +28,12 @@ export interface ICustomer extends Document {
   billingInfo: {
     firstName: string;
     lastName: string;
-    addressLine1: string;
+    addressLine1?: string;
     addressLine2?: string;
-    city: string;
-    stateProvince: string;
-    postalCode: string;
-    country: string;
+    city?: string;
+    stateProvince?: string;
+    postalCode?: string;
+    country?: string;
     emailAddress?: string;
     phoneNumber?: string;
   };
@@ -58,9 +58,12 @@ const BillingInfoSchema = new Schema({
     required: true,
     trim: true,
   },
+  // Address is OPTIONAL for bookings. Square does not require a billing address to
+  // charge a card (the Web Payments card form collects the postal code itself for
+  // AVS); address is only needed for the physical store (shipping). Kept on the
+  // schema for legacy records + admin-entered bookings, but no longer required.
   addressLine1: {
     type: String,
-    required: true,
     trim: true,
   },
   addressLine2: {
@@ -69,22 +72,18 @@ const BillingInfoSchema = new Schema({
   },
   city: {
     type: String,
-    required: true,
     trim: true,
   },
   stateProvince: {
     type: String,
-    required: true,
     trim: true,
   },
   postalCode: {
     type: String,
-    required: true,
     trim: true,
   },
   country: {
     type: String,
-    required: true,
     trim: true,
   },
   emailAddress: {

@@ -20,6 +20,7 @@ interface GiftCardPurchaseRequest {
   purchaserEmail: string;
   sourceId: string; // Card token from Square payment form
   customerId?: string; // Optional Square customer ID to link payment
+  idempotencyKey?: string; // Client-stable key for the payment step (retry-safe)
 }
 
 export async function POST(request: Request): Promise<Response> {
@@ -60,7 +61,8 @@ export async function POST(request: Request): Promise<Response> {
     const { gan, giftCardId, orderId, paymentId } = await giftCardService.createAndActivateGiftCard(
       body.amountCents,
       body.sourceId,
-      body.customerId
+      body.customerId,
+      body.idempotencyKey
     );
 
     console.log("[API-GIFT-CARDS-POST] Order:", orderId, "Payment:", paymentId);

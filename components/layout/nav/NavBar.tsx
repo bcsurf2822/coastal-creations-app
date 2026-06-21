@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
+import { isCheckoutRoute } from "@/lib/utils/isCheckoutRoute";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
 import NavRippleText from "./NavRippleText";
 import CartIcon from "@/components/store/CartIcon";
+import AccountNavLink from "@/components/authentication/AccountNavLink";
 
 interface OfferDropdownItem {
   href: string;
@@ -22,7 +24,9 @@ const OFFER_DROPDOWN_ITEMS: OfferDropdownItem[] = [
 
 export default function NavBar() {
   const pathname = usePathname();
-  const isCheckout = pathname === "/checkout";
+  // Checkout-style pages render the nav in-flow (relative) instead of fixed, so the
+  // sticky order summary isn't overlapped by the nav (see isCheckoutRoute).
+  const isCheckout = isCheckoutRoute(pathname);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isOfferDropdownOpen, setIsOfferDropdownOpen] = useState(false);
   const [hideNavbar, setHideNavbar] = useState(false);
@@ -313,12 +317,17 @@ export default function NavBar() {
             </motion.div>
 
             <motion.div variants={itemVariants}>
+              <AccountNavLink />
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
               <CartIcon />
             </motion.div>
           </motion.nav>
 
           {/* Mobile Menu Button */}
           <div className="lg:hidden flex items-center gap-3">
+            <AccountNavLink />
             <CartIcon />
             <motion.button
             className="flex items-center"

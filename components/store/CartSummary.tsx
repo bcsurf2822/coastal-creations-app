@@ -9,15 +9,18 @@ interface CartSummaryProps {
   items: CartItem[];
   subtotalCents: number;
   selectedRate: ShippingRate | null;
+  /** Gift card applied at checkout (cents) — shown as a deduction. */
+  giftCardCents?: number;
 }
 
 export default function CartSummary({
   items,
   subtotalCents,
   selectedRate,
+  giftCardCents = 0,
 }: CartSummaryProps): ReactElement {
   const totalCents = selectedRate
-    ? subtotalCents + selectedRate.rateCents
+    ? Math.max(0, subtotalCents + selectedRate.rateCents - giftCardCents)
     : null;
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
 
@@ -92,6 +95,15 @@ export default function CartSummary({
             </span>
           )}
         </div>
+
+        {giftCardCents > 0 && (
+          <div className="flex justify-between">
+            <span className="text-[var(--color-text-primary)]">Gift card</span>
+            <span className="font-medium text-green-600">
+              −{formatCents(giftCardCents)}
+            </span>
+          </div>
+        )}
 
         <div className="border-t border-[var(--color-border-lighter)] pt-3 mt-1 flex justify-between font-bold text-base">
           <span className="text-[var(--color-primary)]">Total</span>

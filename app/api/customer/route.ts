@@ -5,6 +5,12 @@ import Event from "@/lib/models/Event";
 import PrivateEvent from "@/lib/models/PrivateEvent";
 import Reservation from "@/lib/models/Reservations";
 import { squareCustomerService } from "@/lib/square/customers";
+import {
+  computeEventChargeCents,
+  computePrivateEventChargeCents,
+  computeReservationChargeCents,
+} from "@/lib/checkout/eventPricing";
+import { PriceIntegrityError } from "@/lib/checkout/errors";
 import mongoose from "mongoose";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -29,7 +35,6 @@ export async function POST(request: NextRequest) {
       event: eventId,
       eventType = "Event",
       quantity,
-      total,
       isSigningUpForSelf,
       participants,
       selectedOptions,
@@ -181,13 +186,21 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // 4. Create customer booking
+      // 4. Create customer booking — recompute `total` from the reservation doc so
+      // a tampered client `total` can't corrupt the saved record (matches the
+      // server-side charge in submitPayment). See ecommerce/09-checkout-price-integrity.md.
+      const reservationTotal =
+        computeReservationChargeCents(reservation, {
+          selectedDates,
+          participants,
+        }) / 100;
+
       const customer = new Customer({
         event: eventId,
         eventType,
         selectedDates,
         quantity,
-        total,
+        total: reservationTotal,
         isSigningUpForSelf,
         participants: participants || [],
         selectedOptions: selectedOptions || [],
@@ -299,8 +312,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Recompute `total` from the event/private-event doc so a tampered client
+    // `total` can't corrupt the saved record (matches submitPayment's charge).
+    const selection = {
+      quantity,
+      isSigningUpForSelf,
+      selectedOptions,
+      participants,
+    };
     const customerTotal =
-      total !== undefined ? total : (event.price || 0) * quantity;
+      (eventType === "PrivateEvent"
+        ? computePrivateEventChargeCents(event, selection)
+        : computeEventChargeCents(event, selection)) / 100;
 
     const customer = new Customer({
       event: eventId,
@@ -328,6 +351,11 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("[CUSTOMER-API-POST] Error registering customer:", error);
+
+    // Booking selection couldn't be priced (bad quantity/dates) → 400, not 500.
+    if (error instanceof PriceIntegrityError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
 
     if (error instanceof mongoose.Error.ValidationError) {
       const validationErrors: Record<string, string> = {};
