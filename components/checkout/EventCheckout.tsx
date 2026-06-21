@@ -343,21 +343,23 @@ export default function EventCheckout(): ReactElement {
           />
         }
       >
-        {eventDetails && (
-          <EventPreview
-            eventTitle={eventDetails.eventName || eventTitle}
-            description={eventDetails.description}
-            image={eventDetails.image}
-            dates={eventDetails.dates}
-            time={eventDetails.time}
-            formattedPrice={(perPersonCents / 100).toFixed(2)}
-            isPriceAvailable={isPriceAvailable}
-            originalPrice={eventPrice}
-            discountInfo={discountInfo}
-            numberOfPeople={quantity}
-          />
-        )}
+        <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-white shadow-[var(--shadow-card)] overflow-hidden">
+          {eventDetails && (
+            <EventPreview
+              eventTitle={eventDetails.eventName || eventTitle}
+              description={eventDetails.description}
+              image={eventDetails.image}
+              dates={eventDetails.dates}
+              time={eventDetails.time}
+              formattedPrice={(perPersonCents / 100).toFixed(2)}
+              isPriceAvailable={isPriceAvailable}
+              originalPrice={eventPrice}
+              discountInfo={discountInfo}
+              numberOfPeople={quantity}
+            />
+          )}
 
+          <div className="p-6 sm:p-8 flex flex-col gap-8">
         <section className="flex flex-col gap-4">
           <h2 className="text-base font-semibold text-[var(--color-primary)]">
             Registration details
@@ -376,7 +378,7 @@ export default function EventCheckout(): ReactElement {
           />
         </section>
 
-        <hr className="border-0 border-t border-[var(--color-border-lighter)]" />
+        <hr className="border-0 border-t border-[var(--color-border)]" />
 
         <section className="flex flex-col gap-4">
           <h2 className="text-base font-semibold text-[var(--color-primary)]">
@@ -385,10 +387,15 @@ export default function EventCheckout(): ReactElement {
           <ContactForm values={contact} onChange={updateContact} disabled={isProcessing} />
         </section>
 
-        <hr className="border-0 border-t border-[var(--color-border-lighter)]" />
+        <hr className="border-0 border-t border-[var(--color-border)]" />
 
         <section className="flex flex-col gap-4">
-          <h2 className="text-base font-semibold text-[var(--color-primary)]">Payment</h2>
+          <div>
+            <h2 className="text-base font-semibold text-[var(--color-primary)]">Payment</h2>
+            <p className="text-xs text-[var(--color-text-subtle)] mt-0.5">
+              All transactions are secure and encrypted
+            </p>
+          </div>
           {isFreeEvent ? (
             <>
               {error && (
@@ -447,6 +454,8 @@ export default function EventCheckout(): ReactElement {
             </>
           )}
         </section>
+          </div>
+        </div>
       </CheckoutLayout>
     </div>
   );

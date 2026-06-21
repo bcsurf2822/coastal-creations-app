@@ -186,7 +186,7 @@ export default function CheckoutForm(): ReactElement | null {
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10 items-start">
 
       {/* Left column: form */}
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-8 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-white p-6 sm:p-8 shadow-[var(--shadow-card)]">
 
         {/* Contact & Shipping */}
         <div className="flex flex-col gap-5">
@@ -201,7 +201,7 @@ export default function CheckoutForm(): ReactElement | null {
           />
         </div>
 
-        <hr className="border-0 border-t border-[var(--color-border-lighter)]" />
+        <hr className="border-0 border-t border-[var(--color-border)]" />
 
         {/* Shipping Method — always visible; fills in once the address is complete */}
         <div className="flex flex-col gap-4">
@@ -264,7 +264,7 @@ export default function CheckoutForm(): ReactElement | null {
           )}
         </div>
 
-        <hr className="border-0 border-t border-[var(--color-border-lighter)]" />
+        <hr className="border-0 border-t border-[var(--color-border)]" />
 
         {/* Payment — the Square SDK mounts as soon as config loads (on page init);
             it stays disabled until contact/shipping details are complete. */}

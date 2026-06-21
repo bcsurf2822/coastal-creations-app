@@ -144,7 +144,7 @@ export default function EventParticipantsFields({
 
       {/* Primary registrant options (self only) */}
       {isSigningUpForSelf && hasOptions && (
-        <div className="flex flex-col gap-3 rounded-[var(--radius-md)] border border-[var(--color-border-lighter)] p-4">
+        <div className="flex flex-col gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
           <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
             Your selections
           </h3>

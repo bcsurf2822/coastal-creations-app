@@ -142,25 +142,28 @@ export default function PaymentStep({
         </div>
       )}
 
-      {/* Secure-checkout trust block: real accepted-card logos + "Secure checkout by Square". */}
-      <div className="flex flex-col items-center gap-3 w-full pt-1">
-        <div className="flex items-center justify-center gap-2">
-          {ACCEPTED_CARDS.map((card) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              key={card.alt}
-              src={card.src}
-              alt={card.alt}
-              className="h-7 w-auto"
-              loading="lazy"
-            />
-          ))}
-        </div>
-        <div className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-subtle)]">
-          <FaLock className="shrink-0 text-green-600" />
-          <span>Secure checkout by</span>
-          <PiSquareLogoFill className="shrink-0 text-[var(--color-primary)] text-base" />
-          <span className="text-[var(--color-primary)] font-semibold">Square</span>
+      {/* Secure-checkout trust block: "Secure checkout by Square" on top, the
+          accepted-card logos below it, spread to that line's width. */}
+      <div className="flex justify-center w-full pt-1">
+        <div className="inline-flex flex-col items-center gap-2.5">
+          <div className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-subtle)]">
+            <FaLock className="shrink-0 text-green-600" />
+            <span>Secure checkout by</span>
+            <PiSquareLogoFill className="shrink-0 text-[var(--color-primary)] text-base" />
+            <span className="text-[var(--color-primary)] font-semibold">Square</span>
+          </div>
+          <div className="flex items-center justify-between w-full">
+            {ACCEPTED_CARDS.map((card) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={card.alt}
+                src={card.src}
+                alt={card.alt}
+                className="h-5 w-auto"
+                loading="lazy"
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>

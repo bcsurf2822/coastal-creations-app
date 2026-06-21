@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
+import { isCheckoutRoute } from "@/lib/utils/isCheckoutRoute";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
@@ -23,7 +24,9 @@ const OFFER_DROPDOWN_ITEMS: OfferDropdownItem[] = [
 
 export default function NavBar() {
   const pathname = usePathname();
-  const isCheckout = pathname === "/checkout";
+  // Checkout-style pages render the nav in-flow (relative) instead of fixed, so the
+  // sticky order summary isn't overlapped by the nav (see isCheckoutRoute).
+  const isCheckout = isCheckoutRoute(pathname);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isOfferDropdownOpen, setIsOfferDropdownOpen] = useState(false);
   const [hideNavbar, setHideNavbar] = useState(false);
