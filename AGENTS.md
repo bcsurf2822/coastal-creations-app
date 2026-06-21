@@ -6,9 +6,9 @@
 
 Full-featured event booking + e-commerce platform for Coastal Creations Studio (Ocean City, NJ):
 
-- **Customer-facing**: Browse/book classes, camps, workshops, private events, reservations with Square payments; shop physical products (Art Kits, etc.) through a Square-catalog-driven online store with Shippo-rated shipping
+- **Customer-facing**: Browse/book classes, camps, workshops, private events, reservations with Square payments; shop physical products (Art Kits, etc.) through a Square-catalog-driven online store with Shippo-rated shipping; optionally sign in (Google or passwordless magic link) to track bookings & orders in a customer account
 - **Admin**: Event management, customer tracking, payment monitoring, refunds, content management, store product/order management
-- **Tech Stack**: Next.js 16, React 19, TypeScript, MongoDB (Mongoose), NextAuth, Square (Payments + Catalog), Shippo (shipping), Sanity CMS, Resend, TanStack Query
+- **Tech Stack**: Next.js 16, React 19, TypeScript, MongoDB (Mongoose), NextAuth (Google + magic link, DB-backed roles), Square (Payments + Catalog), Shippo (shipping), Sanity CMS, Resend, shadcn/ui (customer console), TanStack Query
 
 > **Two independent systems share this codebase:** the original **booking** system (Events / Customers / Reservations / Private Events) and an **additive, independent online store** (Square Catalog + Shippo). The store does not touch the booking models. See the [Online Store](#online-store-e-commerce) section.
 
@@ -44,6 +44,12 @@ coastal-creations-app/
 │   ├── cart/                     # Shopping cart page
 │   ├── checkout/                 # 3-step checkout (address → rate → payment)
 │   ├── order-confirmation/       # Post-purchase confirmation
+│   │
+│   ├── login/                    # Customer sign-in (Google + magic link)
+│   ├── account/                  # Customer console (auth-protected)
+│   │   ├── orders/[orderNumber]/ # My Orders + read-only order detail w/ tracking
+│   │   ├── bookings/             # My Bookings
+│   │   └── profile/              # Profile
 │   │
 │   ├── contact-us/               # Contact form
 │   ├── walk-in/                  # Walk-in offerings (Mosaics, Canvas Mixed Media, Art Kits)
@@ -126,7 +132,9 @@ coastal-creations-app/
 │   │   ├── Card.tsx              # 3 variants (standard, featured, event)
 │   │   ├── Badge.tsx             # 5 status variants (available, fewSpots, soldOut, newClass, upcoming)
 │   │   ├── PriceBadge.tsx        # Gradient price display
-│   │   └── index.ts              # Barrel export
+│   │   ├── index.ts              # Barrel export
+│   │   └── shadcn/               # shadcn/ui primitives (new-york) — customer console only
+│   ├── account/                  # Customer console UI (AccountNav, OrderStatusBadge)
 │   ├── landing/                  # Homepage: Hero, Calendar, Offerings
 │   ├── calendar/                 # Calendar views & event details
 │   ├── classes/                  # Event display (EventCard, PageHeader, etc.)
@@ -141,7 +149,7 @@ coastal-creations-app/
 │   ├── blog/                     # Blog components
 │   ├── email-templates/          # React Email templates
 │   ├── layout/                   # Nav & Footer
-│   ├── authentication/           # Auth components
+│   ├── authentication/           # LoginForm, AccountNavLink, LogoutButton
 │   ├── providers/                # Context providers
 │   ├── dashboard/                # Admin components
 │   │   ├── home/                 # Dashboard home
@@ -207,6 +215,9 @@ coastal-creations-app/
 │   │   ├── StoreProductSettings.ts # Website overlay on Square catalog items
 │   │   └── PaymentError.ts       # Error tracking
 │   │
+│   ├── auth/                     # guards.ts (requireAdmin/requireUser + page variants), roles.ts (DB-backed roles)
+│   ├── account/                  # queries.ts (session-scoped: getMyOrders/getMyBookings)
+│   │
 │   ├── shippo/                   # Shippo shipping SDK utilities
 │   │   ├── rates.ts             # getShippingRates (live rate quotes)
 │   │   └── labels.ts            # purchaseLabelForOrder (buy label)
@@ -245,9 +256,10 @@ coastal-creations-app/
 ├── sanity/                       # Sanity CMS
 │   └── client.ts                 # Sanity client config
 │
-├── __tests__/                    # Test files
+├── __tests__/                    # Test files (incl. __tests__/auth, __tests__/account)
 │
-├── auth.ts                       # NextAuth configuration
+├── scripts/                      # One-off scripts (grant-admin.ts — DB-backed admin grant)
+├── auth.ts                       # NextAuth configuration (Google + magic link, DB roles)
 ├── next.config.ts                # Next.js config
 ├── tsconfig.json                 # TypeScript config
 ├── vitest.config.mts             # Vitest test config
@@ -267,10 +279,15 @@ coastal-creations-app/
 | **StoreProductSettings.ts** | Website overlay on a Square catalog item | squareItemId, isOnlineSellable, parcelPreset (SMALL/MEDIUM/LARGE), slug, displayOrder |
 | **PaymentError.ts** | Payment failure tracking | error details, customer info |
 
+> **Auth collections** (`users`, `accounts`, `sessions`, `verification_tokens`) are managed by the **NextAuth MongoDB adapter**, not Mongoose models. `users` additionally carries `role` / `isAdmin` (see [Authentication](#authentication--authorization)).
+
 ## API Routes Summary
+
+> Admin/privileged routes (`/api/admin/*`, plus writes on events/reservations/private-events/refunds/gift-cards/square-customers/send/gallery/uploads/hours/page-content) enforce admin via `requireAdmin` (see Authentication). Customer-facing reads + checkout/booking stay public.
 
 | Route | Methods | Purpose |
 |-------|---------|---------|
+| `/api/auth/[...nextauth]` | GET, POST | NextAuth — Google + magic-link sign-in, session, callbacks |
 | `/api/events` | GET, POST | List/create events |
 | `/api/events/[id]` | GET, PUT, DELETE | Single event operations |
 | `/api/customer` | GET, POST | Customer bookings |
@@ -334,7 +351,9 @@ Cache invalidation is automatic - mutations invalidate related queries.
 | Package | Purpose |
 |---------|---------|
 | `@tanstack/react-query` | Server state management, caching |
-| `next-auth` | Authentication (Google OAuth) |
+| `next-auth` (v4) | Auth: Google OAuth + magic link; DB-backed roles (database sessions) |
+| `nodemailer` | Dormant peer dep of NextAuth EmailProvider (we send magic links via Resend, not SMTP) |
+| `radix-ui` + `lucide-react` | Primitives/icons for shadcn/ui (customer console) |
 | `mongoose` | MongoDB ODM |
 | `square` | Payment processing + Catalog (store products) |
 | `react-square-web-payments-sdk` | Payment UI |
@@ -352,15 +371,17 @@ Cache invalidation is automatic - mutations invalidate related queries.
 
 ```
 MONGODB_URI              # MongoDB connection
+NEXTAUTH_URL             # Base origin only, e.g. http://localhost:3000 (do NOT append /api/auth)
 NEXTAUTH_SECRET          # Auth secret
-GOOGLE_CLIENT_ID         # OAuth
-GOOGLE_CLIENT_SECRET     # OAuth
+ADMIN_EMAILS             # Comma-separated admin SEED emails (bootstrap only; roles live in the DB)
+GOOGLE_CLIENT_ID         # Google OAuth (customer + admin sign-in)
+GOOGLE_CLIENT_SECRET     # Google OAuth
 SQUARE_ACCESS_TOKEN      # Square API
 SQUARE_APPLICATION_ID    # Square SDK
 SQUARE_LOCATION_ID       # Square location
 SANITY_PROJECT_ID        # Sanity CMS
 SANITY_DATASET           # Sanity dataset
-RESEND_API_KEY           # Email service
+RESEND_API_KEY           # Email service (transactional emails + magic-link sign-in)
 
 # --- Online store (Shippo shipping) ---
 SHIPPO_API_KEY           # Shippo API (test key for dev/stage, live for prod)
@@ -427,6 +448,11 @@ await connectMongo();
 
 // Success: { success: true, data: ... }
 // Error: { error: "message" }
+
+// Admin-only route? Guard FIRST (see Authentication & Authorization):
+//   import { requireAdmin } from "@/lib/auth/guards";
+//   const g = await requireAdmin();
+//   if (g instanceof NextResponse) return g;   // 401/403
 ```
 
 ### Date Handling
@@ -453,6 +479,7 @@ const date = dayjs.tz(dateString, "America/New_York");
 | Gift Cards | - | `/api/gift-cards/` | `app/gift-cards/` | `components/gift-cards/` |
 | Gallery | - | `/api/gallery/` | `app/gallery/` | `components/gallery/` |
 | CMS Content | - | `/api/page-content/`, `/api/hours/` | - | `components/dashboard/page-descriptions/` |
+| Auth & Accounts | NextAuth `users` (`role`) | `/api/auth/*` | `app/login/`, `app/account/` | `lib/auth/`, `lib/account/`, `components/authentication/`, `components/account/` |
 
 ## Online Store (E-commerce)
 
@@ -512,16 +539,52 @@ In dev/stage, **all** store emails redirect to `DEV_EMAIL`; in production, custo
 
 `app/admin/dashboard/store/` — product visibility/parcel management and an order list + detail view. The order detail page **auto-refreshes** (15s polling) so webhook-driven status changes appear without a manual refresh; polling stops on terminal statuses and pauses when the tab is hidden.
 
-## Authentication
+## Authentication & Authorization
 
-- **Provider**: Google OAuth
-- **Whitelist**: `crystaledgedev22@gmail.com`, `ashley@coastalcreationsstudio.com`
-- **Session**: JWT strategy
-- **Protected Routes**: `/admin/*`
+NextAuth v4 + MongoDB adapter, **`database` session strategy** (NOT JWT). One system serves
+both **admins** and **customers**; a DB-backed role decides access. Config lives in `auth.ts`.
+
+### Sign-in (`auth.ts`)
+- **Google OAuth** and **passwordless magic link** (NextAuth `EmailProvider` with a custom
+  `sendVerificationRequest` that sends via **Resend** — no SMTP; `nodemailer` is only a dormant
+  peer dep). Magic links are single-use, ~10-min TTL, with a DB-backed per-email rate limit.
+- **Anyone can sign in** (customers + admins). New users default to `role: "customer"`.
+
+### Roles are DB-backed (`lib/auth/roles.ts`)
+- The NextAuth `users` collection carries `role: "customer" | "admin"` (+ `isAdmin`).
+- Admins are seeded from `ADMIN_EMAILS` via `events.createUser` + a sign-in promotion, with a
+  session fallback. **`ADMIN_EMAILS` is a bootstrap SEED ONLY — never the request-time gate.**
+- Grant/revoke admin in the DB with `scripts/grant-admin.ts <email> [--revoke]` (no redeploy).
+
+### Authorization is enforced in code, NOT middleware (`lib/auth/guards.ts`)
+Because sessions are DB-backed, Edge `middleware.ts` can't read the role — so authz lives in
+route handlers and server components:
+- API routes: `const g = await requireAdmin(); if (g instanceof NextResponse) return g;`
+  (`requireAdmin` → 401 if not signed in, 403 if signed-in-but-not-admin; `requireUser` → 401 only).
+- Server components/pages: `requireAdminPage()` / `requireUserPage()` (redirect variants).
+- **Every** admin route + the `/admin/dashboard` shell uses these; there is NO `NODE_ENV` dev
+  bypass. `__tests__/auth/` asserts a customer session gets 403 on every admin route.
+
+### Customer accounts (`app/login/`, `app/account/`)
+- `/login` — Google + magic link (`components/authentication/LoginForm.tsx`).
+- `/account` (protected by `requireUserPage`) — **Overview**, **My Orders** (live status + a detail
+  page with tracking and an ownership re-check), **My Bookings**, **Profile**. Reads are scoped
+  strictly to the session email via `lib/account/queries.ts` (case-insensitive; never client-supplied).
+- Nav shows "Sign in / My Account" (`components/authentication/AccountNavLink.tsx`).
+- Guest checkout/booking still work without an account. Bookings/orders are linked to a user by
+  **email** (a `userId` stamp is a future enhancement); store checkout also sets
+  `Order.square.customerId` for unified Square history.
+- The customer console uses **shadcn/ui** (`components/ui/shadcn/`), kept separate from the
+  storefront `components/ui/*` design system — both coexist (see Design System).
+
+### Protected routes
+- `/admin/*` (admin role required) · `/account/*` (any authenticated user).
 
 ## Design System
 
 The application uses a custom design system with CSS variables and reusable UI components. **Always use these components and tokens for consistency.**
+
+> **Two UI systems coexist.** The **storefront, booking, and admin** surfaces use this custom design system (`components/ui/*`, `--color-*` tokens). The **customer console** (`/account`, `/login`) uses **shadcn/ui** (`components/ui/shadcn/*`, new-york style) themed on-brand in `app/globals.css` — its shadcn tokens (`--background`, `--foreground`, `--card`, `--primary`, etc.) are defined **without** overwriting the storefront `--color-*` tokens. Use the custom system for storefront/admin work; use shadcn only inside the customer console.
 
 ### Design Tokens (app/globals.css)
 
