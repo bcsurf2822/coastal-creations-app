@@ -2,13 +2,20 @@
  * Store Checkout API
  * POST: Charges Square, saves the Order to MongoDB, and sends the confirmation email.
  *
+ * PRICE INTEGRITY: client-supplied money is NOT trusted. The subtotal is recomputed
+ * from the Square catalog and shipping from a fresh Shippo re-quote (lib/checkout/
+ * storePricing.ts). The body's `subtotalCents` and `selectedRate.rateCents` are
+ * ignored for charging; only `selectedRate.carrier`/`service` select which fresh
+ * rate to charge. See ecommerce/09-checkout-price-integrity.md.
+ *
  * Request body:
  *   paymentToken   — Square nonce from the card form
  *   customer       — { firstName, lastName, email, phone? }
  *   shippingAddress — IOrderAddress shape
  *   selectedRate   — { rateId, carrier, service, serviceName, rateCents, estimatedDays? }
- *   items          — CartItem array (used to build the order snapshot)
- *   subtotalCents  — number
+ *                    (carrier + service identify the chosen rate; amount is re-quoted)
+ *   items          — CartItem array (item ids + quantities; prices re-derived)
+ *   subtotalCents  — number (ignored; recomputed server-side)
  */
 import { NextResponse } from "next/server";
 import { Client, Environment } from "square/legacy";
@@ -22,6 +29,11 @@ import { OrderConfirmationEmail } from "@/components/email-templates/OrderConfir
 import { StoreOrderAdminEmail } from "@/components/email-templates/StoreOrderAdminEmail";
 import { purchaseLabelForOrder } from "@/lib/shippo/labels";
 import { squareCustomerService } from "@/lib/square/customers";
+import {
+  priceCartFromCatalog,
+  resolveShippingRate,
+  PriceIntegrityError,
+} from "@/lib/checkout/storePricing";
 import type { LabelResult } from "@/lib/shippo/labels";
 import type { CartItem } from "@/lib/types/cartTypes";
 import type { ShippingRate } from "@/lib/shippo/rates";
@@ -64,17 +76,42 @@ export async function POST(request: Request): Promise<Response> {
   try {
     const body: CheckoutRequest = await request.json();
 
-    const { paymentToken, customer, shippingAddress, selectedRate, items, subtotalCents } = body;
+    const { paymentToken, customer, shippingAddress, selectedRate, items } = body;
 
     if (!paymentToken || !customer || !shippingAddress || !selectedRate || !items?.length) {
       return NextResponse.json({ error: "Missing required checkout fields" }, { status: 400 });
     }
 
+    // Mongo is needed to read parcel presets for the shipping re-quote.
+    await connectMongo();
+
+    // PRICE INTEGRITY: never trust client money. Recompute the subtotal from the
+    // Square catalog and the shipping from a fresh Shippo re-quote. A tampered
+    // body (tiny subtotalCents / rateCents) is overridden here; an unsellable item
+    // or vanished shipping service throws PriceIntegrityError → 400 (no charge).
+    // See ecommerce/09-checkout-price-integrity.md.
+    const pricedCart = await priceCartFromCatalog(items);
+    const serverRate = await resolveShippingRate(
+      {
+        name: shippingAddress.name,
+        street1: shippingAddress.addressLine1,
+        street2: shippingAddress.addressLine2,
+        city: shippingAddress.city,
+        state: shippingAddress.stateProvince,
+        zip: shippingAddress.postalCode,
+        country: shippingAddress.country || "US",
+      },
+      items,
+      selectedRate
+    );
+
+    const subtotalCents = pricedCart.subtotalCents;
+
     // Sales tax temporarily disabled (pending the studio's nexus/rate decision — see
     // ecommerce/ecommerce-sales-tax-guide.md). Order keeps taxCents: 0 for now.
-    const totalCents = subtotalCents + selectedRate.rateCents;
+    const totalCents = subtotalCents + serverRate.rateCents;
 
-    console.log("[API-STORE-CHECKOUT-POST] Processing checkout for:", customer.email, "Total:", totalCents);
+    console.log("[API-STORE-CHECKOUT-POST] Processing checkout for:", customer.email, "Server total:", totalCents);
 
     // Step 1: Charge Square
     const paymentResult = await squareClient.paymentsApi.createPayment({
@@ -108,22 +145,22 @@ export async function POST(request: Request): Promise<Response> {
 
     console.log("[API-STORE-CHECKOUT-POST] Square payment completed:", payment.id);
 
-    // Step 2: Save Order to MongoDB
-    await connectMongo();
-
-    const orderItems = items.map((item) => ({
+    // Step 2: Save Order to MongoDB — with SERVER-derived prices and the FRESH
+    // rate id from the re-quote (the label purchase transacts on this id, and the
+    // client's original id would already be stale).
+    const orderItems = pricedCart.items.map((item) => ({
       squareCatalogItemId: item.squareCatalogItemId,
       squareVariationId: item.squareVariationId,
-      name: item.productName,
+      name: item.name,
       variationName: item.variationName,
       quantity: item.quantity,
-      unitPriceCents: item.priceCents,
+      unitPriceCents: item.unitPriceCents,
     }));
 
     const newOrder = await Order.create({
       items: orderItems,
       subtotalCents,
-      shippingCents: selectedRate.rateCents,
+      shippingCents: serverRate.rateCents,
       taxCents: 0,
       totalCents,
       customer: {
@@ -137,9 +174,9 @@ export async function POST(request: Request): Promise<Response> {
         paymentId: payment.id,
       },
       shippo: {
-        rateId: selectedRate.rateId,
-        carrier: selectedRate.carrier,
-        serviceLevel: selectedRate.service,
+        rateId: serverRate.rateId,
+        carrier: serverRate.carrier,
+        serviceLevel: serverRate.service,
       },
       status: "paid",
       refundStatus: "none",
@@ -212,7 +249,7 @@ export async function POST(request: Request): Promise<Response> {
               unitPriceCents: item.unitPriceCents,
             })),
             subtotalCents,
-            shippingCents: selectedRate.rateCents,
+            shippingCents: serverRate.rateCents,
             totalCents,
             shippingAddress: {
               name: shippingAddress.name,
@@ -222,7 +259,7 @@ export async function POST(request: Request): Promise<Response> {
               stateProvince: shippingAddress.stateProvince,
               postalCode: shippingAddress.postalCode,
             },
-            shippingMethod: selectedRate.serviceName,
+            shippingMethod: serverRate.serviceName,
           },
         })
       );
@@ -233,7 +270,7 @@ export async function POST(request: Request): Promise<Response> {
           customer,
           items: orderItems,
           subtotalCents,
-          shippingCents: selectedRate.rateCents,
+          shippingCents: serverRate.rateCents,
           totalCents,
           shippingAddress: {
             name: shippingAddress.name,
@@ -243,7 +280,7 @@ export async function POST(request: Request): Promise<Response> {
             stateProvince: shippingAddress.stateProvince,
             postalCode: shippingAddress.postalCode,
           },
-          shippingMethod: selectedRate.serviceName,
+          shippingMethod: serverRate.serviceName,
           labelUrl: label?.labelUrl,
           trackingNumber: label?.trackingNumber,
           labelFailed: label === null,
@@ -274,6 +311,12 @@ export async function POST(request: Request): Promise<Response> {
       orderNumber: newOrder.orderNumber,
     });
   } catch (error) {
+    // Price/shipping reconciliation failures are the customer's to resolve (stale
+    // cart, item pulled, rate expired) — surface a clear 400 and DO NOT charge.
+    if (error instanceof PriceIntegrityError) {
+      console.warn("[API-STORE-CHECKOUT-POST] Price integrity rejection:", error.message);
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     console.error("[API-STORE-CHECKOUT-POST] Checkout error:", error);
     return NextResponse.json({ error: "Checkout failed" }, { status: 500 });
   }

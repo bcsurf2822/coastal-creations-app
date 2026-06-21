@@ -409,22 +409,43 @@ export default function Payment() {
       // This ensures the payment is linked to the customer in Square Dashboard
       const squareCustomerId = await createOrFindSquareCustomer(paymentData);
 
-      const result = await submitPayment(token, {
-        addressLine1: paymentData.addressLine1,
-        addressLine2: paymentData.addressLine2,
-        givenName: paymentData.givenName,
-        familyName: paymentData.familyName,
-        countryCode: paymentData.countryCode,
-        city: paymentData.city,
-        state: paymentData.state,
-        postalCode: paymentData.postalCode,
-        email: paymentData.email,
-        phoneNumber: paymentData.phoneNumber,
-        eventId: paymentData.eventId,
-        eventTitle: paymentData.eventTitle,
-        eventPrice: paymentData.eventPrice,
-        squareCustomerId,
-      });
+      const result = await submitPayment(
+        token,
+        {
+          addressLine1: paymentData.addressLine1,
+          addressLine2: paymentData.addressLine2,
+          givenName: paymentData.givenName,
+          familyName: paymentData.familyName,
+          countryCode: paymentData.countryCode,
+          city: paymentData.city,
+          state: paymentData.state,
+          postalCode: paymentData.postalCode,
+          email: paymentData.email,
+          phoneNumber: paymentData.phoneNumber,
+          eventId: paymentData.eventId,
+          eventTitle: paymentData.eventTitle,
+          eventPrice: paymentData.eventPrice,
+          squareCustomerId,
+        },
+        // Price-determining selection — the server recomputes the charge from these
+        // against the DB, ignoring eventPrice. Mirrors the /api/customer payload.
+        {
+          eventId: paymentData.eventId,
+          eventType: isPrivateEvent ? "PrivateEvent" : "Event",
+          quantity: billingDetails.numberOfPeople,
+          isSigningUpForSelf,
+          selectedOptions,
+          participants: participants.map((p) => ({
+            selectedOptions: p.selectedOptions,
+          })),
+          giftCard: appliedGiftCard
+            ? {
+                giftCardId: appliedGiftCard.giftCardId,
+                amountCents: appliedGiftCard.amountApplied,
+              }
+            : undefined,
+        }
+      );
 
       if (!result) {
         return {

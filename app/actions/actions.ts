@@ -8,6 +8,18 @@ import {
 } from "square/legacy";
 import { connectMongo } from "@/lib/mongoose";
 import PaymentError, { SquareErrorCode } from "@/lib/models/PaymentError";
+import Event from "@/lib/models/Event";
+import PrivateEvent from "@/lib/models/PrivateEvent";
+import Reservation from "@/lib/models/Reservations";
+import { giftCardService } from "@/lib/square/gift-cards";
+import {
+  computeEventChargeCents,
+  computePrivateEventChargeCents,
+  computeReservationChargeCents,
+  type SelectedOption,
+  type BookingParticipant,
+} from "@/lib/checkout/eventPricing";
+import { PriceIntegrityError } from "@/lib/checkout/errors";
 
 const { paymentsApi } = new Client({
   accessToken: process.env.SQUARE_ACCESS_TOKEN,
@@ -16,6 +28,96 @@ const { paymentsApi } = new Client({
       ? Environment.Sandbox
       : Environment.Production,
 });
+
+/**
+ * The customer's booking selection — the ONLY price-determining inputs we accept.
+ * The charge is recomputed from the DB document for these, never from a client total.
+ */
+export interface BookingSelectionInput {
+  eventId: string;
+  eventType?: "Event" | "PrivateEvent" | "Reservation";
+  quantity?: number;
+  isSigningUpForSelf?: boolean;
+  selectedOptions?: SelectedOption[];
+  participants?: BookingParticipant[];
+  selectedDates?: Array<{ numberOfParticipants?: number; participants?: number }>;
+  /** Optional gift card the customer applied — validated against Square below. */
+  giftCard?: { giftCardId: string; amountCents: number };
+}
+
+interface ResolvedCharge {
+  totalCents: number;
+  giftCardAppliedCents: number;
+  chargeCents: number;
+}
+
+/**
+ * Recomputes the authoritative booking total from the database, validates any
+ * applied gift card against Square's real balance, and returns the amount to put
+ * on the card. Throws PriceIntegrityError if the booking can't be priced.
+ */
+async function resolveBookingCharge(
+  booking: BookingSelectionInput
+): Promise<ResolvedCharge> {
+  await connectMongo();
+
+  const quantity = booking.quantity ?? 0;
+  let totalCents: number;
+
+  if (booking.eventType === "Reservation") {
+    const reservation = await Reservation.findById(booking.eventId);
+    if (!reservation) throw new PriceIntegrityError("Reservation not found");
+    totalCents = computeReservationChargeCents(reservation, {
+      selectedDates: booking.selectedDates ?? [],
+      participants: booking.participants,
+    });
+  } else if (booking.eventType === "PrivateEvent") {
+    const privateEvent = await PrivateEvent.findById(booking.eventId);
+    if (!privateEvent) throw new PriceIntegrityError("Private event not found");
+    totalCents = computePrivateEventChargeCents(privateEvent, {
+      quantity,
+      isSigningUpForSelf: booking.isSigningUpForSelf,
+      selectedOptions: booking.selectedOptions,
+      participants: booking.participants,
+    });
+  } else {
+    const event = await Event.findById(booking.eventId);
+    if (!event) throw new PriceIntegrityError("Event not found");
+    totalCents = computeEventChargeCents(event, {
+      quantity,
+      isSigningUpForSelf: booking.isSigningUpForSelf,
+      selectedOptions: booking.selectedOptions,
+      participants: booking.participants,
+    });
+  }
+
+  // Validate the applied gift card against Square's REAL balance. An invalid,
+  // inactive, or insufficient card simply applies $0 (customer pays full on card)
+  // — a tampered "amountCents" can never reduce the charge below the real balance.
+  let giftCardAppliedCents = 0;
+  if (booking.giftCard && booking.giftCard.amountCents > 0) {
+    try {
+      const card = await giftCardService.getById(booking.giftCard.giftCardId);
+      const available =
+        card && card.state === "ACTIVE" ? card.balanceMoney.amount : 0;
+      giftCardAppliedCents = Math.max(
+        0,
+        Math.min(booking.giftCard.amountCents, available, totalCents)
+      );
+    } catch (giftCardError) {
+      console.error(
+        "[ACTIONS-resolveBookingCharge] Gift card validation failed (applying $0):",
+        giftCardError
+      );
+    }
+  }
+
+  return {
+    totalCents,
+    giftCardAppliedCents,
+    chargeCents: Math.max(0, totalCents - giftCardAppliedCents),
+  };
+}
 
 export async function submitPayment(
   sourceId: string,
@@ -34,11 +136,24 @@ export async function submitPayment(
     eventTitle?: string;
     eventPrice?: string;
     squareCustomerId?: string;
-  }
+  },
+  booking?: BookingSelectionInput
 ): Promise<ApiResponse<CreatePaymentResponse> | undefined> {
   try {
-    // Check if price is provided
-    if (!billingDetails.eventPrice) {
+    // PRICE INTEGRITY: the charge is recomputed server-side from the DB. The
+    // client-supplied `eventPrice` is no longer trusted. A booking selection is
+    // required so we know what to price. See ecommerce/09-checkout-price-integrity.md.
+    if (!booking?.eventId) {
+      console.error("[ACTIONS-submitPayment] Missing booking selection — refusing to charge");
+      return undefined;
+    }
+
+    const { chargeCents } = await resolveBookingCharge(booking);
+
+    // Nothing to charge on the card (e.g. a gift card covers it, or free) — the
+    // card flow should not have been invoked; do not call Square with amount 0.
+    if (chargeCents <= 0) {
+      console.error("[ACTIONS-submitPayment] Computed card charge is 0 — refusing to charge");
       return undefined;
     }
 
@@ -58,10 +173,7 @@ export async function submitPayment(
 
     const note = [eventInfo, ...contactInfo].join(" | ");
 
-    // Convert price from dollars to cents (multiply by 100)
-    const priceInCents = BigInt(
-      Math.round(parseFloat(billingDetails.eventPrice) * 100)
-    );
+    const priceInCents = BigInt(chargeCents);
 
     const result = await paymentsApi.createPayment({
       idempotencyKey: randomUUID(),
@@ -91,6 +203,14 @@ export async function submitPayment(
     // );
     return result;
   } catch (error) {
+    // A price-integrity rejection means we refused to charge BEFORE hitting Square
+    // (booking unpriceable / not found). Not a Square payment failure — don't log
+    // it as one; the caller treats undefined as a failed payment.
+    if (error instanceof PriceIntegrityError) {
+      console.error("[ACTIONS-submitPayment] Price integrity rejection:", error.message);
+      return undefined;
+    }
+
     console.error("Payment processing error:", error);
 
     // Log payment error to MongoDB

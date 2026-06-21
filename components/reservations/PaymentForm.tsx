@@ -472,23 +472,47 @@ export default function PaymentForm({
       console.log(
         "[PaymentForm-handleCardTokenizeResponse] Processing payment..."
       );
-      const paymentResult = await submitPayment(token.token, {
-        addressLine1: billingInfo.addressLine1,
-        addressLine2: billingInfo.addressLine2,
-        givenName: billingInfo.firstName,
-        familyName: billingInfo.lastName,
-        countryCode: billingInfo.country,
-        city: billingInfo.city,
-        state: billingInfo.stateProvince,
-        postalCode: billingInfo.postalCode,
-        email: billingInfo.emailAddress,
-        phoneNumber: billingInfo.phoneNumber,
-        eventId: reservation._id,
-        eventTitle: reservation.eventName,
-        // Charge only remaining amount after gift card
-        eventPrice: remainingAmount.toFixed(2),
-        squareCustomerId,
-      });
+      const reservationParticipants = participantsByDate.flatMap(
+        (dayData) => dayData.participants
+      );
+      const paymentResult = await submitPayment(
+        token.token,
+        {
+          addressLine1: billingInfo.addressLine1,
+          addressLine2: billingInfo.addressLine2,
+          givenName: billingInfo.firstName,
+          familyName: billingInfo.lastName,
+          countryCode: billingInfo.country,
+          city: billingInfo.city,
+          state: billingInfo.stateProvince,
+          postalCode: billingInfo.postalCode,
+          email: billingInfo.emailAddress,
+          phoneNumber: billingInfo.phoneNumber,
+          eventId: reservation._id,
+          eventTitle: reservation.eventName,
+          eventPrice: remainingAmount.toFixed(2),
+          squareCustomerId,
+        },
+        // Price-determining selection — the server recomputes the reservation
+        // charge from pricePerDayPerParticipant × participants + options, then
+        // subtracts the validated gift card. eventPrice is ignored server-side.
+        {
+          eventId: reservation._id,
+          eventType: "Reservation",
+          selectedDates: selectedDates.map((sd) => ({
+            numberOfParticipants: sd.participants,
+          })),
+          participants: reservationParticipants.map((p) => ({
+            selectedOptions: p.selectedOptions,
+          })),
+          giftCard: appliedGiftCard
+            ? {
+                giftCardId: appliedGiftCard.giftCardId,
+                amountCents: appliedGiftCard.amountApplied,
+              }
+            : undefined,
+        }
+      );
 
       if (
         !paymentResult ||
