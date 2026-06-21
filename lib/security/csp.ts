@@ -29,16 +29,20 @@ interface SecurityHeader {
  * @param isDev - true in non-production builds; adds 'unsafe-eval' which React
  *   Refresh / Turbopack require in development. Never shipped to production.
  */
-export function buildContentSecurityPolicy(
-  isSandbox: boolean,
-  isDev: boolean
-): string {
-  const squareHost = isSandbox
-    ? "https://sandbox.web.squarecdn.com"
-    : "https://web.squarecdn.com";
-  const pciConnectHost = isSandbox
-    ? "https://pci-connect.squareupsandbox.com"
-    : "https://pci-connect.squareup.com";
+export function buildContentSecurityPolicy(isDev: boolean): string {
+  // Allow BOTH Square Web Payments hosts (production + sandbox). The SDK's actual
+  // CDN host does NOT reliably track SQUARE_ENVIRONMENT — a production build with
+  // sandbox credentials (e.g. staging) loads web.squarecdn.com, while dev loads
+  // sandbox.web.squarecdn.com. Allowlisting both (all are trusted Square domains)
+  // makes the policy bulletproof across every env/build/credential combination.
+  const squareHosts = [
+    "https://web.squarecdn.com",
+    "https://sandbox.web.squarecdn.com",
+  ];
+  const pciConnectHosts = [
+    "https://pci-connect.squareup.com",
+    "https://pci-connect.squareupsandbox.com",
+  ];
 
   const directives: Record<string, string[]> = {
     "default-src": ["'self'"],
@@ -48,14 +52,16 @@ export function buildContentSecurityPolicy(
       "https://www.googletagmanager.com",
       // @vercel/analytics loads its script from this host (dev + prod).
       "https://va.vercel-scripts.com",
-      squareHost,
+      ...squareHosts,
       ...(isDev ? ["'unsafe-eval'"] : []),
     ],
-    "style-src": ["'self'", "'unsafe-inline'", squareHost],
+    "style-src": ["'self'", "'unsafe-inline'", ...squareHosts],
     "font-src": [
       "'self'",
       "https://square-fonts-production-f.squarecdn.com",
       "https://d1g145x70srn7h.cloudfront.net",
+      // Cash App Pay fonts loaded by the Square Web Payments SDK.
+      "https://cash-f.squarecdn.com",
     ],
     "img-src": [
       "'self'",
@@ -68,18 +74,18 @@ export function buildContentSecurityPolicy(
       "https://items-images-sandbox.s3.us-west-2.amazonaws.com",
       "https://www.google-analytics.com",
       "https://www.googletagmanager.com",
-      squareHost,
+      ...squareHosts,
     ],
     "connect-src": [
       "'self'",
-      pciConnectHost,
+      ...pciConnectHosts,
       "https://o160250.ingest.sentry.io",
       "https://www.google-analytics.com",
       "https://www.googletagmanager.com",
     ],
-    "frame-src": ["'self'", squareHost],
+    "frame-src": ["'self'", ...squareHosts],
     // child-src is the legacy fallback for frame-src in older browsers.
-    "child-src": ["'self'", squareHost],
+    "child-src": ["'self'", ...squareHosts],
     "object-src": ["'none'"],
     "base-uri": ["'self'"],
     "form-action": ["'self'"],

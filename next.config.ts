@@ -7,9 +7,8 @@ import {
 const nextConfig: NextConfig = {
 
   async headers() {
-    const isSandbox = process.env.SQUARE_ENVIRONMENT === "sandbox";
     const isDev = process.env.NODE_ENV !== "production";
-    const csp = buildContentSecurityPolicy(isSandbox, isDev);
+    const csp = buildContentSecurityPolicy(isDev);
 
     return [
       {
