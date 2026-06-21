@@ -2,24 +2,12 @@
  * Square Gift Card Service
  * Handles all Square Gift Cards API operations
  */
-import { Client, Environment, ApiError } from "square/legacy";
+import { getSquareClient } from "@/lib/square/client";
+import { SquareError } from "square";
 import { randomUUID } from "crypto";
 import { normalizeIdempotencyKey } from "@/lib/checkout/idempotency";
 
-// Initialize Square client
-const squareClient = new Client({
-  accessToken: process.env.SQUARE_ACCESS_TOKEN,
-  environment:
-    process.env.SQUARE_ENVIRONMENT === "sandbox"
-      ? Environment.Sandbox
-      : Environment.Production,
-});
-
-// Extract APIs with type assertions for methods that may not be fully typed
-const giftCardsApi = squareClient.giftCardsApi;
-const giftCardActivitiesApi = squareClient.giftCardActivitiesApi;
-const ordersApi = squareClient.ordersApi;
-const paymentsApi = squareClient.paymentsApi;
+const client = getSquareClient();
 
 // Types
 export interface GiftCard {
@@ -101,7 +89,7 @@ export class GiftCardService {
 
     // Step 1: Create Order with GIFT_CARD line item
     console.log("[GIFT-CARDS-createAndActivate] Step 1: Creating order...");
-    const orderResponse = await ordersApi.createOrder({
+    const orderResponse = await client.orders.create({
       idempotencyKey: randomUUID(),
       order: {
         locationId: this.locationId,
@@ -119,9 +107,9 @@ export class GiftCardService {
       },
     });
 
-    const order = orderResponse.result.order;
+    const order = orderResponse.order;
     if (!order || !order.id || !order.lineItems || order.lineItems.length === 0) {
-      console.error("[GIFT-CARDS-createAndActivate] Order response:", JSON.stringify(orderResponse.result, null, 2));
+      console.error("[GIFT-CARDS-createAndActivate] Order response:", JSON.stringify(orderResponse, null, 2));
       throw new Error("Failed to create order for gift card");
     }
 
@@ -137,7 +125,7 @@ export class GiftCardService {
       if (customerId) {
         console.log("[GIFT-CARDS-createAndActivate] Linking payment to customer:", customerId);
       }
-      const paymentResponse = await paymentsApi.createPayment({
+      const paymentResponse = await client.payments.create({
         idempotencyKey: normalizeIdempotencyKey(paymentIdempotencyKey),
         sourceId: sourceId,
         amountMoney: {
@@ -149,7 +137,7 @@ export class GiftCardService {
         customerId: customerId,
       });
 
-      const payment = paymentResponse.result.payment;
+      const payment = paymentResponse.payment;
       if (!payment || payment.status !== "COMPLETED") {
         console.error("[GIFT-CARDS-createAndActivate] Payment failed:", payment?.status);
         throw new Error(`Payment failed with status: ${payment?.status || "unknown"}`);
@@ -161,7 +149,7 @@ export class GiftCardService {
 
     // Step 3: Create gift card (PENDING state)
     console.log("[GIFT-CARDS-createAndActivate] Step 3: Creating gift card...");
-    const createResponse = await giftCardsApi.createGiftCard({
+    const createResponse = await client.giftCards.create({
       idempotencyKey: randomUUID(),
       locationId: this.locationId,
       giftCard: {
@@ -169,9 +157,9 @@ export class GiftCardService {
       },
     });
 
-    const giftCard = createResponse.result.giftCard;
+    const giftCard = createResponse.giftCard;
     if (!giftCard || !giftCard.id || !giftCard.gan) {
-      console.error("[GIFT-CARDS-createAndActivate] Create response:", JSON.stringify(createResponse.result, null, 2));
+      console.error("[GIFT-CARDS-createAndActivate] Create response:", JSON.stringify(createResponse, null, 2));
       throw new Error("Failed to create gift card - missing card data");
     }
 
@@ -183,7 +171,7 @@ export class GiftCardService {
 
     // Step 4: Activate with order reference
     // When using Square Orders API, amount comes from the order line item
-    await giftCardActivitiesApi.createGiftCardActivity({
+    await client.giftCards.activities.create({
       idempotencyKey: randomUUID(),
       giftCardActivity: {
         type: "ACTIVATE",
@@ -210,16 +198,16 @@ export class GiftCardService {
     const cleanGan = gan.replace(/-/g, "");
 
     try {
-      const response = await giftCardsApi.retrieveGiftCardFromGAN({
+      const response = await client.giftCards.getFromGan({
         gan: cleanGan,
       });
 
-      const card = response.result.giftCard;
+      const card = response.giftCard;
       if (!card) return null;
 
       return this.mapGiftCard(card);
     } catch (error) {
-      if (error instanceof ApiError && error.statusCode === 404) {
+      if (error instanceof SquareError && error.statusCode === 404) {
         return null;
       }
       throw error;
@@ -231,13 +219,13 @@ export class GiftCardService {
    */
   async getById(giftCardId: string): Promise<GiftCard | null> {
     try {
-      const response = await giftCardsApi.retrieveGiftCard(giftCardId);
-      const card = response.result.giftCard;
+      const response = await client.giftCards.get({ id: giftCardId });
+      const card = response.giftCard;
       if (!card) return null;
 
       return this.mapGiftCard(card);
     } catch (error) {
-      if (error instanceof ApiError && error.statusCode === 404) {
+      if (error instanceof SquareError && error.statusCode === 404) {
         return null;
       }
       throw error;
@@ -269,7 +257,7 @@ export class GiftCardService {
   ): Promise<{ newBalance: number }> {
     console.log("[GIFT-CARDS-redeem] Redeeming", amountCents, "cents from card:", giftCardId);
 
-    const response = await giftCardActivitiesApi.createGiftCardActivity({
+    const response = await client.giftCards.activities.create({
       idempotencyKey: randomUUID(),
       giftCardActivity: {
         type: "REDEEM",
@@ -285,7 +273,7 @@ export class GiftCardService {
       },
     });
 
-    const activity = response.result.giftCardActivity;
+    const activity = response.giftCardActivity;
     const newBalance = Number(activity?.giftCardBalanceMoney?.amount || 0);
 
     console.log("[GIFT-CARDS-redeem] Redemption complete, new balance:", newBalance);
@@ -306,16 +294,15 @@ export class GiftCardService {
     cursor?: string;
     totalOutstandingBalance: number;
   }> {
-    // Square SDK listGiftCards takes positional params: (type?, state?, limit?, cursor?, customerId?)
-    const response = await giftCardsApi.listGiftCards(
-      undefined, // type
-      options?.state,
-      options?.limit || 50,
-      options?.cursor,
-      undefined // customerId
-    );
+    // v44: list() returns an async-iterable Pager. We read a single page here and hand
+    // the cursor back to the caller (the admin UI drives pagination), matching prior behavior.
+    const pager = await client.giftCards.list({
+      state: options?.state,
+      limit: options?.limit || 50,
+      cursor: options?.cursor,
+    });
 
-    const giftCards = (response.result.giftCards || []) as Array<{
+    const giftCards = (pager.data || []) as Array<{
       id?: string | null;
       gan?: string | null;
       state?: string | null;
@@ -333,7 +320,7 @@ export class GiftCardService {
 
     return {
       giftCards: giftCards.map((card) => this.mapGiftCard(card)),
-      cursor: response.result.cursor || undefined,
+      cursor: pager.response.cursor || undefined,
       totalOutstandingBalance,
     };
   }
@@ -342,18 +329,12 @@ export class GiftCardService {
    * Get activity history for a gift card (admin)
    */
   async getGiftCardActivities(giftCardId: string): Promise<GiftCardActivity[]> {
-    // Square SDK listGiftCardActivities takes positional params:
-    // (giftCardId?, type?, locationId?, beginTime?, endTime?, limit?, cursor?, sortOrder?)
-    const response = await giftCardActivitiesApi.listGiftCardActivities(
+    // v44: activities.list() is the nested sub-resource and returns a Pager. Read the
+    // first page (limit 100), matching the prior single-call behavior.
+    const pager = await client.giftCards.activities.list({
       giftCardId,
-      undefined, // type
-      undefined, // locationId
-      undefined, // beginTime
-      undefined, // endTime
-      100, // limit
-      undefined, // cursor
-      undefined // sortOrder
-    );
+      limit: 100,
+    });
 
     // Type the activities properly
     type SquareActivity = {
@@ -367,7 +348,7 @@ export class GiftCardService {
       redeemActivityDetails?: { amountMoney?: { amount?: bigint | null } | null; referenceId?: string | null } | null;
     };
 
-    const activities = (response.result.giftCardActivities || []) as SquareActivity[];
+    const activities = (pager.data || []) as unknown as SquareActivity[];
 
     return activities.map((activity) => {
       const result: GiftCardActivity = {

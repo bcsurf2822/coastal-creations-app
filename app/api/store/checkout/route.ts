@@ -18,7 +18,7 @@
  *   subtotalCents  — number (ignored; recomputed server-side)
  */
 import { NextResponse } from "next/server";
-import { Client, Environment } from "square/legacy";
+import { getSquareClient } from "@/lib/square/client";
 import { Resend } from "resend";
 import { render } from "@react-email/render";
 import * as React from "react";
@@ -38,13 +38,7 @@ import type { LabelResult } from "@/lib/shippo/labels";
 import type { CartItem } from "@/lib/types/cartTypes";
 import type { ShippingRate } from "@/lib/shippo/rates";
 
-const squareClient = new Client({
-  accessToken: process.env.SQUARE_ACCESS_TOKEN,
-  environment:
-    process.env.SQUARE_ENVIRONMENT === "sandbox"
-      ? Environment.Sandbox
-      : Environment.Production,
-});
+const squareClient = getSquareClient();
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -115,7 +109,7 @@ export async function POST(request: Request): Promise<Response> {
     console.log("[API-STORE-CHECKOUT-POST] Processing checkout for:", customer.email, "Server total:", totalCents);
 
     // Step 1: Charge Square
-    const paymentResult = await squareClient.paymentsApi.createPayment({
+    const paymentResult = await squareClient.payments.create({
       idempotencyKey: normalizeIdempotencyKey(body.idempotencyKey),
       sourceId: paymentToken,
       amountMoney: {
@@ -134,7 +128,7 @@ export async function POST(request: Request): Promise<Response> {
       note: `Coastal Creations Studio — online store order`,
     });
 
-    const payment = paymentResult.result.payment;
+    const payment = paymentResult.payment;
 
     if (payment?.status !== "COMPLETED") {
       console.error("[API-STORE-CHECKOUT-POST] Square payment not completed:", payment?.status);

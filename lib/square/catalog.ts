@@ -3,18 +3,11 @@
  * Provides BigInt-free DTOs (priceMoney.amount is converted via Number() here,
  * before any value crosses a JSON/React boundary).
  */
-import { Client, Environment, ApiError } from "square/legacy";
+import { getSquareClient } from "@/lib/square/client";
+import { SquareError } from "square";
 import { moneyAmountToCents } from "@/lib/utils/moneyHelpers";
 
-const squareClient = new Client({
-  accessToken: process.env.SQUARE_ACCESS_TOKEN,
-  environment:
-    process.env.SQUARE_ENVIRONMENT === "sandbox"
-      ? Environment.Sandbox
-      : Environment.Production,
-});
-
-const { catalogApi, inventoryApi } = squareClient;
+const client = getSquareClient();
 
 const LOCATION_ID =
   process.env.SQUARE_LOCATION_ID ||
@@ -97,18 +90,14 @@ function mapRelatedObjects(relatedObjects: unknown[]): {
  */
 async function fetchCategoryNames(): Promise<Map<string, string>> {
   const map = new Map<string, string>();
-  let cursor: string | undefined;
-  do {
-    const resp = await catalogApi.listCatalog(cursor, "CATEGORY");
-    for (const obj of resp.result.objects ?? []) {
-      const o = obj as {
-        id?: string | null;
-        categoryData?: { name?: string | null } | null;
-      };
-      if (o.id && o.categoryData?.name) map.set(o.id, o.categoryData.name);
-    }
-    cursor = resp.result.cursor ?? undefined;
-  } while (cursor);
+  const pager = await client.catalog.list({ types: "CATEGORY" });
+  for await (const obj of pager) {
+    const o = obj as {
+      id?: string | null;
+      categoryData?: { name?: string | null } | null;
+    };
+    if (o.id && o.categoryData?.name) map.set(o.id, o.categoryData.name);
+  }
   return map;
 }
 
@@ -217,27 +206,27 @@ export async function listCatalogItems(
     let relatedObjects: unknown[] = [];
 
     if (squareItemIds && squareItemIds.length > 0) {
-      const response = await catalogApi.batchRetrieveCatalogObjects({
+      const response = await client.catalog.batchGet({
         objectIds: squareItemIds,
         includeRelatedObjects: true,
       });
-      rawObjects = (response.result.objects ?? []) as unknown[];
-      relatedObjects = (response.result.relatedObjects ?? []) as unknown[];
+      rawObjects = (response.objects ?? []) as unknown[];
+      relatedObjects = (response.relatedObjects ?? []) as unknown[];
     } else {
       let cursor: string | undefined;
       do {
-        const response = await catalogApi.searchCatalogObjects({
+        const response = await client.catalog.search({
           objectTypes: ["ITEM"],
           includeRelatedObjects: true,
           includeDeletedObjects: false,
           limit: 200,
           cursor,
         });
-        rawObjects.push(...((response.result.objects ?? []) as unknown[]));
+        rawObjects.push(...((response.objects ?? []) as unknown[]));
         relatedObjects.push(
-          ...((response.result.relatedObjects ?? []) as unknown[])
+          ...((response.relatedObjects ?? []) as unknown[])
         );
-        cursor = response.result.cursor ?? undefined;
+        cursor = response.cursor ?? undefined;
       } while (cursor);
     }
 
@@ -253,10 +242,8 @@ export async function listCatalogItems(
     console.log("[CATALOG-listCatalogItems] Returning", items.length, "items");
     return items;
   } catch (e) {
-    if (e instanceof ApiError) {
-      throw new Error(
-        e.result?.errors?.[0]?.detail ?? "Square catalog error"
-      );
+    if (e instanceof SquareError) {
+      throw new Error(e.errors[0]?.detail ?? e.message ?? "Square catalog error");
     }
     throw e;
   }
@@ -272,9 +259,12 @@ export async function retrieveCatalogItem(
   console.log("[CATALOG-retrieveCatalogItem] Fetching item", squareItemId);
 
   try {
-    const response = await catalogApi.retrieveCatalogObject(squareItemId, true);
-    const obj = response.result.object;
-    const related = (response.result.relatedObjects ?? []) as unknown[];
+    const response = await client.catalog.object.get({
+      objectId: squareItemId,
+      includeRelatedObjects: true,
+    });
+    const obj = response.object;
+    const related = (response.relatedObjects ?? []) as unknown[];
 
     if (!obj) return null;
 
@@ -285,12 +275,9 @@ export async function retrieveCatalogItem(
 
     return mapRawItem(obj as unknown, imageById, categoryById);
   } catch (e) {
-    if (e instanceof ApiError) {
-      const status = e.statusCode;
-      if (status === 404) return null;
-      throw new Error(
-        e.result?.errors?.[0]?.detail ?? "Square catalog error"
-      );
+    if (e instanceof SquareError) {
+      if (e.statusCode === 404) return null;
+      throw new Error(e.errors[0]?.detail ?? e.message ?? "Square catalog error");
     }
     throw e;
   }
@@ -314,13 +301,13 @@ export async function getInventoryCounts(
   );
 
   try {
-    const response = await inventoryApi.batchRetrieveInventoryCounts({
+    const pager = await client.inventory.batchGetCounts({
       catalogObjectIds: variationIds,
       locationIds: LOCATION_ID ? [LOCATION_ID] : undefined,
       states: ["IN_STOCK"],
     });
 
-    for (const count of response.result.counts ?? []) {
+    for await (const count of pager) {
       if (count.catalogObjectId && count.quantity != null) {
         quantities.set(count.catalogObjectId, Number(count.quantity));
       }
@@ -328,10 +315,8 @@ export async function getInventoryCounts(
 
     return quantities;
   } catch (e) {
-    if (e instanceof ApiError) {
-      throw new Error(
-        e.result?.errors?.[0]?.detail ?? "Square inventory error"
-      );
+    if (e instanceof SquareError) {
+      throw new Error(e.errors[0]?.detail ?? e.message ?? "Square inventory error");
     }
     throw e;
   }

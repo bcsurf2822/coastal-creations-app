@@ -1,10 +1,6 @@
 "use server";
-import {
-  Client,
-  Environment,
-  ApiResponse,
-  CreatePaymentResponse,
-} from "square/legacy";
+import { getSquareClient } from "@/lib/square/client";
+import { SquareError, type Square } from "square";
 import { connectMongo } from "@/lib/mongoose";
 import PaymentError, { SquareErrorCode } from "@/lib/models/PaymentError";
 import Event from "@/lib/models/Event";
@@ -21,13 +17,17 @@ import {
 import { PriceIntegrityError } from "@/lib/checkout/errors";
 import { normalizeIdempotencyKey } from "@/lib/checkout/idempotency";
 
-const { paymentsApi } = new Client({
-  accessToken: process.env.SQUARE_ACCESS_TOKEN,
-  environment:
-    process.env.SQUARE_ENVIRONMENT === "sandbox"
-      ? Environment.Sandbox
-      : Environment.Production,
-});
+const client = getSquareClient();
+
+/**
+ * Legacy-shaped payment result. v44 returns `{ payment }` directly, but the client
+ * components (Payment.tsx, PaymentProcessor.tsx, PaymentForm.tsx) read
+ * `result.result?.payment` / `result.result?.errors`. We wrap the v44 response in
+ * `{ result }` so the migration stays server-contained and those components are unchanged.
+ */
+export interface SubmitPaymentResult {
+  result: Square.CreatePaymentResponse;
+}
 
 /**
  * The customer's booking selection — the ONLY price-determining inputs we accept.
@@ -139,7 +139,7 @@ export async function submitPayment(
   },
   booking?: BookingSelectionInput,
   idempotencyKey?: string
-): Promise<ApiResponse<CreatePaymentResponse> | undefined> {
+): Promise<SubmitPaymentResult | undefined> {
   try {
     // PRICE INTEGRITY: the charge is recomputed server-side from the DB. The
     // client-supplied `eventPrice` is no longer trusted. A booking selection is
@@ -176,7 +176,7 @@ export async function submitPayment(
 
     const priceInCents = BigInt(chargeCents);
 
-    const result = await paymentsApi.createPayment({
+    const response = await client.payments.create({
       idempotencyKey: normalizeIdempotencyKey(idempotencyKey),
       sourceId,
       referenceId: billingDetails.eventId,
@@ -188,7 +188,7 @@ export async function submitPayment(
         addressLine2: billingDetails.addressLine2 || "",
         firstName: billingDetails.givenName,
         lastName: billingDetails.familyName,
-        country: billingDetails.countryCode,
+        country: billingDetails.countryCode as Square.Country,
         postalCode: billingDetails.postalCode,
       },
       amountMoney: {
@@ -197,12 +197,8 @@ export async function submitPayment(
       },
     });
 
-    // console.log(
-    //   "Payment processing result:",
-    //   result.statusCode,
-    //   result.result?.payment?.status
-    // );
-    return result;
+    // Wrap in the legacy `{ result }` shape so the client components are unchanged.
+    return { result: response };
   } catch (error) {
     // A price-integrity rejection means we refused to charge BEFORE hitting Square
     // (booking unpriceable / not found). Not a Square payment failure — don't log
@@ -265,26 +261,14 @@ async function logPaymentError(
       return SquareErrorCode.INTERNAL_SERVER_ERROR;
     };
 
-    // Check if it's a Square API error with the expected structure
-    if (error && typeof error === "object" && "result" in error) {
-      const errorObj = error as {
-        result?: {
-          errors?: Array<{
-            code?: string;
-            detail?: string;
-            field?: string;
-            category?: string;
-          }>;
-        };
-      };
-      if (errorObj.result?.errors && Array.isArray(errorObj.result.errors)) {
-        errors = errorObj.result.errors.map((err) => ({
-          code: validateErrorCode(err.code),
-          detail: err.detail || "Unknown error occurred",
-          field: err.field,
-          category: err.category || "UNKNOWN_CATEGORY",
-        }));
-      }
+    // v44 Square errors are SquareError instances carrying a structured `errors` array.
+    if (error instanceof SquareError) {
+      errors = error.errors.map((err) => ({
+        code: validateErrorCode(err.code),
+        detail: err.detail || "Unknown error occurred",
+        field: err.field,
+        category: err.category || "UNKNOWN_CATEGORY",
+      }));
     } else if (error && typeof error === "object" && "errors" in error) {
       // Handle direct errors array
       const errorObj = error as {

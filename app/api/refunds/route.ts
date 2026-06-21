@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectMongo } from "@/lib/mongoose";
 import Customer from "@/lib/models/Customer";
-import { Client, Environment } from "square/legacy";
+import { getSquareClient } from "@/lib/square/client";
+import { SquareError } from "square";
 import { randomUUID } from "crypto";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 
-const { refundsApi } = new Client({
-  accessToken: process.env.SQUARE_ACCESS_TOKEN,
-  environment:
-    process.env.SQUARE_ENVIRONMENT === "sandbox"
-      ? Environment.Sandbox
-      : Environment.Production,
-});
+const client = getSquareClient();
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const session = await getServerSession(authOptions);
@@ -58,7 +53,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       ? BigInt(Math.round(refundAmount * 100))
       : BigInt(Math.round((customer.total - (customer.refundAmount || 0)) * 100));
 
-    const refundResult = await refundsApi.refundPayment({
+    const refundResult = await client.refunds.refundPayment({
       idempotencyKey: randomUUID(),
       paymentId: customer.squarePaymentId,
       amountMoney: {
@@ -68,7 +63,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       reason: reason || "Customer requested refund",
     });
 
-    if (refundResult.result?.refund) {
+    if (refundResult.refund) {
       const refundAmountDollars = refundAmount || customer.total - (customer.refundAmount || 0);
       const totalRefundedAmount = (customer.refundAmount || 0) + refundAmountDollars;
 
@@ -80,7 +75,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       await customer.save();
 
       const refundData = JSON.parse(
-        JSON.stringify(refundResult.result.refund, (key, value) =>
+        JSON.stringify(refundResult.refund, (key, value) =>
           typeof value === "bigint" ? value.toString() : value
         )
       );
@@ -111,18 +106,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     let errorMessage = "Error processing refund";
     let statusCode = 500;
 
-    if (error && typeof error === "object" && "result" in error) {
-      const errorObj = error as {
-        result?: {
-          errors?: Array<{
-            code?: string;
-            detail?: string;
-            category?: string;
-          }>;
-        };
-      };
-      if (errorObj.result?.errors && Array.isArray(errorObj.result.errors)) {
-        const firstError = errorObj.result.errors[0];
+    if (error instanceof SquareError) {
+      const firstError = error.errors[0];
+      if (firstError) {
         errorMessage = firstError.detail || firstError.code || errorMessage;
 
         if (
