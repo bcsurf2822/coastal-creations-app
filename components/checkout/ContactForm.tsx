@@ -10,6 +10,20 @@ export interface ContactFormValues {
   phone: string;
 }
 
+/** Format a US phone as the user types: (XXX) XXX-XXXX, capped at 10 digits. */
+export function formatUsPhone(input: string): string {
+  const digits = input.replace(/\D/g, "").slice(0, 10);
+  if (digits.length === 0) return "";
+  if (digits.length < 4) return `(${digits}`;
+  if (digits.length < 7) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
+/** True when the phone contains exactly 10 digits. */
+export function isValidUsPhone(phone: string): boolean {
+  return phone.replace(/\D/g, "").length === 10;
+}
+
 interface ContactFormProps {
   values: ContactFormValues;
   onChange: (field: keyof ContactFormValues, value: string) => void;
@@ -63,38 +77,41 @@ export default function ContactForm({
         </div>
       </div>
 
-      <div>
-        <Label htmlFor="contact-email" required>
-          Email
-        </Label>
-        <Input
-          id="contact-email"
-          name="email"
-          type="email"
-          inputMode="email"
-          autoComplete="email"
-          value={values.email}
-          error={errors?.email}
-          disabled={disabled}
-          onChange={(e) => onChange("email", e.target.value)}
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="contact-phone" required>
-          Phone
-        </Label>
-        <Input
-          id="contact-phone"
-          name="phone"
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          value={values.phone}
-          error={errors?.phone}
-          disabled={disabled}
-          onChange={(e) => onChange("phone", e.target.value)}
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="contact-email" required>
+            Email
+          </Label>
+          <Input
+            id="contact-email"
+            name="email"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            value={values.email}
+            error={errors?.email}
+            disabled={disabled}
+            onChange={(e) => onChange("email", e.target.value)}
+          />
+        </div>
+        <div>
+          <Label htmlFor="contact-phone" required>
+            Phone
+          </Label>
+          <Input
+            id="contact-phone"
+            name="phone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder="(555) 555-5555"
+            maxLength={14}
+            value={values.phone}
+            error={errors?.phone}
+            disabled={disabled}
+            onChange={(e) => onChange("phone", formatUsPhone(e.target.value))}
+          />
+        </div>
       </div>
     </div>
   );

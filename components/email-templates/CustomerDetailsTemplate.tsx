@@ -173,20 +173,22 @@ export const CustomerDetailsTemplate = ({
             {customer.billingInfo.phoneNumber}
           </DetailRow>
         )}
-        <DetailRow label="Address">
-          {customer.billingInfo.addressLine1}
-          {customer.billingInfo.addressLine2 && (
-            <>
-              <br />
-              {customer.billingInfo.addressLine2}
-            </>
-          )}
-          <br />
-          {customer.billingInfo.city}, {customer.billingInfo.stateProvince}{" "}
-          {customer.billingInfo.postalCode}
-          <br />
-          {customer.billingInfo.country}
-        </DetailRow>
+        {customer.billingInfo.addressLine1 && (
+          <DetailRow label="Address">
+            {customer.billingInfo.addressLine1}
+            {customer.billingInfo.addressLine2 && (
+              <>
+                <br />
+                {customer.billingInfo.addressLine2}
+              </>
+            )}
+            <br />
+            {customer.billingInfo.city}, {customer.billingInfo.stateProvince}{" "}
+            {customer.billingInfo.postalCode}
+            <br />
+            {customer.billingInfo.country}
+          </DetailRow>
+        )}
       </InfoCard>
 
       <InfoCard title="Registration Details">

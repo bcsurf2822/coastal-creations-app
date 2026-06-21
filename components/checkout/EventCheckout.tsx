@@ -9,7 +9,7 @@ import { buildSuccessUrl } from "@/lib/checkout/bookingFlow";
 import { Button } from "@/components/ui";
 import EventPreview from "@/components/payment/EventPreview";
 import CheckoutLayout from "./CheckoutLayout";
-import ContactForm, { type ContactFormValues } from "./ContactForm";
+import ContactForm, { type ContactFormValues, isValidUsPhone } from "./ContactForm";
 import PaymentStep from "./PaymentStep";
 import EventSummary, { type SummaryLine } from "./EventSummary";
 import EventParticipantsFields from "./EventParticipantsFields";
@@ -209,7 +209,7 @@ export default function EventCheckout(): ReactElement {
     contact.firstName.trim() !== "" &&
     contact.lastName.trim() !== "" &&
     contact.email.trim() !== "" &&
-    contact.phone.trim() !== "" &&
+    isValidUsPhone(contact.phone) &&
     participants.every((p) => p.firstName.trim() !== "" && p.lastName.trim() !== "") &&
     (!isSigningUpForSelf || allOptionsChosen(selfSelectedOptions)) &&
     participants.every((p) => allOptionsChosen(p.selectedOptions));
@@ -384,7 +384,12 @@ export default function EventCheckout(): ReactElement {
           <h2 className="text-base font-semibold text-[var(--color-primary)]">
             Your contact information
           </h2>
-          <ContactForm values={contact} onChange={updateContact} disabled={isProcessing} />
+          <ContactForm
+            values={contact}
+            onChange={updateContact}
+            disabled={isProcessing}
+            errors={{ phone: contact.phone !== "" && !isValidUsPhone(contact.phone) }}
+          />
         </section>
 
         <hr className="border-0 border-t border-[var(--color-border)]" />
