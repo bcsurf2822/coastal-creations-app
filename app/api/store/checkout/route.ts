@@ -24,7 +24,6 @@ import { purchaseLabelForOrder } from "@/lib/shippo/labels";
 import type { LabelResult } from "@/lib/shippo/labels";
 import type { CartItem } from "@/lib/types/cartTypes";
 import type { ShippingRate } from "@/lib/shippo/rates";
-import { computeTaxCents } from "@/lib/utils/taxHelpers";
 
 const squareClient = new Client({
   accessToken: process.env.SQUARE_ACCESS_TOKEN,
@@ -70,8 +69,9 @@ export async function POST(request: Request): Promise<Response> {
       return NextResponse.json({ error: "Missing required checkout fields" }, { status: 400 });
     }
 
-    const taxCents = computeTaxCents(subtotalCents, shippingAddress.stateProvince);
-    const totalCents = subtotalCents + selectedRate.rateCents + taxCents;
+    // Sales tax temporarily disabled (pending the studio's nexus/rate decision — see
+    // ecommerce/ecommerce-sales-tax-guide.md). Order keeps taxCents: 0 for now.
+    const totalCents = subtotalCents + selectedRate.rateCents;
 
     console.log("[API-STORE-CHECKOUT-POST] Processing checkout for:", customer.email, "Total:", totalCents);
 
@@ -123,7 +123,7 @@ export async function POST(request: Request): Promise<Response> {
       items: orderItems,
       subtotalCents,
       shippingCents: selectedRate.rateCents,
-      taxCents,
+      taxCents: 0,
       totalCents,
       customer: {
         firstName: customer.firstName,
@@ -182,7 +182,6 @@ export async function POST(request: Request): Promise<Response> {
             })),
             subtotalCents,
             shippingCents: selectedRate.rateCents,
-            taxCents,
             totalCents,
             shippingAddress: {
               name: shippingAddress.name,
@@ -204,7 +203,6 @@ export async function POST(request: Request): Promise<Response> {
           items: orderItems,
           subtotalCents,
           shippingCents: selectedRate.rateCents,
-          taxCents,
           totalCents,
           shippingAddress: {
             name: shippingAddress.name,

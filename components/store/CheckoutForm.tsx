@@ -1,18 +1,16 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/store/CartProvider";
 import { usePaymentConfig } from "@/hooks/queries/use-payment-config";
-import { Button } from "@/components/ui";
 import ShippingAddressStep, {
   type AddressFormValues,
 } from "@/components/store/ShippingAddressStep";
 import PaymentStep from "@/components/store/PaymentStep";
 import CartSummary from "@/components/store/CartSummary";
 import { formatCents } from "@/lib/utils/moneyHelpers";
-import { computeTaxCents, taxLabel as getTaxLabel } from "@/lib/utils/taxHelpers";
 import type { ShippingRate } from "@/lib/shippo/rates";
 
 const EMPTY_ADDRESS: AddressFormValues = {
@@ -35,16 +33,10 @@ export default function CheckoutForm(): ReactElement | null {
   const [address, setAddress] = useState<AddressFormValues>(EMPTY_ADDRESS);
   const [rates, setRates] = useState<ShippingRate[]>([]);
   const [selectedRate, setSelectedRate] = useState<ShippingRate | null>(null);
-  const [showAllRates, setShowAllRates] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const orderCompleted = useRef(false);
-
-  const taxCents = address.state && selectedRate
-    ? computeTaxCents(subtotalCents, address.state)
-    : 0;
-  const taxStateLabel = address.state ? getTaxLabel(address.state) : "";
+  const [orderCompleted, setOrderCompleted] = useState(false);
 
   const updateField = (field: keyof AddressFormValues, value: string): void => {
     setAddress((prev) => ({ ...prev, [field]: value }));
@@ -127,7 +119,7 @@ export default function CheckoutForm(): ReactElement | null {
         setIsProcessing(false);
         return;
       }
-      orderCompleted.current = true;
+      setOrderCompleted(true);
       clearCart();
       router.push(`/order-confirmation?orderNumber=${data.orderNumber}`);
     } catch {
@@ -161,15 +153,12 @@ export default function CheckoutForm(): ReactElement | null {
   ]);
 
   useEffect(() => {
-    if (items.length === 0 && !orderCompleted.current) {
+    if (items.length === 0 && !orderCompleted) {
       router.replace("/cart");
     }
-  }, [items.length, router]);
+  }, [items.length, orderCompleted, router]);
 
-  if (items.length === 0 && !orderCompleted.current) return null;
-
-  const visibleRates = showAllRates ? rates : rates.slice(0, 3);
-  const hiddenCount = rates.length - 3;
+  if (items.length === 0 && !orderCompleted) return null;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10 items-start">
@@ -186,111 +175,92 @@ export default function CheckoutForm(): ReactElement | null {
             values={address}
             onChange={updateField}
             isLoading={isLoading}
-            error={rates.length === 0 ? error : null}
+            error={null}
           />
         </div>
 
-        {/* Shipping Method — auto-reveals once rates load */}
-        {(isLoading || rates.length > 0) && (
-          <div className="flex flex-col gap-4">
-            <h2 className="text-base font-semibold text-[var(--color-primary)] text-center">
-              Shipping Method
-            </h2>
+        {/* Shipping Method — always visible; fills in once the address is complete */}
+        <div className="flex flex-col gap-4">
+          <h2 className="text-base font-semibold text-[var(--color-primary)] text-center">
+            Shipping Method
+          </h2>
 
-            {/* Skeleton placeholders while Shippo fetches */}
-            {isLoading && (
-              <div className="flex flex-col gap-3">
-                {[0, 1, 2].map((i) => (
-                  <div
-                    key={i}
-                    className="animate-pulse bg-gray-100 rounded-[var(--radius-lg)] h-16"
-                  />
+          {/* Skeleton placeholders while Shippo fetches */}
+          {isLoading && (
+            <div className="flex flex-col gap-3">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="animate-pulse bg-gray-100 rounded-[var(--radius-lg)] h-16"
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Shipping method — a single dropdown, defaulting to the cheapest (recommended) */}
+          {!isLoading && rates.length > 0 && selectedRate && (
+            <div className="flex flex-col gap-1.5">
+              {rates.length > 1 && (
+                <label
+                  htmlFor="shipping-rate"
+                  className="text-xs text-[var(--color-text-subtle)] text-center"
+                >
+                  Need it sooner? Choose a different option:
+                </label>
+              )}
+              <select
+                id="shipping-rate"
+                aria-label="Shipping method"
+                value={selectedRate.rateId}
+                onChange={(e) => {
+                  const next = rates.find((r) => r.rateId === e.target.value);
+                  if (next) setSelectedRate(next);
+                }}
+                className="w-full rounded-[var(--radius-lg)] border-2 border-[var(--color-border-lighter)] bg-white px-3 py-2.5 text-sm focus:border-[var(--color-secondary)] outline-none cursor-pointer"
+              >
+                {rates.map((rate) => (
+                  <option key={rate.rateId} value={rate.rateId}>
+                    {rate.serviceName} — {formatCents(rate.rateCents)}
+                    {rate.estimatedDays != null
+                      ? ` (${rate.estimatedDays} day${rate.estimatedDays !== 1 ? "s" : ""})`
+                      : ""}
+                  </option>
                 ))}
-              </div>
-            )}
+              </select>
+            </div>
+          )}
 
-            {/* Rate cards */}
-            {!isLoading && rates.length > 0 && (
-              <>
-                <div className="flex flex-col gap-3">
-                  {visibleRates.map((rate, idx) => {
-                    const isSelected = selectedRate?.rateId === rate.rateId;
-                    return (
-                      <button
-                        key={rate.rateId}
-                        onClick={() => {
-                          setSelectedRate(rate);
-                        }}
-                        className={`w-full text-left px-4 py-3 rounded-[var(--radius-lg)] border-2 transition-colors ${
-                          isSelected
-                            ? "border-[var(--color-primary)] bg-[var(--color-light)]"
-                            : "border-[var(--color-border-lighter)] hover:border-[var(--color-secondary)]"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="flex flex-col gap-0.5 items-center flex-1">
-                            <p className="font-semibold text-[var(--color-text-primary)] text-sm">
-                              {rate.serviceName}
-                            </p>
-                            {rate.estimatedDays != null && (
-                              <p className="text-xs text-[var(--color-text-subtle)]">
-                                Est. {rate.estimatedDays} business day{rate.estimatedDays !== 1 ? "s" : ""}
-                              </p>
-                            )}
-                            {idx === 0 && (
-                              <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full mt-0.5">
-                                ★ Recommended
-                              </span>
-                            )}
-                          </div>
-                          <span className="font-bold text-[var(--color-primary)] shrink-0">
-                            {formatCents(rate.rateCents)}
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
+          {/* Placeholder until a complete address unlocks live rates */}
+          {!isLoading && rates.length === 0 && (
+            <div className="rounded-[var(--radius-lg)] border-2 border-dashed border-[var(--color-border-lighter)] px-4 py-6 text-center text-sm text-[var(--color-text-subtle)]">
+              {error
+                ? "We couldn't load shipping options — please check your address above."
+                : "Enter your address above to see shipping options."}
+            </div>
+          )}
+        </div>
 
-                {!showAllRates && hiddenCount > 0 && (
-                  <button
-                    onClick={() => setShowAllRates(true)}
-                    className="text-sm text-[var(--color-secondary)] hover:underline self-center"
-                  >
-                    See {hiddenCount} more option{hiddenCount !== 1 ? "s" : ""}
-                  </button>
-                )}
-
-                {error && (
-                  <p className="text-[var(--color-error)] text-sm bg-red-50 border border-red-200 rounded-[var(--radius-md)] px-3 py-2">
-                    {error}
-                  </p>
-                )}
-
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Payment — auto-reveals when rate is selected */}
-        {selectedRate && paymentConfig && (
-          <div className="flex flex-col gap-4">
-            <h2 className="text-base font-semibold text-[var(--color-primary)] text-center">
-              Payment
-            </h2>
+        {/* Payment — always visible; unlocks once a shipping method is selected */}
+        <div className="flex flex-col gap-4">
+          <h2 className="text-base font-semibold text-[var(--color-primary)] text-center">
+            Payment
+          </h2>
+          {selectedRate && paymentConfig ? (
             <PaymentStep
               applicationId={paymentConfig.applicationId}
               locationId={paymentConfig.locationId}
               subtotalCents={subtotalCents}
-              taxCents={taxCents}
-              taxStateLabel={taxStateLabel}
               selectedRate={selectedRate}
               onToken={handlePayment}
               isProcessing={isProcessing}
               error={error}
             />
-          </div>
-        )}
+          ) : (
+            <div className="rounded-[var(--radius-lg)] border-2 border-dashed border-[var(--color-border-lighter)] px-4 py-6 text-center text-sm text-[var(--color-text-subtle)]">
+              Choose a shipping method above to continue to payment.
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Right column: sticky cart summary */}
@@ -298,7 +268,6 @@ export default function CheckoutForm(): ReactElement | null {
         items={items}
         subtotalCents={subtotalCents}
         selectedRate={selectedRate}
-        shippingState={address.state}
       />
     </div>
   );

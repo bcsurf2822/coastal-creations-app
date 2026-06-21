@@ -70,24 +70,17 @@ export default function CartDrawer(): ReactElement {
               <h2 className="text-lg font-bold text-[var(--color-primary)]">
                 Your Cart
               </h2>
-              <button
-                type="button"
-                onClick={() => {
-                  if (items.length > 0) {
-                    if (confirm("Remove all items from your cart?")) {
-                      clearCart();
-                      closeDrawer();
-                    }
-                  } else {
-                    closeDrawer();
-                  }
-                }}
-                aria-label={items.length > 0 ? "Clear cart" : "Close cart"}
-                className="p-1.5 rounded text-[var(--color-text-subtle)] hover:text-[var(--color-error)] hover:bg-[var(--color-light)] transition-colors"
-                title={items.length > 0 ? "Clear all items" : "Close"}
-              >
-                ✕
-              </button>
+              {items.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (confirm("Remove all items from your cart?")) clearCart();
+                  }}
+                  className="text-xs font-medium text-[var(--color-error)] hover:underline"
+                >
+                  Clear cart
+                </button>
+              )}
             </div>
 
             {/* Body */}

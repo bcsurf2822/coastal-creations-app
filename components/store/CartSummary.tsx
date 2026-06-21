@@ -1,30 +1,23 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { FaLock } from "react-icons/fa";
 import type { CartItem } from "@/lib/types/cartTypes";
 import type { ShippingRate } from "@/lib/shippo/rates";
 import { formatCents } from "@/lib/utils/moneyHelpers";
-import { computeTaxCents } from "@/lib/utils/taxHelpers";
 
 interface CartSummaryProps {
   items: CartItem[];
   subtotalCents: number;
   selectedRate: ShippingRate | null;
-  shippingState: string;
 }
 
 export default function CartSummary({
   items,
   subtotalCents,
   selectedRate,
-  shippingState,
 }: CartSummaryProps): ReactElement {
-  const taxCents = shippingState && selectedRate
-    ? computeTaxCents(subtotalCents, shippingState)
-    : 0;
   const totalCents = selectedRate
-    ? subtotalCents + selectedRate.rateCents + taxCents
+    ? subtotalCents + selectedRate.rateCents
     : null;
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
 
@@ -100,17 +93,6 @@ export default function CartSummary({
           )}
         </div>
 
-        <div className="flex justify-between">
-          <span className="text-[var(--color-text-primary)]">Tax</span>
-          {selectedRate && shippingState ? (
-            <span className="font-medium text-green-600">
-              {formatCents(taxCents)}
-            </span>
-          ) : (
-            <span className="text-[var(--color-text-subtle)]">—</span>
-          )}
-        </div>
-
         <div className="border-t border-[var(--color-border-lighter)] pt-3 mt-1 flex justify-between font-bold text-base">
           <span className="text-[var(--color-primary)]">Total</span>
           <span className="text-[var(--color-primary)]">
@@ -119,11 +101,6 @@ export default function CartSummary({
         </div>
       </div>
 
-      {/* Trust micro-copy */}
-      <p className="mt-5 flex items-center gap-1.5 text-xs text-[var(--color-text-subtle)] justify-center">
-        <FaLock className="shrink-0" />
-        256-bit SSL secured checkout
-      </p>
     </div>
   );
 }

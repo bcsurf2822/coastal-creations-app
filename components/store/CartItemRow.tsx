@@ -3,6 +3,7 @@
 import type { ReactElement } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { FiTrash2 } from "react-icons/fi";
 import { formatCents } from "@/lib/utils/moneyHelpers";
 import type { CartItem } from "@/lib/types/cartTypes";
 
@@ -99,7 +100,7 @@ export default function CartItemRow({
           aria-label={`Remove ${item.productName}`}
           className="flex-shrink-0 p-1 text-[var(--color-text-subtle)] hover:text-[var(--color-error)] transition-colors"
         >
-          ✕
+          <FiTrash2 className="w-4 h-4" />
         </button>
       </div>
     );

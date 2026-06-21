@@ -36,8 +36,6 @@ interface PaymentStepProps {
   applicationId: string;
   locationId: string;
   subtotalCents: number;
-  taxCents: number;
-  taxStateLabel: string;
   selectedRate: ShippingRate;
   onToken: (token: string) => Promise<void>;
   isProcessing: boolean;
@@ -48,13 +46,12 @@ export default function PaymentStep({
   applicationId,
   locationId,
   subtotalCents,
-  taxCents,
   selectedRate,
   onToken,
   isProcessing,
   error,
 }: PaymentStepProps): ReactElement {
-  const totalCents = subtotalCents + selectedRate.rateCents + taxCents;
+  const totalCents = subtotalCents + selectedRate.rateCents;
   const totalDollars = (totalCents / 100).toFixed(2);
 
   return (
