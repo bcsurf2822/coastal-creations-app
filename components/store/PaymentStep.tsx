@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactElement } from "react";
-import React, { Suspense } from "react";
+import React, { Suspense, useCallback, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { PiSquareLogoFill } from "react-icons/pi";
@@ -36,7 +36,10 @@ interface PaymentStepProps {
   applicationId: string;
   locationId: string;
   subtotalCents: number;
-  selectedRate: ShippingRate;
+  /** Null until the customer has picked a shipping method. */
+  selectedRate: ShippingRate | null;
+  /** True once the address is complete AND a shipping rate is selected. */
+  ready: boolean;
   onToken: (token: string) => Promise<void>;
   isProcessing: boolean;
   error: string | null;
@@ -47,12 +50,47 @@ export default function PaymentStep({
   locationId,
   subtotalCents,
   selectedRate,
+  ready,
   onToken,
   isProcessing,
   error,
 }: PaymentStepProps): ReactElement {
-  const totalCents = subtotalCents + selectedRate.rateCents;
+  // Best-known total: subtotal now, + shipping once a rate is chosen. The real
+  // charge is recomputed server-side; this only labels the button / wallet sheet.
+  const totalCents = subtotalCents + (selectedRate?.rateCents ?? 0);
   const totalDollars = (totalCents / 100).toFixed(2);
+
+  // The Square SDK re-initializes (re-injecting the card iframe → duplicate forms)
+  // whenever createPaymentRequest / cardTokenizeResponseReceived change identity.
+  // Keep them STABLE via refs that always read the latest values at call time.
+  const readyRef = useRef(ready);
+  const totalRef = useRef(totalDollars);
+  const onTokenRef = useRef(onToken);
+  useEffect(() => {
+    readyRef.current = ready;
+    totalRef.current = totalDollars;
+    onTokenRef.current = onToken;
+  });
+
+  const createPaymentRequest = useCallback(
+    () => ({
+      countryCode: "US" as const,
+      currencyCode: "USD" as const,
+      total: { amount: totalRef.current, label: "Total" },
+    }),
+    []
+  );
+
+  const cardTokenizeResponseReceived = useCallback(
+    async (token: { status: string; token?: string }) => {
+      // Guard: never tokenize/charge before prerequisites are met.
+      if (!readyRef.current) return;
+      if (token.status === "OK" && token.token) {
+        await onTokenRef.current(token.token);
+      }
+    },
+    []
+  );
 
   return (
     <div className="flex flex-col gap-5">
@@ -69,30 +107,48 @@ export default function PaymentStep({
           <p className="text-[var(--color-text-subtle)] text-sm">Processing your order…</p>
         </div>
       ) : (
-        <div className="bg-gray-50 rounded-[var(--radius-lg)] p-5 max-w-lg mx-auto">
-          <Suspense fallback={<PaymentFormSkeleton />}>
-            <DynamicPaymentForm
-              applicationId={applicationId}
-              locationId={locationId}
-              createPaymentRequest={() => ({
-                countryCode: "US",
-                currencyCode: "USD",
-                total: { amount: totalDollars, label: "Total" },
-              })}
-              cardTokenizeResponseReceived={async (token) => {
-                if (token.status === "OK" && token.token) {
-                  await onToken(token.token);
-                }
-              }}
-            >
-              <DynamicCreditCard />
-            </DynamicPaymentForm>
-          </Suspense>
+        <div className="bg-gray-50 rounded-[var(--radius-lg)] p-5">
+          {/* The Square SDK mounts on page load. Until the customer has entered
+              their contact/shipping details and chosen a method, the payment
+              area is dimmed and non-interactive (and the Pay button stays
+              disabled). Once ready, it activates and the button reads "Pay $X". */}
+          {!ready && (
+            <p className="text-center text-sm text-[var(--color-text-subtle)] mb-3">
+              Enter your contact &amp; shipping details above to enable payment.
+            </p>
+          )}
+          <div
+            className={
+              ready
+                ? ""
+                : "opacity-50 pointer-events-none select-none"
+            }
+            aria-disabled={!ready}
+          >
+            <Suspense fallback={<PaymentFormSkeleton />}>
+              <DynamicPaymentForm
+                applicationId={applicationId}
+                locationId={locationId}
+                createPaymentRequest={createPaymentRequest}
+                cardTokenizeResponseReceived={cardTokenizeResponseReceived}
+              >
+                <DynamicCreditCard
+                  render={(Button) => (
+                    <Button isLoading={isProcessing}>
+                      {/* Only show an amount once shipping is known — never the
+                          misleading pre-shipping subtotal. */}
+                      {selectedRate ? `Pay $${totalDollars}` : "Pay"}
+                    </Button>
+                  )}
+                />
+              </DynamicPaymentForm>
+            </Suspense>
+          </div>
         </div>
       )}
 
       {/* Trust block */}
-      <div className="rounded-[var(--radius-lg)] border border-[var(--color-border-lighter)] bg-[var(--color-light)] px-4 py-4 flex flex-col gap-2.5 text-xs text-[var(--color-text-subtle)] max-w-lg mx-auto w-full items-center text-center">
+      <div className="rounded-[var(--radius-lg)] border border-[var(--color-border-lighter)] bg-[var(--color-light)] px-4 py-4 flex flex-col gap-2.5 text-xs text-[var(--color-text-subtle)] w-full items-center text-center">
         <div className="flex items-center gap-2">
           <FaLock className="shrink-0 text-green-600" />
           <span>256-bit SSL encryption — your data is fully protected</span>

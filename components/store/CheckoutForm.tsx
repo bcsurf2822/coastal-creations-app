@@ -133,17 +133,19 @@ export default function CheckoutForm(): ReactElement | null {
     }
   };
 
-  // Auto-fetch rates when all required address fields are complete (600ms debounce)
-  useEffect(() => {
-    const addressComplete =
-      address.firstName.trim() &&
+  // All required contact/shipping fields filled — gates rate-fetching AND payment.
+  const addressComplete = Boolean(
+    address.firstName.trim() &&
       address.lastName.trim() &&
       address.email.trim() &&
       address.addressLine1.trim() &&
       address.city.trim() &&
       address.state.trim() &&
-      address.zip.trim();
+      address.zip.trim()
+  );
 
+  // Auto-fetch rates when all required address fields are complete (600ms debounce)
+  useEffect(() => {
     if (!addressComplete || rates.length > 0) return;
 
     const timer = setTimeout(() => {
@@ -245,24 +247,26 @@ export default function CheckoutForm(): ReactElement | null {
           )}
         </div>
 
-        {/* Payment — always visible; unlocks once a shipping method is selected */}
+        {/* Payment — the Square SDK mounts as soon as config loads (on page init);
+            it stays disabled until contact/shipping details are complete. */}
         <div className="flex flex-col gap-4">
           <h2 className="text-base font-semibold text-[var(--color-primary)] text-center">
             Payment
           </h2>
-          {selectedRate && paymentConfig ? (
+          {paymentConfig ? (
             <PaymentStep
               applicationId={paymentConfig.applicationId}
               locationId={paymentConfig.locationId}
               subtotalCents={subtotalCents}
               selectedRate={selectedRate}
+              ready={addressComplete && !!selectedRate}
               onToken={handlePayment}
               isProcessing={isProcessing}
               error={error}
             />
           ) : (
             <div className="rounded-[var(--radius-lg)] border-2 border-dashed border-[var(--color-border-lighter)] px-4 py-6 text-center text-sm text-[var(--color-text-subtle)]">
-              Choose a shipping method above to continue to payment.
+              Loading secure payment…
             </div>
           )}
         </div>
