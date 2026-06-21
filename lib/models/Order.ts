@@ -75,6 +75,11 @@ export interface IOrder extends Document {
     orderId?: string;
     customerId?: string;
   };
+  /** A gift card redeemed against this order (amount in cents). */
+  giftCard?: {
+    giftCardId: string;
+    amountCents: number;
+  };
   shippo: {
     shipmentId?: string;
     rateId?: string;
@@ -163,6 +168,10 @@ const OrderSchema = new Schema<IOrder>(
       paymentId: { type: String, trim: true },
       orderId: { type: String, trim: true },
       customerId: { type: String, trim: true },
+    },
+    giftCard: {
+      giftCardId: { type: String, trim: true },
+      amountCents: { type: Number, min: 0 },
     },
     shippo: {
       shipmentId: { type: String, trim: true },

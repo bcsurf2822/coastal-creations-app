@@ -28,6 +28,7 @@ import { OrderConfirmationEmail } from "@/components/email-templates/OrderConfir
 import { StoreOrderAdminEmail } from "@/components/email-templates/StoreOrderAdminEmail";
 import { purchaseLabelForOrder } from "@/lib/shippo/labels";
 import { squareCustomerService } from "@/lib/square/customers";
+import { giftCardService } from "@/lib/square/gift-cards";
 import {
   priceCartFromCatalog,
   resolveShippingRate,
@@ -43,7 +44,7 @@ const squareClient = getSquareClient();
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 interface CheckoutRequest {
-  paymentToken: string;
+  paymentToken?: string;
   customer: {
     firstName: string;
     lastName: string;
@@ -65,6 +66,8 @@ interface CheckoutRequest {
   items: CartItem[];
   subtotalCents: number;
   idempotencyKey?: string;
+  /** Optional gift card the customer applied — validated against Square below. */
+  giftCard?: { giftCardId: string; amountCents: number };
 }
 
 export async function POST(request: Request): Promise<Response> {
@@ -73,7 +76,7 @@ export async function POST(request: Request): Promise<Response> {
 
     const { paymentToken, customer, shippingAddress, selectedRate, items } = body;
 
-    if (!paymentToken || !customer || !shippingAddress || !selectedRate || !items?.length) {
+    if (!customer || !shippingAddress || !selectedRate || !items?.length) {
       return NextResponse.json({ error: "Missing required checkout fields" }, { status: 400 });
     }
 
@@ -108,37 +111,85 @@ export async function POST(request: Request): Promise<Response> {
 
     console.log("[API-STORE-CHECKOUT-POST] Processing checkout for:", customer.email, "Server total:", totalCents);
 
-    // Step 1: Charge Square
-    const paymentResult = await squareClient.payments.create({
-      idempotencyKey: normalizeIdempotencyKey(body.idempotencyKey),
-      sourceId: paymentToken,
-      amountMoney: {
-        amount: BigInt(totalCents),
-        currency: "USD",
-      },
-      buyerEmailAddress: customer.email,
-      shippingAddress: {
-        addressLine1: shippingAddress.addressLine1,
-        addressLine2: shippingAddress.addressLine2,
-        firstName: customer.firstName,
-        lastName: customer.lastName,
-        postalCode: shippingAddress.postalCode,
-        country: (shippingAddress.country || "US") as "US",
-      },
-      note: `Coastal Creations Studio — online store order`,
-    });
+    // Gift card: validate against Square's REAL balance and reduce the card charge.
+    // A tampered amountCents can never apply more than the actual balance / total.
+    let giftCardAppliedCents = 0;
+    if (body.giftCard && body.giftCard.amountCents > 0) {
+      try {
+        const card = await giftCardService.getById(body.giftCard.giftCardId);
+        const available = card && card.state === "ACTIVE" ? card.balanceMoney.amount : 0;
+        giftCardAppliedCents = Math.max(
+          0,
+          Math.min(body.giftCard.amountCents, available, totalCents)
+        );
+      } catch (giftCardError) {
+        console.error(
+          "[API-STORE-CHECKOUT-POST] Gift card validation failed (applying $0):",
+          giftCardError
+        );
+      }
+    }
+    const chargeCents = totalCents - giftCardAppliedCents;
 
-    const payment = paymentResult.payment;
+    // Step 1: Charge the card portion (skipped when a gift card covers the full total).
+    let squarePaymentId: string | undefined;
+    if (chargeCents > 0) {
+      if (!paymentToken) {
+        return NextResponse.json(
+          { error: "Payment information is required" },
+          { status: 400 }
+        );
+      }
+      const paymentResult = await squareClient.payments.create({
+        idempotencyKey: normalizeIdempotencyKey(body.idempotencyKey),
+        sourceId: paymentToken,
+        amountMoney: {
+          amount: BigInt(chargeCents),
+          currency: "USD",
+        },
+        buyerEmailAddress: customer.email,
+        shippingAddress: {
+          addressLine1: shippingAddress.addressLine1,
+          addressLine2: shippingAddress.addressLine2,
+          firstName: customer.firstName,
+          lastName: customer.lastName,
+          postalCode: shippingAddress.postalCode,
+          country: (shippingAddress.country || "US") as "US",
+        },
+        note: `Coastal Creations Studio — online store order`,
+      });
 
-    if (payment?.status !== "COMPLETED") {
-      console.error("[API-STORE-CHECKOUT-POST] Square payment not completed:", payment?.status);
-      return NextResponse.json(
-        { error: "Payment was not completed", status: payment?.status },
-        { status: 400 }
-      );
+      const payment = paymentResult.payment;
+      if (payment?.status !== "COMPLETED") {
+        console.error("[API-STORE-CHECKOUT-POST] Square payment not completed:", payment?.status);
+        return NextResponse.json(
+          { error: "Payment was not completed", status: payment?.status },
+          { status: 400 }
+        );
+      }
+      console.log("[API-STORE-CHECKOUT-POST] Square payment completed:", payment.id);
+      squarePaymentId = payment.id ?? undefined;
     }
 
-    console.log("[API-STORE-CHECKOUT-POST] Square payment completed:", payment.id);
+    // Redeem the gift card. Gift-card-only order → fatal on failure (no order is
+    // created); partial (card already charged) → non-fatal (reconcile manually).
+    if (giftCardAppliedCents > 0 && body.giftCard) {
+      try {
+        await giftCardService.redeem(
+          body.giftCard.giftCardId,
+          giftCardAppliedCents,
+          customer.email
+        );
+      } catch (giftCardError) {
+        console.error("[API-STORE-CHECKOUT-POST] Gift card redemption failed:", giftCardError);
+        if (chargeCents === 0) {
+          return NextResponse.json(
+            { error: "Gift card could not be redeemed. No charge was made." },
+            { status: 400 }
+          );
+        }
+      }
+    }
 
     // Step 2: Save Order to MongoDB — with SERVER-derived prices and the FRESH
     // rate id from the re-quote (the label purchase transacts on this id, and the
@@ -166,8 +217,12 @@ export async function POST(request: Request): Promise<Response> {
       },
       shippingAddress,
       square: {
-        paymentId: payment.id,
+        paymentId: squarePaymentId,
       },
+      giftCard:
+        giftCardAppliedCents > 0 && body.giftCard
+          ? { giftCardId: body.giftCard.giftCardId, amountCents: giftCardAppliedCents }
+          : undefined,
       shippo: {
         rateId: serverRate.rateId,
         carrier: serverRate.carrier,

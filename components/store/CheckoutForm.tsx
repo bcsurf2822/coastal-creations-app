@@ -8,8 +8,11 @@ import { usePaymentConfig } from "@/hooks/queries/use-payment-config";
 import ShippingAddressStep, {
   type AddressFormValues,
 } from "@/components/store/ShippingAddressStep";
-import PaymentStep from "@/components/store/PaymentStep";
+import PaymentStep from "@/components/checkout/PaymentStep";
+import GiftCardRedemption from "@/components/checkout/GiftCardRedemption";
+import type { AppliedGiftCard } from "@/components/checkout/eventCheckoutTypes";
 import CartSummary from "@/components/store/CartSummary";
+import { Button } from "@/components/ui";
 import { formatCents } from "@/lib/utils/moneyHelpers";
 import type { ShippingRate } from "@/lib/shippo/rates";
 
@@ -37,10 +40,19 @@ export default function CheckoutForm(): ReactElement | null {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [orderCompleted, setOrderCompleted] = useState(false);
+  const [appliedGiftCard, setAppliedGiftCard] = useState<AppliedGiftCard | null>(null);
   // One stable idempotency key per mount — reused across retries of THIS cart
   // attempt so a lost-response retry returns the original charge (no double
   // charge). A new mount (new cart attempt after clearCart) gets a fresh key.
   const [idempotencyKey] = useState(() => crypto.randomUUID());
+
+  // Order total (subtotal + shipping once known) and the card amount due after any
+  // applied gift card. The server re-validates + clamps; this only drives the UI.
+  const orderTotalCents = subtotalCents + (selectedRate?.rateCents ?? 0);
+  const giftCardCents = appliedGiftCard
+    ? Math.min(appliedGiftCard.amountApplied, orderTotalCents)
+    : 0;
+  const amountDueCents = Math.max(0, orderTotalCents - giftCardCents);
 
   const updateField = (field: keyof AddressFormValues, value: string): void => {
     setAddress((prev) => ({ ...prev, [field]: value }));
@@ -87,7 +99,7 @@ export default function CheckoutForm(): ReactElement | null {
     }
   };
 
-  const handlePayment = async (token: string): Promise<void> => {
+  const placeOrder = async (token?: string): Promise<void> => {
     if (!selectedRate) return;
     setIsProcessing(true);
     setError(null);
@@ -116,6 +128,9 @@ export default function CheckoutForm(): ReactElement | null {
           items,
           subtotalCents,
           idempotencyKey,
+          giftCard: appliedGiftCard
+            ? { giftCardId: appliedGiftCard.giftCardId, amountCents: giftCardCents }
+            : undefined,
         }),
       });
       const data = await res.json();
@@ -262,14 +277,38 @@ export default function CheckoutForm(): ReactElement | null {
               All transactions are secure and encrypted.
             </p>
           </div>
-          {paymentConfig ? (
+          {/* Gift card — apply once shipping is known so the total is final. */}
+          {selectedRate && (
+            <GiftCardRedemption
+              totalAmount={orderTotalCents}
+              appliedCard={appliedGiftCard}
+              onApply={setAppliedGiftCard}
+              onRemove={() => setAppliedGiftCard(null)}
+            />
+          )}
+
+          {amountDueCents <= 0 && appliedGiftCard && selectedRate ? (
+            <>
+              {error && (
+                <p className="text-[var(--color-error)] text-sm bg-red-50 border border-red-200 rounded-[var(--radius-md)] px-3 py-2">
+                  {error}
+                </p>
+              )}
+              <Button
+                variant="primary"
+                disabled={isProcessing}
+                onClick={() => void placeOrder()}
+              >
+                {isProcessing ? "Placing order…" : "Place order with gift card"}
+              </Button>
+            </>
+          ) : paymentConfig ? (
             <PaymentStep
               applicationId={paymentConfig.applicationId}
               locationId={paymentConfig.locationId}
-              subtotalCents={subtotalCents}
-              selectedRate={selectedRate}
+              amountDollars={selectedRate ? (amountDueCents / 100).toFixed(2) : null}
               ready={addressComplete && !!selectedRate}
-              onToken={handlePayment}
+              onToken={placeOrder}
               isProcessing={isProcessing}
               error={error}
             />
@@ -286,6 +325,7 @@ export default function CheckoutForm(): ReactElement | null {
         items={items}
         subtotalCents={subtotalCents}
         selectedRate={selectedRate}
+        giftCardCents={giftCardCents}
       />
     </div>
   );
