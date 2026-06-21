@@ -10,10 +10,10 @@ interface CheckoutLayoutProps {
 }
 
 /**
- * Shared checkout shell — form on the left, order summary on the right
- * (stacked on mobile, two columns on desktop). Used by the store, event/booking,
- * and gift-card checkouts so every flow has the same summary-right / payment-left
- * layout. Each flow supplies its own form content and summary.
+ * Shared checkout shell — form on the left, order summary on the right on desktop;
+ * stacked on mobile with the **summary on top** (so the customer sees what they're
+ * buying before the form). Used by the store, event/booking, and gift-card checkouts.
+ * Each flow supplies its own form content and summary.
  */
 export default function CheckoutLayout({
   children,
@@ -21,8 +21,9 @@ export default function CheckoutLayout({
 }: CheckoutLayoutProps): ReactElement {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10 items-start">
-      <div className="flex flex-col gap-8">{children}</div>
-      {summary}
+      {/* Summary first in the DOM → on top when stacked; order flips + sticks on desktop. */}
+      <div className="order-1 lg:order-2 lg:sticky lg:top-6">{summary}</div>
+      <div className="order-2 lg:order-1 flex flex-col gap-8">{children}</div>
     </div>
   );
 }

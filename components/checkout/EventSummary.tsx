@@ -35,7 +35,7 @@ export default function EventSummary({
   totalCents,
 }: EventSummaryProps): ReactElement {
   return (
-    <aside className="lg:sticky lg:top-6 rounded-[var(--radius-lg)] border border-[var(--color-border-lighter)] bg-white p-6 flex flex-col gap-4">
+    <aside className="rounded-[var(--radius-lg)] border border-[var(--color-border-lighter)] bg-white p-6 flex flex-col gap-4">
       <h2 className="text-base font-semibold text-[var(--color-primary)]">
         Order summary
       </h2>

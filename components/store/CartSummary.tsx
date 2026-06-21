@@ -25,7 +25,7 @@ export default function CartSummary({
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
 
   return (
-    <div className="sticky top-6 bg-white border border-[var(--color-border-lighter)] rounded-[var(--radius-xl)] p-6 shadow-[var(--shadow-card)]">
+    <div className="bg-white border border-[var(--color-border-lighter)] rounded-[var(--radius-xl)] p-6 shadow-[var(--shadow-card)]">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <h2 className="font-semibold text-[var(--color-text-primary)] text-base">

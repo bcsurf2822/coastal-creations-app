@@ -185,8 +185,8 @@ export default function CheckoutForm(): ReactElement | null {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10 items-start">
 
-      {/* Left column: form */}
-      <div className="flex flex-col gap-8 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-white p-6 sm:p-8 shadow-[var(--shadow-card)]">
+      {/* Left column: form (below the summary when stacked, left on desktop) */}
+      <div className="order-2 lg:order-1 flex flex-col gap-8 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-white p-6 sm:p-8 shadow-[var(--shadow-card)]">
 
         {/* Contact & Shipping */}
         <div className="flex flex-col gap-5">
@@ -321,12 +321,15 @@ export default function CheckoutForm(): ReactElement | null {
       </div>
 
       {/* Right column: sticky cart summary */}
-      <CartSummary
-        items={items}
-        subtotalCents={subtotalCents}
-        selectedRate={selectedRate}
-        giftCardCents={giftCardCents}
-      />
+      {/* Summary first when stacked (on top), right column + sticky on desktop */}
+      <div className="order-1 lg:order-2 lg:sticky lg:top-6">
+        <CartSummary
+          items={items}
+          subtotalCents={subtotalCents}
+          selectedRate={selectedRate}
+          giftCardCents={giftCardCents}
+        />
+      </div>
     </div>
   );
 }
