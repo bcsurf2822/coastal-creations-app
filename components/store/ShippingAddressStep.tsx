@@ -3,6 +3,7 @@
 import type { ReactElement } from "react";
 import { useState } from "react";
 import { Input, Label } from "@/components/ui";
+import { formatUsPhone, isValidUsPhone } from "@/components/checkout/ContactForm";
 
 export interface AddressFormValues {
   firstName: string;
@@ -31,7 +32,7 @@ const US_STATES = [
 ];
 
 const REQUIRED_FIELDS: (keyof AddressFormValues)[] = [
-  "firstName","lastName","email","addressLine1","city","state","zip",
+  "firstName","lastName","email","phone","addressLine1","city","state","zip",
 ];
 
 function validateField(field: keyof AddressFormValues, value: string): string | null {
@@ -40,8 +41,8 @@ function validateField(field: keyof AddressFormValues, value: string): string | 
     return "Enter a valid email address";
   if (field === "zip" && value.trim() && !/^\d{5}(-\d{4})?$/.test(value))
     return "Enter a valid ZIP code";
-  if (field === "phone" && value.trim() && !/^\+?[\d\s\-().]{7,}$/.test(value))
-    return "Enter a valid phone number";
+  if (field === "phone" && value.trim() && !isValidUsPhone(value))
+    return "Enter a 10-digit phone number";
   return null;
 }
 
@@ -95,6 +96,46 @@ export default function ShippingAddressStep({
 
   return (
     <div className="flex flex-col gap-5">
+      {/* Email + Phone on top for a cleaner contact row */}
+      <div className="grid grid-cols-2 gap-4">
+        <FieldWrapper
+          id="email"
+          label="Email Address"
+          required
+          touched={!!touched.email}
+          error={validateField("email", values.email)}
+          value={values.email}
+        >
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            {...fieldProps("email")}
+          />
+        </FieldWrapper>
+
+        <FieldWrapper
+          id="phone"
+          label="Phone"
+          required
+          touched={!!touched.phone}
+          error={validateField("phone", values.phone)}
+          value={values.phone}
+        >
+          <Input
+            id="phone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder="(555) 555-5555"
+            maxLength={14}
+            value={values.phone}
+            onChange={(e) => onChange("phone", formatUsPhone(e.target.value))}
+            onBlur={() => touch("phone")}
+          />
+        </FieldWrapper>
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <FieldWrapper
           id="firstName"
@@ -126,37 +167,6 @@ export default function ShippingAddressStep({
           />
         </FieldWrapper>
       </div>
-
-      <FieldWrapper
-        id="email"
-        label="Email Address"
-        required
-        touched={!!touched.email}
-        error={validateField("email", values.email)}
-        value={values.email}
-      >
-        <Input
-          id="email"
-          type="email"
-          autoComplete="email"
-          {...fieldProps("email")}
-        />
-      </FieldWrapper>
-
-      <FieldWrapper
-        id="phone"
-        label="Phone (optional)"
-        touched={!!touched.phone}
-        error={validateField("phone", values.phone)}
-        value={values.phone}
-      >
-        <Input
-          id="phone"
-          type="tel"
-          autoComplete="tel"
-          {...fieldProps("phone")}
-        />
-      </FieldWrapper>
 
       <FieldWrapper
         id="addressLine1"

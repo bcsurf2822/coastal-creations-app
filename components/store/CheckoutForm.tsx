@@ -10,6 +10,7 @@ import ShippingAddressStep, {
 } from "@/components/store/ShippingAddressStep";
 import PaymentStep from "@/components/checkout/PaymentStep";
 import GiftCardRedemption from "@/components/checkout/GiftCardRedemption";
+import { isValidUsPhone } from "@/components/checkout/ContactForm";
 import type { AppliedGiftCard } from "@/components/checkout/eventCheckoutTypes";
 import CartSummary from "@/components/store/CartSummary";
 import { Button } from "@/components/ui";
@@ -149,10 +150,12 @@ export default function CheckoutForm(): ReactElement | null {
   };
 
   // All required contact/shipping fields filled — gates rate-fetching AND payment.
+  // Phone is required and must be a valid 10-digit number.
   const addressComplete = Boolean(
     address.firstName.trim() &&
       address.lastName.trim() &&
       address.email.trim() &&
+      isValidUsPhone(address.phone) &&
       address.addressLine1.trim() &&
       address.city.trim() &&
       address.state.trim() &&
@@ -170,7 +173,7 @@ export default function CheckoutForm(): ReactElement | null {
     return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    address.firstName, address.lastName, address.email,
+    address.firstName, address.lastName, address.email, address.phone,
     address.addressLine1, address.city, address.state, address.zip,
   ]);
 
