@@ -114,9 +114,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             ? {
                 addressLine1: customer.billingInfo.addressLine1,
                 addressLine2: customer.billingInfo.addressLine2,
-                city: customer.billingInfo.city,
-                state: customer.billingInfo.stateProvince,
-                postalCode: customer.billingInfo.postalCode,
+                city: customer.billingInfo.city || "",
+                state: customer.billingInfo.stateProvince || "",
+                postalCode: customer.billingInfo.postalCode || "",
                 country: customer.billingInfo.country || "US",
               }
             : undefined,
