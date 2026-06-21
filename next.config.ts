@@ -1,6 +1,28 @@
 import type { NextConfig } from "next";
+import {
+  buildContentSecurityPolicy,
+  securityHeaders,
+} from "./lib/security/csp";
 
 const nextConfig: NextConfig = {
+
+  async headers() {
+    const isSandbox = process.env.SQUARE_ENVIRONMENT === "sandbox";
+    const isDev = process.env.NODE_ENV !== "production";
+    const csp = buildContentSecurityPolicy(isSandbox, isDev);
+
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          // Report-Only first: observe + reconcile real browser violations,
+          // THEN flip the key to "Content-Security-Policy" to enforce.
+          { key: "Content-Security-Policy-Report-Only", value: csp },
+          ...securityHeaders(),
+        ],
+      },
+    ];
+  },
 
   images: {
     qualities: [75, 100],
