@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/auth/guards";
 import { squareCustomerService } from "@/lib/square/customers";
 
 interface RouteParams {
@@ -13,6 +14,9 @@ export async function GET(
   request: NextRequest,
   { params }: RouteParams
 ): Promise<NextResponse> {
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
+
   try {
     const { id } = await params;
 
@@ -61,6 +65,9 @@ export async function PUT(
   request: NextRequest,
   { params }: RouteParams
 ): Promise<NextResponse> {
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
+
   try {
     const { id } = await params;
 
@@ -138,6 +145,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: RouteParams
 ): Promise<NextResponse> {
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
+
   try {
     const { id } = await params;
 

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
+import { requireAdmin } from "@/lib/auth/guards";
 import { Resend } from "resend";
 import { render } from "@react-email/render";
 import * as React from "react";
@@ -21,12 +20,8 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<Response> {
-  if (process.env.NODE_ENV !== "development") {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-  }
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;
 
@@ -50,12 +45,8 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<Response> {
-  if (process.env.NODE_ENV !== "development") {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-  }
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;
 

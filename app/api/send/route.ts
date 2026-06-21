@@ -1,3 +1,5 @@
+import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/auth/guards";
 import { EmailTemplate } from "@/components/email-templates/EmailTemplate";
 import { Resend } from "resend";
 import { render } from "@react-email/render";
@@ -6,6 +8,9 @@ import * as React from "react";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST() {
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
+
   try {
     const emailHtml = await render(
       React.createElement(EmailTemplate, { firstName: "John" })
@@ -41,6 +46,9 @@ export async function POST() {
 }
 
 export async function GET() {
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
+
   try {
     const emailHtml = await render(
       React.createElement(EmailTemplate, { firstName: "Visitor" })

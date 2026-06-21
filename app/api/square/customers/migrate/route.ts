@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/auth/guards";
 import { connectMongo } from "@/lib/mongoose";
 import Customer from "@/lib/models/Customer";
 import { squareCustomerService } from "@/lib/square/customers";
@@ -35,6 +36,9 @@ interface MigrationSummary {
  * - dryRun: If true, don't actually update MongoDB (default: false)
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
+
   try {
     await connectMongo();
 
@@ -186,6 +190,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
  * Get migration status - count of customers without squareCustomerId
  */
 export async function GET(): Promise<NextResponse> {
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
+
   try {
     await connectMongo();
 

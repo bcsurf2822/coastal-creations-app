@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/auth/guards";
 import { connectMongo } from "@/lib/mongoose";
 import Event from "@/lib/models/Event";
 
@@ -33,6 +34,9 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
+
   try {
     await connectMongo();
     const { id } = await params;

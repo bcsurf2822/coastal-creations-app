@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
+import type { ReactElement } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
-import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { authOptions } from "@/auth";
+import { requireAdminPage } from "@/lib/auth/guards";
 import LogoutButton from "@/components/authentication/LogoutButton";
 import Sidebar from "@/components/dashboard/SideBar";
 
@@ -28,14 +27,9 @@ export default async function AdminDashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>) {
-  let session = null;
-  if (process.env.NODE_ENV !== "development") {
-    session = await getServerSession(authOptions);
-    if (!session) {
-      redirect("/admin");
-    }
-  }
+}>): Promise<ReactElement> {
+  // Authorization source of truth: admins only. Removes the former dev bypass.
+  await requireAdminPage();
 
   return (
     <div

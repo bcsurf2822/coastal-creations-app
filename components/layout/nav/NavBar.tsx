@@ -7,6 +7,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
 import NavRippleText from "./NavRippleText";
 import CartIcon from "@/components/store/CartIcon";
+import AccountNavLink from "@/components/authentication/AccountNavLink";
 
 interface OfferDropdownItem {
   href: string;
@@ -313,12 +314,17 @@ export default function NavBar() {
             </motion.div>
 
             <motion.div variants={itemVariants}>
+              <AccountNavLink />
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
               <CartIcon />
             </motion.div>
           </motion.nav>
 
           {/* Mobile Menu Button */}
           <div className="lg:hidden flex items-center gap-3">
+            <AccountNavLink />
             <CartIcon />
             <motion.button
             className="flex items-center"

@@ -21,6 +21,7 @@ import Order from "@/lib/models/Order";
 import { OrderConfirmationEmail } from "@/components/email-templates/OrderConfirmationEmail";
 import { StoreOrderAdminEmail } from "@/components/email-templates/StoreOrderAdminEmail";
 import { purchaseLabelForOrder } from "@/lib/shippo/labels";
+import { squareCustomerService } from "@/lib/square/customers";
 import type { LabelResult } from "@/lib/shippo/labels";
 import type { CartItem } from "@/lib/types/cartTypes";
 import type { ShippingRate } from "@/lib/shippo/rates";
@@ -145,6 +146,36 @@ export async function POST(request: Request): Promise<Response> {
     });
 
     console.log("[API-STORE-CHECKOUT-POST] Order saved:", newOrder.orderNumber);
+
+    // Link this order to a Square customer (unifies store + booking history, and lets a
+    // signed-in customer's account resolve their Square profile). Non-fatal: a Square
+    // failure must never fail a paid order — mirrors the booking flow.
+    try {
+      const squareResult = await squareCustomerService.findOrCreateCustomer({
+        firstName: customer.firstName,
+        lastName: customer.lastName,
+        email: customer.email.toLowerCase(),
+        phone: customer.phone,
+        address: shippingAddress.addressLine1
+          ? {
+              addressLine1: shippingAddress.addressLine1,
+              addressLine2: shippingAddress.addressLine2,
+              city: shippingAddress.city,
+              state: shippingAddress.stateProvince,
+              postalCode: shippingAddress.postalCode,
+              country: shippingAddress.country || "US",
+            }
+          : undefined,
+      });
+      await Order.findByIdAndUpdate(newOrder._id, {
+        "square.customerId": squareResult.customerId,
+      });
+    } catch (squareError) {
+      console.error(
+        "[API-STORE-CHECKOUT-POST] Square customer link failed (non-fatal):",
+        squareError
+      );
+    }
 
     // Step 3: Auto-create the Shippo shipping label (diagram step 3 → "label_created").
     // Non-fatal: if Shippo fails, the order stays "paid" and the merchant can create the
