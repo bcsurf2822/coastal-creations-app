@@ -288,6 +288,20 @@ export default function Footer() {
               </Link>
             ))}
           </nav>
+          <nav className="mb-2 flex flex-wrap justify-center gap-x-6 gap-y-2">
+            <Link
+              href="/privacy"
+              className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-subtle)] transition-colors hover:text-[var(--color-secondary)]"
+            >
+              Privacy Policy
+            </Link>
+            <Link
+              href="/terms"
+              className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-subtle)] transition-colors hover:text-[var(--color-secondary)]"
+            >
+              Terms of Service
+            </Link>
+          </nav>
           <p className="text-center text-xs text-[var(--color-text-subtle)]">
             &copy; {new Date().getFullYear()} Coastal Creations Studio. All
             rights reserved.
