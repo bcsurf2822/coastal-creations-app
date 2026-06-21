@@ -1,15 +1,16 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/store/CartProvider";
 import { usePaymentConfig } from "@/hooks/queries/use-payment-config";
 import ShippingAddressStep, {
   type AddressFormValues,
 } from "@/components/store/ShippingAddressStep";
-import ShippingRateStep from "@/components/store/ShippingRateStep";
 import PaymentStep from "@/components/store/PaymentStep";
+import CartSummary from "@/components/store/CartSummary";
+import { formatCents } from "@/lib/utils/moneyHelpers";
 import type { ShippingRate } from "@/lib/shippo/rates";
 
 const EMPTY_ADDRESS: AddressFormValues = {
@@ -24,24 +25,25 @@ const EMPTY_ADDRESS: AddressFormValues = {
   zip: "",
 };
 
-const STEP_LABELS = ["Contact & Shipping", "Shipping Method", "Payment"];
-
 export default function CheckoutForm(): ReactElement | null {
   const router = useRouter();
   const { items, subtotalCents, clearCart } = useCart();
   const { data: paymentConfig } = usePaymentConfig();
 
-  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [address, setAddress] = useState<AddressFormValues>(EMPTY_ADDRESS);
   const [rates, setRates] = useState<ShippingRate[]>([]);
   const [selectedRate, setSelectedRate] = useState<ShippingRate | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const orderCompleted = useRef(false);
+  const [orderCompleted, setOrderCompleted] = useState(false);
 
   const updateField = (field: keyof AddressFormValues, value: string): void => {
     setAddress((prev) => ({ ...prev, [field]: value }));
+    if (rates.length > 0) {
+      setRates([]);
+      setSelectedRate(null);
+    }
   };
 
   const handleFetchRates = async (): Promise<void> => {
@@ -74,7 +76,6 @@ export default function CheckoutForm(): ReactElement | null {
       }
       setRates(data.rates);
       setSelectedRate(data.rates[0] ?? null);
-      setStep(2);
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -118,7 +119,7 @@ export default function CheckoutForm(): ReactElement | null {
         setIsProcessing(false);
         return;
       }
-      orderCompleted.current = true;
+      setOrderCompleted(true);
       clearCart();
       router.push(`/order-confirmation?orderNumber=${data.orderNumber}`);
     } catch {
@@ -127,81 +128,147 @@ export default function CheckoutForm(): ReactElement | null {
     }
   };
 
+  // Auto-fetch rates when all required address fields are complete (600ms debounce)
   useEffect(() => {
-    if (items.length === 0 && !orderCompleted.current) {
+    const addressComplete =
+      address.firstName.trim() &&
+      address.lastName.trim() &&
+      address.email.trim() &&
+      address.addressLine1.trim() &&
+      address.city.trim() &&
+      address.state.trim() &&
+      address.zip.trim();
+
+    if (!addressComplete || rates.length > 0) return;
+
+    const timer = setTimeout(() => {
+      void handleFetchRates();
+    }, 600);
+
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    address.firstName, address.lastName, address.email,
+    address.addressLine1, address.city, address.state, address.zip,
+  ]);
+
+  useEffect(() => {
+    if (items.length === 0 && !orderCompleted) {
       router.replace("/cart");
     }
-  }, [items.length, router]);
+  }, [items.length, orderCompleted, router]);
 
-  if (items.length === 0 && !orderCompleted.current) return null;
+  if (items.length === 0 && !orderCompleted) return null;
 
   return (
-    <div className="w-full">
-      {/* Step indicator */}
-      <div className="flex items-center gap-2 mb-8">
-        {STEP_LABELS.map((label, i) => {
-          const num = i + 1;
-          const isActive = step === num;
-          const isDone = step > num;
-          return (
-            <div key={label} className="flex items-center gap-2 flex-1">
-              <div
-                className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold shrink-0 transition-colors ${
-                  isActive
-                    ? "bg-[var(--color-primary)] text-white"
-                    : isDone
-                    ? "bg-[var(--color-secondary)] text-white"
-                    : "bg-gray-200 text-gray-500"
-                }`}
-              >
-                {isDone ? "✓" : num}
-              </div>
-              <span
-                className={`text-xs font-medium hidden sm:block ${
-                  isActive ? "text-[var(--color-primary)]" : "text-[var(--color-text-subtle)]"
-                }`}
-              >
-                {label}
-              </span>
-              {i < STEP_LABELS.length - 1 && (
-                <div className="flex-1 h-px bg-gray-200 mx-1" />
-              )}
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10 items-start">
+
+      {/* Left column: form */}
+      <div className="flex flex-col gap-8">
+
+        {/* Contact & Shipping */}
+        <div className="flex flex-col gap-5">
+          <h2 className="text-base font-semibold text-[var(--color-primary)]">
+            Contact &amp; Shipping
+          </h2>
+          <ShippingAddressStep
+            values={address}
+            onChange={updateField}
+            isLoading={isLoading}
+            error={null}
+          />
+        </div>
+
+        {/* Shipping Method — always visible; fills in once the address is complete */}
+        <div className="flex flex-col gap-4">
+          <h2 className="text-base font-semibold text-[var(--color-primary)] text-center">
+            Shipping Method
+          </h2>
+
+          {/* Skeleton placeholders while Shippo fetches */}
+          {isLoading && (
+            <div className="flex flex-col gap-3">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="animate-pulse bg-gray-100 rounded-[var(--radius-lg)] h-16"
+                />
+              ))}
             </div>
-          );
-        })}
+          )}
+
+          {/* Shipping method — a single dropdown, defaulting to the cheapest (recommended) */}
+          {!isLoading && rates.length > 0 && selectedRate && (
+            <div className="flex flex-col gap-1.5">
+              {rates.length > 1 && (
+                <label
+                  htmlFor="shipping-rate"
+                  className="text-xs text-[var(--color-text-subtle)] text-center"
+                >
+                  Need it sooner? Choose a different option:
+                </label>
+              )}
+              <select
+                id="shipping-rate"
+                aria-label="Shipping method"
+                value={selectedRate.rateId}
+                onChange={(e) => {
+                  const next = rates.find((r) => r.rateId === e.target.value);
+                  if (next) setSelectedRate(next);
+                }}
+                className="w-full rounded-[var(--radius-lg)] border-2 border-[var(--color-border-lighter)] bg-white px-3 py-2.5 text-sm focus:border-[var(--color-secondary)] outline-none cursor-pointer"
+              >
+                {rates.map((rate) => (
+                  <option key={rate.rateId} value={rate.rateId}>
+                    {rate.serviceName} — {formatCents(rate.rateCents)}
+                    {rate.estimatedDays != null
+                      ? ` (${rate.estimatedDays} day${rate.estimatedDays !== 1 ? "s" : ""})`
+                      : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Placeholder until a complete address unlocks live rates */}
+          {!isLoading && rates.length === 0 && (
+            <div className="rounded-[var(--radius-lg)] border-2 border-dashed border-[var(--color-border-lighter)] px-4 py-6 text-center text-sm text-[var(--color-text-subtle)]">
+              {error
+                ? "We couldn't load shipping options — please check your address above."
+                : "Enter your address above to see shipping options."}
+            </div>
+          )}
+        </div>
+
+        {/* Payment — always visible; unlocks once a shipping method is selected */}
+        <div className="flex flex-col gap-4">
+          <h2 className="text-base font-semibold text-[var(--color-primary)] text-center">
+            Payment
+          </h2>
+          {selectedRate && paymentConfig ? (
+            <PaymentStep
+              applicationId={paymentConfig.applicationId}
+              locationId={paymentConfig.locationId}
+              subtotalCents={subtotalCents}
+              selectedRate={selectedRate}
+              onToken={handlePayment}
+              isProcessing={isProcessing}
+              error={error}
+            />
+          ) : (
+            <div className="rounded-[var(--radius-lg)] border-2 border-dashed border-[var(--color-border-lighter)] px-4 py-6 text-center text-sm text-[var(--color-text-subtle)]">
+              Choose a shipping method above to continue to payment.
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Step content */}
-      {step === 1 && (
-        <ShippingAddressStep
-          values={address}
-          onChange={updateField}
-          onNext={handleFetchRates}
-          isLoading={isLoading}
-          error={error}
-        />
-      )}
-      {step === 2 && (
-        <ShippingRateStep
-          rates={rates}
-          selectedRate={selectedRate}
-          onSelect={setSelectedRate}
-          onBack={() => setStep(1)}
-          onNext={() => setStep(3)}
-        />
-      )}
-      {step === 3 && selectedRate && paymentConfig && (
-        <PaymentStep
-          applicationId={paymentConfig.applicationId}
-          locationId={paymentConfig.locationId}
-          subtotalCents={subtotalCents}
-          selectedRate={selectedRate}
-          onToken={handlePayment}
-          onBack={() => setStep(2)}
-          isProcessing={isProcessing}
-          error={error}
-        />
-      )}
+      {/* Right column: sticky cart summary */}
+      <CartSummary
+        items={items}
+        subtotalCents={subtotalCents}
+        selectedRate={selectedRate}
+      />
     </div>
   );
 }

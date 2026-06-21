@@ -20,6 +20,7 @@ interface StoreOrderAdminEmailProps {
   items: OrderItem[];
   subtotalCents: number;
   shippingCents: number;
+  taxCents?: number;
   totalCents: number;
   shippingAddress: {
     name: string;
@@ -46,6 +47,7 @@ export function StoreOrderAdminEmail({
   items,
   subtotalCents,
   shippingCents,
+  taxCents,
   totalCents,
   shippingAddress,
   shippingMethod,
@@ -110,6 +112,9 @@ export function StoreOrderAdminEmail({
         ))}
         <DetailRow label="Subtotal">{fmt(subtotalCents)}</DetailRow>
         <DetailRow label={`Shipping (${shippingMethod})`}>{fmt(shippingCents)}</DetailRow>
+        {(taxCents ?? 0) > 0 && (
+          <DetailRow label="Sales Tax">{fmt(taxCents ?? 0)}</DetailRow>
+        )}
         <DetailRow label="Total"><strong>{fmt(totalCents)}</strong></DetailRow>
       </InfoCard>
 

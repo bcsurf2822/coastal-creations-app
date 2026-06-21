@@ -1,7 +1,8 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { Input, Label, Button } from "@/components/ui";
+import { useState } from "react";
+import { Input, Label } from "@/components/ui";
 
 export interface AddressFormValues {
   firstName: string;
@@ -18,7 +19,6 @@ export interface AddressFormValues {
 interface ShippingAddressStepProps {
   values: AddressFormValues;
   onChange: (field: keyof AddressFormValues, value: string) => void;
-  onNext: () => void;
   isLoading: boolean;
   error: string | null;
 }
@@ -30,76 +30,148 @@ const US_STATES = [
   "VA","WA","WV","WI","WY",
 ];
 
+const REQUIRED_FIELDS: (keyof AddressFormValues)[] = [
+  "firstName","lastName","email","addressLine1","city","state","zip",
+];
+
+function validateField(field: keyof AddressFormValues, value: string): string | null {
+  if (REQUIRED_FIELDS.includes(field) && !value.trim()) return "Required";
+  if (field === "email" && value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
+    return "Enter a valid email address";
+  if (field === "zip" && value.trim() && !/^\d{5}(-\d{4})?$/.test(value))
+    return "Enter a valid ZIP code";
+  if (field === "phone" && value.trim() && !/^\+?[\d\s\-().]{7,}$/.test(value))
+    return "Enter a valid phone number";
+  return null;
+}
+
+interface FieldWrapperProps {
+  id: string;
+  label: string;
+  required?: boolean;
+  touched: boolean;
+  error: string | null;
+  value?: string;
+  children: ReactElement;
+}
+
+function FieldWrapper({ id, label, required, touched, error, value, children }: FieldWrapperProps): ReactElement {
+  const isValid = !!value && !error;
+  return (
+    <div>
+      <Label htmlFor={id} required={required}>{label}</Label>
+      <div className="relative">
+        {children}
+        {isValid && (
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 text-sm pointer-events-none">
+            ✓
+          </span>
+        )}
+      </div>
+      {touched && error && (
+        <p className="text-[var(--color-error)] text-xs mt-1">{error}</p>
+      )}
+    </div>
+  );
+}
+
 export default function ShippingAddressStep({
   values,
   onChange,
-  onNext,
   isLoading,
   error,
 }: ShippingAddressStepProps): ReactElement {
-  const isValid =
-    values.firstName.trim() &&
-    values.lastName.trim() &&
-    values.email.trim() &&
-    values.addressLine1.trim() &&
-    values.city.trim() &&
-    values.state.trim() &&
-    values.zip.trim();
+  const [touched, setTouched] = useState<Partial<Record<keyof AddressFormValues, boolean>>>({});
+
+  const touch = (field: keyof AddressFormValues): void => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  };
+
+  const fieldProps = (field: keyof AddressFormValues) => ({
+    value: values[field],
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange(field, e.target.value),
+    onBlur: () => touch(field),
+  });
 
   return (
     <div className="flex flex-col gap-5">
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="firstName" required>First Name</Label>
+        <FieldWrapper
+          id="firstName"
+          label="First Name"
+          required
+          touched={!!touched.firstName}
+          error={validateField("firstName", values.firstName)}
+          value={values.firstName}
+        >
           <Input
             id="firstName"
-            value={values.firstName}
-            onChange={(e) => onChange("firstName", e.target.value)}
             autoComplete="given-name"
+            {...fieldProps("firstName")}
           />
-        </div>
-        <div>
-          <Label htmlFor="lastName" required>Last Name</Label>
+        </FieldWrapper>
+
+        <FieldWrapper
+          id="lastName"
+          label="Last Name"
+          required
+          touched={!!touched.lastName}
+          error={validateField("lastName", values.lastName)}
+          value={values.lastName}
+        >
           <Input
             id="lastName"
-            value={values.lastName}
-            onChange={(e) => onChange("lastName", e.target.value)}
             autoComplete="family-name"
+            {...fieldProps("lastName")}
           />
-        </div>
+        </FieldWrapper>
       </div>
 
-      <div>
-        <Label htmlFor="email" required>Email Address</Label>
+      <FieldWrapper
+        id="email"
+        label="Email Address"
+        required
+        touched={!!touched.email}
+        error={validateField("email", values.email)}
+        value={values.email}
+      >
         <Input
           id="email"
           type="email"
-          value={values.email}
-          onChange={(e) => onChange("email", e.target.value)}
           autoComplete="email"
+          {...fieldProps("email")}
         />
-      </div>
+      </FieldWrapper>
 
-      <div>
-        <Label htmlFor="phone">Phone (optional)</Label>
+      <FieldWrapper
+        id="phone"
+        label="Phone (optional)"
+        touched={!!touched.phone}
+        error={validateField("phone", values.phone)}
+        value={values.phone}
+      >
         <Input
           id="phone"
           type="tel"
-          value={values.phone}
-          onChange={(e) => onChange("phone", e.target.value)}
           autoComplete="tel"
+          {...fieldProps("phone")}
         />
-      </div>
+      </FieldWrapper>
 
-      <div>
-        <Label htmlFor="addressLine1" required>Street Address</Label>
+      <FieldWrapper
+        id="addressLine1"
+        label="Street Address"
+        required
+        touched={!!touched.addressLine1}
+        error={validateField("addressLine1", values.addressLine1)}
+        value={values.addressLine1}
+      >
         <Input
           id="addressLine1"
-          value={values.addressLine1}
-          onChange={(e) => onChange("addressLine1", e.target.value)}
           autoComplete="address-line1"
+          {...fieldProps("addressLine1")}
         />
-      </div>
+      </FieldWrapper>
 
       <div>
         <Label htmlFor="addressLine2">Apt / Suite (optional)</Label>
@@ -112,53 +184,79 @@ export default function ShippingAddressStep({
       </div>
 
       <div className="grid grid-cols-3 gap-4">
-        <div className="col-span-1">
-          <Label htmlFor="city" required>City</Label>
+        <FieldWrapper
+          id="city"
+          label="City"
+          required
+          touched={!!touched.city}
+          error={validateField("city", values.city)}
+          value={values.city}
+        >
           <Input
             id="city"
-            value={values.city}
-            onChange={(e) => onChange("city", e.target.value)}
             autoComplete="address-level2"
+            {...fieldProps("city")}
           />
-        </div>
+        </FieldWrapper>
+
         <div>
           <Label htmlFor="state" required>State</Label>
-          <select
-            id="state"
-            value={values.state}
-            onChange={(e) => onChange("state", e.target.value)}
-            className="w-full px-3 py-2 border border-[var(--color-border-lighter)] rounded-[var(--radius-md)] text-[var(--color-text-primary)] bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] text-sm"
-          >
-            <option value="">State</option>
-            {US_STATES.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              id="state"
+              value={values.state}
+              onChange={(e) => {
+                onChange("state", e.target.value);
+                touch("state");
+              }}
+              onBlur={() => touch("state")}
+              className="w-full h-[50px] px-4 bg-[var(--color-light)] border border-[var(--color-border)] rounded-[var(--radius-default)] text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:outline-none transition-colors text-sm appearance-none"
+            >
+              <option value="">State</option>
+              {US_STATES.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+            {values.state && (
+              <span className="absolute right-7 top-1/2 -translate-y-1/2 text-green-500 text-sm pointer-events-none">
+                ✓
+              </span>
+            )}
+          </div>
+          {touched.state && !values.state && (
+            <p className="text-[var(--color-error)] text-xs mt-1">Required</p>
+          )}
         </div>
-        <div>
-          <Label htmlFor="zip" required>ZIP</Label>
+
+        <FieldWrapper
+          id="zip"
+          label="ZIP"
+          required
+          touched={!!touched.zip}
+          error={validateField("zip", values.zip)}
+          value={values.zip}
+        >
           <Input
             id="zip"
-            value={values.zip}
-            onChange={(e) => onChange("zip", e.target.value)}
             autoComplete="postal-code"
             maxLength={10}
+            {...fieldProps("zip")}
           />
-        </div>
+        </FieldWrapper>
       </div>
 
       {error && (
-        <p className="text-[var(--color-error)] text-sm">{error}</p>
+        <p className="text-[var(--color-error)] text-sm bg-red-50 border border-red-200 rounded-[var(--radius-md)] px-3 py-2">
+          {error}
+        </p>
       )}
 
-      <Button
-        variant="primary"
-        className="w-full"
-        disabled={!isValid || isLoading}
-        onClick={onNext}
-      >
-        {isLoading ? "Getting shipping rates…" : "Continue to Shipping"}
-      </Button>
+      {isLoading && (
+        <p className="text-xs text-[var(--color-text-subtle)] flex items-center gap-1.5 animate-pulse">
+          <span className="inline-block w-3 h-3 border-2 border-[var(--color-secondary)] border-t-transparent rounded-full animate-spin" />
+          Finding the best rates for your address…
+        </p>
+      )}
     </div>
   );
 }

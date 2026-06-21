@@ -252,9 +252,8 @@ export default function Footer() {
               />
               <button
                 type="submit"
-                disabled={isSubmitting}
+                {...(isSubmitting ? { disabled: true } : {})}
                 className="h-10 rounded-lg bg-[var(--color-accent)] px-4 text-sm font-semibold text-white transition-colors hover:brightness-110 disabled:opacity-50"
-                suppressHydrationWarning
               >
                 {isSubmitting ? "Subscribing..." : "Subscribe"}
               </button>
@@ -288,7 +287,7 @@ export default function Footer() {
               </Link>
             ))}
           </nav>
-          <p className="text-center text-xs text-[var(--color-text-subtle)]">
+          <p className="text-center text-xs text-[var(--color-text-subtle)]" suppressHydrationWarning>
             &copy; {new Date().getFullYear()} Coastal Creations Studio. All
             rights reserved.
           </p>

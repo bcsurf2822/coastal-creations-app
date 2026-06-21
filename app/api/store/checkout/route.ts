@@ -69,6 +69,8 @@ export async function POST(request: Request): Promise<Response> {
       return NextResponse.json({ error: "Missing required checkout fields" }, { status: 400 });
     }
 
+    // Sales tax temporarily disabled (pending the studio's nexus/rate decision — see
+    // ecommerce/ecommerce-sales-tax-guide.md). Order keeps taxCents: 0 for now.
     const totalCents = subtotalCents + selectedRate.rateCents;
 
     console.log("[API-STORE-CHECKOUT-POST] Processing checkout for:", customer.email, "Total:", totalCents);
