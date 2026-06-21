@@ -5,7 +5,7 @@ import { PiSquareLogoFill } from "react-icons/pi";
 import dynamic from "next/dynamic";
 import React, { useState } from "react";
 // import WalletPayButtons from "./WalletPayButtons";
-import GiftCardRedemption from "./GiftCardRedemption";
+import GiftCardRedemption from "@/components/checkout/GiftCardRedemption";
 import { buildSuccessUrl } from "@/lib/checkout/bookingFlow";
 
 // Dynamically import Square payment components with SSR disabled

@@ -8,7 +8,7 @@ import { ParticipantInfo, BillingInfo, SelectedDate } from "./types";
 import ParticipantFields from "./ParticipantFields";
 import BillingFields from "./BillingFields";
 import WalletPayButtons from "@/components/payment/WalletPayButtons";
-import GiftCardRedemption from "@/components/payment/GiftCardRedemption";
+import GiftCardRedemption from "@/components/checkout/GiftCardRedemption";
 import { submitPayment } from "@/app/actions/actions";
 
 interface AppliedGiftCard {

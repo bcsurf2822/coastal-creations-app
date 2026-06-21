@@ -22,3 +22,11 @@ export interface CheckoutParticipant {
   lastName: string;
   selectedOptions: SelectedOption[];
 }
+
+/** A gift card the customer has applied at checkout. Amounts are in cents. */
+export interface AppliedGiftCard {
+  giftCardId: string;
+  gan: string;
+  amountApplied: number;
+  remainingBalance: number;
+}

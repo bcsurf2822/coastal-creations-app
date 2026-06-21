@@ -13,10 +13,12 @@ import ContactForm, { type ContactFormValues } from "./ContactForm";
 import PaymentStep from "./PaymentStep";
 import EventSummary, { type SummaryLine } from "./EventSummary";
 import EventParticipantsFields from "./EventParticipantsFields";
+import GiftCardRedemption from "./GiftCardRedemption";
 import type {
   EventOption,
   SelectedOption,
   CheckoutParticipant,
+  AppliedGiftCard,
 } from "./eventCheckoutTypes";
 
 interface EventDetails {
@@ -82,6 +84,7 @@ export default function EventCheckout(): ReactElement {
   const [eventDetails, setEventDetails] = useState<EventDetails | null>(null);
   const [discountInfo, setDiscountInfo] = useState<DiscountInfo>({ isDiscountAvailable: false });
 
+  const [appliedGiftCard, setAppliedGiftCard] = useState<AppliedGiftCard | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // One stable idempotency key per mount — reused across retries of THIS attempt.
@@ -187,6 +190,12 @@ export default function EventCheckout(): ReactElement {
   const optionsCents = optionLines.reduce((sum, l) => sum + l.amountCents, 0);
   const totalCents = registrationCents + optionsCents;
 
+  // Gift card: clamp to the current total (the server re-validates + clamps too).
+  const giftCardCents = appliedGiftCard
+    ? Math.min(appliedGiftCard.amountApplied, totalCents)
+    : 0;
+  const amountDueCents = Math.max(0, totalCents - giftCardCents);
+
   // --- Validation ---
   const allOptionsChosen = useCallback(
     (opts: SelectedOption[]): boolean =>
@@ -263,6 +272,9 @@ export default function EventCheckout(): ReactElement {
                 lastName: p.lastName,
                 selectedOptions: p.selectedOptions,
               })),
+              giftCard: appliedGiftCard
+                ? { giftCardId: appliedGiftCard.giftCardId, amountCents: giftCardCents }
+                : undefined,
             },
           }),
         });
@@ -296,6 +308,7 @@ export default function EventCheckout(): ReactElement {
     [
       idempotencyKey, contact, eventId, isPrivateEvent, quantity, isSigningUpForSelf,
       selfSelectedOptions, participants, router, eventDetails, eventTitle, totalCents,
+      appliedGiftCard, giftCardCents,
     ]
   );
 
@@ -324,8 +337,9 @@ export default function EventCheckout(): ReactElement {
             registrationLabel={`Registration × ${quantity}`}
             registrationCents={registrationCents}
             optionLines={optionLines}
+            giftCardCents={giftCardCents}
             discountApplied={discountActive}
-            totalCents={totalCents}
+            totalCents={amountDueCents}
           />
         }
       >
@@ -390,20 +404,47 @@ export default function EventCheckout(): ReactElement {
                 {isProcessing ? "Registering…" : "Register for event"}
               </Button>
             </>
-          ) : paymentConfig ? (
-            <PaymentStep
-              applicationId={paymentConfig.applicationId}
-              locationId={paymentConfig.locationId}
-              amountDollars={(totalCents / 100).toFixed(2)}
-              ready={formValid}
-              onToken={submitBooking}
-              isProcessing={isProcessing}
-              error={error}
-            />
           ) : (
-            <div className="rounded-[var(--radius-lg)] border-2 border-dashed border-[var(--color-border-lighter)] px-4 py-6 text-center text-sm text-[var(--color-text-subtle)]">
-              Loading secure payment…
-            </div>
+            <>
+              {/* Gift card — apply before paying; reduces the card amount due. */}
+              <GiftCardRedemption
+                totalAmount={totalCents}
+                appliedCard={appliedGiftCard}
+                onApply={setAppliedGiftCard}
+                onRemove={() => setAppliedGiftCard(null)}
+              />
+
+              {amountDueCents <= 0 && appliedGiftCard ? (
+                <>
+                  {error && (
+                    <p className="text-[var(--color-error)] text-sm bg-red-50 border border-red-200 rounded-[var(--radius-md)] px-3 py-2">
+                      {error}
+                    </p>
+                  )}
+                  <Button
+                    variant="primary"
+                    disabled={!formValid || isProcessing}
+                    onClick={() => void submitBooking()}
+                  >
+                    {isProcessing ? "Completing…" : "Complete booking with gift card"}
+                  </Button>
+                </>
+              ) : paymentConfig ? (
+                <PaymentStep
+                  applicationId={paymentConfig.applicationId}
+                  locationId={paymentConfig.locationId}
+                  amountDollars={(amountDueCents / 100).toFixed(2)}
+                  ready={formValid}
+                  onToken={submitBooking}
+                  isProcessing={isProcessing}
+                  error={error}
+                />
+              ) : (
+                <div className="rounded-[var(--radius-lg)] border-2 border-dashed border-[var(--color-border-lighter)] px-4 py-6 text-center text-sm text-[var(--color-text-subtle)]">
+                  Loading secure payment…
+                </div>
+              )}
+            </>
           )}
         </section>
       </CheckoutLayout>
