@@ -22,6 +22,8 @@ import {
   RiStore2Fill,
   RiShoppingCartLine,
   RiShoppingCartFill,
+  RiRefund2Line,
+  RiRefund2Fill,
 } from "react-icons/ri";
 
 interface NavItem {
@@ -60,6 +62,12 @@ const STORE_ITEMS: NavItem[] = [
     label: "Customers",
     icon: <RiTeamLine className="w-5 h-5" />,
     activeIcon: <RiTeamFill className="w-5 h-5" />,
+  },
+  {
+    path: "/admin/dashboard/refunds",
+    label: "Refund Requests",
+    icon: <RiRefund2Line className="w-5 h-5" />,
+    activeIcon: <RiRefund2Fill className="w-5 h-5" />,
   },
 ];
 
