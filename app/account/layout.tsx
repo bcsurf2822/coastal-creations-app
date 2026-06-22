@@ -1,23 +1,6 @@
 import type { ReactElement, ReactNode } from "react";
 import { requireUserPage } from "@/lib/auth/guards";
 import AccountNav from "@/components/account/AccountNav";
-import { Separator } from "@/components/ui/shadcn/separator";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/shadcn/avatar";
-
-function initialsFrom(name?: string | null, email?: string): string {
-  if (name) {
-    const parts = name.trim().split(/\s+/);
-    const first = parts[0]?.[0] ?? "";
-    const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
-    const combined = `${first}${last}`.toUpperCase();
-    if (combined) return combined;
-  }
-  return (email?.[0] ?? "?").toUpperCase();
-}
 
 export default async function AccountLayout({
   children,
@@ -27,31 +10,24 @@ export default async function AccountLayout({
   const user = await requireUserPage();
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
-      <header className="flex items-center gap-4">
-        <Avatar className="size-12">
-          {user.image ? (
-            <AvatarImage src={user.image} alt={user.name ?? user.email} />
-          ) : null}
-          <AvatarFallback>{initialsFrom(user.name, user.email)}</AvatarFallback>
-        </Avatar>
-        <div className="min-w-0">
-          {user.name ? (
-            <h1 className="truncate text-xl font-semibold">{user.name}</h1>
-          ) : (
-            <h1 className="truncate text-xl font-semibold">My Account</h1>
-          )}
-          <p className="truncate text-sm text-muted-foreground">{user.email}</p>
-        </div>
-      </header>
-
-      <div className="mt-6">
-        <AccountNav />
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-800">My Account</h1>
+        <p className="mt-1 text-gray-600">
+          Manage your orders, bookings, and profile.
+        </p>
       </div>
 
-      <Separator className="my-6" />
-
-      <main>{children}</main>
+      <div className="flex flex-col gap-6 md:flex-row">
+        <aside className="md:sticky md:top-6 md:w-64 md:shrink-0 md:self-start">
+          <AccountNav
+            name={user.name}
+            email={user.email}
+            image={user.image}
+          />
+        </aside>
+        <main className="min-w-0 flex-1">{children}</main>
+      </div>
     </div>
   );
 }

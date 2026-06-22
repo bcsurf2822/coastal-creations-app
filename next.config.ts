@@ -46,6 +46,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "items-images-sandbox.s3.us-west-2.amazonaws.com",
       },
+      {
+        // Google account avatars (NextAuth Google sign-in) shown in the account console
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+      },
     ],
   },
 };
