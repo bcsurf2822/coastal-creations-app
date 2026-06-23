@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function CheckoutPage(): ReactElement {
   return (
-    <div className="bg-white min-h-screen">
+    <div className="min-h-screen">
       <div className="container mx-auto px-4 pt-12 pb-10 max-w-5xl">
         <h1 className="text-3xl font-bold text-[var(--color-primary)] mb-8">
           Checkout

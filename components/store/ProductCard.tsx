@@ -24,7 +24,7 @@ export default function ProductCard({ product }: ProductCardProps): ReactElement
   const priceDisplay = formatPriceRange(product.priceRange);
 
   return (
-    <Link href={`/store/${product.slug}`} className="block group">
+    <Link href={`/shop/${product.slug}`} className="block group">
       <Card
         variant="event"
         className="h-full flex flex-col overflow-hidden p-0 transition-shadow duration-200 group-hover:shadow-[var(--shadow-xl)]"
@@ -60,7 +60,9 @@ export default function ProductCard({ product }: ProductCardProps): ReactElement
 
           <div className="mt-auto flex items-center justify-between pt-2">
             <PriceBadge price={priceDisplay} />
-            <Badge variant={availabilityVariant[product.availability]} showDot={false} />
+            <Badge variant={availabilityVariant[product.availability]} showDot={false}>
+              {product.availabilityLabel ?? undefined}
+            </Badge>
           </div>
         </div>
       </Card>

@@ -41,13 +41,19 @@ export interface StoreProductVariation {
 export interface StoreProductSummary {
   squareItemId: string; // -> Order.IOrderItem.squareCatalogItemId
   name: string;
-  slug: string; // resolved route segment for /store/[slug]
+  slug: string; // resolved route segment for /shop/[slug]
   primaryImage?: StoreProductImage;
   categoryName?: string;
   description?: string; // plain-text, for grid cards that show a blurb
   priceRange: { minCents: number; maxCents: number };
   hasMultipleVariations: boolean;
   availability: StoreProductAvailability; // rolled up across variations
+  /**
+   * Customer-friendly stock message for cards/badges, or null when fully in stock.
+   * "Only N remaining" when low, "Sold out" when out. Centralized here so every
+   * Shop layout shows identical wording.
+   */
+  availabilityLabel: string | null;
   displayOrder: number;
   /**
    * The item's first (lowest-ordinal) variation, so the grid card can add to cart
@@ -57,7 +63,7 @@ export interface StoreProductSummary {
 }
 
 /**
- * Full shape for the product detail page (/store/[slug]).
+ * Full shape for the product detail page (/shop/[slug]).
  * Returned by GET /api/store/products/[id].
  */
 export interface StoreProduct extends StoreProductSummary {

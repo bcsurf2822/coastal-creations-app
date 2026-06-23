@@ -31,8 +31,21 @@ export default function ConditionalLayout({
     <>
       <NavBar />
       <main className={isCheckout ? "" : "pt-[var(--nav-offset,8rem)]"}>
-        <div className="bg-gradient-to-r from-[#b6dce6] via-[#BEDCDC] to-[#daebeb]">
+        {/* "Ocean depth" page background: a faint paper grain over a soft
+            light-from-above glow + vertical sky -> sea-glass gradient (her blue
+            family, with depth). */}
+        <div
+          style={{
+            background:
+              "url('/assets/svg/paper-grain.svg') repeat, radial-gradient(130% 70% at 50% 0%, rgba(255,255,255,0.65) 0%, rgba(255,255,255,0) 55%), linear-gradient(180deg, #e8f4f7 0%, #cfe7eb 45%, #b6dce6 100%)",
+          }}
+        >
           <LayoutTransition>{children}</LayoutTransition>
+          {/* Shoreline: the ocean fades into wet sand just before the footer. */}
+          <div
+            aria-hidden
+            className="h-20 bg-gradient-to-b from-transparent to-[#f3ddc4] md:h-28"
+          />
         </div>
       </main>
       <Footer />

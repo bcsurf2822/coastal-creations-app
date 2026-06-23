@@ -7,6 +7,7 @@ import { useProduct } from "@/hooks/queries/use-products";
 import { useCart } from "@/components/store/CartProvider";
 import { Badge, Button } from "@/components/ui";
 import { formatCents } from "@/lib/utils/moneyHelpers";
+import { buildAvailabilityLabel } from "@/lib/utils/catalogHelpers";
 import type {
   StoreProductAvailability,
   StoreProductVariation,
@@ -130,7 +131,12 @@ export default function ProductDetail({
               <Badge
                 variant={availabilityVariant[activeVariation.availability]}
                 showDot={false}
-              />
+              >
+                {buildAvailabilityLabel(
+                  activeVariation.availability,
+                  activeVariation.inStockQuantity ?? 0
+                ) ?? undefined}
+              </Badge>
             )}
           </div>
 

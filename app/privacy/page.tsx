@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     "Privacy Policy for Coastal Creations Studio in Ocean City, NJ. Learn what information we collect when you book classes or shop our store, how we use it, who we share it with, and your privacy rights.",
 };
 
-const LAST_UPDATED = "June 19, 2026";
+const LAST_UPDATED = "June 23, 2026";
 
 const linkClass =
   "text-[var(--color-secondary)] hover:underline underline-offset-2";
@@ -18,15 +18,6 @@ interface PolicySection {
   body: ReactNode;
 }
 
-const ReviewNote = ({ children }: { children: ReactNode }): ReactElement => (
-  <div
-    className="my-3 rounded-md border-l-4 px-3 py-2 text-sm font-medium"
-    style={{ backgroundColor: "#fef3c7", borderColor: "#f59e0b", color: "#92400e" }}
-  >
-    <span className="font-bold">NEEDS FROM ASHLEY:</span> {children}
-  </div>
-);
-
 const sections: PolicySection[] = [
   {
     heading: "1. Introduction",
@@ -35,9 +26,11 @@ const sections: PolicySection[] = [
         <p className="mb-4">
           Coastal Creations Studio (&ldquo;Coastal Creations Studio,&rdquo;
           &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) is an art
-          studio located in Ocean City, New Jersey, owned and operated by Ashley
-          Mathers. This Privacy Policy explains what personal information we
-          collect through our website at{" "}
+          studio located in Ocean City, New Jersey. &ldquo;Coastal Creations
+          Studio&rdquo; is a trade name of Ashley Mathers LLC, a New Jersey
+          limited liability company, which owns and operates the Site. This
+          Privacy Policy explains what personal information we collect through
+          our website at{" "}
           <a
             href="https://coastalcreationsstudio.com"
             className={linkClass}
@@ -49,11 +42,6 @@ const sections: PolicySection[] = [
           (the &ldquo;Site&rdquo;), how we use and share it, and the choices you
           have.
         </p>
-        <ReviewNote>
-          Confirm the exact legal business name and entity type (for example,
-          &ldquo;Coastal Creations Studio LLC&rdquo; vs. a sole proprietorship)
-          and the U.S. state where it is registered.
-        </ReviewNote>
         <p>
           By using the Site, booking a class or event, or placing an order, you
           agree to the practices described in this Policy. Please also review our{" "}
@@ -78,25 +66,23 @@ const sections: PolicySection[] = [
               Class &amp; event booking and registration:
             </span>{" "}
             when you register for a class, camp, workshop, or private event, we
-            collect participant first and last names, email address, phone
-            number, billing information, and the class, camp, or workshop dates
-            you select.
+            collect participant names, email address, phone number, billing
+            information, and the dates you select.
           </li>
           <li>
             <span className="font-semibold">Online store orders:</span> when you
-            purchase physical products (such as Art Kits), we collect your
-            shipping address, contact information, and order details.
+            purchase physical products, we collect your shipping address, contact
+            information, and order details.
           </li>
           <li>
             <span className="font-semibold">Newsletter sign-ups:</span> if you
-            subscribe to our newsletter (for example, through the form in the
-            Site footer), we collect your email address.
+            subscribe to our newsletter, we collect your email address.
           </li>
           <li>
-            <span className="font-semibold">Account information:</span> we are
-            introducing customer accounts. If you create one, you may sign in
-            using Google Sign-In or a passwordless email link, and we collect the
-            associated name and email address.
+            <span className="font-semibold">Account information:</span> if you
+            create a customer account, you may sign in using Google Sign-In or a
+            passwordless email link, and we collect the associated name and email
+            address.
           </li>
           <li>
             <span className="font-semibold">Communications:</span> if you contact
@@ -112,8 +98,9 @@ const sections: PolicySection[] = [
         <ul className="list-disc space-y-2 pl-6">
           <li>
             <span className="font-semibold">Usage and analytics data:</span> we
-            use Google Analytics to understand how visitors use the Site,
-            including pages viewed, traffic sources, and general usage patterns.
+            use Google Analytics and Vercel Analytics to understand how visitors
+            use the Site, including pages viewed, traffic sources, and general
+            usage patterns.
           </li>
           <li>
             <span className="font-semibold">Device and technical data:</span>{" "}
@@ -126,11 +113,20 @@ const sections: PolicySection[] = [
             the Cookies &amp; Tracking Technologies section below).
           </li>
         </ul>
-        <ReviewNote>
-          Do you photograph or video participants (including children) during
-          classes for the gallery, social media, or marketing? If yes, we will
-          add a photo/media consent clause describing this.
-        </ReviewNote>
+        <p className="mb-3 mt-4">
+          <span className="font-semibold">Photography and media</span>
+        </p>
+        <p>
+          During classes, camps, and events, we may photograph or record video of
+          participants, including children, and use those images and videos on
+          our website and social media and in other studio marketing. If you or
+          your child appear in an image and you would prefer we not use it,
+          contact us at{" "}
+          <a href="mailto:info@coastalcreationsstudio.com" className={linkClass}>
+            info@coastalcreationsstudio.com
+          </a>{" "}
+          and we will remove it from our own channels.
+        </p>
       </>
     ),
   },
@@ -209,8 +205,8 @@ const sections: PolicySection[] = [
             hosting for booking, order, and account data.
           </li>
           <li>
-            <span className="font-semibold">Vercel</span> — website hosting and
-            infrastructure.
+            <span className="font-semibold">Vercel</span> — website hosting,
+            infrastructure, and website analytics (Vercel Analytics).
           </li>
         </ul>
         <p>
@@ -218,11 +214,6 @@ const sections: PolicySection[] = [
           rights or the safety of others, or in connection with a business
           transfer. We do not sell your personal information to third parties.
         </p>
-        <ReviewNote>
-          Confirm the complete list of analytics and marketing tools you use,
-          e.g., Google Analytics only, or also Meta/Facebook Pixel, Mailchimp,
-          or others, so we can list them accurately.
-        </ReviewNote>
       </>
     ),
   },
@@ -246,9 +237,9 @@ const sections: PolicySection[] = [
         <p className="mb-4">
           We use cookies and similar technologies to keep you signed in,
           maintain your session and shopping cart, and measure Site usage
-          through Google Analytics. Some cookies are necessary for the Site to
-          function, while others help us understand traffic and improve our
-          services.
+          through Google Analytics and Vercel Analytics. Some cookies are
+          necessary for the Site to function, while others help us understand
+          traffic and improve our services.
         </p>
         <p>
           You can usually control or disable cookies through your browser
@@ -269,11 +260,6 @@ const sections: PolicySection[] = [
           When information is no longer needed, we take reasonable steps to
           delete or anonymize it.
         </p>
-        <ReviewNote>
-          Any specific data-retention period you want to commit to (e.g., keep
-          customer/order records for X years), or leave as &ldquo;as long as
-          needed.&rdquo;
-        </ReviewNote>
       </>
     ),
   },
@@ -388,11 +374,6 @@ const sections: PolicySection[] = [
           </Link>
           .
         </p>
-        <ReviewNote>
-          Confirm the mailing address and email to publish for privacy and legal
-          requests: use 411 E 8th Street and info@coastalcreationsstudio.com, or
-          do you want a dedicated privacy email and/or a PO box?
-        </ReviewNote>
       </>
     ),
   },
@@ -403,48 +384,34 @@ export default function PrivacyPolicyPage(): ReactElement {
     <div className="min-h-screen">
       <section className="py-16 md:py-20">
         <div className="container mx-auto max-w-3xl px-6">
-          <div
-            className="mb-8 rounded-lg border-l-4 px-4 py-3 text-sm"
-            style={{ backgroundColor: "#fffbeb", borderColor: "#f59e0b", color: "#92400e" }}
-          >
-            <span className="font-bold">Draft pending review.</span> This Privacy Policy is
-            a working draft under owner and legal review. Items marked &ldquo;NEEDS FROM
-            ASHLEY&rdquo; must be confirmed before publication.
-          </div>
-          <h1
-            className="text-4xl font-bold tracking-tight md:text-5xl"
-            style={{ color: "var(--color-primary)" }}
-          >
-            Privacy Policy
-          </h1>
-          <p
-            className="mt-3 text-sm"
-            style={{ color: "var(--color-text-subtle)" }}
-          >
-            Last Updated: {LAST_UPDATED}
-          </p>
-          <hr
-            className="mt-6 border-t-2"
-            style={{ borderColor: "var(--color-accent)" }}
-          />
+          <div className="rounded-xl bg-white p-6 text-sm leading-relaxed text-black shadow-md md:p-10">
+            <h1
+              className="text-2xl font-bold tracking-tight md:text-3xl"
+              style={{ color: "var(--color-primary)" }}
+            >
+              Privacy Policy
+            </h1>
+            <p className="mt-2 text-xs text-gray-500">
+              Last Updated: {LAST_UPDATED}
+            </p>
+            <hr
+              className="mt-5 border-t-2"
+              style={{ borderColor: "var(--color-accent)" }}
+            />
 
-          <div
-            className="mt-10 space-y-10 leading-relaxed"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            {sections.map((section) => (
-              <section key={section.heading}>
-                <h2
-                  className="mb-4 text-2xl font-semibold"
-                  style={{ color: "var(--color-primary)" }}
-                >
-                  {section.heading}
-                </h2>
-                <div style={{ color: "var(--color-text-muted)" }}>
-                  {section.body}
-                </div>
-              </section>
-            ))}
+            <div className="mt-8 space-y-8 text-black">
+              {sections.map((section) => (
+                <section key={section.heading}>
+                  <h2
+                    className="mb-3 text-base font-semibold"
+                    style={{ color: "var(--color-primary)" }}
+                  >
+                    {section.heading}
+                  </h2>
+                  <div className="text-black">{section.body}</div>
+                </section>
+              ))}
+            </div>
           </div>
         </div>
       </section>

@@ -1,37 +1,17 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import Image from "next/image";
 import { FaStar } from "react-icons/fa";
 import { AddToCartButton } from "../AddToCartButton";
 import { useProducts } from "@/hooks/queries/use-products";
 import { formatPriceRange } from "@/lib/utils/catalogHelpers";
-import type { StoreProductAvailability } from "@/lib/types/storeTypes";
-
-const ALL = "All Products";
-const availabilityTag: Record<StoreProductAvailability, string | null> = {
-  available: null,
-  low_stock: "Low stock",
-  sold_out: "Sold out",
-};
 
 export default function VariantF(): ReactElement {
   const { data: products, isLoading, isError } = useProducts();
-  const [activeCategory, setActiveCategory] = useState<string>(ALL);
 
-  const categories = useMemo(() => {
-    const set = new Set<string>();
-    (products ?? []).forEach((p) => {
-      if (p.categoryName) set.add(p.categoryName);
-    });
-    return [ALL, ...Array.from(set).sort()];
-  }, [products]);
-
-  const filtered = (products ?? []).filter(
-    (p) => activeCategory === ALL || p.categoryName === activeCategory
-  );
+  const filtered = products ?? [];
 
   // The first available product (falling back to the first overall) is featured.
   const spotlight =
@@ -41,32 +21,6 @@ export default function VariantF(): ReactElement {
   return (
     <section className="min-h-screen py-12 bg-white">
       <div className="mx-auto max-w-7xl px-4">
-        {/* Filter pills */}
-        <div className="flex gap-2 flex-wrap justify-center mb-10">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className="px-4 py-2 rounded-full text-sm font-medium transition-all duration-200"
-              style={
-                activeCategory === cat
-                  ? {
-                      background: "var(--color-primary)",
-                      color: "white",
-                      boxShadow: "0 3px 10px rgba(12,74,110,0.25)",
-                    }
-                  : {
-                      background: "white",
-                      color: "#6b7280",
-                      border: "1px solid #e5e7eb",
-                    }
-              }
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
         {isError && (
           <p className="text-center text-[var(--color-error)] text-lg py-16">
             Unable to load products. Please try again later.
@@ -124,7 +78,7 @@ export default function VariantF(): ReactElement {
                       <FaStar className="text-[10px]" />
                       Featured
                     </span>
-                    {availabilityTag[spotlight.availability] && (
+                    {spotlight.availabilityLabel && (
                       <span
                         className="text-xs font-medium px-3 py-1 rounded-full"
                         style={{
@@ -132,7 +86,7 @@ export default function VariantF(): ReactElement {
                           color: "var(--color-primary)",
                         }}
                       >
-                        {availabilityTag[spotlight.availability]}
+                        {spotlight.availabilityLabel}
                       </span>
                     )}
                   </div>
@@ -173,7 +127,7 @@ export default function VariantF(): ReactElement {
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
                 <AnimatePresence mode="popLayout">
                   {rest.map((product, i) => {
-                    const tag = availabilityTag[product.availability];
+                    const tag = product.availabilityLabel;
                     return (
                       <motion.div
                         key={product.squareItemId}

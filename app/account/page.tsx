@@ -56,7 +56,7 @@ export default async function AccountOverviewPage(): Promise<ReactElement> {
         {recentOrders.length === 0 ? (
           <div className="bg-white rounded-lg shadow border border-gray-200 py-8 text-center text-sm text-gray-500">
             You haven&apos;t placed any orders yet.{" "}
-            <Link href="/store" className="text-blue-600 hover:underline">
+            <Link href="/shop" className="text-blue-600 hover:underline">
               Browse the store
             </Link>
             .

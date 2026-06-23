@@ -1,7 +1,6 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useState, useMemo } from "react";
 import { motion } from "motion/react";
 import Image from "next/image";
 import { useProducts } from "@/hooks/queries/use-products";
@@ -10,61 +9,23 @@ import type { StoreProductAvailability } from "@/lib/types/storeTypes";
 
 // Real-data version of VariantB ("Coastal"). Same design as the mock variant, but bound
 // to live Square catalog data via useProducts() and rendering real product images.
-const availabilityTag: Record<
+const availabilityStyle: Record<
   StoreProductAvailability,
-  { label: string; style: { background: string; color: string } } | null
+  { background: string; color: string } | null
 > = {
   available: null,
-  low_stock: { label: "Low stock", style: { background: "#fef9c3", color: "#854d0e" } },
-  sold_out: { label: "Sold out", style: { background: "#fee2e2", color: "#991b1b" } },
+  low_stock: { background: "#fef9c3", color: "#854d0e" },
+  sold_out: { background: "#fee2e2", color: "#991b1b" },
 };
 
 export default function VariantBReal(): ReactElement {
   const { data: products, isLoading, isError } = useProducts();
-  const [activeCategory, setActiveCategory] = useState<string>("All Products");
 
-  // Categories are derived from the live data (Square category names), not the mock enum.
-  const categories = useMemo(() => {
-    const set = new Set<string>();
-    (products ?? []).forEach((p) => {
-      if (p.categoryName) set.add(p.categoryName);
-    });
-    return ["All Products", ...Array.from(set).sort()];
-  }, [products]);
-
-  const filtered = (products ?? []).filter(
-    (p) => activeCategory === "All Products" || p.categoryName === activeCategory
-  );
+  const filtered = products ?? [];
 
   return (
     <section className="min-h-screen py-12">
       <div className="mx-auto max-w-7xl px-4">
-        {/* Filter pills */}
-        <div className="flex flex-wrap gap-2 justify-center mb-10">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className="px-4 py-2 rounded-full text-sm font-medium transition-all duration-200"
-              style={
-                activeCategory === cat
-                  ? {
-                      background: "var(--color-primary)",
-                      color: "white",
-                      boxShadow: "0 4px 10px rgba(12,74,110,0.25)",
-                    }
-                  : {
-                      background: "white",
-                      color: "var(--color-text-muted)",
-                      border: "1px solid var(--color-border-light)",
-                    }
-              }
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
         {isLoading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -82,7 +43,7 @@ export default function VariantBReal(): ReactElement {
         {!isLoading && !isError && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filtered.map((product, i) => {
-              const tag = availabilityTag[product.availability];
+              const tagStyle = availabilityStyle[product.availability];
               return (
                 <motion.div
                   key={product.squareItemId}
@@ -110,12 +71,12 @@ export default function VariantBReal(): ReactElement {
                   </div>
 
                   <div className="p-4">
-                    {tag && (
+                    {product.availabilityLabel && (
                       <span
                         className="inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full mb-2"
-                        style={tag.style}
+                        style={tagStyle ?? {}}
                       >
-                        {tag.label}
+                        {product.availabilityLabel}
                       </span>
                     )}
 
