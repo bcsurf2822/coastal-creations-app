@@ -20,8 +20,9 @@ export default function VariantL(): ReactElement {
   const filtered = products ?? [];
 
   return (
-    <section className="min-h-screen bg-white py-16">
+    <section className="min-h-screen py-16">
       <div className="mx-auto max-w-6xl px-6">
+        <div className="rounded-[2rem] border border-white/65 bg-white/85 p-6 shadow-[0_14px_28px_rgba(12,74,110,0.1)] backdrop-blur-[2px] md:p-8">
         {isError && (
           <p className="py-16 text-center text-[var(--color-error)]">
             Unable to load products. Please try again later.
@@ -108,6 +109,7 @@ export default function VariantL(): ReactElement {
             })}
           </div>
         )}
+        </div>
       </div>
     </section>
   );

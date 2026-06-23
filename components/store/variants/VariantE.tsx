@@ -13,8 +13,9 @@ export default function VariantE(): ReactElement {
   const filtered = products ?? [];
 
   return (
-    <section className="min-h-screen bg-white py-10">
+    <section className="min-h-screen py-10">
       <div className="mx-auto max-w-5xl px-4">
+        <div className="rounded-[2rem] border border-white/65 bg-white/85 p-6 shadow-[0_14px_28px_rgba(12,74,110,0.1)] backdrop-blur-[2px] md:p-8">
         {isError && (
           <p className="text-sm text-[var(--color-error)] py-10">
             Unable to load products. Please try again later.
@@ -119,6 +120,7 @@ export default function VariantE(): ReactElement {
             </AnimatePresence>
           </>
         )}
+        </div>
       </div>
     </section>
   );
