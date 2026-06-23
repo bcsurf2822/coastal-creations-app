@@ -33,8 +33,9 @@ export default function VariantI(): ReactElement {
   }, [products]);
 
   return (
-    <section className="min-h-screen bg-white py-12">
+    <section className="min-h-screen py-12">
       <div className="mx-auto max-w-7xl px-4">
+        <div className="rounded-[2rem] border border-white/65 bg-white/85 p-6 shadow-[0_14px_28px_rgba(12,74,110,0.1)] backdrop-blur-[2px] md:p-8">
         {isError && (
           <p className="py-16 text-center text-[var(--color-error)]">
             Unable to load products. Please try again later.
@@ -147,6 +148,7 @@ export default function VariantI(): ReactElement {
               </div>
             </div>
           ))}
+        </div>
       </div>
     </section>
   );

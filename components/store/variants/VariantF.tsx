@@ -19,8 +19,9 @@ export default function VariantF(): ReactElement {
   const rest = filtered.filter((p) => p.squareItemId !== spotlight?.squareItemId);
 
   return (
-    <section className="min-h-screen py-12 bg-white">
+    <section className="min-h-screen py-12">
       <div className="mx-auto max-w-7xl px-4">
+        <div className="rounded-[2rem] border border-white/65 bg-white/85 p-6 shadow-[0_14px_28px_rgba(12,74,110,0.1)] backdrop-blur-[2px] md:p-8">
         {isError && (
           <p className="text-center text-[var(--color-error)] text-lg py-16">
             Unable to load products. Please try again later.
@@ -192,6 +193,7 @@ export default function VariantF(): ReactElement {
             )}
           </>
         )}
+        </div>
       </div>
     </section>
   );

@@ -26,6 +26,7 @@ export default function VariantBReal(): ReactElement {
   return (
     <section className="min-h-screen py-12">
       <div className="mx-auto max-w-7xl px-4">
+        <div className="rounded-[2rem] border border-white/65 bg-white/85 p-6 shadow-[0_14px_28px_rgba(12,74,110,0.1)] backdrop-blur-[2px] md:p-8">
         {isLoading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -119,6 +120,7 @@ export default function VariantBReal(): ReactElement {
             })}
           </div>
         )}
+        </div>
       </div>
     </section>
   );

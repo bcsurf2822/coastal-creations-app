@@ -13,8 +13,9 @@ export default function VariantC(): ReactElement {
   const filtered = products ?? [];
 
   return (
-    <section className="min-h-screen py-16 relative overflow-hidden bg-white">
+    <section className="min-h-screen py-16 relative overflow-hidden">
       <div className="relative mx-auto max-w-7xl px-4">
+        <div className="rounded-[2rem] border border-white/65 bg-white/85 p-6 shadow-[0_14px_28px_rgba(12,74,110,0.1)] backdrop-blur-[2px] md:p-8">
         {/* Section intro */}
         <div className="text-center mb-12">
           <p
@@ -132,6 +133,7 @@ export default function VariantC(): ReactElement {
             </AnimatePresence>
           </div>
         )}
+        </div>
       </div>
     </section>
   );
