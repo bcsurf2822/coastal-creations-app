@@ -1,36 +1,16 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import Image from "next/image";
 import { AddToCartButton } from "../AddToCartButton";
 import { useProducts } from "@/hooks/queries/use-products";
 import { formatPriceRange } from "@/lib/utils/catalogHelpers";
-import type { StoreProductAvailability } from "@/lib/types/storeTypes";
-
-const ALL = "All Products";
-const availabilityTag: Record<StoreProductAvailability, string | null> = {
-  available: null,
-  low_stock: "Low stock",
-  sold_out: "Sold out",
-};
 
 export default function VariantC(): ReactElement {
   const { data: products, isLoading, isError } = useProducts();
-  const [activeCategory, setActiveCategory] = useState<string>(ALL);
 
-  const categories = useMemo(() => {
-    const set = new Set<string>();
-    (products ?? []).forEach((p) => {
-      if (p.categoryName) set.add(p.categoryName);
-    });
-    return [ALL, ...Array.from(set).sort()];
-  }, [products]);
-
-  const filtered = (products ?? []).filter(
-    (p) => activeCategory === ALL || p.categoryName === activeCategory
-  );
+  const filtered = products ?? [];
 
   return (
     <section className="min-h-screen py-16 relative overflow-hidden bg-white">
@@ -58,33 +38,6 @@ export default function VariantC(): ReactElement {
           </p>
         </div>
 
-        {/* Filter tabs */}
-        <div className="flex flex-wrap gap-2 justify-center mb-10">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className="px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 border"
-              style={
-                activeCategory === cat
-                  ? {
-                      background: "var(--color-primary)",
-                      color: "white",
-                      borderColor: "transparent",
-                      boxShadow: "0 4px 12px rgba(12,74,110,0.25)",
-                    }
-                  : {
-                      background: "white",
-                      color: "#6b7280",
-                      borderColor: "#e5e7eb",
-                    }
-              }
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
         {isLoading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -104,7 +57,7 @@ export default function VariantC(): ReactElement {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             <AnimatePresence mode="popLayout">
               {filtered.map((product, i) => {
-                const tag = availabilityTag[product.availability];
+                const tag = product.availabilityLabel;
                 return (
                   <motion.div
                     key={product.squareItemId}

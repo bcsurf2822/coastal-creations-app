@@ -24,7 +24,7 @@ export default function CartPage(): ReactElement {
           Looks like you haven&apos;t added anything yet. Head back to the shop
           to find something you&apos;ll love.
         </p>
-        <Link href="/store">
+        <Link href="/shop">
           <Button variant="secondary">Continue Shopping</Button>
         </Link>
       </div>
@@ -51,7 +51,7 @@ export default function CartPage(): ReactElement {
           ))}
 
           <div className="mt-6">
-            <Link href="/store">
+            <Link href="/shop">
               <Button variant="ghost" size="sm">
                 ← Continue Shopping
               </Button>

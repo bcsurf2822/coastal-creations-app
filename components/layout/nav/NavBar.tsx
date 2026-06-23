@@ -291,7 +291,7 @@ export default function NavBar() {
 
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
-                href="/store"
+                href="/shop"
                 className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
                 <NavRippleText text="Shop" />
@@ -496,7 +496,7 @@ export default function NavBar() {
                   className="border-b border-gray-100 pb-2"
                 >
                   <Link
-                    href="/store"
+                    href="/shop"
                     className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block uppercase"
                     onClick={() => setIsMenuOpen(false)}
                   >

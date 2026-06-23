@@ -41,7 +41,7 @@ export default async function OrderConfirmationPage({
       </p>
 
       <div className="flex gap-3">
-        <Link href="/store">
+        <Link href="/shop">
           <Button variant="primary">Continue Shopping</Button>
         </Link>
         <Link href="/">
