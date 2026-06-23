@@ -289,23 +289,22 @@ export default function Footer() {
               </Link>
             ))}
           </nav>
-          <nav className="mb-2 flex flex-wrap justify-center gap-x-6 gap-y-2">
+          <p className="text-center text-xs text-[var(--color-text-subtle)]" suppressHydrationWarning>
+            &copy; {new Date().getFullYear()} Coastal Creations Studio. All
+            rights reserved. &middot;{" "}
             <Link
               href="/privacy"
-              className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-subtle)] transition-colors hover:text-[var(--color-secondary)]"
+              className="font-medium transition-colors hover:text-[var(--color-secondary)]"
             >
               Privacy Policy
-            </Link>
+            </Link>{" "}
+            &middot;{" "}
             <Link
               href="/terms"
-              className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-subtle)] transition-colors hover:text-[var(--color-secondary)]"
+              className="font-medium transition-colors hover:text-[var(--color-secondary)]"
             >
               Terms of Service
             </Link>
-          </nav>
-          <p className="text-center text-xs text-[var(--color-text-subtle)]" suppressHydrationWarning>
-            &copy; {new Date().getFullYear()} Coastal Creations Studio. All
-            rights reserved.
           </p>
         </div>
       </div>
