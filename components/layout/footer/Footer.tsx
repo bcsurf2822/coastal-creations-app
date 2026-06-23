@@ -163,19 +163,21 @@ export default function Footer() {
             <div className="mt-4 flex space-x-4">
               <Link
                 href="https://www.facebook.com/p/Coastal-Creations-Studio-61574989546371"
+                aria-label="Coastal Creations Studio on Facebook"
                 className="text-[var(--color-text-subtle)] hover:text-[var(--color-secondary)] transition-colors"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <FaFacebook size={22} />
+                <FaFacebook size={22} aria-hidden="true" />
               </Link>
               <Link
                 href="https://www.instagram.com/coastalcreationsocnj/?igsh=MTZrMG5odHJ4bXZrZA%3D%3D"
+                aria-label="Coastal Creations Studio on Instagram"
                 className="text-[var(--color-text-subtle)] hover:text-[var(--color-secondary)] transition-colors"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <FaInstagram size={22} />
+                <FaInstagram size={22} aria-hidden="true" />
               </Link>
             </div>
           </div>
