@@ -6,7 +6,6 @@ import { isCheckoutRoute } from "@/lib/utils/isCheckoutRoute";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
-import NavRippleText from "./NavRippleText";
 import CartIcon from "@/components/store/CartIcon";
 import AccountNavLink from "@/components/authentication/AccountNavLink";
 
@@ -235,9 +234,9 @@ export default function NavBar() {
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/"
-                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] rounded-full px-3 py-1.5 transition-colors duration-300 hover:bg-[#0369a1]/10 hover:text-[#0369a1] lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
-                <NavRippleText text="Home" />
+                Home
               </Link>
             </motion.div>
 
@@ -246,8 +245,8 @@ export default function NavBar() {
               whileHover="hover"
               className="relative group"
             >
-              <div className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase flex items-center gap-1 cursor-pointer">
-                <NavRippleText text="What We Offer" />
+              <div className="nav-link text-[#0f172a] rounded-full px-3 py-1.5 transition-colors duration-300 hover:bg-[#0369a1]/10 hover:text-[#0369a1] lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase flex items-center gap-1 cursor-pointer">
+                What We Offer
                 <motion.svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="14"
@@ -283,36 +282,36 @@ export default function NavBar() {
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/about"
-                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] rounded-full px-3 py-1.5 transition-colors duration-300 hover:bg-[#0369a1]/10 hover:text-[#0369a1] lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
-                <NavRippleText text="About" />
+                About
               </Link>
             </motion.div>
 
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/shop"
-                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] rounded-full px-3 py-1.5 transition-colors duration-300 hover:bg-[#0369a1]/10 hover:text-[#0369a1] lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
-                <NavRippleText text="Shop" />
+                Shop
               </Link>
             </motion.div>
 
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/gallery"
-                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] rounded-full px-3 py-1.5 transition-colors duration-300 hover:bg-[#0369a1]/10 hover:text-[#0369a1] lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
-                <NavRippleText text="Gallery" />
+                Gallery
               </Link>
             </motion.div>
 
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/contact-us"
-                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] rounded-full px-3 py-1.5 transition-colors duration-300 hover:bg-[#0369a1]/10 hover:text-[#0369a1] lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
-                <NavRippleText text="Contact" />
+                Contact
               </Link>
             </motion.div>
 

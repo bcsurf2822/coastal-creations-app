@@ -123,20 +123,13 @@ const MainSection = (): ReactElement => {
               </div>
             </div>
 
-            <div className="pointer-events-none absolute -right-8 top-8 hidden md:block">
+            <div className="pointer-events-none absolute -right-6 -top-6 hidden md:block">
               <Image
                 src="/assets/svg/starfish.svg"
-                alt="Decorative starfish"
-                width={140}
-                height={140}
-                className="rotate-[-12deg] opacity-55"
-              />
-              <Image
-                src="/assets/svg/shell-paint.svg"
-                alt="Decorative shell"
-                width={90}
-                height={90}
-                className="-mt-5 ml-16 rotate-12 opacity-50"
+                alt=""
+                width={96}
+                height={96}
+                className="rotate-[-12deg] opacity-40"
               />
             </div>
           </div>
@@ -151,7 +144,7 @@ const MainSection = (): ReactElement => {
               {content?.homepage?.mainSection?.title || DEFAULT_TEXT.homepage.mainSection.title}
             </h2>
             <p
-              className={`${ebGaramond.className} mb-8 text-lg leading-relaxed text-slate-700 md:text-xl`}
+              className={`${ebGaramond.className} mb-8 text-base leading-relaxed text-slate-700 md:text-lg`}
             >
               {description}
             </p>

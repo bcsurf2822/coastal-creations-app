@@ -131,7 +131,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="mt-auto border-t border-gray-100 bg-white/90 text-[var(--color-text-primary)]">
+    <footer className="mt-auto bg-gradient-to-b from-[#f3ddc4] to-[#fdeeda] text-[var(--color-text-primary)]">
       {/* Main footer content */}
       <div className="container mx-auto px-6 py-12 lg:px-12">
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
@@ -156,7 +156,7 @@ export default function Footer() {
               </Link>
             </motion.div>
 
-            <p className="mt-3 text-sm text-[var(--color-text-subtle)] text-center sm:text-left">
+            <p className="mt-3 text-sm text-[var(--color-text-muted)] text-center sm:text-left">
               Ocean City&apos;s creative art studio for all ages.
             </p>
 
@@ -164,7 +164,7 @@ export default function Footer() {
               <Link
                 href="https://www.facebook.com/p/Coastal-Creations-Studio-61574989546371"
                 aria-label="Coastal Creations Studio on Facebook"
-                className="text-[var(--color-text-subtle)] hover:text-[var(--color-secondary)] transition-colors"
+                className="text-[var(--color-text-muted)] hover:text-[var(--color-secondary)] transition-colors"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -173,7 +173,7 @@ export default function Footer() {
               <Link
                 href="https://www.instagram.com/coastalcreationsocnj/?igsh=MTZrMG5odHJ4bXZrZA%3D%3D"
                 aria-label="Coastal Creations Studio on Instagram"
-                className="text-[var(--color-text-subtle)] hover:text-[var(--color-secondary)] transition-colors"
+                className="text-[var(--color-text-muted)] hover:text-[var(--color-secondary)] transition-colors"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -189,17 +189,17 @@ export default function Footer() {
             </h3>
             <div className="mb-4 h-px w-10 bg-[var(--color-accent)]" />
             {loading ? (
-              <p className="text-sm text-[var(--color-text-subtle)]">
+              <p className="text-sm text-[var(--color-text-muted)]">
                 Loading hours...
               </p>
             ) : (
               <ul className="space-y-2 text-sm">
                 {DAYS.map((day) => (
                   <li key={day} className="flex justify-between gap-4">
-                    <span className="font-medium capitalize text-[var(--color-text-muted)]">
+                    <span className="font-semibold capitalize text-[var(--color-text-secondary)]">
                       {day}
                     </span>
-                    <span className="text-[var(--color-text-subtle)]">
+                    <span className="text-[var(--color-text-muted)]">
                       {hoursData
                         ? formatDayHours(hoursData[day])
                         : "Not available"}
@@ -217,7 +217,7 @@ export default function Footer() {
             </h3>
             <div className="mb-4 h-px w-10 bg-[var(--color-accent)]" />
             <div className="space-y-4 text-sm">
-              <div className="text-[var(--color-text-subtle)] leading-relaxed">
+              <div className="text-[var(--color-text-muted)] leading-relaxed">
                 <p>411 E 8th Street</p>
                 <p>Ocean City, NJ 08226</p>
               </div>
@@ -239,7 +239,7 @@ export default function Footer() {
               Newsletter
             </h3>
             <div className="mb-4 h-px w-10 bg-[var(--color-accent)]" />
-            <p className="mb-4 text-sm leading-relaxed text-[var(--color-text-subtle)]">
+            <p className="mb-4 text-sm leading-relaxed text-[var(--color-text-muted)]">
               Sign up for updates on classes, events, and workshops.
             </p>
             <form className="flex flex-col gap-3" onSubmit={handleSubscribe} suppressHydrationWarning>
@@ -276,20 +276,20 @@ export default function Footer() {
       </div>
 
       {/* Bottom bar */}
-      <div className="border-t border-gray-100 bg-white/90">
+      <div className="border-t border-black/5">
         <div className="container mx-auto px-6 py-5 lg:px-12">
           <nav className="mb-3 flex flex-wrap justify-center gap-x-6 gap-y-2">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-subtle)] transition-colors hover:text-[var(--color-secondary)]"
+                className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-secondary)]"
               >
                 {link.label}
               </Link>
             ))}
           </nav>
-          <p className="text-center text-xs text-[var(--color-text-subtle)]" suppressHydrationWarning>
+          <p className="text-center text-xs text-[var(--color-text-muted)]" suppressHydrationWarning>
             &copy; {new Date().getFullYear()} Coastal Creations Studio. All
             rights reserved. &middot;{" "}
             <Link
