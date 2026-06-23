@@ -23,6 +23,45 @@ interface OrderItem {
   refundedQuantity?: number;
 }
 
+interface RefundLineItem {
+  squareVariationId: string;
+  name: string;
+  quantity: number;
+}
+
+interface RefundEntry {
+  squareRefundId?: string;
+  amountCents: number;
+  reason?: string;
+  items: RefundLineItem[];
+  createdAt: Date;
+}
+
+// Typed collection shapes — the native driver's update typing (PushOperator) needs
+// the document type so `$push: { refunds: ... }` is checked against RefundEntry[].
+interface OrderDoc {
+  _id: ObjectId;
+  orderNumber?: string;
+  items: OrderItem[];
+  refunds?: RefundEntry[];
+  refundStatus?: string;
+  status?: string;
+  refundAmountCents?: number;
+  refundedAt?: Date;
+}
+
+interface RefundRequestDoc {
+  _id: ObjectId;
+  type: string;
+  targetId: ObjectId;
+  status: string;
+  requestedItems?: RefundLineItem[];
+  requestedAmountCents: number;
+  reason?: string;
+  resolvedAt?: Date;
+  updatedAt?: Date;
+}
+
 async function main(): Promise<void> {
   const apply = process.argv.includes("--apply");
   const uri = process.env.MONGODB_URI;
@@ -37,8 +76,8 @@ async function main(): Promise<void> {
   try {
     await client.connect();
     const db = client.db();
-    const orders = db.collection("orders");
-    const requests = db.collection("refundrequests");
+    const orders = db.collection<OrderDoc>("orders");
+    const requests = db.collection<RefundRequestDoc>("refundrequests");
 
     // Orders that received a refund but never got the refunds[] log written.
     const broken = await orders
@@ -55,7 +94,7 @@ async function main(): Promise<void> {
     for (const order of broken) {
       // Most-recent approved order request for this order gives the item breakdown.
       const req = await requests.findOne(
-        { type: "order", targetId: order._id as ObjectId, status: "approved" },
+        { type: "order", targetId: order._id, status: "approved" },
         { sort: { resolvedAt: -1 } }
       );
 
@@ -66,12 +105,8 @@ async function main(): Promise<void> {
         continue;
       }
 
-      const items: OrderItem[] = (order.items as OrderItem[]).map((it) => ({ ...it }));
-      const reqItems = (req.requestedItems ?? []) as Array<{
-        squareVariationId: string;
-        name: string;
-        quantity: number;
-      }>;
+      const items: OrderItem[] = order.items.map((it) => ({ ...it }));
+      const reqItems: RefundLineItem[] = req.requestedItems ?? [];
 
       for (const ri of reqItems) {
         const item = items.find((i) => i.squareVariationId === ri.squareVariationId);
@@ -86,8 +121,8 @@ async function main(): Promise<void> {
       const fullyRefunded = items.every(
         (i) => (i.refundedQuantity ?? 0) >= i.quantity
       );
-      const refundEntry = {
-        squareRefundId: undefined as string | undefined, // not captured at the time
+      const refundEntry: RefundEntry = {
+        squareRefundId: undefined, // not captured at the time
         amountCents: req.requestedAmountCents,
         reason: req.reason,
         items: reqItems,
