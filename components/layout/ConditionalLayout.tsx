@@ -30,11 +30,11 @@ export default function ConditionalLayout({
   return (
     <>
       <NavBar />
-      <div className={isCheckout ? "" : "pt-[var(--nav-offset,8rem)]"}>
+      <main className={isCheckout ? "" : "pt-[var(--nav-offset,8rem)]"}>
         <div className="bg-gradient-to-r from-[#b6dce6] via-[#BEDCDC] to-[#daebeb]">
           <LayoutTransition>{children}</LayoutTransition>
         </div>
-      </div>
+      </main>
       <Footer />
     </>
   );

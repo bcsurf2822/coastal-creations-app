@@ -18,6 +18,7 @@ type LeanOrder = {
   orderNumber: string;
   items: Array<{ name: string; quantity: number }>;
   totalCents: number;
+  refundAmountCents?: number;
   customer: { firstName: string; lastName: string; email: string };
   status: OrderStatus;
   createdAt: string;
@@ -59,9 +60,11 @@ export default function OrdersTable(): ReactElement {
     fetchOrders();
   }, [fetchOrders]);
 
+  // Net of refunds: drop fully-cancelled/refunded orders, and subtract any
+  // partial refunds from the remaining orders' totals.
   const totalRevenue = orders
     .filter((o) => o.status !== "cancelled" && o.status !== "refunded")
-    .reduce((sum, o) => sum + o.totalCents, 0);
+    .reduce((sum, o) => sum + o.totalCents - (o.refundAmountCents ?? 0), 0);
 
   return (
     <div>

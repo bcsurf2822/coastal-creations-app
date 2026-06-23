@@ -1,17 +1,10 @@
 import type { ReactElement } from "react";
 import Link from "next/link";
-import { CalendarDays, Package } from "lucide-react";
+import { RiShoppingBag3Line, RiCalendarEventLine } from "react-icons/ri";
 import { requireUserPage } from "@/lib/auth/guards";
 import { getMyOrders, getMyBookings } from "@/lib/account/queries";
 import { formatCents } from "@/lib/utils/moneyHelpers";
 import OrderStatusBadge from "@/components/account/OrderStatusBadge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/shadcn/card";
 
 export default async function AccountOverviewPage(): Promise<ReactElement> {
   const user = await requireUserPage();
@@ -23,75 +16,69 @@ export default async function AccountOverviewPage(): Promise<ReactElement> {
   const recentOrders = orders.slice(0, 3);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardDescription className="flex items-center gap-2">
-              <Package className="size-4" /> Orders
-            </CardDescription>
-            <CardTitle className="text-3xl">{orders.length}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Link
-              href="/account/orders"
-              className="text-sm text-primary hover:underline"
-            >
-              View all orders
-            </Link>
-          </CardContent>
-        </Card>
+        <div className="bg-white rounded-lg shadow border border-gray-200 p-5">
+          <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
+            <RiShoppingBag3Line className="w-4 h-4" /> Orders
+          </div>
+          <p className="mt-2 text-3xl font-bold text-gray-800">
+            {orders.length}
+          </p>
+          <Link
+            href="/account/orders"
+            className="mt-3 inline-block text-sm font-medium text-blue-600 hover:underline"
+          >
+            View all orders
+          </Link>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardDescription className="flex items-center gap-2">
-              <CalendarDays className="size-4" /> Bookings
-            </CardDescription>
-            <CardTitle className="text-3xl">{bookings.length}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Link
-              href="/account/bookings"
-              className="text-sm text-primary hover:underline"
-            >
-              View all bookings
-            </Link>
-          </CardContent>
-        </Card>
+        <div className="bg-white rounded-lg shadow border border-gray-200 p-5">
+          <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
+            <RiCalendarEventLine className="w-4 h-4" /> Bookings
+          </div>
+          <p className="mt-2 text-3xl font-bold text-gray-800">
+            {bookings.length}
+          </p>
+          <Link
+            href="/account/bookings"
+            className="mt-3 inline-block text-sm font-medium text-blue-600 hover:underline"
+          >
+            View all bookings
+          </Link>
+        </div>
       </div>
 
       <section>
-        <h2 className="mb-3 text-lg font-semibold">Recent orders</h2>
+        <h2 className="mb-3 text-base font-semibold text-gray-800">
+          Recent orders
+        </h2>
         {recentOrders.length === 0 ? (
-          <Card>
-            <CardContent className="py-8 text-center text-sm text-muted-foreground">
-              You haven&apos;t placed any orders yet.{" "}
-              <Link href="/store" className="text-primary hover:underline">
-                Browse the store
-              </Link>
-              .
-            </CardContent>
-          </Card>
+          <div className="bg-white rounded-lg shadow border border-gray-200 py-8 text-center text-sm text-gray-500">
+            You haven&apos;t placed any orders yet.{" "}
+            <Link href="/store" className="text-blue-600 hover:underline">
+              Browse the store
+            </Link>
+            .
+          </div>
         ) : (
           <div className="space-y-3">
             {recentOrders.map((order) => (
               <Link
                 key={order.orderNumber}
                 href={`/account/orders/${order.orderNumber}`}
-                className="block"
+                className="flex items-center justify-between gap-4 bg-white rounded-lg shadow border border-gray-200 px-5 py-4 transition-colors hover:bg-gray-50"
               >
-                <Card className="transition-colors hover:bg-accent/40">
-                  <CardContent className="flex items-center justify-between gap-4 py-4">
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{order.orderNumber}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(order.createdAt).toLocaleDateString()} ·{" "}
-                        {formatCents(order.totalCents)}
-                      </p>
-                    </div>
-                    <OrderStatusBadge status={order.status} />
-                  </CardContent>
-                </Card>
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-gray-800">
+                    {order.orderNumber}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {new Date(order.createdAt).toLocaleDateString()} ·{" "}
+                    {formatCents(order.totalCents)}
+                  </p>
+                </div>
+                <OrderStatusBadge status={order.status} />
               </Link>
             ))}
           </div>

@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectMongo } from "@/lib/mongoose";
 import Customer from "@/lib/models/Customer";
+// Registered so the refunded customer's `event` ref can be populated for the email.
+import "@/lib/models/Event";
+import "@/lib/models/PrivateEvent";
+import "@/lib/models/Reservations";
 import { getSquareClient } from "@/lib/square/client";
 import { SquareError } from "square";
 import { randomUUID } from "crypto";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
+import { sendRefundConfirmation } from "@/lib/email/sendRefundConfirmation";
 
 const client = getSquareClient();
 
@@ -26,7 +31,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const customer = await Customer.findById(customerId);
+    const customer = await Customer.findById(customerId).populate("event");
 
     if (!customer) {
       return NextResponse.json(
@@ -73,6 +78,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       customer.refundStatus = isFullRefund ? "full" : "partial";
       customer.refundedAt = new Date();
       await customer.save();
+
+      // Refund confirmation email (non-blocking — the refund already succeeded).
+      const populatedEvent =
+        customer.event && typeof customer.event === "object"
+          ? (customer.event as { eventName?: string; title?: string })
+          : null;
+      await sendRefundConfirmation({
+        customerEmail: customer.billingInfo?.emailAddress,
+        data: {
+          customerName: customer.billingInfo?.firstName || "there",
+          referenceLabel:
+            populatedEvent?.eventName || populatedEvent?.title || "your booking",
+          refundAmountFormatted: `$${refundAmountDollars.toFixed(2)}`,
+          reason: reason || undefined,
+          isFullRefund,
+        },
+      });
 
       const refundData = JSON.parse(
         JSON.stringify(refundResult.refund, (key, value) =>

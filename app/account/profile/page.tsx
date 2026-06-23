@@ -1,16 +1,6 @@
 import type { ReactElement } from "react";
+import Image from "next/image";
 import { requireUserPage } from "@/lib/auth/guards";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/shadcn/avatar";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/shadcn/card";
 
 function initialsFrom(name?: string | null, email?: string): string {
   if (name) {
@@ -28,35 +18,42 @@ export default async function ProfilePage(): Promise<ReactElement> {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-semibold">Profile</h1>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Account details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <h1 className="text-xl font-bold text-gray-800">Profile</h1>
+      <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-200">
+          <h2 className="text-base font-semibold text-gray-800">
+            Account details
+          </h2>
+        </div>
+        <div className="space-y-4 px-5 py-5">
           <div className="flex items-center gap-4">
-            <Avatar className="size-16">
-              {user.image ? (
-                <AvatarImage src={user.image} alt={user.name ?? user.email} />
-              ) : null}
-              <AvatarFallback>
+            {user.image ? (
+              <Image
+                src={user.image}
+                alt={user.name ?? user.email}
+                width={64}
+                height={64}
+                className="h-16 w-16 rounded-full object-cover"
+              />
+            ) : (
+              <span className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-lg font-semibold">
                 {initialsFrom(user.name, user.email)}
-              </AvatarFallback>
-            </Avatar>
+              </span>
+            )}
             <div className="min-w-0">
               {user.name ? (
-                <p className="truncate text-lg font-medium">{user.name}</p>
+                <p className="truncate text-lg font-medium text-gray-800">
+                  {user.name}
+                </p>
               ) : null}
-              <p className="truncate text-sm text-muted-foreground">
-                {user.email}
-              </p>
+              <p className="truncate text-sm text-gray-500">{user.email}</p>
             </div>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-500">
             Signed in with Google or a magic link.
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

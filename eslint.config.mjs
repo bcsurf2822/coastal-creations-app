@@ -2,6 +2,11 @@ import coreWebVitals from "eslint-config-next/core-web-vitals";
 import typescript from "eslint-config-next/typescript";
 
 const eslintConfig = [
+  {
+    // Mirror tsconfig "exclude": archived planning docs + vendored example
+    // components are not application source and should not be linted.
+    ignores: ["archive/**", "spec/**"],
+  },
   ...coreWebVitals,
   ...typescript,
   {

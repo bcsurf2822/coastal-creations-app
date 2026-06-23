@@ -40,6 +40,21 @@ export interface IOrderItem {
   selectedOptions?: IOrderSelectedOption[];
   quantity: number;
   unitPriceCents: number; // price at time of purchase
+  refundedQuantity?: number; // cumulative units refunded across all refund events (default 0)
+}
+
+// A single refund event against the order (item-level, no shipping). Stored as a
+// log so multiple partial refunds over time keep a full audit trail.
+export interface IOrderRefund {
+  squareRefundId?: string; // Square PaymentRefund id
+  amountCents: number; // amount refunded in this event
+  reason?: string;
+  items: Array<{
+    squareVariationId: string;
+    name: string;
+    quantity: number; // units refunded for this line in this event
+  }>;
+  createdAt: Date;
 }
 
 // Shipping / billing address. Shape aligns with the Shippo address object.
@@ -94,6 +109,7 @@ export interface IOrder extends Document {
   refundStatus: OrderRefundStatus;
   refundAmountCents?: number;
   refundedAt?: Date;
+  refunds?: IOrderRefund[]; // per-event refund log (item-level)
   shippedAt?: Date;
   deliveredAt?: Date;
   createdAt: Date;
@@ -117,6 +133,30 @@ const OrderItemSchema = new Schema<IOrderItem>(
     selectedOptions: { type: [SelectedOptionSchema], default: [] },
     quantity: { type: Number, required: true, min: 1, default: 1 },
     unitPriceCents: { type: Number, required: true, min: 0 },
+    refundedQuantity: { type: Number, min: 0, default: 0 },
+  },
+  { _id: false }
+);
+
+const OrderRefundSchema = new Schema<IOrderRefund>(
+  {
+    squareRefundId: { type: String, trim: true },
+    amountCents: { type: Number, required: true, min: 0 },
+    reason: { type: String, trim: true },
+    items: {
+      type: [
+        new Schema(
+          {
+            squareVariationId: { type: String, required: true, trim: true },
+            name: { type: String, required: true, trim: true },
+            quantity: { type: Number, required: true, min: 1 },
+          },
+          { _id: false }
+        ),
+      ],
+      default: [],
+    },
+    createdAt: { type: Date, default: Date.now },
   },
   { _id: false }
 );
@@ -205,6 +245,7 @@ const OrderSchema = new Schema<IOrder>(
     },
     refundAmountCents: { type: Number, min: 0, default: 0 },
     refundedAt: { type: Date },
+    refunds: { type: [OrderRefundSchema], default: [] },
     shippedAt: { type: Date },
     deliveredAt: { type: Date },
   },

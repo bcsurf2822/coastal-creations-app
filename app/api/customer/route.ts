@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectMongo } from "@/lib/mongoose";
+import { getSessionUser } from "@/lib/auth/guards";
 import Customer from "@/lib/models/Customer";
 import Event from "@/lib/models/Event";
 import PrivateEvent from "@/lib/models/PrivateEvent";
@@ -401,7 +402,23 @@ export async function GET(request: NextRequest) {
 
     const customers = await Customer.find(query)
       .populate("event")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Customer records hold PII (billingInfo, participant names, Square IDs).
+    // Only admins receive the full records; public callers (the homepage/calendar
+    // signup counts) get just the non-sensitive fields needed to tally per-event
+    // quantities — never customer PII. This endpoint was previously unguarded.
+    const user = await getSessionUser();
+    const data = user?.isAdmin
+      ? customers
+      : customers.map((c) => ({
+          _id: c._id,
+          event: c.event,
+          eventType: c.eventType,
+          quantity: c.quantity,
+          selectedDates: c.selectedDates,
+        }));
 
     return NextResponse.json(
       {
@@ -409,7 +426,7 @@ export async function GET(request: NextRequest) {
         message: eventId
           ? `Customers for event ${eventId} retrieved successfully`
           : "Customers retrieved successfully",
-        data: customers,
+        data,
         count: customers.length,
       },
       { status: 200 }
