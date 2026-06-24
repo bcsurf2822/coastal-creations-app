@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import { render } from "@react-email/render";
 import * as React from "react";
 import { CustomerContactTemplate } from "@/components/email-templates/CustomerContactTemplate";
+import { isValidEmail } from "@/lib/utils/validation";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -34,8 +35,7 @@ export async function POST(request: Request) {
       return Response.json({ error: "Message is required" }, { status: 400 });
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!isValidEmail(email)) {
       return Response.json({ error: "Invalid email format" }, { status: 400 });
     }
 

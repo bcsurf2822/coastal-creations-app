@@ -263,7 +263,7 @@
   box-shadow: 0 8px 24px rgba(12, 74, 110, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
   font-size: 0.9em;
   z-index: 99999 !important;
-  pointer-events: auto;
+  pointer-events: none;
   white-space: normal;
   color: var(--color-text-primary, #111827);
   text-align: left;
@@ -363,6 +363,19 @@
 
 .tooltip-description::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+/* Hint footer -- nudges the user to click for the full detail sheet */
+.tooltip-hint {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #f1f5f9;
+  color: var(--color-text-subtle, #64748b);
+  font-weight: 600;
+  font-size: 0.82em;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 /* Sold out badge */

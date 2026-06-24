@@ -15,6 +15,7 @@ import type { AppliedGiftCard } from "@/components/checkout/eventCheckoutTypes";
 import CartSummary from "@/components/store/CartSummary";
 import { Button } from "@/components/ui";
 import { formatCents } from "@/lib/utils/moneyHelpers";
+import { isValidEmail } from "@/lib/utils/validation";
 import type { ShippingRate } from "@/lib/shippo/rates";
 
 const EMPTY_ADDRESS: AddressFormValues = {
@@ -48,10 +49,12 @@ export default function CheckoutForm(): ReactElement | null {
   const [idempotencyKey] = useState(() => crypto.randomUUID());
 
   // Order total (subtotal + shipping once known) and the card amount due after any
-  // applied gift card. The server re-validates + clamps; this only drives the UI.
+  // applied gift card. Gift cards apply to the PRODUCT SUBTOTAL ONLY — never to
+  // shipping — so the gift-card credit is clamped to the subtotal. The server
+  // re-validates + clamps the same way; this only drives the UI.
   const orderTotalCents = subtotalCents + (selectedRate?.rateCents ?? 0);
   const giftCardCents = appliedGiftCard
-    ? Math.min(appliedGiftCard.amountApplied, orderTotalCents)
+    ? Math.min(appliedGiftCard.amountApplied, subtotalCents)
     : 0;
   const amountDueCents = Math.max(0, orderTotalCents - giftCardCents);
 
@@ -154,7 +157,7 @@ export default function CheckoutForm(): ReactElement | null {
   const addressComplete = Boolean(
     address.firstName.trim() &&
       address.lastName.trim() &&
-      address.email.trim() &&
+      isValidEmail(address.email) &&
       isValidUsPhone(address.phone) &&
       address.addressLine1.trim() &&
       address.city.trim() &&
@@ -280,15 +283,19 @@ export default function CheckoutForm(): ReactElement | null {
               All transactions are secure and encrypted.
             </p>
           </div>
-          {/* Gift card — apply once shipping is known so the total is final. */}
-          {selectedRate && (
+          {/* Gift card — applies to the product subtotal only (never shipping), so it
+              can be entered up front without waiting for a shipping method. */}
+          <div className="flex flex-col gap-1">
             <GiftCardRedemption
-              totalAmount={orderTotalCents}
+              totalAmount={subtotalCents}
               appliedCard={appliedGiftCard}
               onApply={setAppliedGiftCard}
               onRemove={() => setAppliedGiftCard(null)}
             />
-          )}
+            <p className="text-xs text-[var(--color-text-subtle)]">
+              Gift cards apply to items only — shipping is paid at checkout.
+            </p>
+          </div>
 
           {amountDueCents <= 0 && appliedGiftCard && selectedRate ? (
             <>

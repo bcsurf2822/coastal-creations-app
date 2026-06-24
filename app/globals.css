@@ -339,6 +339,25 @@ html {
   animation: fade-in-up 0.4s ease-out both;
 }
 
+/* Continuous right-to-left marquee. The track holds TWO copies of the content,
+   so translating by -50% loops seamlessly. Duration is set inline per usage. */
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee-scroll linear infinite;
+  will-change: transform;
+}
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none;
+  }
+}
+
 @keyframes btn-shine {
   0%   { transform: translateX(-150%) skewX(-15deg); }
   100% { transform: translateX(200%) skewX(-15deg); }

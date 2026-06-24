@@ -3,6 +3,8 @@
  * @module lib/types/eventTypes
  */
 
+import { isValidEmail } from "@/lib/utils/validation";
+
 /**
  * Event type enumeration.
  */
@@ -157,8 +159,7 @@ export const validators = {
 
   email: (value: string | undefined): string | null => {
     if (!value) return null;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(value)) {
+    if (!isValidEmail(value)) {
       return "Invalid email address";
     }
     return null;

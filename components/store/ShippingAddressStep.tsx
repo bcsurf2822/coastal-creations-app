@@ -4,6 +4,7 @@ import type { ReactElement } from "react";
 import { useState } from "react";
 import { Input, Label } from "@/components/ui";
 import { formatUsPhone, isValidUsPhone } from "@/components/checkout/ContactForm";
+import { isValidEmail } from "@/lib/utils/validation";
 
 export interface AddressFormValues {
   firstName: string;
@@ -37,7 +38,7 @@ const REQUIRED_FIELDS: (keyof AddressFormValues)[] = [
 
 function validateField(field: keyof AddressFormValues, value: string): string | null {
   if (REQUIRED_FIELDS.includes(field) && !value.trim()) return "Required";
-  if (field === "email" && value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
+  if (field === "email" && value.trim() && !isValidEmail(value))
     return "Enter a valid email address";
   if (field === "zip" && value.trim() && !/^\d{5}(-\d{4})?$/.test(value))
     return "Enter a valid ZIP code";

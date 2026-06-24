@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, FormEvent, useEffect } from "react";
 import { motion } from "motion/react";
+import { isValidEmail } from "@/lib/utils/validation";
 
 type DayHours = {
   isClosed?: boolean;
@@ -98,6 +99,13 @@ export default function Footer() {
   const handleSubscribe = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!email) return;
+
+    // Client-side format check (the API validates too) so we don't fire a
+    // request for an obviously-bad address.
+    if (!isValidEmail(email)) {
+      setMessage("Please enter a valid email address.");
+      return;
+    }
 
     setIsSubmitting(true);
     setMessage("");
@@ -263,7 +271,9 @@ export default function Footer() {
             {message && (
               <p
                 className={`mt-2 text-sm ${
-                  message.includes("error") || message.includes("wrong")
+                  message.includes("error") ||
+                  message.includes("wrong") ||
+                  message.includes("valid")
                     ? "text-[var(--color-error)]"
                     : "text-[var(--color-success-text)]"
                 }`}

@@ -112,7 +112,9 @@ export async function POST(request: Request): Promise<Response> {
     console.log("[API-STORE-CHECKOUT-POST] Processing checkout for:", customer.email, "Server total:", totalCents);
 
     // Gift card: validate against Square's REAL balance and reduce the card charge.
-    // A tampered amountCents can never apply more than the actual balance / total.
+    // Gift cards apply to the PRODUCT SUBTOTAL ONLY — never to shipping — so the
+    // credit is clamped to subtotalCents (not the shipping-inclusive totalCents).
+    // A tampered amountCents can never apply more than the actual balance / subtotal.
     let giftCardAppliedCents = 0;
     if (body.giftCard && body.giftCard.amountCents > 0) {
       try {
@@ -120,7 +122,7 @@ export async function POST(request: Request): Promise<Response> {
         const available = card && card.state === "ACTIVE" ? card.balanceMoney.amount : 0;
         giftCardAppliedCents = Math.max(
           0,
-          Math.min(body.giftCard.amountCents, available, totalCents)
+          Math.min(body.giftCard.amountCents, available, subtotalCents)
         );
       } catch (giftCardError) {
         console.error(
