@@ -15,22 +15,18 @@ import {
   RefundConfirmationEmail,
   type RefundConfirmationData,
 } from "@/components/email-templates/RefundConfirmationEmail";
+import { resolveEmailRecipients, EMAIL_FROM } from "@/lib/email/recipients";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = "Coastal Creations Studio <no-reply@resend.coastalcreationsstudio.com>";
+const FROM = EMAIL_FROM;
 
 export async function sendRefundConfirmation(params: {
   customerEmail?: string | null;
   data: RefundConfirmationData;
 }): Promise<void> {
   try {
-    const isProduction = process.env.VERCEL_ENV === "production";
-    const customerRecipient = isProduction
-      ? params.customerEmail
-      : (process.env.DEV_EMAIL ?? params.customerEmail);
-    const adminRecipient = isProduction
-      ? (process.env.STUDIO_EMAIL ?? "ashley@coastalcreationsstudio.com")
-      : (process.env.DEV_EMAIL ?? params.customerEmail);
+    const { customer: customerRecipient, admin: adminRecipient } =
+      resolveEmailRecipients(params.customerEmail);
 
     const html = await render(
       React.createElement(RefundConfirmationEmail, { data: params.data })

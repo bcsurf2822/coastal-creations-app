@@ -22,8 +22,12 @@ import {
   getMyBookings,
 } from "@/lib/account/queries";
 
+// .sort() may be followed by .lean() (orders) or .populate().lean() (bookings).
 const sortable = (result: unknown) => ({
-  sort: () => ({ lean: () => Promise.resolve(result) }),
+  sort: () => ({
+    lean: () => Promise.resolve(result),
+    populate: () => ({ lean: () => Promise.resolve(result) }),
+  }),
 });
 const leanable = (result: unknown) => ({ lean: () => Promise.resolve(result) });
 

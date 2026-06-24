@@ -1,7 +1,16 @@
 import type { HoursOfOperation } from "@/types/hours";
-import type { PageContent } from "@/types/pageContent";
+import type { PageContent, PortableTextContent } from "@/types/pageContent";
 import type { ApiEvent, ICustomer, PictureGalleryItem } from "@/types/interfaces";
 import type { Reservation } from "@/lib/types/reservationTypes";
+
+// Minimal valid PortableText block helper for description fields.
+const portableText = (text: string): PortableTextContent => [
+  {
+    _type: "block",
+    _key: "block-0",
+    children: [{ _type: "span", _key: "span-0", text }],
+  },
+];
 
 // Hours mock data
 export const mockHoursData: HoursOfOperation = {
@@ -22,23 +31,24 @@ export const mockPageContent: PageContent = {
   _type: "pageContent",
   homepage: {
     hero: {
-      title: "Welcome to Coastal Creations",
-      subtitle: "Art Studio & Classes",
+      heading: "Welcome to Coastal Creations",
+      ctaButton1: "Book a Class",
+      ctaButton2: "View Gallery",
     },
     offerings: {
-      title: "Our Offerings",
-      description: "Explore our classes",
+      sectionTitle: "Our Offerings",
+      sectionSubtitle: portableText("Explore our classes"),
     },
   },
   eventPages: {
-    adultClasses: { title: "Adult Classes", description: "Classes for adults" },
-    kidClasses: { title: "Kid Classes", description: "Classes for kids" },
-    camps: { title: "Camps", description: "Summer camps" },
+    adultClasses: { title: "Adult Classes", description: portableText("Classes for adults") },
+    kidClasses: { title: "Kid Classes", description: portableText("Classes for kids") },
+    camps: { title: "Camps", description: portableText("Summer camps") },
   },
   otherPages: {
-    about: { title: "About Us", description: "Learn about us" },
-    gallery: { title: "Gallery", description: "View our gallery" },
-    reservations: { title: "Reservations", description: "Book a reservation" },
+    about: { title: "About Us", description: portableText("Learn about us") },
+    gallery: { title: "Gallery", description: portableText("View our gallery") },
+    reservations: { title: "Reservations", description: portableText("Book a reservation") },
   },
 };
 
@@ -57,13 +67,12 @@ export const mockEvent: ApiEvent = {
   dates: {
     startDate: "2024-12-20",
     endDate: "2024-12-20",
-    recurring: {
-      isRecurring: false,
-    },
+    isRecurring: false,
   },
   image: "https://example.com/image.jpg",
   options: [],
-  discount: { enabled: false },
+  createdAt: "2024-11-01T10:00:00Z",
+  updatedAt: "2024-11-01T10:00:00Z",
 };
 
 export const mockEvents: ApiEvent[] = [
@@ -87,19 +96,29 @@ export const mockEvents: ApiEvent[] = [
 // Customer mock data
 export const mockCustomer: ICustomer = {
   _id: "test-customer-id-1",
-  event: "test-event-id-1",
+  event: {
+    _id: "test-event-id-1",
+    eventName: "Paint & Sip Night",
+    eventType: "class",
+    price: 45,
+  },
   eventType: "Event",
   quantity: 2,
   total: 90,
   isSigningUpForSelf: true,
   participants: [
-    { firstName: "John", lastName: "Doe", age: 30 },
+    { firstName: "John", lastName: "Doe" },
   ],
   billingInfo: {
     firstName: "John",
     lastName: "Doe",
-    email: "john@example.com",
-    phone: "555-1234",
+    addressLine1: "123 Main St",
+    city: "Ocean City",
+    stateProvince: "NJ",
+    postalCode: "08226",
+    country: "US",
+    emailAddress: "john@example.com",
+    phoneNumber: "555-1234",
   },
   squarePaymentId: "sq-payment-123",
   refundStatus: "none",
@@ -113,7 +132,7 @@ export const mockCustomers: ICustomer[] = [
     billingInfo: {
       ...mockCustomer.billingInfo,
       firstName: "Jane",
-      email: "jane@example.com",
+      emailAddress: "jane@example.com",
     },
   },
 ];
@@ -126,8 +145,8 @@ export const mockReservation: Reservation = {
   description: "Drop-in painting session",
   pricePerDayPerParticipant: 25,
   dates: {
-    startDate: "2024-12-01",
-    endDate: "2024-12-31",
+    startDate: new Date("2024-12-01"),
+    endDate: new Date("2024-12-31"),
     excludeDates: [],
   },
   timeType: "same",
@@ -137,13 +156,15 @@ export const mockReservation: Reservation = {
   },
   dailyAvailability: [
     {
-      date: "2024-12-15",
+      date: new Date("2024-12-15"),
       maxParticipants: 10,
       currentBookings: 3,
+      isAvailable: true,
     },
   ],
   options: [],
-  discount: { enabled: false },
+  createdAt: new Date("2024-11-01T10:00:00Z"),
+  updatedAt: new Date("2024-11-01T10:00:00Z"),
 };
 
 export const mockReservations: Reservation[] = [
@@ -184,10 +205,20 @@ export const mockPrivateEvents = [
 // Gallery mock data
 export const mockGalleryItem: PictureGalleryItem = {
   _id: "test-gallery-id-1",
+  _type: "pictureGallery",
   title: "Summer Camp Art",
   description: "Art from summer camp 2024",
-  imageUrl: "https://example.com/gallery1.jpg",
-  destinations: ["camp", "kid-class"],
+  destination: ["camp", "kid-class"],
+  image: {
+    _type: "image",
+    asset: {
+      _type: "reference",
+      _ref: "image-gallery1",
+      url: "https://example.com/gallery1.jpg",
+    },
+  },
+  _createdAt: "2024-08-01T10:00:00Z",
+  _updatedAt: "2024-08-01T10:00:00Z",
 };
 
 export const mockGalleryItems: PictureGalleryItem[] = [
@@ -196,7 +227,7 @@ export const mockGalleryItems: PictureGalleryItem[] = [
     ...mockGalleryItem,
     _id: "test-gallery-id-2",
     title: "Adult Class Projects",
-    destinations: ["adult-class"],
+    destination: ["adult-class"],
   },
 ];
 

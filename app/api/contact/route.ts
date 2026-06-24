@@ -3,6 +3,7 @@ import { render } from "@react-email/render";
 import * as React from "react";
 import { CustomerContactTemplate } from "@/components/email-templates/CustomerContactTemplate";
 import { isValidEmail } from "@/lib/utils/validation";
+import { EMAIL_FROM } from "@/lib/email/recipients";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -94,7 +95,7 @@ export async function POST(request: Request) {
     }
 
     const { error } = await resend.emails.send({
-      from: "Coastal Creations <no-reply@resend.coastalcreationsstudio.com>",
+      from: EMAIL_FROM,
       to: [recipient],
       subject: `New Contact Message: ${subject.trim()}`,
       html: emailHtml,

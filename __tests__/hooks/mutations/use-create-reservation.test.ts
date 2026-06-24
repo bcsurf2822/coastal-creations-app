@@ -19,11 +19,16 @@ describe("useCreateReservation", () => {
     await act(async () => {
       result.current.mutate({
         eventName: "Walk-In Session",
-        eventType: "reservation",
+        description: "Drop-in painting session",
         pricePerDayPerParticipant: 25,
+        maxParticipantsPerDay: 10,
         dates: {
           startDate: "2024-12-01",
           endDate: "2024-12-31",
+        },
+        time: {
+          startTime: "10:00 AM",
+          endTime: "6:00 PM",
         },
       });
     });
@@ -45,8 +50,11 @@ describe("useCreateReservation", () => {
     await act(async () => {
       result.current.mutate({
         eventName: "Test Reservation",
-        eventType: "reservation",
+        description: "Test reservation",
         pricePerDayPerParticipant: 30,
+        maxParticipantsPerDay: 5,
+        dates: { startDate: "2024-12-01" },
+        time: { startTime: "10:00 AM" },
       });
     });
 
@@ -71,7 +79,11 @@ describe("useCreateReservation", () => {
     await act(async () => {
       result.current.mutate({
         eventName: "",
-        eventType: "reservation",
+        description: "",
+        pricePerDayPerParticipant: 0,
+        maxParticipantsPerDay: 0,
+        dates: { startDate: "2024-12-01" },
+        time: { startTime: "10:00 AM" },
       });
     });
 

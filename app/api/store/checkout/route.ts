@@ -35,11 +35,28 @@ import {
   PriceIntegrityError,
 } from "@/lib/checkout/storePricing";
 import { normalizeIdempotencyKey } from "@/lib/checkout/idempotency";
+import { resolveEmailRecipients, EMAIL_FROM } from "@/lib/email/recipients";
 import type { LabelResult } from "@/lib/shippo/labels";
 import type { CartItem } from "@/lib/types/cartTypes";
 import type { ShippingRate } from "@/lib/shippo/rates";
 
 const squareClient = getSquareClient();
+
+/**
+ * Split a full recipient name into first/last for Square's payment shippingAddress.
+ * First token = first name, the remainder = last name (handles single-token names).
+ * Falls back to the buyer's name when no recipient name is present.
+ */
+function splitName(
+  full: string | undefined,
+  fallback: { firstName: string; lastName: string }
+): { firstName: string; lastName: string } {
+  const trimmed = (full ?? "").trim();
+  if (!trimmed) return fallback;
+  const parts = trimmed.split(/\s+/);
+  if (parts.length === 1) return { firstName: parts[0], lastName: "" };
+  return { firstName: parts[0], lastName: parts.slice(1).join(" ") };
+}
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -153,8 +170,12 @@ export async function POST(request: Request): Promise<Response> {
         shippingAddress: {
           addressLine1: shippingAddress.addressLine1,
           addressLine2: shippingAddress.addressLine2,
-          firstName: customer.firstName,
-          lastName: customer.lastName,
+          // Ship-to name is the RECIPIENT (gift orders ship to someone other than
+          // the buyer); derived from shippingAddress.name, not the payer.
+          ...splitName(shippingAddress.name, {
+            firstName: customer.firstName,
+            lastName: customer.lastName,
+          }),
           postalCode: shippingAddress.postalCode,
           country: (shippingAddress.country || "US") as "US",
         },
@@ -281,11 +302,8 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     // Step 4: Send emails (non-blocking — a failure here shouldn't fail the order)
-    const isProduction = process.env.VERCEL_ENV === "production";
-    const customerRecipient = isProduction ? customer.email : (process.env.DEV_EMAIL ?? customer.email);
-    const adminRecipient = isProduction
-      ? (process.env.STUDIO_EMAIL ?? "ashley@coastalcreationsstudio.com")
-      : (process.env.DEV_EMAIL ?? customer.email);
+    const { customer: customerRecipient, admin: adminRecipient } =
+      resolveEmailRecipients(customer.email);
 
     try {
       const emailHtml = await render(
@@ -341,13 +359,13 @@ export async function POST(request: Request): Promise<Response> {
 
       await Promise.allSettled([
         resend.emails.send({
-          from: "Coastal Creations Studio <no-reply@resend.coastalcreationsstudio.com>",
+          from: EMAIL_FROM,
           to: [customerRecipient],
           subject: `Order ${newOrder.orderNumber} confirmed — Coastal Creations Studio`,
           html: emailHtml,
         }),
         resend.emails.send({
-          from: "Coastal Creations Studio <no-reply@resend.coastalcreationsstudio.com>",
+          from: EMAIL_FROM,
           to: [adminRecipient],
           subject: `New Store Order: ${newOrder.orderNumber} — ${customer.firstName} ${customer.lastName}`,
           html: adminEmailHtml,

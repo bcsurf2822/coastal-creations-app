@@ -40,9 +40,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    if (!customer.squarePaymentId) {
+    // Reject refunds for bookings with no real card payment: free events and
+    // gift-card-covered bookings carry a synthetic id ("FREE-EVENT" / "GIFTCARD-<id>"),
+    // which Square has no payment for. There is nothing to refund to a card.
+    if (
+      !customer.squarePaymentId ||
+      customer.squarePaymentId.startsWith("FREE-EVENT") ||
+      customer.squarePaymentId.startsWith("GIFTCARD-")
+    ) {
       return NextResponse.json(
-        { error: "No Square payment ID found for this customer" },
+        {
+          error:
+            "This booking has no card payment to refund (it was free or covered by a gift card).",
+        },
         { status: 400 }
       );
     }

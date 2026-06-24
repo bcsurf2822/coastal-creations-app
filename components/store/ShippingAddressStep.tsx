@@ -3,14 +3,11 @@
 import type { ReactElement } from "react";
 import { useState } from "react";
 import { Input, Label } from "@/components/ui";
-import { formatUsPhone, isValidUsPhone } from "@/components/checkout/ContactForm";
-import { isValidEmail } from "@/lib/utils/validation";
+import { FieldWrapper } from "./CheckoutField";
 
 export interface AddressFormValues {
   firstName: string;
   lastName: string;
-  email: string;
-  phone: string;
   addressLine1: string;
   addressLine2: string;
   city: string;
@@ -23,6 +20,10 @@ interface ShippingAddressStepProps {
   onChange: (field: keyof AddressFormValues, value: string) => void;
   isLoading: boolean;
   error: string | null;
+  /** When true, collect the recipient's name (gift / ship-to-someone-else). */
+  collectName?: boolean;
+  /** Label used for the recipient name fields. */
+  nameLabelPrefix?: string;
 }
 
 const US_STATES = [
@@ -32,49 +33,13 @@ const US_STATES = [
   "VA","WA","WV","WI","WY",
 ];
 
-const REQUIRED_FIELDS: (keyof AddressFormValues)[] = [
-  "firstName","lastName","email","phone","addressLine1","city","state","zip",
-];
-
 function validateField(field: keyof AddressFormValues, value: string): string | null {
-  if (REQUIRED_FIELDS.includes(field) && !value.trim()) return "Required";
-  if (field === "email" && value.trim() && !isValidEmail(value))
-    return "Enter a valid email address";
-  if (field === "zip" && value.trim() && !/^\d{5}(-\d{4})?$/.test(value))
+  // firstName/lastName/addressLine2 are validated/optional by the caller via collectName.
+  if (field === "addressLine2") return null;
+  if (!value.trim()) return "Required";
+  if (field === "zip" && !/^\d{5}(-\d{4})?$/.test(value))
     return "Enter a valid ZIP code";
-  if (field === "phone" && value.trim() && !isValidUsPhone(value))
-    return "Enter a 10-digit phone number";
   return null;
-}
-
-interface FieldWrapperProps {
-  id: string;
-  label: string;
-  required?: boolean;
-  touched: boolean;
-  error: string | null;
-  value?: string;
-  children: ReactElement;
-}
-
-function FieldWrapper({ id, label, required, touched, error, value, children }: FieldWrapperProps): ReactElement {
-  const isValid = !!value && !error;
-  return (
-    <div>
-      <Label htmlFor={id} required={required}>{label}</Label>
-      <div className="relative">
-        {children}
-        {isValid && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 text-sm pointer-events-none">
-            ✓
-          </span>
-        )}
-      </div>
-      {touched && error && (
-        <p className="text-[var(--color-error)] text-xs mt-1">{error}</p>
-      )}
-    </div>
-  );
 }
 
 export default function ShippingAddressStep({
@@ -82,6 +47,8 @@ export default function ShippingAddressStep({
   onChange,
   isLoading,
   error,
+  collectName = false,
+  nameLabelPrefix = "Recipient",
 }: ShippingAddressStepProps): ReactElement {
   const [touched, setTouched] = useState<Partial<Record<keyof AddressFormValues, boolean>>>({});
 
@@ -97,77 +64,31 @@ export default function ShippingAddressStep({
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Email + Phone on top for a cleaner contact row */}
-      <div className="grid grid-cols-2 gap-4">
-        <FieldWrapper
-          id="email"
-          label="Email Address"
-          required
-          touched={!!touched.email}
-          error={validateField("email", values.email)}
-          value={values.email}
-        >
-          <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            {...fieldProps("email")}
-          />
-        </FieldWrapper>
+      {collectName && (
+        <div className="grid grid-cols-2 gap-4">
+          <FieldWrapper
+            id="ship-firstName"
+            label={`${nameLabelPrefix} First Name`}
+            required
+            touched={!!touched.firstName}
+            error={validateField("firstName", values.firstName)}
+            value={values.firstName}
+          >
+            <Input id="ship-firstName" autoComplete="off" {...fieldProps("firstName")} />
+          </FieldWrapper>
 
-        <FieldWrapper
-          id="phone"
-          label="Phone"
-          required
-          touched={!!touched.phone}
-          error={validateField("phone", values.phone)}
-          value={values.phone}
-        >
-          <Input
-            id="phone"
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
-            placeholder="(555) 555-5555"
-            maxLength={14}
-            value={values.phone}
-            onChange={(e) => onChange("phone", formatUsPhone(e.target.value))}
-            onBlur={() => touch("phone")}
-          />
-        </FieldWrapper>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <FieldWrapper
-          id="firstName"
-          label="First Name"
-          required
-          touched={!!touched.firstName}
-          error={validateField("firstName", values.firstName)}
-          value={values.firstName}
-        >
-          <Input
-            id="firstName"
-            autoComplete="given-name"
-            {...fieldProps("firstName")}
-          />
-        </FieldWrapper>
-
-        <FieldWrapper
-          id="lastName"
-          label="Last Name"
-          required
-          touched={!!touched.lastName}
-          error={validateField("lastName", values.lastName)}
-          value={values.lastName}
-        >
-          <Input
-            id="lastName"
-            autoComplete="family-name"
-            {...fieldProps("lastName")}
-          />
-        </FieldWrapper>
-      </div>
+          <FieldWrapper
+            id="ship-lastName"
+            label={`${nameLabelPrefix} Last Name`}
+            required
+            touched={!!touched.lastName}
+            error={validateField("lastName", values.lastName)}
+            value={values.lastName}
+          >
+            <Input id="ship-lastName" autoComplete="off" {...fieldProps("lastName")} />
+          </FieldWrapper>
+        </div>
+      )}
 
       <FieldWrapper
         id="addressLine1"
@@ -177,11 +98,7 @@ export default function ShippingAddressStep({
         error={validateField("addressLine1", values.addressLine1)}
         value={values.addressLine1}
       >
-        <Input
-          id="addressLine1"
-          autoComplete="address-line1"
-          {...fieldProps("addressLine1")}
-        />
+        <Input id="addressLine1" autoComplete="address-line1" {...fieldProps("addressLine1")} />
       </FieldWrapper>
 
       <div>
@@ -203,11 +120,7 @@ export default function ShippingAddressStep({
           error={validateField("city", values.city)}
           value={values.city}
         >
-          <Input
-            id="city"
-            autoComplete="address-level2"
-            {...fieldProps("city")}
-          />
+          <Input id="city" autoComplete="address-level2" {...fieldProps("city")} />
         </FieldWrapper>
 
         <div>
@@ -247,12 +160,7 @@ export default function ShippingAddressStep({
           error={validateField("zip", values.zip)}
           value={values.zip}
         >
-          <Input
-            id="zip"
-            autoComplete="postal-code"
-            maxLength={10}
-            {...fieldProps("zip")}
-          />
+          <Input id="zip" autoComplete="postal-code" maxLength={10} {...fieldProps("zip")} />
         </FieldWrapper>
       </div>
 

@@ -19,9 +19,10 @@ import { CustomerDetailsTemplate } from "@/components/email-templates/CustomerDe
 import { connectMongo } from "@/lib/mongoose";
 import Customer from "@/lib/models/Customer";
 import Event from "@/lib/models/Event";
+import { resolveEmailRecipients, EMAIL_FROM } from "@/lib/email/recipients";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = "Coastal Creations Studio <no-reply@resend.coastalcreationsstudio.com>";
+const FROM = EMAIL_FROM;
 
 export async function sendBookingConfirmationEmails(
   customerId: string,
@@ -45,13 +46,8 @@ export async function sendBookingConfirmationEmails(
     const event = JSON.parse(JSON.stringify(eventDoc));
     const eventTitle = event.eventName || "your event";
 
-    const isProduction = process.env.VERCEL_ENV === "production";
-    const customerRecipient = isProduction
-      ? customerDoc.billingInfo.emailAddress
-      : process.env.DEV_EMAIL;
-    const adminRecipient = isProduction
-      ? process.env.STUDIO_EMAIL
-      : process.env.DEV_EMAIL;
+    const { customer: customerRecipient, admin: adminRecipient } =
+      resolveEmailRecipients(customerDoc.billingInfo.emailAddress);
 
     // Customer email only when they gave an address and we have a recipient.
     if (customerDoc.billingInfo.emailAddress && customerRecipient) {
