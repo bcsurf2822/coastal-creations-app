@@ -210,7 +210,7 @@ const Hero = (): ReactElement => {
             />
           </div>
 
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="mx-auto flex max-w-2xl flex-wrap justify-center gap-4">
             {HERO_CTAS.map((cta) => (
               <Link
                 key={cta.href}

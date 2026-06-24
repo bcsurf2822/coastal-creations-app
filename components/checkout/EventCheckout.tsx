@@ -10,6 +10,7 @@ import { Button } from "@/components/ui";
 import EventPreview from "@/components/payment/EventPreview";
 import CheckoutLayout from "./CheckoutLayout";
 import ContactForm, { type ContactFormValues, isValidUsPhone } from "./ContactForm";
+import { isValidEmail } from "@/lib/utils/validation";
 import PaymentStep from "./PaymentStep";
 import EventSummary, { type SummaryLine } from "./EventSummary";
 import EventParticipantsFields from "./EventParticipantsFields";
@@ -208,7 +209,7 @@ export default function EventCheckout(): ReactElement {
   const formValid =
     contact.firstName.trim() !== "" &&
     contact.lastName.trim() !== "" &&
-    contact.email.trim() !== "" &&
+    isValidEmail(contact.email) &&
     isValidUsPhone(contact.phone) &&
     participants.every((p) => p.firstName.trim() !== "" && p.lastName.trim() !== "") &&
     (!isSigningUpForSelf || allOptionsChosen(selfSelectedOptions)) &&
@@ -388,7 +389,10 @@ export default function EventCheckout(): ReactElement {
             values={contact}
             onChange={updateContact}
             disabled={isProcessing}
-            errors={{ phone: contact.phone !== "" && !isValidUsPhone(contact.phone) }}
+            errors={{
+              email: contact.email !== "" && !isValidEmail(contact.email),
+              phone: contact.phone !== "" && !isValidUsPhone(contact.phone),
+            }}
           />
         </section>
 

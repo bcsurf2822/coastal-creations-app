@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactElement } from "react";
 import CheckoutLayout from "@/components/checkout/CheckoutLayout";
 import PaymentStep from "@/components/checkout/PaymentStep";
 import { formatCents } from "@/lib/utils/moneyHelpers";
+import { isValidEmail } from "@/lib/utils/validation";
 
 interface PaymentConfig {
   applicationId: string;
@@ -11,7 +12,6 @@ interface PaymentConfig {
 }
 
 const PRESET_AMOUNTS = [2000, 3500, 5000, 10000]; // In cents: $20, $35, $50, $100
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function GiftCardPurchase(): ReactElement {
   const [amount, setAmount] = useState<number>(5000);
@@ -52,9 +52,9 @@ export function GiftCardPurchase(): ReactElement {
   const formValid =
     PRESET_AMOUNTS.includes(amount) &&
     recipientName.trim() !== "" &&
-    EMAIL_RE.test(recipientEmail) &&
+    isValidEmail(recipientEmail) &&
     senderName.trim() !== "" &&
-    (purchaserEmail.trim() === "" || EMAIL_RE.test(purchaserEmail));
+    (purchaserEmail.trim() === "" || isValidEmail(purchaserEmail));
 
   const handlePayment = async (token: string): Promise<void> => {
     setIsProcessing(true);

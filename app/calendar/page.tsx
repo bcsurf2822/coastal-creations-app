@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function CalendarPage() {
   return (
-    <div className="min-h-screen bg-[var(--color-light)]">
+    <div className="min-h-screen">
       <PageHeader
         title="Events Calendar"
         subtitle="Browse our full schedule of classes, workshops, camps, and events. Find the perfect creative experience for you."

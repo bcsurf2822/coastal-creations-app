@@ -56,3 +56,9 @@ next-env.d.ts
 
 # Local MCP server configs (contain secrets — never commit)
 spec/mcp/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

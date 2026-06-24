@@ -174,9 +174,9 @@ const MainSection = (): ReactElement => {
                 variant="secondary"
                 size="lg"
                 className="w-full transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
-                onClick={() => router.push("/reservations")}
+                onClick={() => router.push("/events/classes-workshops")}
               >
-                Book Reservations
+                Explore Classes
               </Button>
             </div>
           </div>

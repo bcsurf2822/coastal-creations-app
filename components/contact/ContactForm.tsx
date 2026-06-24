@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Input, Textarea, Label, Button } from "@/components/ui";
+import { isValidEmail } from "@/lib/utils/validation";
 
 interface ContactFormData {
   name: string;
@@ -20,6 +21,7 @@ export default function ContactForm() {
     description: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [emailError, setEmailError] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<
     "idle" | "success" | "error"
   >("idle");
@@ -32,10 +34,19 @@ export default function ContactForm() {
       ...prev,
       [name]: value,
     }));
+    if (name === "email" && emailError) setEmailError(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate email format before sending (the API rejects bad emails too).
+    if (!isValidEmail(formData.email)) {
+      setEmailError(true);
+      return;
+    }
+    setEmailError(false);
+
     setIsSubmitting(true);
     setSubmitStatus("idle");
 
@@ -99,9 +110,16 @@ export default function ContactForm() {
             name="email"
             value={formData.email}
             onChange={handleChange}
+            error={emailError}
+            aria-invalid={emailError}
             required
             placeholder="your.email@example.com"
           />
+          {emailError && (
+            <p className="mt-1 text-sm text-[var(--color-error)]">
+              Enter a valid email address.
+            </p>
+          )}
         </div>
       </div>
 

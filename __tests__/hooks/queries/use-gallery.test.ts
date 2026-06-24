@@ -28,7 +28,7 @@ describe("useGallery", () => {
 
   it("should fetch gallery with destination filter", async () => {
     const filteredItems = mockGalleryItems.filter(
-      i => i.destinations?.includes("adult-class")
+      i => i.destination?.includes("adult-class")
     );
     mockFetch({ success: true, data: filteredItems });
 

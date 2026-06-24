@@ -1,0 +1,85 @@
+name: CI
+
+# Gate: these checks must pass before code reaches a deployable branch.
+# Enable branch protection on `develop` and `main` requiring the "verify" job.
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Non-secret placeholders so `next build` can evaluate modules that read env at
+# build time. Sanity project id + dataset are PUBLIC identifiers (the blog page
+# prerenders from a public dataset, no token needed). Real secrets never live here.
+env:
+  MONGODB_URI: "mongodb://localhost:27017/ci"
+  NEXTAUTH_URL: "http://localhost:3000"
+  NEXTAUTH_SECRET: "ci-placeholder-secret"
+  ADMIN_EMAILS: "admin@example.com"
+  GOOGLE_CLIENT_ID: "ci"
+  GOOGLE_CLIENT_SECRET: "ci"
+  SQUARE_ACCESS_TOKEN: "ci-placeholder"
+  SQUARE_APPLICATION_ID: "sandbox-sq0idb-ci"
+  SQUARE_LOCATION_ID: "CI"
+  SQUARE_ENVIRONMENT: "sandbox"
+  SANITY_PROJECT_ID: "vmqep02a"
+  SANITY_DATASET: "production"
+  NEXT_PUBLIC_SANITY_PROJECT_ID: "vmqep02a"
+  NEXT_PUBLIC_SANITY_DATASET: "production"
+  RESEND_API_KEY: "re_ci_placeholder"
+  SHIPPO_API_KEY: "shippo_test_ci"
+  SHIPPO_WEBHOOK_SECRET: "ci"
+  MERCHANT_SHIP_FROM_NAME: "CI"
+  MERCHANT_SHIP_FROM_STREET: "1 Main St"
+  MERCHANT_SHIP_FROM_CITY: "Ocean City"
+  MERCHANT_SHIP_FROM_STATE: "NJ"
+  MERCHANT_SHIP_FROM_ZIP: "08226"
+  MERCHANT_SHIP_FROM_COUNTRY: "US"
+  MERCHANT_SHIP_FROM_PHONE: "6095551234"
+  MERCHANT_SHIP_FROM_EMAIL: "ci@example.com"
+  STUDIO_EMAIL: "studio@example.com"
+  DEV_EMAIL: "dev@example.com"
+
+jobs:
+  # Required gate: static checks + unit/integration tests + production build.
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm lint
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Unit & integration tests
+        run: pnpm test:run
+      - name: Production build
+        run: pnpm build
+
+  # Browser E2E (Playwright). Non-blocking for now — the full-page flows depend
+  # on live data/services; promote to a required check once pointed at a seeded
+  # stage environment.
+  e2e:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Run E2E tests
+        run: pnpm test:e2e
