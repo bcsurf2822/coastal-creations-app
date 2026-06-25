@@ -38,7 +38,17 @@ const EMPTY_SHIPPING: AddressFormValues = {
   zip: "",
 };
 
-export default function CheckoutForm(): ReactElement | null {
+export interface CheckoutFormProps {
+  // Prefilled contact/shipping for a signed-in returning customer (from their last
+  // order or Square profile). Undefined for guests → the form starts empty.
+  initialContact?: Partial<ContactValues>;
+  initialShipping?: Partial<AddressFormValues>;
+}
+
+export default function CheckoutForm({
+  initialContact,
+  initialShipping,
+}: CheckoutFormProps = {}): ReactElement | null {
   const router = useRouter();
   const { items, subtotalCents, clearCart } = useCart();
   const { data: paymentConfig } = usePaymentConfig();
@@ -46,9 +56,15 @@ export default function CheckoutForm(): ReactElement | null {
   // Buyer (payer + receipt) is always `contact`. The shipment goes to `shipping`.
   // When `isGift`, the buyer collects the recipient's name in the shipping block;
   // otherwise the shipment is addressed to the buyer.
-  const [contact, setContact] = useState<ContactValues>(EMPTY_CONTACT);
+  const [contact, setContact] = useState<ContactValues>({
+    ...EMPTY_CONTACT,
+    ...initialContact,
+  });
   const [isGift, setIsGift] = useState(false);
-  const [shipping, setShipping] = useState<AddressFormValues>(EMPTY_SHIPPING);
+  const [shipping, setShipping] = useState<AddressFormValues>({
+    ...EMPTY_SHIPPING,
+    ...initialShipping,
+  });
 
   const [rates, setRates] = useState<ShippingRate[]>([]);
   const [selectedRate, setSelectedRate] = useState<ShippingRate | null>(null);

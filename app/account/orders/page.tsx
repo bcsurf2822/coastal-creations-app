@@ -9,7 +9,7 @@ import OrdersAccordion, {
 export default async function MyOrdersPage(): Promise<ReactElement> {
   const user = await requireUserPage();
   const [orders, refundRequests] = await Promise.all([
-    getMyOrders(user.email),
+    getMyOrders(user.email, user.id),
     getMyRefundRequests(user.email),
   ]);
   const pendingRefundIds = refundRequests

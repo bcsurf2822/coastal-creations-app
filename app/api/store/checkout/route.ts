@@ -18,7 +18,9 @@
  *   subtotalCents  — number (ignored; recomputed server-side)
  */
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { getSquareClient } from "@/lib/square/client";
+import { getSessionUser } from "@/lib/auth/guards";
 import { Resend } from "resend";
 import { render } from "@react-email/render";
 import * as React from "react";
@@ -99,6 +101,12 @@ export async function POST(request: Request): Promise<Response> {
 
     // Mongo is needed to read parcel presets for the shipping re-quote.
     await connectMongo();
+
+    // Durable buyer identity: link this order to the authenticated user when one is
+    // signed in. NON-FATAL and identity-only — a guest (null) still checks out, and
+    // the buyer email/charge always comes from the submitted form (so gifting and
+    // buying-for-someone keep working). See lib/account/queries.ts for read-side use.
+    const sessionUser = await getSessionUser();
 
     // PRICE INTEGRITY: never trust client money. Recompute the subtotal from the
     // Square catalog and the shipping from a fresh Shippo re-quote. A tampered
@@ -227,6 +235,9 @@ export async function POST(request: Request): Promise<Response> {
     }));
 
     const newOrder = await Order.create({
+      userId: sessionUser
+        ? new mongoose.Types.ObjectId(sessionUser.id)
+        : undefined,
       items: orderItems,
       subtotalCents,
       shippingCents: serverRate.rateCents,
@@ -280,6 +291,20 @@ export async function POST(request: Request): Promise<Response> {
       await Order.findByIdAndUpdate(newOrder._id, {
         "square.customerId": squareResult.customerId,
       });
+      // Associate the Square customer profile with the authenticated user (once),
+      // so their account can resolve saved payment methods (Cards on File) later.
+      // Adapter-managed `users` collection — direct driver update, only if unset.
+      if (sessionUser) {
+        await mongoose.connection
+          .collection("users")
+          .updateOne(
+            {
+              _id: new mongoose.Types.ObjectId(sessionUser.id),
+              squareCustomerId: { $exists: false },
+            },
+            { $set: { squareCustomerId: squareResult.customerId } }
+          );
+      }
     } catch (squareError) {
       console.error(
         "[API-STORE-CHECKOUT-POST] Square customer link failed (non-fatal):",

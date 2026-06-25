@@ -14,7 +14,7 @@ export default async function OrderDetailPage({
 }): Promise<ReactElement> {
   const user = await requireUserPage();
   const { orderNumber } = await params;
-  const order = await getMyOrderByNumber(user.email, orderNumber);
+  const order = await getMyOrderByNumber(user.email, orderNumber, user.id);
   if (!order) notFound();
 
   const address = order.shippingAddress;

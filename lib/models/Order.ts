@@ -72,6 +72,10 @@ export interface IOrderAddress {
 
 export interface IOrder extends Document {
   orderNumber: string; // human-friendly, unique (e.g. "CC-LXYZ-4821")
+  // Durable link to the authenticated user who placed this order, when signed in.
+  // Guest orders have none — they are still reconciled to a user by email at read
+  // time (see lib/account/queries.ts). Stamped at checkout from the session.
+  userId?: mongoose.Types.ObjectId;
   items: IOrderItem[];
   subtotalCents: number;
   shippingCents: number;
@@ -184,6 +188,11 @@ const OrderSchema = new Schema<IOrder>(
       unique: true,
       trim: true,
     },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: false,
+    },
     items: {
       type: [OrderItemSchema],
       required: true,
@@ -268,6 +277,7 @@ OrderSchema.pre("validate", function (next) {
 // Indexes for the admin Sales page + Shipments tracker queries.
 OrderSchema.index({ status: 1, createdAt: -1 });
 OrderSchema.index({ "customer.email": 1, createdAt: -1 });
+OrderSchema.index({ userId: 1, createdAt: -1 });
 OrderSchema.index({ "square.paymentId": 1 });
 OrderSchema.index({ "shippo.trackingNumber": 1 });
 

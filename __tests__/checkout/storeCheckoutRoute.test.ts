@@ -53,6 +53,31 @@ vi.mock("resend", () => ({
   },
 }));
 
+// Authenticated-user identity (null = guest). Drives the durable userId stamp.
+const getSessionUser = vi.fn();
+vi.mock("@/lib/auth/guards", () => ({
+  getSessionUser: (...a: unknown[]) => getSessionUser(...a),
+}));
+
+// The route uses mongoose.Types.ObjectId + a direct driver update on `users`.
+const usersUpdateOne = vi.fn();
+vi.mock("mongoose", () => {
+  class ObjectId {
+    constructor(public value: string) {}
+    toString(): string {
+      return this.value;
+    }
+  }
+  return {
+    default: {
+      Types: { ObjectId },
+      connection: {
+        collection: () => ({ updateOne: (...a: unknown[]) => usersUpdateOne(...a) }),
+      },
+    },
+  };
+});
+
 import { POST } from "@/app/api/store/checkout/route";
 
 const BUYER = { firstName: "Pat", lastName: "Buyer", email: "buyer@example.com", phone: "(609) 555-1234" };
@@ -111,6 +136,8 @@ beforeEach(() => {
   orderCreate.mockResolvedValue({ _id: { toString: () => "order_1" }, orderNumber: "CC-TEST-1" });
   orderFindByIdAndUpdate.mockResolvedValue({});
   emailSend.mockResolvedValue({});
+  getSessionUser.mockResolvedValue(null); // default: guest checkout
+  usersUpdateOne.mockResolvedValue({});
 });
 
 describe("POST /api/store/checkout", () => {
@@ -213,5 +240,47 @@ describe("POST /api/store/checkout", () => {
     const res = await POST(req(baseBody()));
     expect(res.status).toBe(400);
     expect(orderCreate).not.toHaveBeenCalled();
+  });
+
+  it("stamps userId and links the Square customer to the user when signed in", async () => {
+    getSessionUser.mockResolvedValue({
+      id: "6650f0000000000000000abc",
+      email: "account@example.com",
+    });
+    const res = await POST(req(baseBody()));
+    expect(res.status).toBe(200);
+
+    // Durable user link stamped on the order.
+    const order = orderCreate.mock.calls[0][0];
+    expect(order.userId.toString()).toBe("6650f0000000000000000abc");
+
+    // Square customer associated to the user record exactly once, only when unset.
+    expect(usersUpdateOne).toHaveBeenCalledTimes(1);
+    const [filter, update] = usersUpdateOne.mock.calls[0];
+    expect(filter.squareCustomerId).toEqual({ $exists: false });
+    expect(update.$set.squareCustomerId).toBe("sqcust_1");
+  });
+
+  it("leaves userId unset and writes no user link for a guest checkout", async () => {
+    // getSessionUser default is null (guest)
+    const res = await POST(req(baseBody()));
+    expect(res.status).toBe(200);
+
+    const order = orderCreate.mock.calls[0][0];
+    expect(order.userId).toBeUndefined();
+    expect(usersUpdateOne).not.toHaveBeenCalled();
+  });
+
+  it("charges the BUYER's submitted email, never the signed-in account email", async () => {
+    getSessionUser.mockResolvedValue({
+      id: "6650f0000000000000000abc",
+      email: "account@example.com",
+    });
+    const res = await POST(req(baseBody()));
+    expect(res.status).toBe(200);
+
+    // Identity link uses the session; the charge + receipt stay with the typed buyer.
+    expect(paymentsCreate.mock.calls[0][0].buyerEmailAddress).toBe("buyer@example.com");
+    expect(orderCreate.mock.calls[0][0].customer.email).toBe("buyer@example.com");
   });
 });
