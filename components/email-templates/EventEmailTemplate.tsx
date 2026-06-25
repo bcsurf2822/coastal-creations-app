@@ -4,6 +4,7 @@ import {
   EmailShell,
   InfoCard,
   DetailRow,
+  ReceiptButton,
   emailText,
 } from "./shared";
 
@@ -73,11 +74,20 @@ interface Event {
 interface EventEmailTemplateProps {
   customer: Customer;
   event: Event;
+  /** Square-hosted receipt link for this payment, when available. */
+  receiptUrl?: string;
 }
+
+const formatUsd = (n: number): string =>
+  `$${n.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 
 export const EventEmailTemplate = ({
   customer,
   event,
+  receiptUrl,
 }: EventEmailTemplateProps) => {
   // Format currency
 
@@ -201,7 +211,12 @@ export const EventEmailTemplate = ({
         {event.description && (
           <DetailRow label="Description">{event.description}</DetailRow>
         )}
+        {typeof customer.total === "number" && customer.total > 0 && (
+          <DetailRow label="Amount Paid">{formatUsd(customer.total)}</DetailRow>
+        )}
       </InfoCard>
+
+      <ReceiptButton href={receiptUrl} />
     </EmailShell>
   );
 };

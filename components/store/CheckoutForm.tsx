@@ -12,6 +12,8 @@ import ContactFields, {
   type ContactValues,
 } from "@/components/store/ContactFields";
 import PaymentStep from "@/components/checkout/PaymentStep";
+import SavedCardPicker from "@/components/checkout/SavedCardPicker";
+import { useSavedCards } from "@/hooks/queries/use-saved-cards";
 import GiftCardRedemption from "@/components/checkout/GiftCardRedemption";
 import { isValidUsPhone } from "@/components/checkout/ContactForm";
 import { isValidEmail } from "@/lib/utils/validation";
@@ -38,7 +40,17 @@ const EMPTY_SHIPPING: AddressFormValues = {
   zip: "",
 };
 
-export default function CheckoutForm(): ReactElement | null {
+export interface CheckoutFormProps {
+  // Prefilled contact/shipping for a signed-in returning customer (from their last
+  // order or Square profile). Undefined for guests → the form starts empty.
+  initialContact?: Partial<ContactValues>;
+  initialShipping?: Partial<AddressFormValues>;
+}
+
+export default function CheckoutForm({
+  initialContact,
+  initialShipping,
+}: CheckoutFormProps = {}): ReactElement | null {
   const router = useRouter();
   const { items, subtotalCents, clearCart } = useCart();
   const { data: paymentConfig } = usePaymentConfig();
@@ -46,9 +58,15 @@ export default function CheckoutForm(): ReactElement | null {
   // Buyer (payer + receipt) is always `contact`. The shipment goes to `shipping`.
   // When `isGift`, the buyer collects the recipient's name in the shipping block;
   // otherwise the shipment is addressed to the buyer.
-  const [contact, setContact] = useState<ContactValues>(EMPTY_CONTACT);
+  const [contact, setContact] = useState<ContactValues>({
+    ...EMPTY_CONTACT,
+    ...initialContact,
+  });
   const [isGift, setIsGift] = useState(false);
-  const [shipping, setShipping] = useState<AddressFormValues>(EMPTY_SHIPPING);
+  const [shipping, setShipping] = useState<AddressFormValues>({
+    ...EMPTY_SHIPPING,
+    ...initialShipping,
+  });
 
   const [rates, setRates] = useState<ShippingRate[]>([]);
   const [selectedRate, setSelectedRate] = useState<ShippingRate | null>(null);
@@ -56,7 +74,17 @@ export default function CheckoutForm(): ReactElement | null {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [orderCompleted, setOrderCompleted] = useState(false);
-  const [appliedGiftCard, setAppliedGiftCard] = useState<AppliedGiftCard | null>(null);
+  const [appliedGiftCard, setAppliedGiftCard] =
+    useState<AppliedGiftCard | null>(null);
+
+  // Cards on file (signed-in users). null selection = pay with a new card.
+  const { data: savedCardsData } = useSavedCards();
+  const savedCards = savedCardsData?.cards ?? [];
+  const isAuthenticated = savedCardsData?.authenticated ?? false;
+  const [selectedSavedCardId, setSelectedSavedCardId] = useState<string | null>(
+    null,
+  );
+  const [saveNewCard, setSaveNewCard] = useState(false);
   // One stable idempotency key per mount — reused across retries of THIS cart
   // attempt so a lost-response retry returns the original charge (no double
   // charge). A new mount (new cart attempt after clearCart) gets a fresh key.
@@ -85,7 +113,10 @@ export default function CheckoutForm(): ReactElement | null {
     setContact((prev) => ({ ...prev, [field]: value }));
   };
 
-  const updateShipping = (field: keyof AddressFormValues, value: string): void => {
+  const updateShipping = (
+    field: keyof AddressFormValues,
+    value: string,
+  ): void => {
     setShipping((prev) => ({ ...prev, [field]: value }));
     // Address (not name) changes invalidate the quoted rates.
     if (field !== "firstName" && field !== "lastName") resetRates();
@@ -121,7 +152,10 @@ export default function CheckoutForm(): ReactElement | null {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Could not fetch shipping rates. Please check the address.");
+        setError(
+          data.error ??
+            "Could not fetch shipping rates. Please check the address.",
+        );
         return;
       }
       setRates(data.rates);
@@ -133,7 +167,10 @@ export default function CheckoutForm(): ReactElement | null {
     }
   };
 
-  const placeOrder = async (token?: string): Promise<void> => {
+  const placeOrder = async (
+    token?: string,
+    verificationToken?: string,
+  ): Promise<void> => {
     if (!selectedRate) return;
     setIsProcessing(true);
     setError(null);
@@ -143,6 +180,12 @@ export default function CheckoutForm(): ReactElement | null {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           paymentToken: token,
+          verificationToken,
+          savedCardId: selectedSavedCardId ?? undefined,
+          saveCard:
+            saveNewCard && !selectedSavedCardId && isAuthenticated
+              ? true
+              : undefined,
           customer: {
             firstName: contact.firstName,
             lastName: contact.lastName,
@@ -163,7 +206,10 @@ export default function CheckoutForm(): ReactElement | null {
           subtotalCents,
           idempotencyKey,
           giftCard: appliedGiftCard
-            ? { giftCardId: appliedGiftCard.giftCardId, amountCents: giftCardCents }
+            ? {
+                giftCardId: appliedGiftCard.giftCardId,
+                amountCents: giftCardCents,
+              }
             : undefined,
         }),
       });
@@ -175,7 +221,14 @@ export default function CheckoutForm(): ReactElement | null {
       }
       setOrderCompleted(true);
       clearCart();
-      router.push(`/order-confirmation?orderNumber=${data.orderNumber}`);
+      const params = new URLSearchParams({ orderNumber: data.orderNumber });
+      if (data.receiptUrl) params.set("receiptUrl", data.receiptUrl);
+      if (typeof data.totalCents === "number") {
+        params.set("total", (data.totalCents / 100).toFixed(2));
+      }
+      if (contact.firstName) params.set("firstName", contact.firstName);
+      if (contact.email) params.set("email", contact.email);
+      router.push(`/order-confirmation?${params.toString()}`);
     } catch {
       setError("Network error. Please try again.");
       setIsProcessing(false);
@@ -185,18 +238,18 @@ export default function CheckoutForm(): ReactElement | null {
   // Buyer contact must be valid to pay (and receive the receipt).
   const contactComplete = Boolean(
     contact.firstName.trim() &&
-      contact.lastName.trim() &&
-      isValidEmail(contact.email) &&
-      isValidUsPhone(contact.phone)
+    contact.lastName.trim() &&
+    isValidEmail(contact.email) &&
+    isValidUsPhone(contact.phone),
   );
 
   // Destination address must be complete; gifting also requires a recipient name.
   const shippingComplete = Boolean(
     shipping.addressLine1.trim() &&
-      shipping.city.trim() &&
-      shipping.state.trim() &&
-      shipping.zip.trim() &&
-      (!isGift || (shipping.firstName.trim() && shipping.lastName.trim()))
+    shipping.city.trim() &&
+    shipping.state.trim() &&
+    shipping.zip.trim() &&
+    (!isGift || (shipping.firstName.trim() && shipping.lastName.trim())),
   );
 
   const canPay = contactComplete && shippingComplete;
@@ -210,11 +263,15 @@ export default function CheckoutForm(): ReactElement | null {
     }, 600);
 
     return () => clearTimeout(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isGift,
-    shipping.addressLine1, shipping.city, shipping.state, shipping.zip,
-    shipping.firstName, shipping.lastName,
+    shipping.addressLine1,
+    shipping.city,
+    shipping.state,
+    shipping.zip,
+    shipping.firstName,
+    shipping.lastName,
   ]);
 
   useEffect(() => {
@@ -227,10 +284,8 @@ export default function CheckoutForm(): ReactElement | null {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10 items-start">
-
       {/* Left column: form (below the summary when stacked, left on desktop) */}
       <div className="order-2 lg:order-1 flex flex-col gap-8 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-white p-6 sm:p-8 shadow-[var(--shadow-card)]">
-
         {/* Contact (buyer) */}
         <div className="flex flex-col gap-5">
           <h2 className="text-base font-semibold text-[var(--color-primary)]">
@@ -254,14 +309,14 @@ export default function CheckoutForm(): ReactElement | null {
                 onChange={(e) => toggleGift(e.target.checked)}
                 className="h-4 w-4 cursor-pointer accent-[var(--color-primary)]"
               />
-              This is a gift — ship to a different address
+              Ship to a different address?
             </label>
           </div>
 
           {isGift && (
             <p className="rounded-[var(--radius-md)] bg-[var(--color-light)] px-3 py-2 text-xs text-[var(--color-text-subtle)]">
-              We&apos;ll ship to the recipient below. Your order confirmation and
-              receipt come to you.
+              We&apos;ll ship to the recipient below. Your order confirmation
+              and receipt come to you.
             </p>
           )}
 
@@ -364,6 +419,18 @@ export default function CheckoutForm(): ReactElement | null {
             </p>
           </div>
 
+          {/* Saved cards (signed-in users) — choose a card on file or a new card.
+              Hidden when a gift card already covers the whole order. */}
+          {savedCards.length > 0 &&
+            !(amountDueCents <= 0 && appliedGiftCard) && (
+              <SavedCardPicker
+                cards={savedCards}
+                selectedCardId={selectedSavedCardId}
+                onSelect={setSelectedSavedCardId}
+                disabled={isProcessing}
+              />
+            )}
+
           {amountDueCents <= 0 && appliedGiftCard && selectedRate ? (
             <>
               {error && (
@@ -379,16 +446,70 @@ export default function CheckoutForm(): ReactElement | null {
                 {isProcessing ? "Placing order…" : "Place order with gift card"}
               </Button>
             </>
+          ) : selectedSavedCardId ? (
+            <>
+              {error && (
+                <p className="text-[var(--color-error)] text-sm bg-red-50 border border-red-200 rounded-[var(--radius-md)] px-3 py-2">
+                  {error}
+                </p>
+              )}
+              <Button
+                variant="primary"
+                disabled={isProcessing || !canPay || !selectedRate}
+                onClick={() => void placeOrder()}
+              >
+                {isProcessing
+                  ? "Placing order…"
+                  : `Pay $${(amountDueCents / 100).toFixed(2)} with saved card`}
+              </Button>
+            </>
           ) : paymentConfig ? (
-            <PaymentStep
-              applicationId={paymentConfig.applicationId}
-              locationId={paymentConfig.locationId}
-              amountDollars={selectedRate ? (amountDueCents / 100).toFixed(2) : null}
-              ready={canPay && !!selectedRate}
-              onToken={placeOrder}
-              isProcessing={isProcessing}
-              error={error}
-            />
+            <>
+              <PaymentStep
+                applicationId={paymentConfig.applicationId}
+                locationId={paymentConfig.locationId}
+                amountDollars={
+                  selectedRate ? (amountDueCents / 100).toFixed(2) : null
+                }
+                ready={canPay && !!selectedRate}
+                onToken={placeOrder}
+                isProcessing={isProcessing}
+                error={error}
+                verification={{
+                  intent: "CHARGE",
+                  billingContact: {
+                    givenName: contact.firstName,
+                    familyName: contact.lastName,
+                    email: contact.email,
+                    phone: contact.phone || undefined,
+                    // Use the shipping address as a billing hint only when not a gift.
+                    ...(!isGift
+                      ? {
+                          addressLines: [
+                            shipping.addressLine1,
+                            shipping.addressLine2,
+                          ].filter(Boolean) as string[],
+                          city: shipping.city,
+                          state: shipping.state,
+                          postalCode: shipping.zip,
+                          countryCode: "US",
+                        }
+                      : {}),
+                  },
+                }}
+              />
+              {isAuthenticated && (
+                <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-[var(--color-text-secondary)]">
+                  <input
+                    type="checkbox"
+                    checked={saveNewCard}
+                    onChange={(e) => setSaveNewCard(e.target.checked)}
+                    className="h-4 w-4 cursor-pointer accent-[var(--color-primary)]"
+                  />
+                  Save this card for faster checkout
+                </label>
+              )}
+            </>
           ) : (
             <div className="rounded-[var(--radius-lg)] border-2 border-dashed border-[var(--color-border-lighter)] px-4 py-6 text-center text-sm text-[var(--color-text-subtle)]">
               Loading secure payment…

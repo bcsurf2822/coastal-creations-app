@@ -172,13 +172,15 @@ describe("POST /api/webhooks/shippo — email routing", () => {
     expect(recipients).toContain("studio@coastal.com");
   });
 
-  it("in dev/stage, redirects all mail to DEV_EMAIL", async () => {
+  it("in dev/stage, emails the real customer but redirects only the admin copy to DEV_EMAIL", async () => {
     vi.stubEnv("VERCEL_ENV", "preview");
     vi.stubEnv("DEV_EMAIL", "dev@coastal.com");
     orderFindOne.mockResolvedValue(makeOrder());
     await POST(req({ token: SECRET, body: trackEvent("TRANSIT") }));
-    for (const call of emailSend.mock.calls) {
-      expect(call[0].to).toEqual(["dev@coastal.com"]);
-    }
+    const recipients = emailSend.mock.calls.map((c) => c[0].to[0]);
+    // Customer copy goes to the real buyer; the admin copy is redirected.
+    expect(recipients).toContain("buyer@example.com");
+    expect(recipients).toContain("dev@coastal.com");
+    expect(recipients).not.toContain("studio@coastal.com");
   });
 });

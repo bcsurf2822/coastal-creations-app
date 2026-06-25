@@ -9,7 +9,7 @@ import OrderStatusBadge from "@/components/account/OrderStatusBadge";
 export default async function AccountOverviewPage(): Promise<ReactElement> {
   const user = await requireUserPage();
   const [orders, bookings] = await Promise.all([
-    getMyOrders(user.email),
+    getMyOrders(user.email, user.id),
     getMyBookings(user.email),
   ]);
 

@@ -23,10 +23,27 @@ export function emailMatch(email: string): { $regex: string; $options: string } 
   return { $regex: `^${escaped}$`, $options: "i" };
 }
 
+/**
+ * Match orders owned by the signed-in user. An order is theirs if it carries their
+ * stamped `userId` (orders placed while signed in) OR its buyer email matches the
+ * session email (guest orders, and any placed before userId stamping existed).
+ * `userId` is optional so callers that only have an email still work.
+ */
+function orderOwnerMatch(
+  sessionEmail: string,
+  userId?: string
+): Record<string, unknown> {
+  const byEmail = { "customer.email": emailMatch(sessionEmail) };
+  return userId ? { $or: [{ userId }, byEmail] } : byEmail;
+}
+
 /** Store orders belonging to the signed-in user, newest first. */
-export async function getMyOrders(sessionEmail: string): Promise<IOrder[]> {
+export async function getMyOrders(
+  sessionEmail: string,
+  userId?: string
+): Promise<IOrder[]> {
   await connectMongo();
-  return Order.find({ "customer.email": emailMatch(sessionEmail) })
+  return Order.find(orderOwnerMatch(sessionEmail, userId))
     .sort({ createdAt: -1 })
     .lean<IOrder[]>();
 }
@@ -34,13 +51,28 @@ export async function getMyOrders(sessionEmail: string): Promise<IOrder[]> {
 /** A single order by number, ONLY if it belongs to the signed-in user (else null). */
 export async function getMyOrderByNumber(
   sessionEmail: string,
-  orderNumber: string
+  orderNumber: string,
+  userId?: string
 ): Promise<IOrder | null> {
   await connectMongo();
   return Order.findOne({
     orderNumber,
-    "customer.email": emailMatch(sessionEmail),
+    ...orderOwnerMatch(sessionEmail, userId),
   }).lean<IOrder | null>();
+}
+
+/**
+ * The signed-in user's most recent order, used to prefill checkout (name, phone,
+ * shipping address). Returns null when they have no prior order.
+ */
+export async function getLatestOrderForPrefill(
+  sessionEmail: string,
+  userId?: string
+): Promise<IOrder | null> {
+  await connectMongo();
+  return Order.findOne(orderOwnerMatch(sessionEmail, userId))
+    .sort({ createdAt: -1 })
+    .lean<IOrder | null>();
 }
 
 /** Event/class bookings belonging to the signed-in user, newest first. */

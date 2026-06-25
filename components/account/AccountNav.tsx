@@ -13,6 +13,8 @@ import {
   RiCalendarEventFill,
   RiUser3Line,
   RiUser3Fill,
+  RiBankCardLine,
+  RiBankCardFill,
 } from "react-icons/ri";
 import LogoutButton from "@/components/authentication/LogoutButton";
 
@@ -41,6 +43,12 @@ const NAV_ITEMS: NavItem[] = [
     label: "Bookings",
     icon: <RiCalendarEventLine className="w-5 h-5" />,
     activeIcon: <RiCalendarEventFill className="w-5 h-5" />,
+  },
+  {
+    href: "/account/payment-methods",
+    label: "Payment methods",
+    icon: <RiBankCardLine className="w-5 h-5" />,
+    activeIcon: <RiBankCardFill className="w-5 h-5" />,
   },
   {
     href: "/account/profile",

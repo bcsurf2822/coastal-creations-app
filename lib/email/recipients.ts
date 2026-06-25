@@ -1,9 +1,11 @@
 /**
  * Centralized transactional-email recipient routing.
  *
- * In production, customer emails go to the customer and admin emails go to
- * STUDIO_EMAIL (with a hard fallback). In dev/stage, EVERYTHING redirects to
- * DEV_EMAIL so we never email real customers from a non-prod environment.
+ * The CUSTOMER copy always goes to the real customer address (the sending domain
+ * is verified, so Resend can deliver anywhere) — this lets us test the checkout
+ * flow as a genuine customer in dev. Only the ADMIN copy is redirected in
+ * non-production: in prod it goes to STUDIO_EMAIL (with a hard fallback), in
+ * dev/stage it goes to DEV_EMAIL so Ashley never gets test-order notifications.
  *
  * This is the single source of truth — every send site should call it instead
  * of re-deriving the prod/dev branch inline (which had drifted across routes).
@@ -29,6 +31,7 @@ export function resolveEmailRecipients(
   customerEmail: string | null | undefined
 ): EmailRecipients {
   const isProduction = process.env.VERCEL_ENV === "production";
+  // The customer copy always goes to the real address — in every environment.
   const customer = customerEmail ?? "";
 
   // Use `||` so an empty-string env var (a misconfiguration) is treated as unset.
@@ -39,8 +42,8 @@ export function resolveEmailRecipients(
     };
   }
 
-  // dev / stage: redirect both to DEV_EMAIL (falling back to the customer email
-  // only if DEV_EMAIL is not configured).
-  const devEmail = process.env.DEV_EMAIL || customer;
-  return { customer: devEmail, admin: devEmail };
+  // dev / stage: only the ADMIN copy is redirected, so test orders never reach
+  // Ashley. Fall back to the customer address if DEV_EMAIL is not configured.
+  const adminInDev = process.env.DEV_EMAIL || customer;
+  return { customer, admin: adminInDev };
 }

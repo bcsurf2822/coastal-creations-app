@@ -18,7 +18,9 @@
  *   subtotalCents  — number (ignored; recomputed server-side)
  */
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { getSquareClient } from "@/lib/square/client";
+import { getSessionUser } from "@/lib/auth/guards";
 import { Resend } from "resend";
 import { render } from "@react-email/render";
 import * as React from "react";
@@ -28,6 +30,8 @@ import { OrderConfirmationEmail } from "@/components/email-templates/OrderConfir
 import { StoreOrderAdminEmail } from "@/components/email-templates/StoreOrderAdminEmail";
 import { purchaseLabelForOrder } from "@/lib/shippo/labels";
 import { squareCustomerService } from "@/lib/square/customers";
+import { squareCardService } from "@/lib/square/cards";
+import { resolveUserSquareCustomerId } from "@/lib/square/userCustomer";
 import { giftCardService } from "@/lib/square/gift-cards";
 import {
   priceCartFromCatalog,
@@ -85,6 +89,12 @@ interface CheckoutRequest {
   idempotencyKey?: string;
   /** Optional gift card the customer applied — validated against Square below. */
   giftCard?: { giftCardId: string; amountCents: number };
+  /** SCA verification token from tokenize (new-card path). */
+  verificationToken?: string;
+  /** Charge a saved card on file instead of a new nonce (signed-in users only). */
+  savedCardId?: string;
+  /** Save the new card on file after charging (signed-in users only). */
+  saveCard?: boolean;
 }
 
 export async function POST(request: Request): Promise<Response> {
@@ -99,6 +109,12 @@ export async function POST(request: Request): Promise<Response> {
 
     // Mongo is needed to read parcel presets for the shipping re-quote.
     await connectMongo();
+
+    // Durable buyer identity: link this order to the authenticated user when one is
+    // signed in. NON-FATAL and identity-only — a guest (null) still checks out, and
+    // the buyer email/charge always comes from the submitted form (so gifting and
+    // buying-for-someone keep working). See lib/account/queries.ts for read-side use.
+    const sessionUser = await getSessionUser();
 
     // PRICE INTEGRITY: never trust client money. Recompute the subtotal from the
     // Square catalog and the shipping from a fresh Shippo re-quote. A tampered
@@ -150,10 +166,36 @@ export async function POST(request: Request): Promise<Response> {
     }
     const chargeCents = totalCents - giftCardAppliedCents;
 
+    // Cards on file live on the signed-in user's Square customer. Resolve it when a
+    // saved card is being used or a new card is being saved.
+    let accountCustomerId: string | null = null;
+    if (sessionUser && (body.savedCardId || body.saveCard)) {
+      accountCustomerId = await resolveUserSquareCustomerId(sessionUser, {
+        createIfMissing: Boolean(body.saveCard),
+      });
+    }
+
+    // A saved card must belong to THIS user's customer — otherwise reject (never
+    // charge another customer's card).
+    if (body.savedCardId) {
+      if (!sessionUser || !accountCustomerId) {
+        return NextResponse.json(
+          { error: "Sign in to use a saved card" },
+          { status: 401 }
+        );
+      }
+      const owned = await squareCardService.getCard(body.savedCardId);
+      if (!owned || owned.customerId !== accountCustomerId) {
+        return NextResponse.json({ error: "Saved card not found" }, { status: 404 });
+      }
+    }
+
     // Step 1: Charge the card portion (skipped when a gift card covers the full total).
     let squarePaymentId: string | undefined;
+    let squareReceiptUrl: string | undefined;
     if (chargeCents > 0) {
-      if (!paymentToken) {
+      const usingSavedCard = Boolean(body.savedCardId);
+      if (!usingSavedCard && !paymentToken) {
         return NextResponse.json(
           { error: "Payment information is required" },
           { status: 400 }
@@ -161,7 +203,12 @@ export async function POST(request: Request): Promise<Response> {
       }
       const paymentResult = await squareClient.payments.create({
         idempotencyKey: normalizeIdempotencyKey(body.idempotencyKey),
-        sourceId: paymentToken,
+        // A saved card charges by its card id; a new card by the one-time nonce.
+        sourceId: body.savedCardId ?? (paymentToken as string),
+        ...(accountCustomerId ? { customerId: accountCustomerId } : {}),
+        ...(body.verificationToken
+          ? { verificationToken: body.verificationToken }
+          : {}),
         amountMoney: {
           amount: BigInt(chargeCents),
           currency: "USD",
@@ -192,6 +239,25 @@ export async function POST(request: Request): Promise<Response> {
       }
       console.log("[API-STORE-CHECKOUT-POST] Square payment completed:", payment.id);
       squarePaymentId = payment.id ?? undefined;
+      squareReceiptUrl = payment.receiptUrl ?? undefined;
+
+      // Save the new card on file after a successful charge (opt-in, signed-in).
+      // The PAYMENT id is a valid card source — the one-time nonce is already spent.
+      if (body.saveCard && !usingSavedCard && accountCustomerId && payment.id) {
+        try {
+          await squareCardService.createCard({
+            sourceId: payment.id,
+            customerId: accountCustomerId,
+            cardholderName: `${customer.firstName} ${customer.lastName}`.trim(),
+            referenceId: sessionUser?.id,
+          });
+        } catch (saveError) {
+          console.error(
+            "[API-STORE-CHECKOUT-POST] Save card on file failed (non-fatal):",
+            saveError
+          );
+        }
+      }
     }
 
     // Redeem the gift card. Gift-card-only order → fatal on failure (no order is
@@ -227,6 +293,9 @@ export async function POST(request: Request): Promise<Response> {
     }));
 
     const newOrder = await Order.create({
+      userId: sessionUser
+        ? new mongoose.Types.ObjectId(sessionUser.id)
+        : undefined,
       items: orderItems,
       subtotalCents,
       shippingCents: serverRate.rateCents,
@@ -241,6 +310,7 @@ export async function POST(request: Request): Promise<Response> {
       shippingAddress,
       square: {
         paymentId: squarePaymentId,
+        receiptUrl: squareReceiptUrl,
       },
       giftCard:
         giftCardAppliedCents > 0 && body.giftCard
@@ -280,6 +350,20 @@ export async function POST(request: Request): Promise<Response> {
       await Order.findByIdAndUpdate(newOrder._id, {
         "square.customerId": squareResult.customerId,
       });
+      // Associate the Square customer profile with the authenticated user (once),
+      // so their account can resolve saved payment methods (Cards on File) later.
+      // Adapter-managed `users` collection — direct driver update, only if unset.
+      if (sessionUser) {
+        await mongoose.connection
+          .collection("users")
+          .updateOne(
+            {
+              _id: new mongoose.Types.ObjectId(sessionUser.id),
+              squareCustomerId: { $exists: false },
+            },
+            { $set: { squareCustomerId: squareResult.customerId } }
+          );
+      }
     } catch (squareError) {
       console.error(
         "[API-STORE-CHECKOUT-POST] Square customer link failed (non-fatal):",
@@ -330,6 +414,7 @@ export async function POST(request: Request): Promise<Response> {
               postalCode: shippingAddress.postalCode,
             },
             shippingMethod: serverRate.serviceName,
+            receiptUrl: squareReceiptUrl,
           },
         })
       );
@@ -379,6 +464,8 @@ export async function POST(request: Request): Promise<Response> {
       success: true,
       orderId: newOrder._id.toString(),
       orderNumber: newOrder.orderNumber,
+      receiptUrl: squareReceiptUrl,
+      totalCents,
     });
   } catch (error) {
     // Price/shipping reconciliation failures are the customer's to resolve (stale
