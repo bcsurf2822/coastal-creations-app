@@ -22,16 +22,16 @@ describe("resolveEmailRecipients", () => {
     expect(resolveEmailRecipients("buyer@example.com").admin).toBe(FALLBACK_STUDIO_EMAIL);
   });
 
-  it("in dev/stage redirects everything to DEV_EMAIL", () => {
+  it("in dev/stage sends the customer copy to the real address, only the admin copy to DEV_EMAIL", () => {
     vi.stubEnv("VERCEL_ENV", "preview");
     vi.stubEnv("DEV_EMAIL", "dev@coastal.com");
     expect(resolveEmailRecipients("buyer@example.com")).toEqual({
-      customer: "dev@coastal.com",
+      customer: "buyer@example.com",
       admin: "dev@coastal.com",
     });
   });
 
-  it("in dev with no DEV_EMAIL falls back to the customer address", () => {
+  it("in dev with no DEV_EMAIL falls back to the customer address for admin too", () => {
     vi.stubEnv("VERCEL_ENV", "development");
     vi.stubEnv("DEV_EMAIL", "");
     expect(resolveEmailRecipients("buyer@example.com")).toEqual({
