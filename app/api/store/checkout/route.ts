@@ -414,6 +414,7 @@ export async function POST(request: Request): Promise<Response> {
               postalCode: shippingAddress.postalCode,
             },
             shippingMethod: serverRate.serviceName,
+            receiptUrl: squareReceiptUrl,
           },
         })
       );

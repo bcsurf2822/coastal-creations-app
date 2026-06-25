@@ -1,6 +1,12 @@
 import * as React from "react";
 import { Text } from "@react-email/components";
-import { EmailShell, InfoCard, DetailRow, emailText } from "./shared";
+import {
+  EmailShell,
+  InfoCard,
+  DetailRow,
+  emailText,
+  getStudioEmail,
+} from "./shared";
 
 export interface RefundLineItem {
   name: string;
@@ -62,9 +68,7 @@ export const RefundConfirmationEmail = ({
         ? "This order has been fully refunded."
         : "If you have questions about this refund, just reply to this email or contact us at "}
       {data.isFullRefund ? null : (
-        <a href="mailto:ashley@coastalcreationsstudio.com">
-          ashley@coastalcreationsstudio.com
-        </a>
+        <a href={`mailto:${getStudioEmail()}`}>{getStudioEmail()}</a>
       )}
       {data.isFullRefund ? null : "."}
     </Text>

@@ -1,6 +1,12 @@
 import * as React from "react";
 import { Text, Link } from "@react-email/components";
-import { EmailShell, InfoCard, DetailRow, emailText } from "./shared";
+import {
+  EmailShell,
+  InfoCard,
+  DetailRow,
+  emailText,
+  getStudioEmail,
+} from "./shared";
 
 /**
  * Sent automatically when the Shippo tracking webhook reports DELIVERED
@@ -35,10 +41,7 @@ export const DeliveryConfirmationEmail = ({
 
     <Text style={emailText.subParagraph}>
       Something not right with your order? Reply to this email or reach us at{" "}
-      <Link href="mailto:ashley@coastalcreationsstudio.com">
-        ashley@coastalcreationsstudio.com
-      </Link>
-      .
+      <Link href={`mailto:${getStudioEmail()}`}>{getStudioEmail()}</Link>.
     </Text>
   </EmailShell>
 );

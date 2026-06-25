@@ -281,6 +281,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       },
       squarePaymentId,
       squareCustomerId,
+      squareReceiptUrl,
       refundStatus: "none",
     });
 

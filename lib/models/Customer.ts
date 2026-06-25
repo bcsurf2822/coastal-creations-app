@@ -39,6 +39,7 @@ export interface ICustomer extends Document {
   };
   squarePaymentId?: string;
   squareCustomerId?: string;
+  squareReceiptUrl?: string;
   refundStatus?: "none" | "partial" | "full";
   refundAmount?: number;
   refundedAt?: Date;
@@ -203,6 +204,11 @@ const CustomerSchema = new Schema<ICustomer>(
       trim: true,
     },
     squareCustomerId: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    squareReceiptUrl: {
       type: String,
       required: false,
       trim: true,

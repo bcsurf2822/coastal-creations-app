@@ -43,6 +43,7 @@ export async function sendBookingConfirmationEmails(
     }
 
     const customerEmail = customerDoc.billingInfo.emailAddress;
+    const receiptUrl = customerDoc.squareReceiptUrl;
     const { customer: customerRecipient, admin: adminRecipient } =
       resolveEmailRecipients(customerEmail);
 
@@ -67,6 +68,7 @@ export async function sendBookingConfirmationEmails(
         eventTitle: privateEventDoc.title,
         depositPaid: customerDoc.total,
         fullPrice: privateEventDoc.price,
+        receiptUrl,
       };
 
       if (customerEmail && customerRecipient) {
@@ -114,7 +116,7 @@ export async function sendBookingConfirmationEmails(
     // Customer email only when they gave an address and we have a recipient.
     if (customerEmail && customerRecipient) {
       const html = await render(
-        React.createElement(EventEmailTemplate, { customer, event })
+        React.createElement(EventEmailTemplate, { customer, event, receiptUrl })
       );
       await resend.emails.send({
         from: FROM,

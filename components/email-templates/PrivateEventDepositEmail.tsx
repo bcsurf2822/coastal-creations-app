@@ -1,6 +1,12 @@
 import * as React from "react";
 import { Text, Link } from "@react-email/components";
-import { EmailShell, InfoCard, DetailRow, emailText } from "./shared";
+import {
+  EmailShell,
+  InfoCard,
+  DetailRow,
+  ReceiptButton,
+  emailText,
+} from "./shared";
 
 export interface PrivateEventDepositEmailProps {
   customerFirstName: string;
@@ -12,6 +18,8 @@ export interface PrivateEventDepositEmailProps {
   depositPaid: number;
   /** Full event price, in dollars (used to show the remaining balance). */
   fullPrice?: number;
+  /** Square-hosted receipt link for the deposit payment, when available. */
+  receiptUrl?: string;
   /** Admin notification variant (vs. the customer confirmation). */
   isAdmin?: boolean;
 }
@@ -30,6 +38,7 @@ export const PrivateEventDepositEmail = ({
   eventTitle,
   depositPaid,
   fullPrice,
+  receiptUrl,
   isAdmin = false,
 }: PrivateEventDepositEmailProps) => {
   const balanceDue =
@@ -95,6 +104,8 @@ export const PrivateEventDepositEmail = ({
           Ocean City, NJ 08226
         </DetailRow>
       </InfoCard>
+
+      <ReceiptButton href={receiptUrl} />
 
       <Text style={emailText.subParagraph}>
         Any balance is settled when we confirm the final details of your event.
