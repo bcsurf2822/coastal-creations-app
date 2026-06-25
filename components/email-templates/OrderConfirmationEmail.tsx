@@ -90,6 +90,12 @@ export const OrderConfirmationEmail = ({
     </InfoCard>
 
     <Text style={emailText.subParagraph}>
+      <strong>What&apos;s next?</strong> We&apos;ll email you a tracking number
+      as soon as your order ships, so you can follow it to your door — no account
+      needed.
+    </Text>
+
+    <Text style={emailText.subParagraph}>
       Questions about your order? Reply to this email or contact us at{" "}
       <a href="mailto:ashley@coastalcreationsstudio.com">
         ashley@coastalcreationsstudio.com
