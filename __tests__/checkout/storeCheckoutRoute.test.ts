@@ -20,6 +20,21 @@ vi.mock("@/lib/square/customers", () => ({
   squareCustomerService: { findOrCreateCustomer: (...a: unknown[]) => findOrCreateCustomer(...a) },
 }));
 
+const cardGetCard = vi.fn();
+const cardCreateCard = vi.fn();
+vi.mock("@/lib/square/cards", () => ({
+  squareCardService: {
+    getCard: (...a: unknown[]) => cardGetCard(...a),
+    createCard: (...a: unknown[]) => cardCreateCard(...a),
+  },
+}));
+
+const resolveUserSquareCustomerId = vi.fn();
+vi.mock("@/lib/square/userCustomer", () => ({
+  resolveUserSquareCustomerId: (...a: unknown[]) =>
+    resolveUserSquareCustomerId(...a),
+}));
+
 const giftCardGetById = vi.fn();
 const giftCardRedeem = vi.fn();
 vi.mock("@/lib/square/gift-cards", () => ({
@@ -138,7 +153,12 @@ beforeEach(() => {
   emailSend.mockResolvedValue({});
   getSessionUser.mockResolvedValue(null); // default: guest checkout
   usersUpdateOne.mockResolvedValue({});
+  resolveUserSquareCustomerId.mockResolvedValue("acct_cust_1");
+  cardGetCard.mockResolvedValue({ id: "ccof:1", customerId: "acct_cust_1" });
+  cardCreateCard.mockResolvedValue({ id: "ccof:new" });
 });
+
+const SIGNED_IN = { id: "user_1", email: "u@example.com", isAdmin: false, role: "customer" };
 
 describe("POST /api/store/checkout", () => {
   it("charges the server total, creates the order, buys a label, returns the order number", async () => {
@@ -282,5 +302,58 @@ describe("POST /api/store/checkout", () => {
     // Identity link uses the session; the charge + receipt stay with the typed buyer.
     expect(paymentsCreate.mock.calls[0][0].buyerEmailAddress).toBe("buyer@example.com");
     expect(orderCreate.mock.calls[0][0].customer.email).toBe("buyer@example.com");
+  });
+
+  it("charges a saved card by id under the signed-in user's customer", async () => {
+    getSessionUser.mockResolvedValue(SIGNED_IN);
+    const res = await POST(
+      req(baseBody({ paymentToken: undefined, savedCardId: "ccof:1" }))
+    );
+    expect(res.status).toBe(200);
+
+    const charge = paymentsCreate.mock.calls[0][0];
+    expect(charge.sourceId).toBe("ccof:1");
+    expect(charge.customerId).toBe("acct_cust_1");
+    // Ownership was verified against the user's customer.
+    expect(cardGetCard).toHaveBeenCalledWith("ccof:1");
+  });
+
+  it("rejects (404) and never charges a saved card the user does not own", async () => {
+    getSessionUser.mockResolvedValue(SIGNED_IN);
+    cardGetCard.mockResolvedValue({ id: "ccof:1", customerId: "someone_else" });
+    const res = await POST(
+      req(baseBody({ paymentToken: undefined, savedCardId: "ccof:1" }))
+    );
+    expect(res.status).toBe(404);
+    expect(paymentsCreate).not.toHaveBeenCalled();
+  });
+
+  it("requires sign-in to use a saved card (401)", async () => {
+    getSessionUser.mockResolvedValue(null);
+    const res = await POST(
+      req(baseBody({ paymentToken: undefined, savedCardId: "ccof:1" }))
+    );
+    expect(res.status).toBe(401);
+    expect(paymentsCreate).not.toHaveBeenCalled();
+  });
+
+  it("saves the new card on file after charge when saveCard is set and signed in", async () => {
+    getSessionUser.mockResolvedValue(SIGNED_IN);
+    const res = await POST(req(baseBody({ saveCard: true })));
+    expect(res.status).toBe(200);
+
+    expect(resolveUserSquareCustomerId).toHaveBeenCalledWith(SIGNED_IN, {
+      createIfMissing: true,
+    });
+    // Card filed from the PAYMENT id (the one-time nonce is already spent).
+    const arg = cardCreateCard.mock.calls[0][0];
+    expect(arg.sourceId).toBe("pay_1");
+    expect(arg.customerId).toBe("acct_cust_1");
+  });
+
+  it("forwards the SCA verificationToken to the charge", async () => {
+    const res = await POST(req(baseBody({ verificationToken: "verif_1" })));
+    expect(res.status).toBe(200);
+    expect(paymentsCreate.mock.calls[0][0].verificationToken).toBe("verif_1");
   });
 });

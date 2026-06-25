@@ -30,6 +30,8 @@ import { OrderConfirmationEmail } from "@/components/email-templates/OrderConfir
 import { StoreOrderAdminEmail } from "@/components/email-templates/StoreOrderAdminEmail";
 import { purchaseLabelForOrder } from "@/lib/shippo/labels";
 import { squareCustomerService } from "@/lib/square/customers";
+import { squareCardService } from "@/lib/square/cards";
+import { resolveUserSquareCustomerId } from "@/lib/square/userCustomer";
 import { giftCardService } from "@/lib/square/gift-cards";
 import {
   priceCartFromCatalog,
@@ -87,6 +89,12 @@ interface CheckoutRequest {
   idempotencyKey?: string;
   /** Optional gift card the customer applied — validated against Square below. */
   giftCard?: { giftCardId: string; amountCents: number };
+  /** SCA verification token from tokenize (new-card path). */
+  verificationToken?: string;
+  /** Charge a saved card on file instead of a new nonce (signed-in users only). */
+  savedCardId?: string;
+  /** Save the new card on file after charging (signed-in users only). */
+  saveCard?: boolean;
 }
 
 export async function POST(request: Request): Promise<Response> {
@@ -158,10 +166,35 @@ export async function POST(request: Request): Promise<Response> {
     }
     const chargeCents = totalCents - giftCardAppliedCents;
 
+    // Cards on file live on the signed-in user's Square customer. Resolve it when a
+    // saved card is being used or a new card is being saved.
+    let accountCustomerId: string | null = null;
+    if (sessionUser && (body.savedCardId || body.saveCard)) {
+      accountCustomerId = await resolveUserSquareCustomerId(sessionUser, {
+        createIfMissing: Boolean(body.saveCard),
+      });
+    }
+
+    // A saved card must belong to THIS user's customer — otherwise reject (never
+    // charge another customer's card).
+    if (body.savedCardId) {
+      if (!sessionUser || !accountCustomerId) {
+        return NextResponse.json(
+          { error: "Sign in to use a saved card" },
+          { status: 401 }
+        );
+      }
+      const owned = await squareCardService.getCard(body.savedCardId);
+      if (!owned || owned.customerId !== accountCustomerId) {
+        return NextResponse.json({ error: "Saved card not found" }, { status: 404 });
+      }
+    }
+
     // Step 1: Charge the card portion (skipped when a gift card covers the full total).
     let squarePaymentId: string | undefined;
     if (chargeCents > 0) {
-      if (!paymentToken) {
+      const usingSavedCard = Boolean(body.savedCardId);
+      if (!usingSavedCard && !paymentToken) {
         return NextResponse.json(
           { error: "Payment information is required" },
           { status: 400 }
@@ -169,7 +202,12 @@ export async function POST(request: Request): Promise<Response> {
       }
       const paymentResult = await squareClient.payments.create({
         idempotencyKey: normalizeIdempotencyKey(body.idempotencyKey),
-        sourceId: paymentToken,
+        // A saved card charges by its card id; a new card by the one-time nonce.
+        sourceId: body.savedCardId ?? (paymentToken as string),
+        ...(accountCustomerId ? { customerId: accountCustomerId } : {}),
+        ...(body.verificationToken
+          ? { verificationToken: body.verificationToken }
+          : {}),
         amountMoney: {
           amount: BigInt(chargeCents),
           currency: "USD",
@@ -200,6 +238,24 @@ export async function POST(request: Request): Promise<Response> {
       }
       console.log("[API-STORE-CHECKOUT-POST] Square payment completed:", payment.id);
       squarePaymentId = payment.id ?? undefined;
+
+      // Save the new card on file after a successful charge (opt-in, signed-in).
+      // The PAYMENT id is a valid card source — the one-time nonce is already spent.
+      if (body.saveCard && !usingSavedCard && accountCustomerId && payment.id) {
+        try {
+          await squareCardService.createCard({
+            sourceId: payment.id,
+            customerId: accountCustomerId,
+            cardholderName: `${customer.firstName} ${customer.lastName}`.trim(),
+            referenceId: sessionUser?.id,
+          });
+        } catch (saveError) {
+          console.error(
+            "[API-STORE-CHECKOUT-POST] Save card on file failed (non-fatal):",
+            saveError
+          );
+        }
+      }
     }
 
     // Redeem the gift card. Gift-card-only order → fatal on failure (no order is

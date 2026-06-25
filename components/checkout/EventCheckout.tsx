@@ -12,6 +12,8 @@ import CheckoutLayout from "./CheckoutLayout";
 import ContactForm, { type ContactFormValues, isValidUsPhone } from "./ContactForm";
 import { isValidEmail } from "@/lib/utils/validation";
 import PaymentStep from "./PaymentStep";
+import SavedCardPicker from "./SavedCardPicker";
+import { useSavedCards } from "@/hooks/queries/use-saved-cards";
 import EventSummary, { type SummaryLine } from "./EventSummary";
 import EventParticipantsFields from "./EventParticipantsFields";
 import GiftCardRedemption from "./GiftCardRedemption";
@@ -86,6 +88,12 @@ export default function EventCheckout(): ReactElement {
   const [discountInfo, setDiscountInfo] = useState<DiscountInfo>({ isDiscountAvailable: false });
 
   const [appliedGiftCard, setAppliedGiftCard] = useState<AppliedGiftCard | null>(null);
+  // Cards on file (signed-in users). null selection = pay with a new card.
+  const { data: savedCardsData } = useSavedCards();
+  const savedCards = savedCardsData?.cards ?? [];
+  const isAuthenticated = savedCardsData?.authenticated ?? false;
+  const [selectedSavedCardId, setSelectedSavedCardId] = useState<string | null>(null);
+  const [saveNewCard, setSaveNewCard] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // One stable idempotency key per mount — reused across retries of THIS attempt.
@@ -251,7 +259,7 @@ export default function EventCheckout(): ReactElement {
 
   // --- Submit ---
   const submitBooking = useCallback(
-    async (paymentToken?: string): Promise<void> => {
+    async (paymentToken?: string, verificationToken?: string): Promise<void> => {
       setIsProcessing(true);
       setError(null);
       try {
@@ -260,6 +268,12 @@ export default function EventCheckout(): ReactElement {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             paymentToken,
+            verificationToken,
+            savedCardId: selectedSavedCardId ?? undefined,
+            saveCard:
+              saveNewCard && !selectedSavedCardId && isAuthenticated
+                ? true
+                : undefined,
             idempotencyKey,
             contact,
             booking: {
@@ -293,7 +307,7 @@ export default function EventCheckout(): ReactElement {
             eventTitle: eventDetails?.eventName || eventTitle,
             eventId,
             amount: (totalCents / 100).toFixed(2),
-            paymentMethod: paymentToken ? "card" : "free",
+            paymentMethod: paymentToken || selectedSavedCardId ? "card" : "free",
             email: contact.email,
             phone: contact.phone,
             numberOfPeople: quantity,
@@ -310,6 +324,7 @@ export default function EventCheckout(): ReactElement {
       idempotencyKey, contact, eventId, isPrivateEvent, quantity, isSigningUpForSelf,
       selfSelectedOptions, participants, router, eventDetails, eventTitle, totalCents,
       appliedGiftCard, giftCardCents,
+      selectedSavedCardId, saveNewCard, isAuthenticated,
     ]
   );
 
@@ -430,6 +445,18 @@ export default function EventCheckout(): ReactElement {
                 onRemove={() => setAppliedGiftCard(null)}
               />
 
+              {/* Saved cards (signed-in users) — pay with a card on file or a new
+                  card. Hidden when a gift card already covers the whole total. */}
+              {savedCards.length > 0 &&
+                !(amountDueCents <= 0 && appliedGiftCard) && (
+                  <SavedCardPicker
+                    cards={savedCards}
+                    selectedCardId={selectedSavedCardId}
+                    onSelect={setSelectedSavedCardId}
+                    disabled={isProcessing}
+                  />
+                )}
+
               {amountDueCents <= 0 && appliedGiftCard ? (
                 <>
                   {error && (
@@ -445,16 +472,55 @@ export default function EventCheckout(): ReactElement {
                     {isProcessing ? "Completing…" : "Complete booking with gift card"}
                   </Button>
                 </>
+              ) : selectedSavedCardId ? (
+                <>
+                  {error && (
+                    <p className="text-[var(--color-error)] text-sm bg-red-50 border border-red-200 rounded-[var(--radius-md)] px-3 py-2">
+                      {error}
+                    </p>
+                  )}
+                  <Button
+                    variant="primary"
+                    disabled={!formValid || isProcessing}
+                    onClick={() => void submitBooking()}
+                  >
+                    {isProcessing
+                      ? "Completing…"
+                      : `Pay $${(amountDueCents / 100).toFixed(2)} with saved card`}
+                  </Button>
+                </>
               ) : paymentConfig ? (
-                <PaymentStep
-                  applicationId={paymentConfig.applicationId}
-                  locationId={paymentConfig.locationId}
-                  amountDollars={(amountDueCents / 100).toFixed(2)}
-                  ready={formValid}
-                  onToken={submitBooking}
-                  isProcessing={isProcessing}
-                  error={error}
-                />
+                <>
+                  <PaymentStep
+                    applicationId={paymentConfig.applicationId}
+                    locationId={paymentConfig.locationId}
+                    amountDollars={(amountDueCents / 100).toFixed(2)}
+                    ready={formValid}
+                    onToken={submitBooking}
+                    isProcessing={isProcessing}
+                    error={error}
+                    verification={{
+                      intent: "CHARGE",
+                      billingContact: {
+                        givenName: contact.firstName,
+                        familyName: contact.lastName,
+                        email: contact.email,
+                        phone: contact.phone || undefined,
+                      },
+                    }}
+                  />
+                  {isAuthenticated && (
+                    <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-[var(--color-text-secondary)]">
+                      <input
+                        type="checkbox"
+                        checked={saveNewCard}
+                        onChange={(e) => setSaveNewCard(e.target.checked)}
+                        className="h-4 w-4 cursor-pointer accent-[var(--color-primary)]"
+                      />
+                      Save this card for faster checkout
+                    </label>
+                  )}
+                </>
               ) : (
                 <div className="rounded-[var(--radius-lg)] border-2 border-dashed border-[var(--color-border-lighter)] px-4 py-6 text-center text-sm text-[var(--color-text-subtle)]">
                   Loading secure payment…

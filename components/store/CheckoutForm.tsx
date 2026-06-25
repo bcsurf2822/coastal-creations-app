@@ -12,6 +12,8 @@ import ContactFields, {
   type ContactValues,
 } from "@/components/store/ContactFields";
 import PaymentStep from "@/components/checkout/PaymentStep";
+import SavedCardPicker from "@/components/checkout/SavedCardPicker";
+import { useSavedCards } from "@/hooks/queries/use-saved-cards";
 import GiftCardRedemption from "@/components/checkout/GiftCardRedemption";
 import { isValidUsPhone } from "@/components/checkout/ContactForm";
 import { isValidEmail } from "@/lib/utils/validation";
@@ -73,6 +75,13 @@ export default function CheckoutForm({
   const [error, setError] = useState<string | null>(null);
   const [orderCompleted, setOrderCompleted] = useState(false);
   const [appliedGiftCard, setAppliedGiftCard] = useState<AppliedGiftCard | null>(null);
+
+  // Cards on file (signed-in users). null selection = pay with a new card.
+  const { data: savedCardsData } = useSavedCards();
+  const savedCards = savedCardsData?.cards ?? [];
+  const isAuthenticated = savedCardsData?.authenticated ?? false;
+  const [selectedSavedCardId, setSelectedSavedCardId] = useState<string | null>(null);
+  const [saveNewCard, setSaveNewCard] = useState(false);
   // One stable idempotency key per mount — reused across retries of THIS cart
   // attempt so a lost-response retry returns the original charge (no double
   // charge). A new mount (new cart attempt after clearCart) gets a fresh key.
@@ -149,7 +158,10 @@ export default function CheckoutForm({
     }
   };
 
-  const placeOrder = async (token?: string): Promise<void> => {
+  const placeOrder = async (
+    token?: string,
+    verificationToken?: string
+  ): Promise<void> => {
     if (!selectedRate) return;
     setIsProcessing(true);
     setError(null);
@@ -159,6 +171,12 @@ export default function CheckoutForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           paymentToken: token,
+          verificationToken,
+          savedCardId: selectedSavedCardId ?? undefined,
+          saveCard:
+            saveNewCard && !selectedSavedCardId && isAuthenticated
+              ? true
+              : undefined,
           customer: {
             firstName: contact.firstName,
             lastName: contact.lastName,
@@ -380,6 +398,18 @@ export default function CheckoutForm({
             </p>
           </div>
 
+          {/* Saved cards (signed-in users) — choose a card on file or a new card.
+              Hidden when a gift card already covers the whole order. */}
+          {savedCards.length > 0 &&
+            !(amountDueCents <= 0 && appliedGiftCard) && (
+              <SavedCardPicker
+                cards={savedCards}
+                selectedCardId={selectedSavedCardId}
+                onSelect={setSelectedSavedCardId}
+                disabled={isProcessing}
+              />
+            )}
+
           {amountDueCents <= 0 && appliedGiftCard && selectedRate ? (
             <>
               {error && (
@@ -395,16 +425,68 @@ export default function CheckoutForm({
                 {isProcessing ? "Placing order…" : "Place order with gift card"}
               </Button>
             </>
+          ) : selectedSavedCardId ? (
+            <>
+              {error && (
+                <p className="text-[var(--color-error)] text-sm bg-red-50 border border-red-200 rounded-[var(--radius-md)] px-3 py-2">
+                  {error}
+                </p>
+              )}
+              <Button
+                variant="primary"
+                disabled={isProcessing || !canPay || !selectedRate}
+                onClick={() => void placeOrder()}
+              >
+                {isProcessing
+                  ? "Placing order…"
+                  : `Pay $${(amountDueCents / 100).toFixed(2)} with saved card`}
+              </Button>
+            </>
           ) : paymentConfig ? (
-            <PaymentStep
-              applicationId={paymentConfig.applicationId}
-              locationId={paymentConfig.locationId}
-              amountDollars={selectedRate ? (amountDueCents / 100).toFixed(2) : null}
-              ready={canPay && !!selectedRate}
-              onToken={placeOrder}
-              isProcessing={isProcessing}
-              error={error}
-            />
+            <>
+              <PaymentStep
+                applicationId={paymentConfig.applicationId}
+                locationId={paymentConfig.locationId}
+                amountDollars={selectedRate ? (amountDueCents / 100).toFixed(2) : null}
+                ready={canPay && !!selectedRate}
+                onToken={placeOrder}
+                isProcessing={isProcessing}
+                error={error}
+                verification={{
+                  intent: "CHARGE",
+                  billingContact: {
+                    givenName: contact.firstName,
+                    familyName: contact.lastName,
+                    email: contact.email,
+                    phone: contact.phone || undefined,
+                    // Use the shipping address as a billing hint only when not a gift.
+                    ...(!isGift
+                      ? {
+                          addressLines: [
+                            shipping.addressLine1,
+                            shipping.addressLine2,
+                          ].filter(Boolean) as string[],
+                          city: shipping.city,
+                          state: shipping.state,
+                          postalCode: shipping.zip,
+                          countryCode: "US",
+                        }
+                      : {}),
+                  },
+                }}
+              />
+              {isAuthenticated && (
+                <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-[var(--color-text-secondary)]">
+                  <input
+                    type="checkbox"
+                    checked={saveNewCard}
+                    onChange={(e) => setSaveNewCard(e.target.checked)}
+                    className="h-4 w-4 cursor-pointer accent-[var(--color-primary)]"
+                  />
+                  Save this card for faster checkout
+                </label>
+              )}
+            </>
           ) : (
             <div className="rounded-[var(--radius-lg)] border-2 border-dashed border-[var(--color-border-lighter)] px-4 py-6 text-center text-sm text-[var(--color-text-subtle)]">
               Loading secure payment…
