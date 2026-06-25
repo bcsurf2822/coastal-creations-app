@@ -533,6 +533,7 @@ export default function PaymentForm({
       }
 
       const squarePaymentId = paymentResult.result.payment.id;
+      const squareReceiptUrl = paymentResult.result.payment.receiptUrl;
       console.log(
         "[PaymentForm-handleCardTokenizeResponse] Payment completed:",
         squarePaymentId
@@ -614,9 +615,13 @@ export default function PaymentForm({
       }
 
       setPaymentStatus("success");
-      router.push(
-        `/reservations/confirmation?bookingId=${result.data._id}&total=${grandTotal}&name=${encodeURIComponent(reservation.eventName)}`
-      );
+      const confirmParams = new URLSearchParams({
+        bookingId: result.data._id,
+        total: String(grandTotal),
+        name: reservation.eventName,
+      });
+      if (squareReceiptUrl) confirmParams.set("receiptUrl", squareReceiptUrl);
+      router.push(`/reservations/confirmation?${confirmParams.toString()}`);
     } catch (error) {
       console.error(
         "[PaymentForm-handleSubmit] Error processing payment:",

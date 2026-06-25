@@ -192,6 +192,7 @@ export async function POST(request: Request): Promise<Response> {
 
     // Step 1: Charge the card portion (skipped when a gift card covers the full total).
     let squarePaymentId: string | undefined;
+    let squareReceiptUrl: string | undefined;
     if (chargeCents > 0) {
       const usingSavedCard = Boolean(body.savedCardId);
       if (!usingSavedCard && !paymentToken) {
@@ -238,6 +239,7 @@ export async function POST(request: Request): Promise<Response> {
       }
       console.log("[API-STORE-CHECKOUT-POST] Square payment completed:", payment.id);
       squarePaymentId = payment.id ?? undefined;
+      squareReceiptUrl = payment.receiptUrl ?? undefined;
 
       // Save the new card on file after a successful charge (opt-in, signed-in).
       // The PAYMENT id is a valid card source — the one-time nonce is already spent.
@@ -308,6 +310,7 @@ export async function POST(request: Request): Promise<Response> {
       shippingAddress,
       square: {
         paymentId: squarePaymentId,
+        receiptUrl: squareReceiptUrl,
       },
       giftCard:
         giftCardAppliedCents > 0 && body.giftCard
@@ -460,6 +463,8 @@ export async function POST(request: Request): Promise<Response> {
       success: true,
       orderId: newOrder._id.toString(),
       orderNumber: newOrder.orderNumber,
+      receiptUrl: squareReceiptUrl,
+      totalCents,
     });
   } catch (error) {
     // Price/shipping reconciliation failures are the customer's to resolve (stale

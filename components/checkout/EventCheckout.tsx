@@ -302,6 +302,7 @@ export default function EventCheckout(): ReactElement {
         router.push(
           buildSuccessUrl({
             paymentId: data.squarePaymentId,
+            receiptUrl: data.receiptUrl,
             firstName: contact.firstName,
             lastName: contact.lastName,
             eventTitle: eventDetails?.eventName || eventTitle,

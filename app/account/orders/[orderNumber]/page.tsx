@@ -102,6 +102,18 @@ export default async function OrderDetailPage({
               <span>{formatCents(order.totalCents)}</span>
             </div>
           </div>
+          {order.square?.receiptUrl && (
+            <div className="ml-auto mt-3 max-w-xs">
+              <a
+                href={order.square.receiptUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full text-center px-4 py-2 border border-sky-200 text-sky-700 font-medium rounded-lg text-sm hover:bg-sky-50 transition-colors"
+              >
+                View Square Receipt
+              </a>
+            </div>
+          )}
         </div>
       </div>
 

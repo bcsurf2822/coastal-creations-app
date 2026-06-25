@@ -173,6 +173,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     // 4. Charge the card portion (skipped when free or fully gift-card-covered).
     let squarePaymentId: string;
+    let squareReceiptUrl: string | undefined;
     if (chargeCents > 0) {
       const usingSavedCard = Boolean(body.savedCardId);
       if (!usingSavedCard && !paymentToken) {
@@ -211,6 +212,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         );
       }
       squarePaymentId = payment.id ?? "";
+      squareReceiptUrl = payment.receiptUrl ?? undefined;
 
       // Save the new card on file after a successful charge (opt-in, signed-in).
       // The PAYMENT id is a valid card source — the one-time nonce is already spent.
@@ -303,6 +305,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       success: true,
       customerId: customer._id.toString(),
       squarePaymentId,
+      receiptUrl: squareReceiptUrl,
       total: totalCents / 100,
       status: "COMPLETED",
     });

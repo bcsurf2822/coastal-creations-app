@@ -145,7 +145,9 @@ beforeEach(() => {
     subtotalCents: 8800,
   });
   resolveShippingRate.mockResolvedValue(RATE);
-  paymentsCreate.mockResolvedValue({ payment: { id: "pay_1", status: "COMPLETED" } });
+  paymentsCreate.mockResolvedValue({
+    payment: { id: "pay_1", status: "COMPLETED", receiptUrl: "https://squareup.com/receipt/pay_1" },
+  });
   findOrCreateCustomer.mockResolvedValue({ customerId: "sqcust_1" });
   purchaseLabelForOrder.mockResolvedValue({ labelUrl: "https://label", trackingNumber: "TRK1" });
   orderCreate.mockResolvedValue({ _id: { toString: () => "order_1" }, orderNumber: "CC-TEST-1" });
@@ -180,6 +182,10 @@ describe("POST /api/store/checkout", () => {
     expect(order.shippingCents).toBe(570);
     expect(order.status).toBe("paid");
     expect(purchaseLabelForOrder).toHaveBeenCalledWith("order_1");
+
+    // Square receipt captured on the order + returned for the confirmation page.
+    expect(order.square.receiptUrl).toBe("https://squareup.com/receipt/pay_1");
+    expect(data.receiptUrl).toBe("https://squareup.com/receipt/pay_1");
   });
 
   it("ships to the RECIPIENT on a gift order while charging the BUYER (A1)", async () => {

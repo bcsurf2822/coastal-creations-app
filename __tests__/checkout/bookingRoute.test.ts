@@ -73,7 +73,9 @@ function req(body: unknown): Request {
 beforeEach(() => {
   vi.clearAllMocks();
   resolveBookingCharge.mockResolvedValue({ totalCents: 5000, giftCardAppliedCents: 0, chargeCents: 5000 });
-  paymentsCreate.mockResolvedValue({ payment: { id: "pay_123", status: "COMPLETED" } });
+  paymentsCreate.mockResolvedValue({
+    payment: { id: "pay_123", status: "COMPLETED", receiptUrl: "https://squareup.com/receipt/pay_123" },
+  });
   findOrCreateCustomer.mockResolvedValue({ customerId: "sqcust_1", isNew: true });
   customerCreate.mockResolvedValue({ _id: { toString: () => "cust_123" } });
   getSessionUser.mockResolvedValue(null);
@@ -113,6 +115,9 @@ describe("POST /api/checkout/booking", () => {
     expect(saved.squarePaymentId).toBe("pay_123");
     expect(saved.squareCustomerId).toBe("sqcust_1");
     expect(sendBookingConfirmationEmails).toHaveBeenCalledWith("cust_123", "ev1");
+
+    // Square receipt returned for the confirmation page.
+    expect(data.receiptUrl).toBe("https://squareup.com/receipt/pay_123");
   });
 
   it("returns 400 on a price-integrity rejection without charging", async () => {

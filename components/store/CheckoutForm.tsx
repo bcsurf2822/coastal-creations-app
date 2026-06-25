@@ -74,13 +74,16 @@ export default function CheckoutForm({
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [orderCompleted, setOrderCompleted] = useState(false);
-  const [appliedGiftCard, setAppliedGiftCard] = useState<AppliedGiftCard | null>(null);
+  const [appliedGiftCard, setAppliedGiftCard] =
+    useState<AppliedGiftCard | null>(null);
 
   // Cards on file (signed-in users). null selection = pay with a new card.
   const { data: savedCardsData } = useSavedCards();
   const savedCards = savedCardsData?.cards ?? [];
   const isAuthenticated = savedCardsData?.authenticated ?? false;
-  const [selectedSavedCardId, setSelectedSavedCardId] = useState<string | null>(null);
+  const [selectedSavedCardId, setSelectedSavedCardId] = useState<string | null>(
+    null,
+  );
   const [saveNewCard, setSaveNewCard] = useState(false);
   // One stable idempotency key per mount — reused across retries of THIS cart
   // attempt so a lost-response retry returns the original charge (no double
@@ -110,7 +113,10 @@ export default function CheckoutForm({
     setContact((prev) => ({ ...prev, [field]: value }));
   };
 
-  const updateShipping = (field: keyof AddressFormValues, value: string): void => {
+  const updateShipping = (
+    field: keyof AddressFormValues,
+    value: string,
+  ): void => {
     setShipping((prev) => ({ ...prev, [field]: value }));
     // Address (not name) changes invalidate the quoted rates.
     if (field !== "firstName" && field !== "lastName") resetRates();
@@ -146,7 +152,10 @@ export default function CheckoutForm({
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Could not fetch shipping rates. Please check the address.");
+        setError(
+          data.error ??
+            "Could not fetch shipping rates. Please check the address.",
+        );
         return;
       }
       setRates(data.rates);
@@ -160,7 +169,7 @@ export default function CheckoutForm({
 
   const placeOrder = async (
     token?: string,
-    verificationToken?: string
+    verificationToken?: string,
   ): Promise<void> => {
     if (!selectedRate) return;
     setIsProcessing(true);
@@ -197,7 +206,10 @@ export default function CheckoutForm({
           subtotalCents,
           idempotencyKey,
           giftCard: appliedGiftCard
-            ? { giftCardId: appliedGiftCard.giftCardId, amountCents: giftCardCents }
+            ? {
+                giftCardId: appliedGiftCard.giftCardId,
+                amountCents: giftCardCents,
+              }
             : undefined,
         }),
       });
@@ -209,7 +221,14 @@ export default function CheckoutForm({
       }
       setOrderCompleted(true);
       clearCart();
-      router.push(`/order-confirmation?orderNumber=${data.orderNumber}`);
+      const params = new URLSearchParams({ orderNumber: data.orderNumber });
+      if (data.receiptUrl) params.set("receiptUrl", data.receiptUrl);
+      if (typeof data.totalCents === "number") {
+        params.set("total", (data.totalCents / 100).toFixed(2));
+      }
+      if (contact.firstName) params.set("firstName", contact.firstName);
+      if (contact.email) params.set("email", contact.email);
+      router.push(`/order-confirmation?${params.toString()}`);
     } catch {
       setError("Network error. Please try again.");
       setIsProcessing(false);
@@ -219,18 +238,18 @@ export default function CheckoutForm({
   // Buyer contact must be valid to pay (and receive the receipt).
   const contactComplete = Boolean(
     contact.firstName.trim() &&
-      contact.lastName.trim() &&
-      isValidEmail(contact.email) &&
-      isValidUsPhone(contact.phone)
+    contact.lastName.trim() &&
+    isValidEmail(contact.email) &&
+    isValidUsPhone(contact.phone),
   );
 
   // Destination address must be complete; gifting also requires a recipient name.
   const shippingComplete = Boolean(
     shipping.addressLine1.trim() &&
-      shipping.city.trim() &&
-      shipping.state.trim() &&
-      shipping.zip.trim() &&
-      (!isGift || (shipping.firstName.trim() && shipping.lastName.trim()))
+    shipping.city.trim() &&
+    shipping.state.trim() &&
+    shipping.zip.trim() &&
+    (!isGift || (shipping.firstName.trim() && shipping.lastName.trim())),
   );
 
   const canPay = contactComplete && shippingComplete;
@@ -244,11 +263,15 @@ export default function CheckoutForm({
     }, 600);
 
     return () => clearTimeout(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isGift,
-    shipping.addressLine1, shipping.city, shipping.state, shipping.zip,
-    shipping.firstName, shipping.lastName,
+    shipping.addressLine1,
+    shipping.city,
+    shipping.state,
+    shipping.zip,
+    shipping.firstName,
+    shipping.lastName,
   ]);
 
   useEffect(() => {
@@ -261,10 +284,8 @@ export default function CheckoutForm({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10 items-start">
-
       {/* Left column: form (below the summary when stacked, left on desktop) */}
       <div className="order-2 lg:order-1 flex flex-col gap-8 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-white p-6 sm:p-8 shadow-[var(--shadow-card)]">
-
         {/* Contact (buyer) */}
         <div className="flex flex-col gap-5">
           <h2 className="text-base font-semibold text-[var(--color-primary)]">
@@ -288,14 +309,14 @@ export default function CheckoutForm({
                 onChange={(e) => toggleGift(e.target.checked)}
                 className="h-4 w-4 cursor-pointer accent-[var(--color-primary)]"
               />
-              This is a gift — ship to a different address
+              Ship to a different address?
             </label>
           </div>
 
           {isGift && (
             <p className="rounded-[var(--radius-md)] bg-[var(--color-light)] px-3 py-2 text-xs text-[var(--color-text-subtle)]">
-              We&apos;ll ship to the recipient below. Your order confirmation and
-              receipt come to you.
+              We&apos;ll ship to the recipient below. Your order confirmation
+              and receipt come to you.
             </p>
           )}
 
@@ -447,7 +468,9 @@ export default function CheckoutForm({
               <PaymentStep
                 applicationId={paymentConfig.applicationId}
                 locationId={paymentConfig.locationId}
-                amountDollars={selectedRate ? (amountDueCents / 100).toFixed(2) : null}
+                amountDollars={
+                  selectedRate ? (amountDueCents / 100).toFixed(2) : null
+                }
                 ready={canPay && !!selectedRate}
                 onToken={placeOrder}
                 isProcessing={isProcessing}

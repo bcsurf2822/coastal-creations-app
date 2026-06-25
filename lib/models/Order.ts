@@ -93,6 +93,7 @@ export interface IOrder extends Document {
     paymentId?: string;
     orderId?: string;
     customerId?: string;
+    receiptUrl?: string; // Square-hosted payment receipt
   };
   /** A gift card redeemed against this order (amount in cents). */
   giftCard?: {
@@ -217,6 +218,7 @@ const OrderSchema = new Schema<IOrder>(
       paymentId: { type: String, trim: true },
       orderId: { type: String, trim: true },
       customerId: { type: String, trim: true },
+      receiptUrl: { type: String, trim: true },
     },
     giftCard: {
       giftCardId: { type: String, trim: true },
