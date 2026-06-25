@@ -76,6 +76,9 @@ export class SquareCardService {
       const page = await client.cards.list({
         customerId,
         includeDisabled: false,
+        // Explicit: the v44 client serializes an omitted sortOrder as an empty
+        // string, which Square's API rejects (INVALID_ENUM_VALUE). Newest first.
+        sortOrder: "DESC",
       });
       for await (const card of page) {
         if (card.enabled === false) continue;
