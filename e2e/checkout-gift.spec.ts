@@ -32,7 +32,7 @@ test.describe("store checkout — gift shipping", () => {
     await expect(page.getByRole("heading", { name: "Shipping address" })).toBeVisible();
     await expect(page.getByText("Recipient First Name")).toHaveCount(0);
 
-    await page.getByRole("checkbox", { name: /this is a gift/i }).check();
+    await page.getByRole("checkbox", { name: /ship to a different address/i }).check();
 
     await expect(page.getByRole("heading", { name: "Ship to recipient" })).toBeVisible();
     await expect(page.getByText("Recipient First Name")).toBeVisible();
