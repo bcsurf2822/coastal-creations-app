@@ -7,6 +7,7 @@ import Calendar from "@/components/landing/Calendar";
 import ShopPreview from "@/components/landing/ShopPreview";
 import GiftCardBanner from "@/components/landing/GiftCardBanner";
 import SectionDivider from "@/components/landing/SectionDivider";
+import GoogleReviews from "@/components/landing/GoogleReviews";
 import PhotoCorral from "@/components/gallery/PhotoCorral";
 
 export const metadata: Metadata = {
@@ -30,6 +31,8 @@ export default function Home() {
         />
       </div>
       <PhotoCorral destination="home-page" />
+      <SectionDivider />
+      <GoogleReviews />
       <SectionDivider />
       <Offerings />
       <SectionDivider />
