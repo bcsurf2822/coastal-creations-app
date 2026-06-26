@@ -5,6 +5,7 @@ import MainSection from "@/components/landing/MainSection";
 import Offerings from "@/components/landing/Offerings";
 import Calendar from "@/components/landing/Calendar";
 import GiftCardBanner from "@/components/landing/GiftCardBanner";
+import GoogleReviews from "@/components/landing/GoogleReviews";
 import SectionDivider from "@/components/landing/SectionDivider";
 import PhotoCorral from "@/components/gallery/PhotoCorral";
 
@@ -33,6 +34,8 @@ export default function Home() {
       <Offerings />
       <SectionDivider />
       <GiftCardBanner />
+      <SectionDivider />
+      <GoogleReviews />
       <SectionDivider />
       <Calendar />
     </div>
