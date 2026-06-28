@@ -1,21 +1,22 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { isCheckoutRoute } from "@/lib/utils/isCheckoutRoute";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
-import NavRippleText from "./NavRippleText";
 import CartIcon from "@/components/store/CartIcon";
 import AccountNavLink from "@/components/authentication/AccountNavLink";
+import { useReservations } from "@/hooks/queries";
+import { Reservation } from "@/lib/types/reservationTypes";
 
 interface OfferDropdownItem {
   href: string;
   label: string;
 }
 
-const OFFER_DROPDOWN_ITEMS: OfferDropdownItem[] = [
+const BASE_OFFER_DROPDOWN_ITEMS: OfferDropdownItem[] = [
   { href: "/walk-in", label: "Walk Ins" },
   { href: "/events/classes-workshops", label: "Classes" },
   { href: "/events/private-events", label: "Private Events" },
@@ -24,6 +25,26 @@ const OFFER_DROPDOWN_ITEMS: OfferDropdownItem[] = [
 
 export default function NavBar() {
   const pathname = usePathname();
+  // Hide the "Reservations" entry when there are no active reservations to book
+  // (same future-end-date rule the reservations page uses).
+  const { data: reservationsData = [] } = useReservations();
+  const hasActiveReservations = useMemo(() => {
+    const now = new Date();
+    return (reservationsData as Reservation[]).some((reservation) => {
+      const endDate = reservation.dates.endDate
+        ? new Date(reservation.dates.endDate)
+        : new Date(reservation.dates.startDate);
+      return endDate >= now;
+    });
+  }, [reservationsData]);
+
+  const offerDropdownItems = useMemo(
+    () =>
+      BASE_OFFER_DROPDOWN_ITEMS.filter(
+        (item) => item.href !== "/reservations" || hasActiveReservations
+      ),
+    [hasActiveReservations]
+  );
   // Checkout-style pages render the nav in-flow (relative) instead of fixed, so the
   // sticky order summary isn't overlapped by the nav (see isCheckoutRoute).
   const isCheckout = isCheckoutRoute(pathname);
@@ -235,9 +256,9 @@ export default function NavBar() {
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/"
-                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] rounded-full px-3 py-1.5 transition-colors duration-300 hover:bg-[#0369a1]/10 hover:text-[#0369a1] lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
-                <NavRippleText text="Home" />
+                Home
               </Link>
             </motion.div>
 
@@ -246,8 +267,8 @@ export default function NavBar() {
               whileHover="hover"
               className="relative group"
             >
-              <div className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase flex items-center gap-1 cursor-pointer">
-                <NavRippleText text="What We Offer" />
+              <div className="nav-link text-[#0f172a] rounded-full px-3 py-1.5 transition-colors duration-300 hover:bg-[#0369a1]/10 hover:text-[#0369a1] lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase flex items-center gap-1 cursor-pointer">
+                What We Offer
                 <motion.svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="14"
@@ -267,7 +288,7 @@ export default function NavBar() {
               {/* Desktop Dropdown */}
               <div className="absolute top-full right-0 mt-2 w-56 bg-white/95 backdrop-blur-sm border border-gray-100 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
                 <div className="py-2">
-                  {OFFER_DROPDOWN_ITEMS.map((item) => (
+                  {offerDropdownItems.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
@@ -283,36 +304,36 @@ export default function NavBar() {
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/about"
-                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] rounded-full px-3 py-1.5 transition-colors duration-300 hover:bg-[#0369a1]/10 hover:text-[#0369a1] lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
-                <NavRippleText text="About" />
+                About
               </Link>
             </motion.div>
 
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
-                href="/store"
-                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+                href="/shop"
+                className="nav-link text-[#0f172a] rounded-full px-3 py-1.5 transition-colors duration-300 hover:bg-[#0369a1]/10 hover:text-[#0369a1] lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
-                <NavRippleText text="Shop" />
+                Shop
               </Link>
             </motion.div>
 
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/gallery"
-                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] rounded-full px-3 py-1.5 transition-colors duration-300 hover:bg-[#0369a1]/10 hover:text-[#0369a1] lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
-                <NavRippleText text="Gallery" />
+                Gallery
               </Link>
             </motion.div>
 
             <motion.div variants={itemVariants} whileHover="hover">
               <Link
                 href="/contact-us"
-                className="nav-link text-[#0f172a] relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-[#0369a1] after:transition-[width] after:duration-300 hover:after:w-full lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
+                className="nav-link text-[#0f172a] rounded-full px-3 py-1.5 transition-colors duration-300 hover:bg-[#0369a1]/10 hover:text-[#0369a1] lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase"
               >
-                <NavRippleText text="Contact" />
+                Contact
               </Link>
             </motion.div>
 
@@ -442,7 +463,7 @@ export default function NavBar() {
                         animate="visible"
                         exit="hidden"
                       >
-                        {OFFER_DROPDOWN_ITEMS.map((item) => (
+                        {offerDropdownItems.map((item) => (
                           <motion.div
                             key={item.href}
                             variants={itemVariants}
@@ -496,7 +517,7 @@ export default function NavBar() {
                   className="border-b border-gray-100 pb-2"
                 >
                   <Link
-                    href="/store"
+                    href="/shop"
                     className="text-[#0f172a] hover:text-[#0369a1] font-medium py-2 block uppercase"
                     onClick={() => setIsMenuOpen(false)}
                   >

@@ -22,6 +22,10 @@ export default function NewCalendar() {
   // Use refs for tooltip tracking so event listeners always see current values
   const activeTooltipRef = useRef<HTMLElement | null>(null);
   const tooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Hover-intent delay: only show a preview once the pointer rests on an event,
+  // so sweeping across stacked events doesn't spawn/flicker tooltips.
+  const tooltipShowTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const TOOLTIP_SHOW_DELAY_MS = 220;
   const [selectedEvent, setSelectedEvent] = useState<{
     title: string;
     eventType: string;
@@ -418,6 +422,9 @@ export default function NewCalendar() {
       if (tooltipTimeoutRef.current) {
         clearTimeout(tooltipTimeoutRef.current);
       }
+      if (tooltipShowTimeoutRef.current) {
+        clearTimeout(tooltipShowTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -437,9 +444,8 @@ export default function NewCalendar() {
         }}
         initialView="dayGridMonth"
         nowIndicator={true}
-        editable={true}
-        selectable={true}
-        selectMirror={true}
+        editable={false}
+        selectable={false}
         events={events}
         schedulerLicenseKey="CC-Attribution-NonCommercial-NoDerivatives"
         resources={calendarView.includes("resource") ? resources : undefined}
@@ -470,6 +476,10 @@ export default function NewCalendar() {
             clearTimeout(tooltipTimeoutRef.current);
             tooltipTimeoutRef.current = null;
           }
+          if (tooltipShowTimeoutRef.current) {
+            clearTimeout(tooltipShowTimeoutRef.current);
+            tooltipShowTimeoutRef.current = null;
+          }
           const props = info.event.extendedProps;
           const eventId = props?._id || "";
           const currentSignups = eventId
@@ -489,6 +499,16 @@ export default function NewCalendar() {
           });
         }}
         eventMouseEnter={(info) => {
+          // Only show hover previews on devices with a true hover-capable
+          // pointer (mouse). Touch devices use tap -> detail sheet, so a
+          // synthetic hover must never leave a stuck tooltip behind.
+          if (
+            typeof window !== "undefined" &&
+            window.matchMedia("(hover: none)").matches
+          ) {
+            return;
+          }
+
           // Remove any existing tooltip DOM element
           if (activeTooltipRef.current && document.body.contains(activeTooltipRef.current)) {
             document.body.removeChild(activeTooltipRef.current);
@@ -500,6 +520,18 @@ export default function NewCalendar() {
             clearTimeout(tooltipTimeoutRef.current);
             tooltipTimeoutRef.current = null;
           }
+
+          // Cancel a pending show from a previously-hovered event.
+          if (tooltipShowTimeoutRef.current) {
+            clearTimeout(tooltipShowTimeoutRef.current);
+            tooltipShowTimeoutRef.current = null;
+          }
+
+          // Hover-intent: only build + show the preview once the pointer has
+          // rested on this event for a beat. Quickly passing over neighbouring
+          // events is cancelled by eventMouseLeave before this fires.
+          tooltipShowTimeoutRef.current = setTimeout(() => {
+            tooltipShowTimeoutRef.current = null;
 
           // Create new tooltip
           const tooltip = document.createElement("div");
@@ -545,31 +577,15 @@ export default function NewCalendar() {
             tooltipContent += `<div class="tooltip-description">${info.event.extendedProps.description}</div>`;
           }
 
-          const isRecurring = info.event.extendedProps?.isRecurring;
-          const isFirstOccurrence = isRecurring
-            ? info.event.start &&
-              info.event.extendedProps?.originalStartDate &&
-              new Date(info.event.start).toDateString() ===
-                new Date(
-                  info.event.extendedProps.originalStartDate
-                ).toDateString()
-            : true;
-
-          // Don't show sign up button for artist events or if sold out
+          // The hover tooltip is a non-interactive PREVIEW only. The actual
+          // sign-up / sold-out CTA lives in the click-to-open detail sheet, so
+          // there is no fragile "move the mouse onto a hovering button" path.
           const maxParticipants = 20; // Default capacity
-          const isSoldOut = currentSignups >= maxParticipants;
-
-          if ((!isRecurring || isFirstOccurrence) && eventType !== "artist") {
-            if (isSoldOut) {
-              tooltipContent += `<div class="tooltip-soldout">
-                <div style="padding: 8px 16px; background: linear-gradient(135deg, #d32f2f, #f44336); color: white; border-radius: 4px; font-weight: bold; text-align: center; cursor: not-allowed;">Sold Out</div>
-              </div>`;
-            } else {
-              tooltipContent += `<div class="tooltip-signup">
-                <button id="signup-${info.event.extendedProps?._id || "event"}" type="button">Sign Up</button>
-              </div>`;
-            }
-          }
+          const isSoldOut =
+            eventType !== "artist" && currentSignups >= maxParticipants;
+          tooltipContent += `<div class="tooltip-hint">${
+            isSoldOut ? "Sold out" : "Click for details"
+          }</div>`;
 
           tooltip.innerHTML = tooltipContent;
 
@@ -632,80 +648,38 @@ export default function NewCalendar() {
             }
           }
 
-          // Apply positioning
+          // Apply positioning. pointer-events:none keeps the preview from ever
+          // intercepting the mouse, so moving toward / clicking the event below
+          // always works — no hover-bridge flicker.
           tooltip.style.position = "fixed";
           tooltip.style.left = left + "px";
           tooltip.style.top = top + "px";
           tooltip.style.transform = `translate(${transformX}, ${transformY})`;
           tooltip.style.zIndex = "99999";
           tooltip.style.display = "block";
+          tooltip.style.pointerEvents = "none";
 
           activeTooltipRef.current = tooltip;
-
-          // Add event listeners to the tooltip itself
-          tooltip.addEventListener("mouseenter", () => {
-            // If a hide timer was set by eventMouseLeave, cancel it because mouse is now over tooltip
-            if (tooltipTimeoutRef.current) {
-              clearTimeout(tooltipTimeoutRef.current);
-              tooltipTimeoutRef.current = null;
-            }
-          });
-
-          tooltip.addEventListener("mouseleave", () => {
-            // Mouse left the tooltip, so remove it
-            if (document.body.contains(tooltip)) {
-              document.body.removeChild(tooltip);
-            }
-            if (activeTooltipRef.current === tooltip) {
-              activeTooltipRef.current = null;
-            }
-            if (tooltipTimeoutRef.current) {
-              clearTimeout(tooltipTimeoutRef.current);
-              tooltipTimeoutRef.current = null;
-            }
-          });
-
-          // Add event listener for the signup button
-          setTimeout(() => {
-            const signupButton = document.getElementById(
-              `signup-${info.event.extendedProps?._id || "event"}`
-            );
-            if (signupButton) {
-              signupButton.addEventListener("click", (e) => {
-                e.stopPropagation();
-                navigateToPayment(
-                  info.event.extendedProps?._id || "unknown",
-                  info.event.title,
-                  info.event.extendedProps?.price,
-                  info.event.extendedProps?.isFree
-                );
-              });
-            }
-          }, 0);
+          }, TOOLTIP_SHOW_DELAY_MS);
         }}
-        eventMouseLeave={(leaveInfo) => {
-          const relatedTarget = leaveInfo.jsEvent.relatedTarget as Node | null;
-
+        eventMouseLeave={() => {
+          // Cancel a not-yet-shown preview (the pointer was just passing over).
+          if (tooltipShowTimeoutRef.current) {
+            clearTimeout(tooltipShowTimeoutRef.current);
+            tooltipShowTimeoutRef.current = null;
+          }
+          // Pure preview — remove it as soon as the pointer leaves the event.
+          if (tooltipTimeoutRef.current) {
+            clearTimeout(tooltipTimeoutRef.current);
+            tooltipTimeoutRef.current = null;
+          }
           if (
             activeTooltipRef.current &&
-            relatedTarget &&
-            (activeTooltipRef.current === relatedTarget ||
-              activeTooltipRef.current.contains(relatedTarget))
+            document.body.contains(activeTooltipRef.current)
           ) {
-            if (tooltipTimeoutRef.current) {
-              clearTimeout(tooltipTimeoutRef.current);
-              tooltipTimeoutRef.current = null;
-            }
-            return;
+            document.body.removeChild(activeTooltipRef.current);
           }
-
-          tooltipTimeoutRef.current = setTimeout(() => {
-            if (activeTooltipRef.current && document.body.contains(activeTooltipRef.current)) {
-              document.body.removeChild(activeTooltipRef.current);
-              activeTooltipRef.current = null;
-            }
-            tooltipTimeoutRef.current = null;
-          }, 400);
+          activeTooltipRef.current = null;
         }}
         eventDidMount={(info) => {
           // Set event color based on event type

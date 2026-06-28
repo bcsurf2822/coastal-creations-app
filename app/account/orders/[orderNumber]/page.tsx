@@ -1,26 +1,11 @@
 import type { ReactElement } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Truck } from "lucide-react";
+import { RiArrowLeftLine, RiTruckLine } from "react-icons/ri";
 import { requireUserPage } from "@/lib/auth/guards";
 import { getMyOrderByNumber } from "@/lib/account/queries";
 import { formatCents } from "@/lib/utils/moneyHelpers";
 import OrderStatusBadge from "@/components/account/OrderStatusBadge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/shadcn/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/shadcn/table";
-import { Separator } from "@/components/ui/shadcn/separator";
 
 export default async function OrderDetailPage({
   params,
@@ -29,7 +14,7 @@ export default async function OrderDetailPage({
 }): Promise<ReactElement> {
   const user = await requireUserPage();
   const { orderNumber } = await params;
-  const order = await getMyOrderByNumber(user.email, orderNumber);
+  const order = await getMyOrderByNumber(user.email, orderNumber, user.id);
   if (!order) notFound();
 
   const address = order.shippingAddress;
@@ -37,116 +22,138 @@ export default async function OrderDetailPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <Link
-          href="/account/orders"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="size-4" /> Back to orders
-        </Link>
-      </div>
+      <Link
+        href="/account/orders"
+        className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800"
+      >
+        <RiArrowLeftLine className="w-4 h-4" /> Back to orders
+      </Link>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold">Order {order.orderNumber}</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-xl font-bold text-gray-800">
+            Order {order.orderNumber}
+          </h1>
+          <p className="text-sm text-gray-500">
             Placed {new Date(order.createdAt).toLocaleDateString()}
           </p>
         </div>
         <OrderStatusBadge status={order.status} />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Items</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Item</TableHead>
-                <TableHead className="text-center">Qty</TableHead>
-                <TableHead className="text-right">Unit price</TableHead>
-                <TableHead className="text-right">Line total</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+      <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-200">
+          <h2 className="text-base font-semibold text-gray-800">Items</h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+              <tr>
+                <th className="px-5 py-3">Item</th>
+                <th className="px-5 py-3 text-center">Qty</th>
+                <th className="px-5 py-3 text-right">Unit price</th>
+                <th className="px-5 py-3 text-right">Line total</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
               {order.items.map((item, index) => (
-                <TableRow key={`${item.name}-${index}`}>
-                  <TableCell>
-                    <div className="font-medium">{item.name}</div>
+                <tr key={`${item.name}-${index}`}>
+                  <td className="px-5 py-3">
+                    <div className="font-medium text-gray-800">
+                      {item.name}
+                    </div>
                     {item.variationName ? (
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-sm text-gray-500">
                         {item.variationName}
                       </div>
                     ) : null}
-                  </TableCell>
-                  <TableCell className="text-center">{item.quantity}</TableCell>
-                  <TableCell className="text-right">
+                  </td>
+                  <td className="px-5 py-3 text-center text-gray-600">
+                    {item.quantity}
+                  </td>
+                  <td className="px-5 py-3 text-right text-gray-600">
                     {formatCents(item.unitPriceCents)}
-                  </TableCell>
-                  <TableCell className="text-right">
+                  </td>
+                  <td className="px-5 py-3 text-right text-gray-800">
                     {formatCents(item.unitPriceCents * item.quantity)}
-                  </TableCell>
-                </TableRow>
+                  </td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
+            </tbody>
+          </table>
+        </div>
 
-          <Separator className="my-4" />
-
+        <div className="border-t border-gray-200 px-5 py-4">
           <div className="ml-auto max-w-xs space-y-1 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Subtotal</span>
-              <span>{formatCents(order.subtotalCents)}</span>
+              <span className="text-gray-500">Subtotal</span>
+              <span className="text-gray-800">
+                {formatCents(order.subtotalCents)}
+              </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Shipping</span>
-              <span>{formatCents(order.shippingCents)}</span>
+              <span className="text-gray-500">Shipping</span>
+              <span className="text-gray-800">
+                {formatCents(order.shippingCents)}
+              </span>
             </div>
-            <div className="flex justify-between font-semibold">
+            <div className="flex justify-between border-t border-gray-200 pt-1 font-semibold text-gray-900">
               <span>Total</span>
               <span>{formatCents(order.totalCents)}</span>
             </div>
           </div>
-        </CardContent>
-      </Card>
+          {order.square?.receiptUrl && (
+            <div className="ml-auto mt-3 max-w-xs">
+              <a
+                href={order.square.receiptUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full text-center px-4 py-2 border border-sky-200 text-sky-700 font-medium rounded-lg text-sm hover:bg-sky-50 transition-colors"
+              >
+                View Square Receipt
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Shipping address</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            <p className="font-medium text-foreground">{address.name}</p>
+        <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-200">
+            <h2 className="text-base font-semibold text-gray-800">
+              Shipping address
+            </h2>
+          </div>
+          <div className="px-5 py-4 text-sm text-gray-600">
+            <p className="font-medium text-gray-800">{address.name}</p>
             <p>{address.addressLine1}</p>
             {address.addressLine2 ? <p>{address.addressLine2}</p> : null}
             <p>
               {address.city}, {address.stateProvince} {address.postalCode}
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Truck className="size-4" /> Tracking
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm">
+        <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-200">
+            <h2 className="flex items-center gap-2 text-base font-semibold text-gray-800">
+              <RiTruckLine className="w-4 h-4" /> Tracking
+            </h2>
+          </div>
+          <div className="px-5 py-4 text-sm">
             {tracking?.trackingNumber ? (
               <div className="space-y-1">
                 {tracking.carrier ? (
-                  <p className="text-muted-foreground">
+                  <p className="text-gray-500">
                     Carrier:{" "}
-                    <span className="font-medium uppercase text-foreground">
+                    <span className="font-medium uppercase text-gray-800">
                       {tracking.carrier}
                     </span>
                   </p>
                 ) : null}
-                <p className="text-muted-foreground">
+                <p className="text-gray-500">
                   Tracking #:{" "}
-                  <span className="font-medium text-foreground">
+                  <span className="font-medium text-gray-800">
                     {tracking.trackingNumber}
                   </span>
                 </p>
@@ -155,19 +162,17 @@ export default async function OrderDetailPage({
                     href={tracking.trackingUrlProvider}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-block pt-1 text-primary hover:underline"
+                    className="inline-block pt-1 text-blue-600 hover:underline"
                   >
                     Track package
                   </a>
                 ) : null}
               </div>
             ) : (
-              <p className="text-muted-foreground">
-                No tracking information yet.
-              </p>
+              <p className="text-gray-500">No tracking information yet.</p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

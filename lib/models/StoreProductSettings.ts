@@ -36,7 +36,7 @@ export interface IStoreProductSettings extends Document {
   isOnlineSellable: boolean; // THE Shop visibility flag
   parcelPreset: ParcelPreset; // default MEDIUM (5lb)
   shipping?: IProductShipping; // optional exact override of the preset
-  slug?: string; // optional pretty URL for /store/[slug]
+  slug?: string; // optional pretty URL for /shop/[slug]
   displayOrder?: number; // optional manual sort within the Shop
   createdAt: Date;
   updatedAt: Date;

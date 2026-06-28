@@ -36,6 +36,7 @@ const mockProduct: StoreProduct = {
   priceRange: { minCents: 2400, maxCents: 2400 },
   hasMultipleVariations: false,
   availability: "available",
+  availabilityLabel: null,
   displayOrder: 0,
   images: [],
   variations: [mockVariation],

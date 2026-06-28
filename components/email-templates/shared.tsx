@@ -11,7 +11,15 @@ import {
   Link,
   Img,
   Hr,
+  Button,
 } from "@react-email/components";
+
+/**
+ * The studio's public contact address. Single source of truth so templates stop
+ * hardcoding it. STUDIO_EMAIL in prod; a sensible fallback otherwise.
+ */
+export const getStudioEmail = (): string =>
+  process.env.STUDIO_EMAIL || "ashley@coastalcreationsstudio.com";
 
 /**
  * Shared email design system for Coastal Creations transactional emails.
@@ -148,8 +156,35 @@ export const CardText = ({ children }: { children: React.ReactNode }) => (
   </tr>
 );
 
+/**
+ * "View Square Receipt" link button — a subtle outlined CTA so it never competes
+ * with a primary action. Renders nothing when no receipt URL is available.
+ */
+export const ReceiptButton = ({ href }: { href?: string }) => {
+  if (!href) return null;
+  return (
+    <Button
+      href={href}
+      style={{
+        display: "inline-block",
+        border: `1px solid ${c.lightBorder}`,
+        color: c.secondary,
+        backgroundColor: c.white,
+        fontSize: "14px",
+        fontWeight: 600,
+        padding: "10px 22px",
+        borderRadius: "8px",
+        textDecoration: "none",
+        margin: "0 0 16px",
+      }}
+    >
+      View Square Receipt
+    </Button>
+  );
+};
+
 export const EmailFooter = () => {
-  const studioEmail = process.env.STUDIO_EMAIL || "info@coastalcreationsstudio.com";
+  const studioEmail = getStudioEmail();
   return (
     <Section style={footer.wrap}>
       <Hr style={footer.rule} />

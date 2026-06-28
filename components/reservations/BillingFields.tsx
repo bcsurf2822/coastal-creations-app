@@ -2,6 +2,7 @@
 
 import { ReactElement, ChangeEvent } from "react";
 import { BillingInfo } from "./types";
+import { isValidEmail } from "@/lib/utils/validation";
 
 interface BillingFieldsProps {
   billingInfo: BillingInfo;
@@ -10,7 +11,6 @@ interface BillingFieldsProps {
   ) => void;
 }
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_REGEX = /^[\d\s\-\+\(\)]+$/;
 
 export default function BillingFields({
@@ -18,7 +18,7 @@ export default function BillingFields({
   onInputChange,
 }: BillingFieldsProps): ReactElement {
   const validateEmail = (email: string): boolean => {
-    return EMAIL_REGEX.test(email);
+    return isValidEmail(email);
   };
 
   const validatePhone = (phone: string): boolean => {

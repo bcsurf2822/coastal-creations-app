@@ -1,7 +1,5 @@
 import type { ReactElement } from "react";
-import { Badge } from "@/components/ui/shadcn/badge";
 import type { IOrder } from "@/lib/models/Order";
-import { cn } from "@/lib/shadcn/utils";
 
 interface OrderStatusBadgeProps {
   status: IOrder["status"];
@@ -23,12 +21,11 @@ function humanize(status: IOrder["status"]): string {
 
 const OrderStatusBadge = ({ status }: OrderStatusBadgeProps): ReactElement => {
   return (
-    <Badge
-      variant="outline"
-      className={cn("capitalize", STATUS_STYLES[status])}
+    <span
+      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${STATUS_STYLES[status]}`}
     >
       {humanize(status)}
-    </Badge>
+    </span>
   );
 };
 

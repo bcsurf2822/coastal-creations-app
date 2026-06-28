@@ -90,7 +90,7 @@ export default function CartDrawer(): ReactElement {
                   <p className="text-[var(--color-text-subtle)]">
                     Your cart is empty.
                   </p>
-                  <Link href="/store" onClick={closeDrawer}>
+                  <Link href="/shop" onClick={closeDrawer}>
                     <Button variant="secondary" size="sm">
                       Continue Shopping
                     </Button>

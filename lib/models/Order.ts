@@ -40,6 +40,21 @@ export interface IOrderItem {
   selectedOptions?: IOrderSelectedOption[];
   quantity: number;
   unitPriceCents: number; // price at time of purchase
+  refundedQuantity?: number; // cumulative units refunded across all refund events (default 0)
+}
+
+// A single refund event against the order (item-level, no shipping). Stored as a
+// log so multiple partial refunds over time keep a full audit trail.
+export interface IOrderRefund {
+  squareRefundId?: string; // Square PaymentRefund id
+  amountCents: number; // amount refunded in this event
+  reason?: string;
+  items: Array<{
+    squareVariationId: string;
+    name: string;
+    quantity: number; // units refunded for this line in this event
+  }>;
+  createdAt: Date;
 }
 
 // Shipping / billing address. Shape aligns with the Shippo address object.
@@ -57,6 +72,10 @@ export interface IOrderAddress {
 
 export interface IOrder extends Document {
   orderNumber: string; // human-friendly, unique (e.g. "CC-LXYZ-4821")
+  // Durable link to the authenticated user who placed this order, when signed in.
+  // Guest orders have none — they are still reconciled to a user by email at read
+  // time (see lib/account/queries.ts). Stamped at checkout from the session.
+  userId?: mongoose.Types.ObjectId;
   items: IOrderItem[];
   subtotalCents: number;
   shippingCents: number;
@@ -74,6 +93,7 @@ export interface IOrder extends Document {
     paymentId?: string;
     orderId?: string;
     customerId?: string;
+    receiptUrl?: string; // Square-hosted payment receipt
   };
   /** A gift card redeemed against this order (amount in cents). */
   giftCard?: {
@@ -94,6 +114,7 @@ export interface IOrder extends Document {
   refundStatus: OrderRefundStatus;
   refundAmountCents?: number;
   refundedAt?: Date;
+  refunds?: IOrderRefund[]; // per-event refund log (item-level)
   shippedAt?: Date;
   deliveredAt?: Date;
   createdAt: Date;
@@ -117,6 +138,30 @@ const OrderItemSchema = new Schema<IOrderItem>(
     selectedOptions: { type: [SelectedOptionSchema], default: [] },
     quantity: { type: Number, required: true, min: 1, default: 1 },
     unitPriceCents: { type: Number, required: true, min: 0 },
+    refundedQuantity: { type: Number, min: 0, default: 0 },
+  },
+  { _id: false }
+);
+
+const OrderRefundSchema = new Schema<IOrderRefund>(
+  {
+    squareRefundId: { type: String, trim: true },
+    amountCents: { type: Number, required: true, min: 0 },
+    reason: { type: String, trim: true },
+    items: {
+      type: [
+        new Schema(
+          {
+            squareVariationId: { type: String, required: true, trim: true },
+            name: { type: String, required: true, trim: true },
+            quantity: { type: Number, required: true, min: 1 },
+          },
+          { _id: false }
+        ),
+      ],
+      default: [],
+    },
+    createdAt: { type: Date, default: Date.now },
   },
   { _id: false }
 );
@@ -144,6 +189,11 @@ const OrderSchema = new Schema<IOrder>(
       unique: true,
       trim: true,
     },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: false,
+    },
     items: {
       type: [OrderItemSchema],
       required: true,
@@ -168,6 +218,7 @@ const OrderSchema = new Schema<IOrder>(
       paymentId: { type: String, trim: true },
       orderId: { type: String, trim: true },
       customerId: { type: String, trim: true },
+      receiptUrl: { type: String, trim: true },
     },
     giftCard: {
       giftCardId: { type: String, trim: true },
@@ -205,6 +256,7 @@ const OrderSchema = new Schema<IOrder>(
     },
     refundAmountCents: { type: Number, min: 0, default: 0 },
     refundedAt: { type: Date },
+    refunds: { type: [OrderRefundSchema], default: [] },
     shippedAt: { type: Date },
     deliveredAt: { type: Date },
   },
@@ -227,6 +279,7 @@ OrderSchema.pre("validate", function (next) {
 // Indexes for the admin Sales page + Shipments tracker queries.
 OrderSchema.index({ status: 1, createdAt: -1 });
 OrderSchema.index({ "customer.email": 1, createdAt: -1 });
+OrderSchema.index({ userId: 1, createdAt: -1 });
 OrderSchema.index({ "square.paymentId": 1 });
 OrderSchema.index({ "shippo.trackingNumber": 1 });
 

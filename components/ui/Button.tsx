@@ -13,7 +13,7 @@ const variantClasses = {
   secondary: 'bg-white text-[var(--color-primary)] border-2 border-[var(--color-primary)] hover:bg-[var(--color-light)]',
   ghost: 'bg-transparent text-[var(--color-primary)] border-transparent hover:bg-[var(--color-light)]',
   destructive: 'bg-[var(--color-error-dark)] text-white border-transparent hover:bg-[#b91c1c]',
-  pill: 'bg-white text-[var(--color-primary)] border-2 border-[var(--color-primary)]/40 rounded-full hover:bg-[var(--color-light)]',
+  pill: 'paint-pill bg-transparent text-[var(--color-primary)] border-transparent rounded-full font-semibold',
 };
 
 const sizeClasses = {

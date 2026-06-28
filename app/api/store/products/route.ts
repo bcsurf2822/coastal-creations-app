@@ -4,7 +4,6 @@ import StoreProductSettings from "@/lib/models/StoreProductSettings";
 import { listCatalogItems, getInventoryCounts } from "@/lib/square/catalog";
 import {
   isSellablePhysicalGood,
-  isInOnlineSalesCategory,
   toStoreProductSummary,
 } from "@/lib/utils/catalogHelpers";
 import type { StoreProductSummary } from "@/lib/types/storeTypes";
@@ -12,14 +11,12 @@ import type { IStoreProductSettings } from "@/lib/models/StoreProductSettings";
 
 export async function GET(): Promise<Response> {
   try {
-    // Shop visibility is driven entirely by Square: an item appears online when the
-    // merchant adds it to an "Online Sales …" category in the Square dashboard. No
-    // app-side toggle. StoreProductSettings is now only an OPTIONAL layer for parcel
-    // size / slug / display order overrides.
+    // Shop shows the full Square inventory: every REGULAR, non-archived physical good
+    // at the location. The previous "Online Sales …" category gate was removed so the
+    // client sees a realistic view of all products. StoreProductSettings remains an
+    // OPTIONAL layer for parcel size / slug / display order overrides.
     const allItems = await listCatalogItems();
-    const items = allItems.filter(
-      (item) => isSellablePhysicalGood(item) && isInOnlineSalesCategory(item)
-    );
+    const items = allItems.filter((item) => isSellablePhysicalGood(item));
 
     if (items.length === 0) {
       return NextResponse.json({ success: true, products: [] });

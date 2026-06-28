@@ -93,6 +93,11 @@ export default function ContactForm({
             disabled={disabled}
             onChange={(e) => onChange("email", e.target.value)}
           />
+          {errors?.email && (
+            <p className="mt-1 text-sm text-[var(--color-error)]">
+              Enter a valid email address.
+            </p>
+          )}
         </div>
         <div>
           <Label htmlFor="contact-phone" required>
