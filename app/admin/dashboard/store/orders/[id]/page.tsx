@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import type { ReactElement } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import OrderRefundModal from "@/components/dashboard/store/OrderRefundModal";
 
 // How often the page re-pulls the order so webhook-driven status changes
 // (shipped / delivered) appear without a manual refresh.
@@ -20,15 +21,25 @@ type OrderStatus =
   | "pending" | "paid" | "label_created" | "shipped"
   | "delivered" | "cancelled" | "refunded";
 
+type OrderRefundEntry = {
+  squareRefundId?: string;
+  amountCents: number;
+  reason?: string;
+  items: Array<{ name: string; quantity: number }>;
+  createdAt: string;
+};
+
 type OrderDetail = {
   _id: string;
   orderNumber: string;
   status: OrderStatus;
   items: Array<{
+    squareVariationId: string;
     name: string;
     variationName?: string;
     quantity: number;
     unitPriceCents: number;
+    refundedQuantity?: number;
   }>;
   subtotalCents: number;
   shippingCents: number;
@@ -45,6 +56,10 @@ type OrderDetail = {
     country: string;
   };
   square: { paymentId?: string };
+  giftCard?: { giftCardId?: string; amountCents?: number };
+  refundStatus?: "none" | "partial" | "full";
+  refundAmountCents?: number;
+  refunds?: OrderRefundEntry[];
   shippo: { trackingNumber?: string; carrier?: string; labelUrl?: string; trackingUrlProvider?: string };
   createdAt: string;
 };
@@ -73,6 +88,7 @@ export default function OrderDetailPage(): ReactElement {
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
   const [creatingLabel, setCreatingLabel] = useState(false);
+  const [refundModalOpen, setRefundModalOpen] = useState(false);
 
   // Track in-flight admin actions so a background poll can't clobber an
   // optimistic update mid-request.
@@ -179,6 +195,11 @@ export default function OrderDetailPage(): ReactElement {
   if (!order) return <div className="p-6 text-gray-500">Order not found.</div>;
 
   const fmt = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+
+  const giftCardUsed = !!order.giftCard?.giftCardId;
+  const hasPayment = !!order.square.paymentId;
+  const fullyRefunded = order.refundStatus === "full";
+  const refundedCents = order.refundAmountCents ?? 0;
 
   return (
     <div className="p-6 max-w-4xl">
@@ -318,6 +339,77 @@ export default function OrderDetailPage(): ReactElement {
           )}
         </div>
       </div>
+
+      {/* Refunds */}
+      <div className="bg-white rounded-lg shadow p-4 mt-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+            Refunds
+          </h2>
+          {hasPayment && !giftCardUsed && (
+            <button
+              onClick={() => setRefundModalOpen(true)}
+              disabled={fullyRefunded}
+              className="px-3 py-1.5 bg-red-500 text-white text-sm font-medium rounded-md hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {fullyRefunded ? "Fully refunded" : "Issue Refund"}
+            </button>
+          )}
+        </div>
+
+        {giftCardUsed ? (
+          <p className="text-sm text-gray-500">
+            This order used a gift card — refund it manually in Square. Automated
+            gift-card refunds aren&apos;t supported here.
+          </p>
+        ) : !hasPayment ? (
+          <p className="text-sm text-gray-400">
+            No payment ID on this order — nothing to refund.
+          </p>
+        ) : refundedCents > 0 ? (
+          <div className="space-y-2">
+            <p className="text-sm text-gray-700">
+              <span className="font-medium capitalize">{order.refundStatus}</span>{" "}
+              refund — {fmt(refundedCents)} of {fmt(order.totalCents)} refunded
+            </p>
+            <ul className="divide-y divide-gray-100 border-t border-gray-100">
+              {(order.refunds ?? []).map((r, i) => (
+                <li key={i} className="py-2 text-sm text-gray-600">
+                  <div className="flex justify-between">
+                    <span>{new Date(r.createdAt).toLocaleDateString()}</span>
+                    <span className="font-medium text-gray-800">{fmt(r.amountCents)}</span>
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {r.items.map((it) => `${it.quantity}× ${it.name}`).join(", ")}
+                    {r.reason ? ` — ${r.reason}` : ""}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-400">No refunds issued.</p>
+        )}
+      </div>
+
+      {refundModalOpen && (
+        <OrderRefundModal
+          orderId={order._id}
+          items={order.items.map((it) => ({
+            squareVariationId: it.squareVariationId,
+            name: it.name,
+            variationName: it.variationName,
+            quantity: it.quantity,
+            unitPriceCents: it.unitPriceCents,
+            refundedQuantity: it.refundedQuantity,
+          }))}
+          onClose={() => setRefundModalOpen(false)}
+          onRefunded={() => {
+            setRefundModalOpen(false);
+            fetchOrder();
+          }}
+        />
+      )}
     </div>
   );
 }

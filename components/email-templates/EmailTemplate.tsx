@@ -1,6 +1,12 @@
 import * as React from "react";
 import { Text } from "@react-email/components";
-import { EmailShell, InfoCard, DetailRow, emailText } from "./shared";
+import {
+  EmailShell,
+  InfoCard,
+  DetailRow,
+  emailText,
+  getStudioEmail,
+} from "./shared";
 
 interface EmailTemplateProps {
   firstName: string;
@@ -9,8 +15,7 @@ interface EmailTemplateProps {
 export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
   firstName,
 }) => {
-  const studioEmail =
-    process.env.STUDIO_EMAIL || "info@coastalcreationsstudio.com";
+  const studioEmail = getStudioEmail();
   return (
     <EmailShell preview={`Welcome to Coastal Creations Studio, ${firstName}`}>
       <Text style={emailText.heroTitle}>Welcome, {firstName}!</Text>

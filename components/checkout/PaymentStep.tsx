@@ -38,6 +38,34 @@ const PaymentFormSkeleton = (): ReactElement => (
   </div>
 );
 
+/**
+ * Buyer billing details for Strong Customer Authentication (SCA). All fields are
+ * optional — Square verifies more successfully with more data, but we only ever
+ * pass what we already collect (never a new billing-address form). The card iframe
+ * still captures the postal code for AVS independently.
+ */
+export interface PaymentBillingContact {
+  givenName?: string;
+  familyName?: string;
+  email?: string;
+  phone?: string;
+  addressLines?: string[];
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  countryCode?: string;
+}
+
+/**
+ * Opt-in SCA config. When provided, the card is tokenized WITH verification
+ * details (Square's recommended path — `tokenize()` handles 3DS automatically and
+ * returns a verificationToken). Omit it to tokenize without verification.
+ */
+export interface PaymentVerification {
+  intent: "CHARGE" | "STORE";
+  billingContact: PaymentBillingContact;
+}
+
 interface PaymentStepProps {
   applicationId: string;
   locationId: string;
@@ -49,10 +77,18 @@ interface PaymentStepProps {
   amountDollars: string | null;
   /** Card form is dimmed + non-interactive until true (e.g. contact complete). */
   ready: boolean;
-  onToken: (token: string) => Promise<void>;
+  /**
+   * Receives the card token, plus a verificationToken when `verification` is set
+   * (forward it to payments.create / cards.create for SCA).
+   */
+  onToken: (token: string, verificationToken?: string) => Promise<void>;
   isProcessing: boolean;
   error: string | null;
   processingLabel?: string;
+  /** Optional SCA verification (CHARGE for payments, STORE for saving a card). */
+  verification?: PaymentVerification;
+  /** Override the submit button label (e.g. "Save card"); defaults to Pay/$amount. */
+  submitLabel?: string;
 }
 
 /**
@@ -71,6 +107,8 @@ export default function PaymentStep({
   isProcessing,
   error,
   processingLabel = "Processing…",
+  verification,
+  submitLabel,
 }: PaymentStepProps): ReactElement {
   // The Square SDK re-initializes (re-injecting the card iframe → duplicate forms)
   // whenever createPaymentRequest / cardTokenizeResponseReceived change identity.
@@ -78,10 +116,12 @@ export default function PaymentStep({
   const readyRef = useRef(ready);
   const amountRef = useRef(amountDollars);
   const onTokenRef = useRef(onToken);
+  const verificationRef = useRef(verification);
   useEffect(() => {
     readyRef.current = ready;
     amountRef.current = amountDollars;
     onTokenRef.current = onToken;
+    verificationRef.current = verification;
   });
 
   const createPaymentRequest = useCallback(
@@ -93,11 +133,30 @@ export default function PaymentStep({
     []
   );
 
+  // SCA verification details (stable identity). Built from the latest verification
+  // config at call time; returns CHARGE (with amount) or STORE shape.
+  const createVerificationDetails = useCallback(() => {
+    const v = verificationRef.current;
+    const billingContact = v?.billingContact ?? {};
+    if (v?.intent === "STORE") {
+      return { intent: "STORE" as const, billingContact };
+    }
+    return {
+      intent: "CHARGE" as const,
+      amount: amountRef.current ?? "0",
+      currencyCode: "USD",
+      billingContact,
+    };
+  }, []);
+
   const cardTokenizeResponseReceived = useCallback(
-    async (token: { status: string; token?: string }) => {
+    async (
+      token: { status: string; token?: string },
+      verifiedBuyer?: { token: string } | null
+    ) => {
       if (!readyRef.current) return; // never tokenize before prerequisites are met
       if (token.status === "OK" && token.token) {
-        await onTokenRef.current(token.token);
+        await onTokenRef.current(token.token, verifiedBuyer?.token);
       }
     },
     []
@@ -127,12 +186,16 @@ export default function PaymentStep({
                 applicationId={applicationId}
                 locationId={locationId}
                 createPaymentRequest={createPaymentRequest}
+                createVerificationDetails={
+                  verification ? createVerificationDetails : undefined
+                }
                 cardTokenizeResponseReceived={cardTokenizeResponseReceived}
               >
                 <DynamicCreditCard
                   render={(Button) => (
                     <Button isLoading={isProcessing}>
-                      {amountDollars ? `Pay $${amountDollars}` : "Pay"}
+                      {submitLabel ??
+                        (amountDollars ? `Pay $${amountDollars}` : "Pay")}
                     </Button>
                   )}
                 />

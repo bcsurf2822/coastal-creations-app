@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/shadcn/card";
 import { Button } from "@/components/ui/shadcn/button";
 import { Input } from "@/components/ui/shadcn/input";
+import { isValidEmail } from "@/lib/utils/validation";
 
 /**
  * Customer sign-in: Google OAuth + passwordless magic link (Resend).
@@ -26,6 +27,10 @@ export default function LoginForm(): ReactElement {
   const handleMagicLink = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     if (!email) return;
+    if (!isValidEmail(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {

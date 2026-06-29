@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import PageHeader from "@/components/classes/PageHeader";
 import Store from "@/components/store/Store";
 import StoreCartButton from "@/components/store/StoreCartButton";
+import ShopGiftCardCTA from "@/components/store/ShopGiftCardCTA";
 import { FaShoppingBag } from "react-icons/fa";
 import { GiPaintBrush } from "react-icons/gi";
 
@@ -21,6 +22,7 @@ export default function StorePage(): ReactElement {
         rightIcon={<GiPaintBrush />}
       />
       <Store />
+      <ShopGiftCardCTA />
       {/* Store-only: keep the cart reachable at all times while shopping. */}
       <StoreCartButton />
     </div>

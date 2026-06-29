@@ -1,7 +1,8 @@
 import { Metadata } from "next";
 import { ReactElement } from "react";
-import GiftCardPurchase from "@/components/gift-cards/GiftCardPurchase";
 import Link from "next/link";
+import { RiWallet3Line } from "react-icons/ri";
+import GiftCardPurchase from "@/components/gift-cards/GiftCardPurchase";
 
 export const metadata: Metadata = {
   title: "Purchase Gift Card",
@@ -9,74 +10,77 @@ export const metadata: Metadata = {
     "Give the gift of creativity! Purchase a digital gift card for Coastal Creations Studio.",
 };
 
+const STEPS = [
+  {
+    n: 1,
+    title: "Purchase",
+    body: "Choose an amount and enter the recipient's details. Pay securely with any card.",
+  },
+  {
+    n: 2,
+    title: "Deliver",
+    body: "The gift card is instantly emailed to the recipient with a unique code.",
+  },
+  {
+    n: 3,
+    title: "Redeem",
+    body: "Use the gift card code at checkout for any class, camp, or event.",
+  },
+];
+
 export default function GiftCardsPage(): ReactElement {
   return (
     <div className="min-h-screen py-12">
       <div className="container mx-auto px-4">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-800 mb-4">Gift Cards</h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">Our gift cards can be used for classes,
-            camps, workshops, and private events at Coastal Creations Studio.
-          </p>
-        </div>
-
-        {/* Gift Card Purchase Component */}
-        <GiftCardPurchase />
-
-        {/* Already have a gift card? */}
-        <div className="mt-12 text-center">
-          <p className="text-gray-600 mb-2">Already have a gift card?</p>
+        <header className="max-w-5xl mx-auto mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">Gift Cards</h1>
+            <p className="mt-1 max-w-xl text-gray-600">
+              Give the gift of creativity — redeemable for classes, camps,
+              workshops, and private events at Coastal Creations Studio.
+            </p>
+          </div>
           <Link
             href="/gift-cards/balance"
-            className="text-primary hover:underline font-medium"
+            className="inline-flex items-center gap-2 self-start rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 sm:self-auto"
           >
-            Check Your Balance
+            <RiWallet3Line className="h-4 w-4" />
+            Check your balance
           </Link>
-        </div>
+        </header>
 
-        {/* Info Section */}
-        <div className="mt-16 max-w-3xl mx-auto">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-            How Gift Cards Work
+        {/* Purchase */}
+        <GiftCardPurchase />
+
+        {/* How it works */}
+        <section className="mx-auto mt-14 max-w-5xl">
+          <h2 className="mb-6 text-center text-xl font-bold text-gray-800">
+            How gift cards work
           </h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-xl p-6 shadow-md text-center">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-primary">1</span>
+          <div className="grid gap-6 md:grid-cols-3">
+            {STEPS.map((step) => (
+              <div
+                key={step.n}
+                className="rounded-xl border border-gray-100 bg-white p-6 text-center shadow-sm"
+              >
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                  <span className="text-2xl font-bold text-primary">
+                    {step.n}
+                  </span>
+                </div>
+                <h3 className="mb-2 font-semibold text-gray-800">
+                  {step.title}
+                </h3>
+                <p className="text-sm text-gray-600">{step.body}</p>
               </div>
-              <h3 className="font-semibold text-gray-800 mb-2">Purchase</h3>
-              <p className="text-gray-600 text-sm">
-                Choose an amount and enter the recipient&apos;s details. Pay
-                securely with any card.
-              </p>
-            </div>
-            <div className="bg-white rounded-xl p-6 shadow-md text-center">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-primary">2</span>
-              </div>
-              <h3 className="font-semibold text-gray-800 mb-2">Deliver</h3>
-              <p className="text-gray-600 text-sm">
-                The gift card is instantly emailed to the recipient with a
-                unique code.
-              </p>
-            </div>
-            <div className="bg-white rounded-xl p-6 shadow-md text-center">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-primary">3</span>
-              </div>
-              <h3 className="font-semibold text-gray-800 mb-2">Redeem</h3>
-              <p className="text-gray-600 text-sm">
-                Use the gift card code at checkout for any class, camp, or
-                event.
-              </p>
-            </div>
+            ))}
           </div>
           <p className="mt-8 text-center text-sm text-gray-500">
             Gift cards never expire and can be used across multiple purchases
             until the balance is exhausted.
           </p>
-        </div>
+        </section>
       </div>
     </div>
   );

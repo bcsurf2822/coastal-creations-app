@@ -207,6 +207,46 @@ html {
   }
 }
 
+/* ── Paint-splatter pill buttons ─────────────────────────────────────────────
+   Keeps the pill crisp + legible; a hand-painted splat blooms behind it (peeking
+   around the edges) and intensifies on hover/focus. Color is overridable per
+   button via the --paint-splat-color custom property (defaults to brand accent). */
+.paint-pill {
+  position: relative;
+  isolation: isolate;
+}
+.paint-pill::before {
+  content: "";
+  position: absolute;
+  inset: -30% -4%;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--paint-splat-color, var(--color-accent));
+  -webkit-mask: url("/assets/svg/paint-splat.svg") center / 100% 100% no-repeat;
+  mask: url("/assets/svg/paint-splat.svg") center / 100% 100% no-repeat;
+  opacity: 0.62;
+  transform: scale(1) rotate(-4deg);
+  transform-origin: center;
+  filter: drop-shadow(0 3px 5px rgba(12, 74, 110, 0.18));
+  transition: opacity 320ms ease,
+    transform 360ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.paint-pill:hover::before,
+.paint-pill:focus-visible::before {
+  opacity: 0.85;
+  transform: scale(1.07) rotate(2deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .paint-pill::before {
+    transition: opacity 220ms ease;
+    transform: scale(0.96) rotate(0deg);
+  }
+  .paint-pill:hover::before,
+  .paint-pill:focus-visible::before {
+    transform: scale(0.96) rotate(0deg);
+  }
+}
+
 /* Footer animation styles */
 @keyframes slideInFromBottom {
   from {
@@ -297,6 +337,25 @@ html {
 
 .animate-fade-in-up {
   animation: fade-in-up 0.4s ease-out both;
+}
+
+/* Continuous right-to-left marquee. The track holds TWO copies of the content,
+   so translating by -50% loops seamlessly. Duration is set inline per usage. */
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee-scroll linear infinite;
+  will-change: transform;
+}
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none;
+  }
 }
 
 @keyframes btn-shine {

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, ReactElement } from "react";
+import { motion, AnimatePresence } from "motion/react";
 
 interface AppliedGiftCard {
   giftCardId: string;
@@ -127,12 +128,21 @@ export function GiftCardRedemption({
     );
   }
 
-  // Collapsed view - just a toggle button
-  if (!isExpanded) {
-    return (
+  // Toggle header + smoothly-revealed entry form (height/opacity animate so the
+  // open/close feels fluid instead of snapping between two states).
+  return (
+    <div className="border border-gray-200 rounded-lg mb-4 overflow-hidden">
       <button
-        onClick={() => setIsExpanded(true)}
-        className="w-full text-left border border-gray-200 rounded-lg p-4 mb-4 hover:bg-gray-50 transition-colors flex items-center justify-between"
+        type="button"
+        onClick={() => {
+          if (isExpanded) {
+            setGan("");
+            setError(null);
+          }
+          setIsExpanded((prev) => !prev);
+        }}
+        aria-expanded={isExpanded}
+        className="w-full text-left p-4 hover:bg-gray-50 transition-colors flex items-center justify-between"
       >
         <div className="flex items-center">
           <svg className="w-5 h-5 text-gray-400 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -140,67 +150,61 @@ export function GiftCardRedemption({
           </svg>
           <span className="text-gray-700 font-medium">Have a gift card?</span>
         </div>
-        <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <motion.svg
+          className="w-5 h-5 text-gray-400"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          animate={{ rotate: isExpanded ? 90 : 0 }}
+          transition={{ duration: 0.25, ease: "easeInOut" }}
+        >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
+        </motion.svg>
       </button>
-    );
-  }
 
-  // Expanded view - input form
-  return (
-    <div className="border border-gray-200 rounded-lg p-4 mb-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-medium text-gray-800 flex items-center">
-          <svg className="w-5 h-5 text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-          </svg>
-          Enter Gift Card Number
-        </h3>
-        <button
-          onClick={() => {
-            setIsExpanded(false);
-            setGan("");
-            setError(null);
-          }}
-          className="text-gray-400 hover:text-gray-600"
-        >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
+      <AnimatePresence initial={false}>
+        {isExpanded && (
+          <motion.div
+            key="gift-card-entry"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4 pt-1">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={gan}
+                  onChange={handleGanChange}
+                  placeholder="XXXX-XXXX-XXXX-XXXX"
+                  maxLength={19}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent font-mono"
+                />
+                <button
+                  onClick={handleApply}
+                  disabled={gan.replace(/-/g, "").length !== 16 || loading}
+                  className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loading ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    </span>
+                  ) : (
+                    "Apply"
+                  )}
+                </button>
+              </div>
 
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={gan}
-          onChange={handleGanChange}
-          placeholder="XXXX-XXXX-XXXX-XXXX"
-          maxLength={19}
-          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent font-mono"
-        />
-        <button
-          onClick={handleApply}
-          disabled={gan.replace(/-/g, "").length !== 16 || loading}
-          className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {loading ? (
-            <span className="flex items-center">
-              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            </span>
-          ) : (
-            "Apply"
-          )}
-        </button>
-      </div>
-
-      {error && (
-        <p className="text-red-600 text-sm mt-2">{error}</p>
-      )}
+              {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

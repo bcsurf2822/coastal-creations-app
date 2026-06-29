@@ -77,7 +77,7 @@ export default function CartItemRow({
         {/* Info */}
         <div className="flex-1 min-w-0">
           <Link
-            href={`/store/${item.slug}`}
+            href={`/shop/${item.slug}`}
             className="block text-sm font-medium text-[var(--color-text-primary)] hover:text-[var(--color-primary)] truncate"
           >
             {item.productName}
@@ -132,7 +132,7 @@ export default function CartItemRow({
       {/* Info */}
       <div className="flex-1 min-w-0">
         <Link
-          href={`/store/${item.slug}`}
+          href={`/shop/${item.slug}`}
           className="block text-base font-semibold text-[var(--color-text-primary)] hover:text-[var(--color-primary)]"
         >
           {item.productName}

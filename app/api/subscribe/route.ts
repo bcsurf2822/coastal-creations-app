@@ -3,6 +3,7 @@ import { render } from "@react-email/render";
 import * as React from "react";
 import { NewsletterEmailTemplate } from "@/components/email-templates/NewsletterEmailTemplate";
 import { NewsletterWelcomeTemplate } from "@/components/email-templates/NewsletterWelcomeTemplate";
+import { isValidEmail } from "@/lib/utils/validation";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = "Coastal Creations <no-reply@resend.coastalcreationsstudio.com>";
@@ -15,9 +16,7 @@ export async function POST(request: Request) {
       return Response.json({ error: "Email is required" }, { status: 400 });
     }
 
-    // Validate email format using regex
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!isValidEmail(email)) {
       return Response.json({ error: "Invalid email format" }, { status: 400 });
     }
 

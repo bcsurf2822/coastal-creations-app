@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactElement } from "react";
+import type { CSSProperties, ReactElement } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
@@ -55,7 +55,19 @@ const HERO_BUBBLES: BubbleConfig[] = [
 ];
 
 const CTA_BUTTON_CLASS =
-  "min-w-[170px] shadow-md hover:shadow-xl hover:scale-105 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer";
+  "min-w-[210px] text-lg hover:scale-105 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer";
+
+// Hero CTAs — each gets its own paint-splat color so the row reads as a
+// hand-painted set (the --paint-splat-color var is consumed by .paint-pill).
+// `nudge` staggers each button vertically + rotates it slightly so the row looks
+// scattered/hand-placed rather than perfectly aligned.
+const HERO_CTAS: { href: string; label: string; splat: string; nudge: string }[] = [
+  { href: "/events/classes-workshops", label: "Explore Classes", splat: "#42A5F5", nudge: "translate-y-2 -rotate-2" },
+  { href: "/walk-in", label: "Walk In and Create", splat: "#FB923C", nudge: "-translate-y-2 rotate-1" },
+  { href: "/about", label: "About Us", splat: "#2DD4BF", nudge: "translate-y-3 -rotate-1" },
+  { href: "/shop", label: "Shop", splat: "#FB7185", nudge: "-translate-y-1 rotate-2" },
+  { href: "/gift-cards", label: "Gift Cards", splat: "#FBBF24", nudge: "translate-y-2 -rotate-1" },
+];
 
 const Hero = (): ReactElement => {
   const [showLiveEventPopup, setShowLiveEventPopup] = useState(false);
@@ -198,27 +210,25 @@ const Hero = (): ReactElement => {
             />
           </div>
 
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link href="/events/classes-workshops">
-              <Button variant="pill" size="lg" className={CTA_BUTTON_CLASS}>
-                Explore Classes
-              </Button>
-            </Link>
-            <Link href="/walk-in">
-              <Button variant="pill" size="lg" className={CTA_BUTTON_CLASS}>
-                Walk In and Create
-              </Button>
-            </Link>
-            <Link href="/about">
-              <Button variant="pill" size="lg" className={CTA_BUTTON_CLASS}>
-                About Us
-              </Button>
-            </Link>
-            <Link href="/gift-cards">
-              <Button variant="pill" size="lg" className={CTA_BUTTON_CLASS}>
-                Gift Cards
-              </Button>
-            </Link>
+          <div className="mx-auto flex max-w-2xl flex-wrap justify-center gap-4">
+            {HERO_CTAS.map((cta) => (
+              <Link
+                key={cta.href}
+                href={cta.href}
+                className={`inline-block ${cta.nudge}`}
+              >
+                <Button
+                  variant="pill"
+                  size="xl"
+                  className={CTA_BUTTON_CLASS}
+                  style={
+                    { "--paint-splat-color": cta.splat } as CSSProperties
+                  }
+                >
+                  {cta.label}
+                </Button>
+              </Link>
+            ))}
           </div>
         </div>
       </div>

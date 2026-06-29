@@ -4,7 +4,9 @@ import {
   EmailShell,
   InfoCard,
   DetailRow,
+  ReceiptButton,
   emailText,
+  getStudioEmail,
 } from "./shared";
 import { formatCents } from "@/lib/utils/moneyHelpers";
 
@@ -33,6 +35,8 @@ export interface OrderConfirmationData {
     postalCode: string;
   };
   shippingMethod: string;
+  /** Square-hosted receipt link for this payment, when available. */
+  receiptUrl?: string;
 }
 
 interface OrderConfirmationEmailProps {
@@ -89,12 +93,17 @@ export const OrderConfirmationEmail = ({
       <DetailRow label="Method">{order.shippingMethod}</DetailRow>
     </InfoCard>
 
+    <ReceiptButton href={order.receiptUrl} />
+
+    <Text style={emailText.subParagraph}>
+      <strong>What&apos;s next?</strong> We&apos;ll email you a tracking number
+      as soon as your order ships, so you can follow it to your door — no account
+      needed.
+    </Text>
+
     <Text style={emailText.subParagraph}>
       Questions about your order? Reply to this email or contact us at{" "}
-      <a href="mailto:ashley@coastalcreationsstudio.com">
-        ashley@coastalcreationsstudio.com
-      </a>
-      .
+      <a href={`mailto:${getStudioEmail()}`}>{getStudioEmail()}</a>.
     </Text>
   </EmailShell>
 );

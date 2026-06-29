@@ -14,32 +14,16 @@ import type {
 import { createProductSlug } from "@/lib/utils/slugify";
 import { formatCents } from "@/lib/utils/moneyHelpers";
 
-const LOW_STOCK_THRESHOLD = 3;
-
-/**
- * Square category-name prefix that controls Shop visibility. The merchant adds an
- * item to any Square category whose name starts with this prefix (e.g.
- * "Online Sales - Art Kits", "Online Sales - Stickers") to put it in the online Shop.
- * This is the SINGLE source of truth for what is sellable online — managed entirely
- * from the Square dashboard, no app-side toggle. See spec/ecommerce/00-STATUS.md.
- */
-export const ONLINE_SALES_CATEGORY_PREFIX = "Online Sales";
+const LOW_STOCK_THRESHOLD = 5;
 
 /**
  * Returns true for items that should be allowed in the Shop:
  * REGULAR physical goods, not archived, present at the merchant's location.
+ * The Shop now shows ALL such items — there is no longer an "Online Sales …"
+ * category gate (removed so the client sees a realistic view of full inventory).
  */
 export function isSellablePhysicalGood(item: RawCatalogItem): boolean {
   return item.productType === "REGULAR" && !item.isArchived;
-}
-
-/**
- * True when the item belongs to an "Online Sales …" Square category — i.e. the
- * merchant has flagged it for the online Shop from the Square dashboard.
- */
-export function isInOnlineSalesCategory(item: RawCatalogItem): boolean {
-  const prefix = ONLINE_SALES_CATEGORY_PREFIX.toLowerCase();
-  return item.categoryNames.some((name) => name.toLowerCase().startsWith(prefix));
 }
 
 /**
@@ -112,6 +96,35 @@ function rollupAvailability(
 }
 
 /**
+ * Total units in stock across the item's tracked variations. Used to render a
+ * customer-friendly "Only N remaining" message. Untracked variations contribute 0
+ * (they're effectively unlimited and never drive a low-stock message).
+ */
+function totalInStock(
+  variations: RawVariation[],
+  stock: Map<string, number>
+): number {
+  return variations.reduce((sum, v) => {
+    if (!v.trackInventory) return sum;
+    return sum + Math.max(0, stock.get(v.id) ?? 0);
+  }, 0);
+}
+
+/**
+ * Customer-friendly stock message for a rolled-up product, or null when fully in
+ * stock. Keeps the "low_stock" rollup but swaps the blunt "Low stock" wording for
+ * "Only N remaining" so shoppers see exactly how many are left.
+ */
+export function buildAvailabilityLabel(
+  availability: StoreProductAvailability,
+  remaining: number
+): string | null {
+  if (availability === "sold_out") return "Sold out";
+  if (availability === "low_stock") return `Only ${remaining} remaining`;
+  return null;
+}
+
+/**
  * Builds the StoreProductSummary (grid card shape) from a raw item + settings + stock map.
  */
 export function toStoreProductSummary(
@@ -135,6 +148,8 @@ export function toStoreProductSummary(
     ? toStoreProductVariation(firstRaw, stock.get(firstRaw.id))
     : undefined;
 
+  const availability = rollupAvailability(item.variations, stock);
+
   return {
     squareItemId: item.id,
     name: item.name,
@@ -144,7 +159,11 @@ export function toStoreProductSummary(
     description: item.descriptionHtml ? stripHtml(item.descriptionHtml) : undefined,
     priceRange: priceRange(item.variations),
     hasMultipleVariations: item.variations.length > 1,
-    availability: rollupAvailability(item.variations, stock),
+    availability,
+    availabilityLabel: buildAvailabilityLabel(
+      availability,
+      totalInStock(item.variations, stock)
+    ),
     displayOrder: (settings?.displayOrder as number | undefined) ?? 0,
     defaultVariation,
   };

@@ -6,6 +6,15 @@ import {
 
 const nextConfig: NextConfig = {
 
+  // The Shop route was renamed /store -> /shop. Permanently redirect the old
+  // paths so existing links/bookmarks (and the old stg URL) don't 404.
+  async redirects() {
+    return [
+      { source: "/store", destination: "/shop", permanent: true },
+      { source: "/store/:slug", destination: "/shop/:slug", permanent: true },
+    ];
+  },
+
   async headers() {
     const isDev = process.env.NODE_ENV !== "production";
     const csp = buildContentSecurityPolicy(isDev);
@@ -45,6 +54,11 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "items-images-sandbox.s3.us-west-2.amazonaws.com",
+      },
+      {
+        // Google account avatars (NextAuth Google sign-in) shown in the account console
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
       },
     ],
   },

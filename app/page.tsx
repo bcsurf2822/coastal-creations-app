@@ -4,6 +4,7 @@ import Hero from "@/components/landing/Hero";
 import MainSection from "@/components/landing/MainSection";
 import Offerings from "@/components/landing/Offerings";
 import Calendar from "@/components/landing/Calendar";
+import ShopPreview from "@/components/landing/ShopPreview";
 import GiftCardBanner from "@/components/landing/GiftCardBanner";
 import GoogleReviews from "@/components/landing/GoogleReviews";
 import SectionDivider from "@/components/landing/SectionDivider";
@@ -32,6 +33,8 @@ export default function Home() {
       <PhotoCorral destination="home-page" />
       <SectionDivider />
       <Offerings />
+      <SectionDivider />
+      <ShopPreview />
       <SectionDivider />
       <GiftCardBanner />
       <SectionDivider />

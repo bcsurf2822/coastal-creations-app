@@ -25,6 +25,9 @@ import Customer from "@/lib/models/Customer";
 import Reservation from "@/lib/models/Reservations";
 import { getSquareClient } from "@/lib/square/client";
 import { squareCustomerService } from "@/lib/square/customers";
+import { squareCardService } from "@/lib/square/cards";
+import { resolveUserSquareCustomerId } from "@/lib/square/userCustomer";
+import { getSessionUser } from "@/lib/auth/guards";
 import { giftCardService } from "@/lib/square/gift-cards";
 import { resolveBookingCharge } from "@/lib/checkout/resolveBookingCharge";
 import { PriceIntegrityError } from "@/lib/checkout/errors";
@@ -45,6 +48,12 @@ interface SelectedOption {
 interface BookingCheckoutRequest {
   paymentToken?: string;
   idempotencyKey?: string;
+  /** SCA verification token from tokenize (new-card path). */
+  verificationToken?: string;
+  /** Charge a saved card on file instead of a new nonce (signed-in users only). */
+  savedCardId?: string;
+  /** Save the new card on file after charging (signed-in users only). */
+  saveCard?: boolean;
   contact: {
     firstName: string;
     lastName: string;
@@ -87,6 +96,9 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     await connectMongo();
     const eventType = booking.eventType ?? "Event";
+
+    // Signed-in user (null for guests) — needed for saved cards / save-on-file.
+    const sessionUser = await getSessionUser();
 
     // 1. PRICE INTEGRITY — authoritative charge recomputed from the DB.
     const { totalCents, giftCardAppliedCents, chargeCents } =
@@ -136,22 +148,55 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
+    // Cards on file live on the signed-in user's Square customer. Resolve it when a
+    // saved card is being used or a new card is being saved.
+    let accountCustomerId: string | null = null;
+    if (sessionUser && (body.savedCardId || body.saveCard)) {
+      accountCustomerId = await resolveUserSquareCustomerId(sessionUser, {
+        createIfMissing: Boolean(body.saveCard),
+      });
+    }
+
+    // A saved card must belong to THIS user's customer — otherwise reject.
+    if (body.savedCardId) {
+      if (!sessionUser || !accountCustomerId) {
+        return NextResponse.json(
+          { error: "Sign in to use a saved card" },
+          { status: 401 }
+        );
+      }
+      const owned = await squareCardService.getCard(body.savedCardId);
+      if (!owned || owned.customerId !== accountCustomerId) {
+        return NextResponse.json({ error: "Saved card not found" }, { status: 404 });
+      }
+    }
+
     // 4. Charge the card portion (skipped when free or fully gift-card-covered).
     let squarePaymentId: string;
+    let squareReceiptUrl: string | undefined;
     if (chargeCents > 0) {
-      if (!paymentToken) {
+      const usingSavedCard = Boolean(body.savedCardId);
+      if (!usingSavedCard && !paymentToken) {
         return NextResponse.json(
           { error: "Payment information is required" },
           { status: 400 }
         );
       }
       const client = getSquareClient();
+      // Saved card charges under its owning (account) customer; a new card uses the
+      // booking's email-resolved customer.
+      const chargeCustomerId = usingSavedCard
+        ? accountCustomerId ?? undefined
+        : squareCustomerId;
       const paymentResult = await client.payments.create({
         idempotencyKey: normalizeIdempotencyKey(body.idempotencyKey),
-        sourceId: paymentToken,
+        sourceId: body.savedCardId ?? (paymentToken as string),
+        ...(body.verificationToken
+          ? { verificationToken: body.verificationToken }
+          : {}),
         amountMoney: { amount: BigInt(chargeCents), currency: "USD" },
         referenceId: booking.eventId,
-        customerId: squareCustomerId,
+        customerId: chargeCustomerId,
         buyerEmailAddress: contact.email,
         note: "Coastal Creations Studio — booking",
       });
@@ -167,6 +212,25 @@ export async function POST(request: Request): Promise<NextResponse> {
         );
       }
       squarePaymentId = payment.id ?? "";
+      squareReceiptUrl = payment.receiptUrl ?? undefined;
+
+      // Save the new card on file after a successful charge (opt-in, signed-in).
+      // The PAYMENT id is a valid card source — the one-time nonce is already spent.
+      if (body.saveCard && !usingSavedCard && accountCustomerId && payment.id) {
+        try {
+          await squareCardService.createCard({
+            sourceId: payment.id,
+            customerId: accountCustomerId,
+            cardholderName: `${contact.firstName} ${contact.lastName}`.trim(),
+            referenceId: sessionUser?.id,
+          });
+        } catch (saveError) {
+          console.error(
+            "[API-CHECKOUT-BOOKING-POST] Save card on file failed (non-fatal):",
+            saveError
+          );
+        }
+      }
     } else {
       squarePaymentId =
         giftCardAppliedCents > 0
@@ -217,6 +281,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       },
       squarePaymentId,
       squareCustomerId,
+      squareReceiptUrl,
       refundStatus: "none",
     });
 
@@ -241,6 +306,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       success: true,
       customerId: customer._id.toString(),
       squarePaymentId,
+      receiptUrl: squareReceiptUrl,
       total: totalCents / 100,
       status: "COMPLETED",
     });

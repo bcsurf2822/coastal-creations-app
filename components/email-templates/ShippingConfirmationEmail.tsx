@@ -5,6 +5,7 @@ import {
   InfoCard,
   DetailRow,
   emailText,
+  getStudioEmail,
 } from "./shared";
 
 export interface ShippingConfirmationEmailProps {
@@ -59,10 +60,7 @@ export const ShippingConfirmationEmail = ({
     <Text style={emailText.subParagraph}>
       Estimated delivery times vary by carrier. If you have any questions,
       reply to this email or reach us at{" "}
-      <Link href="mailto:ashley@coastalcreationsstudio.com">
-        ashley@coastalcreationsstudio.com
-      </Link>
-      .
+      <Link href={`mailto:${getStudioEmail()}`}>{getStudioEmail()}</Link>.
     </Text>
   </EmailShell>
 );

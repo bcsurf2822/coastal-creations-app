@@ -5,58 +5,23 @@
 // gallery-meets-lookbook. Built on shadcn/ui primitives.
 
 import type { ReactElement } from "react";
-import { useState, useMemo } from "react";
 import Image from "next/image";
 import { AddToCartButton } from "../AddToCartButton";
 import { useProducts } from "@/hooks/queries/use-products";
 import { formatPriceRange } from "@/lib/utils/catalogHelpers";
-import type { StoreProductAvailability } from "@/lib/types/storeTypes";
 import { Card } from "@/components/ui/shadcn/card";
 import { Badge } from "@/components/ui/shadcn/badge";
-import { Button } from "@/components/ui/shadcn/button";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
-
-const ALL = "All Products";
-const availabilityTag: Record<StoreProductAvailability, string | null> = {
-  available: null,
-  low_stock: "Low stock",
-  sold_out: "Sold out",
-};
 
 export default function VariantJ(): ReactElement {
   const { data: products, isLoading, isError } = useProducts();
-  const [activeCategory, setActiveCategory] = useState<string>(ALL);
 
-  const categories = useMemo(() => {
-    const set = new Set<string>();
-    (products ?? []).forEach((p) => {
-      if (p.categoryName) set.add(p.categoryName);
-    });
-    return [ALL, ...Array.from(set).sort()];
-  }, [products]);
-
-  const filtered = (products ?? []).filter(
-    (p) => activeCategory === ALL || p.categoryName === activeCategory
-  );
+  const filtered = products ?? [];
 
   return (
-    <section className="min-h-screen bg-white py-12">
+    <section className="min-h-screen py-12">
       <div className="mx-auto max-w-7xl px-4">
-        {/* Left-aligned filter pills */}
-        <div className="mb-8 flex flex-wrap gap-2">
-          {categories.map((cat) => (
-            <Button
-              key={cat}
-              size="sm"
-              variant={activeCategory === cat ? "default" : "ghost"}
-              className="rounded-full"
-              onClick={() => setActiveCategory(cat)}
-            >
-              {cat}
-            </Button>
-          ))}
-        </div>
-
+        <div className="rounded-[2rem] border border-white/65 bg-white/85 p-6 shadow-[0_14px_28px_rgba(12,74,110,0.1)] backdrop-blur-[2px] md:p-8">
         {isError && (
           <p className="py-16 text-center text-[var(--color-error)]">
             Unable to load products. Please try again later.
@@ -74,7 +39,7 @@ export default function VariantJ(): ReactElement {
         {!isLoading && !isError && (
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
             {filtered.map((product, index) => {
-              const tag = availabilityTag[product.availability];
+              const tag = product.availabilityLabel;
               return (
                 <Card
                   key={product.squareItemId}
@@ -145,6 +110,7 @@ export default function VariantJ(): ReactElement {
             })}
           </div>
         )}
+        </div>
       </div>
     </section>
   );

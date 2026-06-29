@@ -32,10 +32,11 @@ import type { IOrder } from "@/lib/models/Order";
 import { ShippingConfirmationEmail } from "@/components/email-templates/ShippingConfirmationEmail";
 import { DeliveryConfirmationEmail } from "@/components/email-templates/DeliveryConfirmationEmail";
 import { ShipmentExceptionEmail } from "@/components/email-templates/ShipmentExceptionEmail";
+import { resolveEmailRecipients, EMAIL_FROM } from "@/lib/email/recipients";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM = "Coastal Creations Studio <no-reply@resend.coastalcreationsstudio.com>";
+const FROM = EMAIL_FROM;
 
 interface ShippoTrackingStatus {
   status: string; // "PRE_TRANSIT" | "TRANSIT" | "DELIVERED" | "RETURNED" | "FAILURE" | "UNKNOWN"
@@ -56,8 +57,10 @@ interface ShippoWebhookEvent {
 function verifySecret(request: Request): boolean {
   const webhookSecret = process.env.SHIPPO_WEBHOOK_SECRET;
   if (!webhookSecret) {
-    console.warn("[WEBHOOKS-SHIPPO] SHIPPO_WEBHOOK_SECRET not set — skipping verification");
-    return true;
+    // Fail closed: with no configured secret we cannot authenticate the caller,
+    // so reject rather than accept unauthenticated webhook POSTs.
+    console.error("[WEBHOOKS-SHIPPO] SHIPPO_WEBHOOK_SECRET not set — rejecting request");
+    return false;
   }
   // Shippo can't send custom headers, so the secret rides in the URL (?token=).
   // Accept the header form too, for manual curl/testing.
@@ -66,18 +69,10 @@ function verifySecret(request: Request): boolean {
   return urlToken === webhookSecret || headerToken === webhookSecret;
 }
 
-// In prod, real recipients. In dev/stage, redirect everything to DEV_EMAIL so we
-// never email real customers from a test environment.
+// Recipient routing is centralized in lib/email/recipients.ts (prod → real +
+// STUDIO_EMAIL; dev/stage → DEV_EMAIL).
 function resolveRecipients(order: IOrder): { customer: string; admin: string } {
-  const isProduction = process.env.VERCEL_ENV === "production";
-  if (isProduction) {
-    return {
-      customer: order.customer.email,
-      admin: process.env.STUDIO_EMAIL ?? "ashley@coastalcreationsstudio.com",
-    };
-  }
-  const devEmail = process.env.DEV_EMAIL ?? order.customer.email;
-  return { customer: devEmail, admin: devEmail };
+  return resolveEmailRecipients(order.customer.email);
 }
 
 // Mark the order shipped on the first carrier scan and notify customer + admin.

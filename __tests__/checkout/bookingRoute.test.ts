@@ -34,6 +34,23 @@ vi.mock("@/lib/models/Reservations", () => ({
   },
 }));
 
+const cardGetCard = vi.fn();
+const cardCreateCard = vi.fn();
+vi.mock("@/lib/square/cards", () => ({
+  squareCardService: {
+    getCard: (...a: unknown[]) => cardGetCard(...a),
+    createCard: (...a: unknown[]) => cardCreateCard(...a),
+  },
+}));
+
+const resolveUserSquareCustomerId = vi.fn();
+vi.mock("@/lib/square/userCustomer", () => ({
+  resolveUserSquareCustomerId: (...a: unknown[]) => resolveUserSquareCustomerId(...a),
+}));
+
+const getSessionUser = vi.fn();
+vi.mock("@/lib/auth/guards", () => ({ getSessionUser: (...a: unknown[]) => getSessionUser(...a) }));
+
 vi.mock("@/lib/mongoose", () => ({ connectMongo: vi.fn() }));
 const sendBookingConfirmationEmails = vi.fn();
 vi.mock("@/lib/email/sendBookingConfirmation", () => ({
@@ -56,10 +73,18 @@ function req(body: unknown): Request {
 beforeEach(() => {
   vi.clearAllMocks();
   resolveBookingCharge.mockResolvedValue({ totalCents: 5000, giftCardAppliedCents: 0, chargeCents: 5000 });
-  paymentsCreate.mockResolvedValue({ payment: { id: "pay_123", status: "COMPLETED" } });
+  paymentsCreate.mockResolvedValue({
+    payment: { id: "pay_123", status: "COMPLETED", receiptUrl: "https://squareup.com/receipt/pay_123" },
+  });
   findOrCreateCustomer.mockResolvedValue({ customerId: "sqcust_1", isNew: true });
   customerCreate.mockResolvedValue({ _id: { toString: () => "cust_123" } });
+  getSessionUser.mockResolvedValue(null);
+  resolveUserSquareCustomerId.mockResolvedValue("acct_cust_1");
+  cardGetCard.mockResolvedValue({ id: "ccof:1", customerId: "acct_cust_1" });
+  cardCreateCard.mockResolvedValue({ id: "ccof:new" });
 });
+
+const SIGNED_IN = { id: "user_1", email: "u@example.com", isAdmin: false, role: "customer" };
 
 describe("POST /api/checkout/booking", () => {
   it("rejects when contact fields are missing (no charge)", async () => {
@@ -90,6 +115,9 @@ describe("POST /api/checkout/booking", () => {
     expect(saved.squarePaymentId).toBe("pay_123");
     expect(saved.squareCustomerId).toBe("sqcust_1");
     expect(sendBookingConfirmationEmails).toHaveBeenCalledWith("cust_123", "ev1");
+
+    // Square receipt returned for the confirmation page.
+    expect(data.receiptUrl).toBe("https://squareup.com/receipt/pay_123");
   });
 
   it("returns 400 on a price-integrity rejection without charging", async () => {
@@ -136,5 +164,47 @@ describe("POST /api/checkout/booking", () => {
     const res = await POST(req({ booking: BOOKING, contact: CONTACT }));
     expect(res.status).toBe(400);
     expect(paymentsCreate).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/checkout/booking — saved cards", () => {
+  it("charges a saved card by id under the signed-in user's customer", async () => {
+    getSessionUser.mockResolvedValue(SIGNED_IN);
+    const res = await POST(req({ booking: BOOKING, contact: CONTACT, savedCardId: "ccof:1" }));
+    expect(res.status).toBe(200);
+    const charge = paymentsCreate.mock.calls[0][0];
+    expect(charge.sourceId).toBe("ccof:1");
+    expect(charge.customerId).toBe("acct_cust_1");
+    expect(cardGetCard).toHaveBeenCalledWith("ccof:1");
+  });
+
+  it("rejects (404) and never charges a saved card the user does not own", async () => {
+    getSessionUser.mockResolvedValue(SIGNED_IN);
+    cardGetCard.mockResolvedValue({ id: "ccof:1", customerId: "someone_else" });
+    const res = await POST(req({ booking: BOOKING, contact: CONTACT, savedCardId: "ccof:1" }));
+    expect(res.status).toBe(404);
+    expect(paymentsCreate).not.toHaveBeenCalled();
+  });
+
+  it("requires sign-in to use a saved card (401)", async () => {
+    const res = await POST(req({ booking: BOOKING, contact: CONTACT, savedCardId: "ccof:1" }));
+    expect(res.status).toBe(401);
+    expect(paymentsCreate).not.toHaveBeenCalled();
+  });
+
+  it("saves the new card on file after charge when saveCard is set and signed in", async () => {
+    getSessionUser.mockResolvedValue(SIGNED_IN);
+    const res = await POST(req({ paymentToken: "cnon:tok", booking: BOOKING, contact: CONTACT, saveCard: true }));
+    expect(res.status).toBe(200);
+    expect(resolveUserSquareCustomerId).toHaveBeenCalledWith(SIGNED_IN, { createIfMissing: true });
+    const arg = cardCreateCard.mock.calls[0][0];
+    expect(arg.sourceId).toBe("pay_123");
+    expect(arg.customerId).toBe("acct_cust_1");
+  });
+
+  it("forwards the SCA verificationToken to the charge", async () => {
+    const res = await POST(req({ paymentToken: "cnon:tok", booking: BOOKING, contact: CONTACT, verificationToken: "verif_1" }));
+    expect(res.status).toBe(200);
+    expect(paymentsCreate.mock.calls[0][0].verificationToken).toBe("verif_1");
   });
 });

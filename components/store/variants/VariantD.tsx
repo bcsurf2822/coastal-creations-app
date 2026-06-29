@@ -1,64 +1,21 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import Image from "next/image";
 import { AddToCartButton } from "../AddToCartButton";
 import { useProducts } from "@/hooks/queries/use-products";
 import { formatPriceRange } from "@/lib/utils/catalogHelpers";
-import type { StoreProductAvailability } from "@/lib/types/storeTypes";
-
-const ALL = "All Products";
-const availabilityTag: Record<StoreProductAvailability, string | null> = {
-  available: null,
-  low_stock: "Low stock",
-  sold_out: "Sold out",
-};
 
 export default function VariantD(): ReactElement {
   const { data: products, isLoading, isError } = useProducts();
-  const [activeCategory, setActiveCategory] = useState<string>(ALL);
 
-  const categories = useMemo(() => {
-    const set = new Set<string>();
-    (products ?? []).forEach((p) => {
-      if (p.categoryName) set.add(p.categoryName);
-    });
-    return [ALL, ...Array.from(set).sort()];
-  }, [products]);
-
-  const filtered = (products ?? []).filter(
-    (p) => activeCategory === ALL || p.categoryName === activeCategory
-  );
+  const filtered = products ?? [];
 
   return (
-    <section className="min-h-screen py-12 bg-white">
+    <section className="min-h-screen py-12">
       <div className="mx-auto max-w-7xl px-4">
-        {/* Category tab strip */}
-        <div className="flex gap-0 border-b border-gray-200 mb-10 overflow-x-auto">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className="whitespace-nowrap px-5 py-3 text-sm font-medium transition-all duration-200 border-b-2 -mb-px"
-              style={
-                activeCategory === cat
-                  ? {
-                      borderBottomColor: "var(--color-primary)",
-                      color: "var(--color-primary)",
-                    }
-                  : {
-                      borderBottomColor: "transparent",
-                      color: "#78716c",
-                    }
-              }
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
+        <div className="rounded-[2rem] border border-white/65 bg-white/85 p-6 shadow-[0_14px_28px_rgba(12,74,110,0.1)] backdrop-blur-[2px] md:p-8">
         {isError && (
           <p className="text-center text-[var(--color-error)] text-lg py-16">
             Unable to load products. Please try again later.
@@ -82,7 +39,7 @@ export default function VariantD(): ReactElement {
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
             <AnimatePresence mode="popLayout">
               {filtered.map((product, i) => {
-                const tag = availabilityTag[product.availability];
+                const tag = product.availabilityLabel;
                 return (
                   <motion.div
                     key={product.squareItemId}
@@ -153,6 +110,7 @@ export default function VariantD(): ReactElement {
             </AnimatePresence>
           </div>
         )}
+        </div>
       </div>
     </section>
   );

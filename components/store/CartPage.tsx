@@ -24,7 +24,7 @@ export default function CartPage(): ReactElement {
           Looks like you haven&apos;t added anything yet. Head back to the shop
           to find something you&apos;ll love.
         </p>
-        <Link href="/store">
+        <Link href="/shop">
           <Button variant="secondary">Continue Shopping</Button>
         </Link>
       </div>
@@ -40,18 +40,20 @@ export default function CartPage(): ReactElement {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Items list */}
         <div className="lg:col-span-2">
-          {items.map((item) => (
-            <CartItemRow
-              key={item.squareVariationId}
-              item={item}
-              compact={false}
-              onUpdateQty={(qty) => updateQuantity(item.squareVariationId, qty)}
-              onRemove={() => removeItem(item.squareVariationId)}
-            />
-          ))}
+          <div className="rounded-[var(--radius-lg)] border border-[var(--color-border-lighter)] bg-white p-4 shadow-[0_8px_24px_rgba(12,74,110,0.08)] sm:p-6">
+            {items.map((item) => (
+              <CartItemRow
+                key={item.squareVariationId}
+                item={item}
+                compact={false}
+                onUpdateQty={(qty) => updateQuantity(item.squareVariationId, qty)}
+                onRemove={() => removeItem(item.squareVariationId)}
+              />
+            ))}
+          </div>
 
           <div className="mt-6">
-            <Link href="/store">
+            <Link href="/shop">
               <Button variant="ghost" size="sm">
                 ← Continue Shopping
               </Button>
