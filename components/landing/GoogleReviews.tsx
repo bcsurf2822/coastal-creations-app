@@ -53,9 +53,8 @@ const ReviewCard = ({ review }: { review: PlacesReview }): ReactElement => (
   </article>
 );
 
-const WRITE_REVIEW_URL = `https://search.google.com/local/writereview?placeid=${
-  process.env.GOOGLE_PLACE_ID ?? "ChIJreLuJwzrwIkRzL7k9yS2olw"
-}`;
+const WRITE_REVIEW_URL =
+  "https://www.google.com/search?hl=en-US&gl=us&q=Coastal+Creations+Studio+Reviews&ludocid=6675097867610537676#lrd=0x89c0eb0c27eee2ad:0x5ca2b624f7e4becc,3";
 
 const GoogleReviews = async (): Promise<ReactElement> => {
   const reviews = await getGoogleReviews();
