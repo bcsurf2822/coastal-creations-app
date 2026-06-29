@@ -8,7 +8,6 @@ import ShopPreview from "@/components/landing/ShopPreview";
 import GiftCardBanner from "@/components/landing/GiftCardBanner";
 import GoogleReviews from "@/components/landing/GoogleReviews";
 import SectionDivider from "@/components/landing/SectionDivider";
-import GoogleReviews from "@/components/landing/GoogleReviews";
 import PhotoCorral from "@/components/gallery/PhotoCorral";
 
 export const metadata: Metadata = {
@@ -40,8 +39,6 @@ export default function Home() {
       <ShopPreview />
       <SectionDivider />
       <GiftCardBanner />
-      <SectionDivider />
-      <GoogleReviews />
       <SectionDivider />
       <Calendar />
     </div>

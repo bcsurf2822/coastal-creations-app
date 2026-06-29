@@ -4,6 +4,7 @@
 **Type:** Production hotfix
 **Area:** Event booking / checkout options
 **Branches & PRs:**
+
 - `main-hotfix-1` → `main` — **PR #147** (production fix)
 - `merge-options-hotfix-into-develop` → `develop` — **PR #148** (keep develop in sync)
 
@@ -45,7 +46,7 @@ Two behavioral changes:
    `choices[0]`. It is renameable (defaults to **"None"**), always priced $0, and
    cannot be removed in the admin form.
 2. **Explicit selection required.** The admin "Required" checkbox was removed —
-   *every* category now requires the customer to choose. This is safe because a
+   _every_ category now requires the customer to choose. This is safe because a
    free option is always present, so no one is ever forced to pay.
 
 This was a deliberate product decision (simpler for the studio admin): rather than
