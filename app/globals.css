@@ -58,6 +58,8 @@
   --shadow-card: 0px 4px 6px -1px rgba(0, 0, 0, 0.1);
   --shadow-event-card: 0px 8px 24px 0px #42a5f5;
   --shadow-price-badge: 0px 4px 15px 0px #326c85;
+  --shadow-review-card: 0 4px 20px rgba(12, 74, 110, 0.10);
+  --shadow-review-card-hover: 0 8px 30px rgba(12, 74, 110, 0.15);
 
   /* Border Radius */
   --radius-sm: 4px;
