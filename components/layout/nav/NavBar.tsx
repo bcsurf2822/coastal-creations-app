@@ -267,7 +267,7 @@ export default function NavBar() {
               whileHover="hover"
               className="relative group"
             >
-              <div className="nav-link text-[#0f172a] rounded-full px-3 py-1.5 transition-colors duration-300 hover:bg-[#0369a1]/10 hover:text-[#0369a1] lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase flex items-center gap-1 cursor-pointer">
+              <div className="nav-link text-[#0f172a] rounded-full px-3 py-1.5 transition-colors duration-300 hover:bg-[#0369a1]/10 hover:text-[#0369a1] lg:text-sm xl:text-base 2xl:text-lg font-bold uppercase flex items-center gap-1 cursor-pointer whitespace-nowrap">
                 What We Offer
                 <motion.svg
                   xmlns="http://www.w3.org/2000/svg"
