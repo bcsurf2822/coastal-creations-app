@@ -22,7 +22,7 @@ function humanize(status: IOrder["status"]): string {
 const OrderStatusBadge = ({ status }: OrderStatusBadgeProps): ReactElement => {
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${STATUS_STYLES[status]}`}
+      className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${STATUS_STYLES[status]}`}
     >
       {humanize(status)}
     </span>
