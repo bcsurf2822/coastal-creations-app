@@ -38,10 +38,10 @@ export default function AccountNavLink(): ReactElement {
     <Link
       href={href}
       aria-label={label}
-      className="flex items-center gap-1.5 text-[#0f172a] hover:text-[#0369a1] transition-colors"
+      className="flex items-center gap-1.5 text-[#64748b] hover:text-[#0369a1] transition-colors"
     >
       <FiUser className="h-5 w-5" />
-      <span className="hidden xl:inline lg:text-sm xl:text-base font-bold uppercase">
+      <span className="hidden xl:inline text-sm font-medium whitespace-nowrap">
         {label}
       </span>
     </Link>

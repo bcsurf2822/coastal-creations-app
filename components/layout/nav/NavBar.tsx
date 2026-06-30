@@ -337,11 +337,11 @@ export default function NavBar() {
               </Link>
             </motion.div>
 
-            <motion.div variants={itemVariants}>
+            <motion.div
+              variants={itemVariants}
+              className="flex items-center gap-4 border-l border-gray-200 pl-5 xl:pl-8 2xl:pl-10"
+            >
               <AccountNavLink />
-            </motion.div>
-
-            <motion.div variants={itemVariants}>
               <CartIcon />
             </motion.div>
           </motion.nav>
