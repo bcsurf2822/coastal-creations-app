@@ -30,7 +30,7 @@ export default function ProductDetail({
   squareItemId,
 }: ProductDetailProps): ReactElement {
   const { data: product, isLoading, isError } = useProduct(squareItemId);
-  const { addItem, openDrawer } = useCart();
+  const { addItem } = useCart();
   const [selectedVariation, setSelectedVariation] =
     useState<StoreProductVariation | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -190,8 +190,10 @@ export default function ProductDetail({
                   className="w-full"
                   onClick={() => {
                     if (!canAddToCart || !product) return;
+                    // Don't auto-open the cart drawer on add — the cart icon
+                    // badge animates as feedback; opening is reserved for the
+                    // cart icon itself (consistent with the shop grid).
                     addItem(product, activeVariation!);
-                    openDrawer();
                   }}
                 >
                   {isSoldOut ? "Sold Out" : "Add to Cart"}

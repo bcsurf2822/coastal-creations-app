@@ -4,6 +4,7 @@ import type { ReactElement } from "react";
 import { useState } from "react";
 import { RiArrowDownSLine, RiTruckLine } from "react-icons/ri";
 import { formatCents } from "@/lib/utils/moneyHelpers";
+import { summarizeOrderItems } from "@/lib/account/display";
 import OrderStatusBadge from "@/components/account/OrderStatusBadge";
 import RefundRequestModal from "@/components/account/RefundRequestModal";
 import { useRouter } from "next/navigation";
@@ -105,8 +106,13 @@ const OrdersAccordion = ({
                     isOpen ? "rotate-180" : ""
                   }`}
                 />
-                <span className="flex-1 truncate font-medium text-blue-600">
-                  {order.orderNumber}
+                <span className="flex-1 min-w-0">
+                  <span className="block truncate font-medium text-blue-600">
+                    {order.orderNumber}
+                  </span>
+                  <span className="block truncate text-xs text-gray-500">
+                    {summarizeOrderItems(order.items)}
+                  </span>
                 </span>
                 <span className="hidden w-28 text-gray-600 sm:block">
                   {new Date(order.createdAt).toLocaleDateString()}

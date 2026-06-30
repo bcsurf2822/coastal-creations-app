@@ -101,7 +101,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     const sessionUser = await getSessionUser();
 
     // 1. PRICE INTEGRITY — authoritative charge recomputed from the DB.
-    const { totalCents, giftCardAppliedCents, chargeCents } =
+    const { totalCents, giftCardAppliedCents, chargeCents, eventSnapshot } =
       await resolveBookingCharge(booking);
 
     // 2. Reservation availability — validate BEFORE charging (no charge on failure).
@@ -267,6 +267,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     const customer = await Customer.create({
       event: booking.eventId,
       eventType,
+      eventSnapshot,
       selectedDates: booking.selectedDates,
       quantity: booking.quantity ?? 1,
       total: totalCents / 100,

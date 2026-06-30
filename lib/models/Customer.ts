@@ -6,6 +6,16 @@ import { IReservation } from "./Reservations";
 export interface ICustomer extends Document {
   event: IEvent | IPrivateEvent | IReservation | string;
   eventType: "Event" | "PrivateEvent" | "Reservation";
+  /**
+   * Name + date snapshot captured at booking time. Lets order history stay
+   * readable even if the referenced event is later edited or deleted (a deleted
+   * event makes the `event` populate resolve to null). Optional: legacy records
+   * predate it and fall back to the populated event / generic copy.
+   */
+  eventSnapshot?: {
+    name?: string;
+    startDate?: Date;
+  };
   selectedDates?: Array<{
     date: Date;
     numberOfParticipants: number;
@@ -156,6 +166,16 @@ const CustomerSchema = new Schema<ICustomer>(
       enum: ["Event", "PrivateEvent", "Reservation"],
       required: true,
       default: "Event",
+    },
+    eventSnapshot: {
+      type: new Schema(
+        {
+          name: { type: String, trim: true },
+          startDate: { type: Date },
+        },
+        { _id: false }
+      ),
+      required: false,
     },
     selectedDates: {
       type: [

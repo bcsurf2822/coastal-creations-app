@@ -24,19 +24,21 @@ export function AddToCartButton({
   iconClassName = "text-xs",
   label = "Add to Cart",
 }: AddToCartButtonProps): ReactElement {
-  const { addItem, openDrawer } = useCart();
+  const { addItem } = useCart();
   const [added, setAdded] = useState(false);
 
   const variation = product.defaultVariation;
   const soldOut = product.availability === "sold_out" || !variation;
 
+  // Adding an item does NOT open the cart drawer — that was disruptive while
+  // browsing. The cart icon badge animates as feedback, and the button itself
+  // flips to "Added!"; opening the drawer is reserved for clicking the cart.
   const handleClick = useCallback(() => {
     if (added || !variation || soldOut) return;
     addItem(product, variation);
-    openDrawer();
     setAdded(true);
     setTimeout(() => setAdded(false), 1800);
-  }, [added, variation, soldOut, product, addItem, openDrawer]);
+  }, [added, variation, soldOut, product, addItem]);
 
   return (
     <button

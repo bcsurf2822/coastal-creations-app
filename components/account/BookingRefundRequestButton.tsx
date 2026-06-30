@@ -10,6 +10,8 @@ interface BookingRefundRequestButtonProps {
   referenceLabel: string;
   pending: boolean;
   refunded: boolean;
+  /** Only upcoming bookings can be cancelled; false hides the request control. */
+  eligible?: boolean;
 }
 
 export default function BookingRefundRequestButton({
@@ -17,6 +19,7 @@ export default function BookingRefundRequestButton({
   referenceLabel,
   pending,
   refunded,
+  eligible = true,
 }: BookingRefundRequestButtonProps): ReactElement {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -30,6 +33,11 @@ export default function BookingRefundRequestButton({
         Requested
       </span>
     );
+  }
+  // A refund request cancels an UPCOMING booking; past/undated bookings are not
+  // eligible for self-service cancellation.
+  if (!eligible) {
+    return <span className="text-xs text-gray-400">—</span>;
   }
 
   return (

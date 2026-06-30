@@ -1,5 +1,7 @@
 import type { ReactElement } from "react";
 import Image from "next/image";
+import { ObjectId } from "mongodb";
+import clientPromise from "@/lib/mongodb";
 import { requireUserPage } from "@/lib/auth/guards";
 
 function initialsFrom(name?: string | null, email?: string): string {
@@ -13,8 +15,30 @@ function initialsFrom(name?: string | null, email?: string): string {
   return (email?.[0] ?? "?").toUpperCase();
 }
 
+/**
+ * Resolve how this user actually signed in. NextAuth's MongoDB adapter writes an
+ * `accounts` row (with a `provider`) only for OAuth sign-ins (Google); a
+ * passwordless magic-link sign-in has no such row. So an account row => that
+ * OAuth provider, and its absence => magic link.
+ */
+async function getSignInMethod(userId: string): Promise<string> {
+  try {
+    const db = (await clientPromise).db();
+    const account = await db
+      .collection("accounts")
+      .findOne({ userId: new ObjectId(userId) }, { projection: { provider: 1 } });
+    const provider = account?.provider as string | undefined;
+    if (provider === "google") return "Google";
+    if (provider) return provider.charAt(0).toUpperCase() + provider.slice(1);
+  } catch {
+    // Fall through to the email default if the lookup fails.
+  }
+  return "a magic link";
+}
+
 export default async function ProfilePage(): Promise<ReactElement> {
   const user = await requireUserPage();
+  const signInMethod = await getSignInMethod(user.id);
 
   return (
     <div className="space-y-4">
@@ -50,7 +74,7 @@ export default async function ProfilePage(): Promise<ReactElement> {
             </div>
           </div>
           <p className="text-sm text-gray-500">
-            Signed in with Google or a magic link.
+            Signed in with {signInMethod}.
           </p>
         </div>
       </div>

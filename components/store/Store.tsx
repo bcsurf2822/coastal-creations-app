@@ -1,108 +1,150 @@
 "use client";
 
-// TEMPORARY: Design review mode for client approval.
-// Remove this selector and keep only the chosen variant once Ashley approves.
+// Final Shop layout. Loads the online-sellable catalog and renders it in either
+// a Grid (Gallery/Polaroid cards) or List (horizontal rows) view. The shopper's
+// choice is remembered in localStorage. Product images are shown UNCROPPED so
+// the whole photo is always visible, and descriptions are shown in both views.
 
-import type { ReactElement } from "react";
-import { useState } from "react";
-import VariantA from "./variants/VariantA";
-import VariantB from "./variants/VariantB";
-import VariantC from "./variants/VariantC";
-import VariantD from "./variants/VariantD";
-import VariantE from "./variants/VariantE";
-import VariantF from "./variants/VariantF";
-import VariantG from "./variants/VariantG";
-import VariantH from "./variants/VariantH";
-import VariantI from "./variants/VariantI";
-import VariantJ from "./variants/VariantJ";
-import VariantK from "./variants/VariantK";
-import VariantL from "./variants/VariantL";
+import type { ReactElement, ReactNode } from "react";
+import { useState, useEffect } from "react";
+import { FiGrid, FiList } from "react-icons/fi";
+import { useProducts } from "@/hooks/queries/use-products";
+import ShopProductCard from "./ShopProductCard";
+import ShopListRow from "./ShopListRow";
 
-type Variant =
-  | "a"
-  | "b"
-  | "c"
-  | "d"
-  | "e"
-  | "f"
-  | "g"
-  | "h"
-  | "i"
-  | "j"
-  | "k"
-  | "l";
+type ShopView = "grid" | "list";
+const VIEW_STORAGE_KEY = "shop-view";
 
-const VARIANTS: { id: Variant; label: string }[] = [
-  { id: "a", label: "A" },
-  { id: "b", label: "B" },
-  { id: "c", label: "C" },
-  { id: "d", label: "D" },
-  { id: "e", label: "E" },
-  { id: "f", label: "F" },
-  { id: "g", label: "G" },
-  { id: "h", label: "H" },
-  { id: "i", label: "I" },
-  { id: "j", label: "J" },
-  { id: "k", label: "K" },
-  { id: "l", label: "L" },
-];
+function ViewToggleButton({
+  active,
+  onClick,
+  label,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  children: ReactNode;
+}): ReactElement {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      aria-pressed={active}
+      className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
+        active
+          ? "bg-[var(--color-primary)] text-white"
+          : "text-[var(--color-text-subtle)] hover:bg-[var(--color-light)]"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
 
 export default function Store(): ReactElement {
-  const [variant, setVariant] = useState<Variant>("a");
+  const { data: products, isLoading, isError } = useProducts();
+  const [view, setView] = useState<ShopView>("grid");
+
+  // Restore the shopper's last view preference (client-only to avoid a
+  // hydration mismatch — the server always renders the default "grid").
+  useEffect(() => {
+    const saved = window.localStorage.getItem(VIEW_STORAGE_KEY);
+    if (saved === "grid" || saved === "list") {
+      // Restoring persisted UI state after mount is the canonical reason to set
+      // state in an effect: it cannot run during SSR (no localStorage), so doing
+      // it here keeps the server/client first render identical (both "grid").
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setView(saved);
+    }
+  }, []);
+
+  const selectView = (next: ShopView): void => {
+    setView(next);
+    window.localStorage.setItem(VIEW_STORAGE_KEY, next);
+  };
+
+  const items = products ?? [];
+  const hasItems = !isLoading && !isError && items.length > 0;
 
   return (
-    <div>
-      {/* Design selector bar. The NavBar is fixed and hides on scroll-down, so
-          this sticks to top-0 (where the nav has vacated) but sits BELOW the nav
-          in z-order (z-40 < the nav's z-50) so the nav always wins on overlap. */}
-      <div
-        className="sticky top-0 z-40 border-b border-gray-200 py-3 px-4"
-        style={{
-          background: "rgba(255,255,255,0.97)",
-          backdropFilter: "blur(8px)",
-        }}
-      >
-        <div className="mx-auto max-w-7xl flex items-center flex-wrap gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 mr-2">
-            Design Preview:
-          </span>
-          {VARIANTS.map((v) => (
-            <button
-              key={v.id}
-              onClick={() => setVariant(v.id)}
-              className="flex items-center justify-center w-9 h-9 rounded-full text-sm font-semibold transition-all border"
-              style={
-                variant === v.id
-                  ? {
-                      background: "#0c4a6e",
-                      color: "white",
-                      borderColor: "#0c4a6e",
-                    }
-                  : {
-                      background: "white",
-                      color: "#374151",
-                      borderColor: "#d1d5db",
-                    }
-              }
-            >
-              {v.label}
-            </button>
-          ))}
+    <section className="min-h-screen py-12">
+      <div className="mx-auto max-w-7xl px-4">
+        <div className="rounded-[2rem] border border-white/65 bg-white/85 p-6 shadow-[0_14px_28px_rgba(12,74,110,0.1)] backdrop-blur-[2px] md:p-8">
+          {/* Toolbar: item count + view toggle */}
+          {hasItems && (
+            <div className="mb-6 flex items-center justify-between gap-4">
+              <p className="text-sm text-[var(--color-text-subtle)]">
+                {items.length} item{items.length !== 1 ? "s" : ""}
+              </p>
+              <div className="flex items-center gap-1 rounded-full border border-[var(--color-border-light)] bg-white p-1">
+                <ViewToggleButton
+                  active={view === "grid"}
+                  onClick={() => selectView("grid")}
+                  label="Grid view"
+                >
+                  <FiGrid className="h-4 w-4" />
+                </ViewToggleButton>
+                <ViewToggleButton
+                  active={view === "list"}
+                  onClick={() => selectView("list")}
+                  label="List view"
+                >
+                  <FiList className="h-4 w-4" />
+                </ViewToggleButton>
+              </div>
+            </div>
+          )}
+
+          {isError && (
+            <p className="py-16 text-center text-[var(--color-error)]">
+              Unable to load products. Please try again later.
+            </p>
+          )}
+
+          {isLoading && (
+            <div className="grid grid-cols-2 gap-5 sm:gap-6 md:grid-cols-3 xl:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="aspect-[3/4] w-full animate-pulse rounded-2xl bg-[var(--color-light)]"
+                />
+              ))}
+            </div>
+          )}
+
+          {!isLoading && !isError && items.length === 0 && (
+            <p className="py-16 text-center text-lg text-[var(--color-text-subtle)]">
+              No products available yet. Check back soon!
+            </p>
+          )}
+
+          {hasItems && view === "grid" && (
+            <div className="grid grid-cols-2 items-stretch gap-5 sm:gap-6 md:grid-cols-3 xl:grid-cols-4">
+              {items.map((product, i) => (
+                <ShopProductCard
+                  key={product.squareItemId}
+                  product={product}
+                  priority={i < 4}
+                />
+              ))}
+            </div>
+          )}
+
+          {hasItems && view === "list" && (
+            <div className="flex flex-col divide-y divide-gray-100">
+              {items.map((product, i) => (
+                <ShopListRow
+                  key={product.squareItemId}
+                  product={product}
+                  priority={i < 6}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
-
-      {variant === "a" && <VariantA />}
-      {variant === "b" && <VariantB />}
-      {variant === "c" && <VariantC />}
-      {variant === "d" && <VariantD />}
-      {variant === "e" && <VariantE />}
-      {variant === "f" && <VariantF />}
-      {variant === "g" && <VariantG />}
-      {variant === "h" && <VariantH />}
-      {variant === "i" && <VariantI />}
-      {variant === "j" && <VariantJ />}
-      {variant === "k" && <VariantK />}
-      {variant === "l" && <VariantL />}
-    </div>
+    </section>
   );
 }

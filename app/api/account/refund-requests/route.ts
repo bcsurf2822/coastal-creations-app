@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth/guards";
 import { connectMongo } from "@/lib/mongoose";
 import Order, { type IOrderItem } from "@/lib/models/Order";
-import Customer from "@/lib/models/Customer";
+import Customer, { type ICustomer } from "@/lib/models/Customer";
 // Registered so the booking's `event` ref can be populated for the label.
 import "@/lib/models/Event";
 import "@/lib/models/PrivateEvent";
 import "@/lib/models/Reservations";
 import RefundRequest from "@/lib/models/RefundRequest";
 import { emailMatch, getMyRefundRequests } from "@/lib/account/queries";
+import { isBookingUpcoming } from "@/lib/account/display";
 import { formatCents } from "@/lib/utils/moneyHelpers";
 import { sendRefundRequestAdmin } from "@/lib/email/sendRefundRequestAdmin";
 
@@ -147,6 +148,17 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (booking.refundStatus === "full") {
       return NextResponse.json(
         { error: "This booking has already been fully refunded" },
+        { status: 400 }
+      );
+    }
+    // Refund requests are cancellations for UPCOMING bookings only (a past or
+    // undated booking is not eligible for self-service cancellation).
+    if (!isBookingUpcoming(booking as unknown as ICustomer)) {
+      return NextResponse.json(
+        {
+          error:
+            "This booking is no longer eligible for a refund request (the event has already taken place).",
+        },
         { status: 400 }
       );
     }
