@@ -42,6 +42,8 @@ export interface ResolvedCharge {
   totalCents: number;
   giftCardAppliedCents: number;
   chargeCents: number;
+  /** Name + date captured from the event doc, stored on the booking for durable history. */
+  eventSnapshot: { name?: string; startDate?: Date };
 }
 
 export async function resolveBookingCharge(
@@ -51,10 +53,15 @@ export async function resolveBookingCharge(
 
   const quantity = booking.quantity ?? 0;
   let totalCents: number;
+  // Captured from whichever event doc we load below, so the booking record keeps a
+  // human-readable name/date even if the event is later deleted.
+  const eventSnapshot: { name?: string; startDate?: Date } = {};
 
   if (booking.eventType === "Reservation") {
     const reservation = await Reservation.findById(booking.eventId);
     if (!reservation) throw new PriceIntegrityError("Reservation not found");
+    eventSnapshot.name = reservation.eventName;
+    eventSnapshot.startDate = reservation.dates?.startDate;
     totalCents = computeReservationChargeCents(reservation, {
       selectedDates: booking.selectedDates ?? [],
       participants: booking.participants,
@@ -62,6 +69,8 @@ export async function resolveBookingCharge(
   } else if (booking.eventType === "PrivateEvent") {
     const privateEvent = await PrivateEvent.findById(booking.eventId);
     if (!privateEvent) throw new PriceIntegrityError("Private event not found");
+    // Private events carry a `title` and no fixed date.
+    eventSnapshot.name = privateEvent.title;
     totalCents = computePrivateEventChargeCents(privateEvent, {
       quantity,
       isSigningUpForSelf: booking.isSigningUpForSelf,
@@ -71,6 +80,8 @@ export async function resolveBookingCharge(
   } else {
     const event = await Event.findById(booking.eventId);
     if (!event) throw new PriceIntegrityError("Event not found");
+    eventSnapshot.name = event.eventName;
+    eventSnapshot.startDate = event.dates?.startDate;
     totalCents = computeEventChargeCents(event, {
       quantity,
       isSigningUpForSelf: booking.isSigningUpForSelf,
@@ -104,5 +115,6 @@ export async function resolveBookingCharge(
     totalCents,
     giftCardAppliedCents,
     chargeCents: Math.max(0, totalCents - giftCardAppliedCents),
+    eventSnapshot,
   };
 }

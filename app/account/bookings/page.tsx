@@ -3,46 +3,16 @@ import Link from "next/link";
 import { requireUserPage } from "@/lib/auth/guards";
 import { getMyBookings, getMyRefundRequests } from "@/lib/account/queries";
 import type { ICustomer } from "@/lib/models/Customer";
+import {
+  bookingEventName,
+  bookingTypeLabel,
+  bookingDates,
+  isBookingPast,
+} from "@/lib/account/display";
 import BookingRefundRequestButton from "@/components/account/BookingRefundRequestButton";
-
-/** Shape the populated `event` ref can take, across Event / PrivateEvent / Reservation. */
-interface PopulatedEvent {
-  eventName?: string;
-  title?: string;
-  dates?: { startDate?: string | Date };
-}
-
-function asPopulated(event: ICustomer["event"]): PopulatedEvent | null {
-  return event && typeof event === "object"
-    ? (event as PopulatedEvent)
-    : null;
-}
 
 function bookingId(booking: ICustomer): string {
   return String((booking as unknown as { _id: unknown })._id);
-}
-
-function eventName(booking: ICustomer): string {
-  const event = asPopulated(booking.event);
-  return event?.eventName ?? event?.title ?? "Booking";
-}
-
-function eventTypeLabel(type: ICustomer["eventType"]): string {
-  if (type === "PrivateEvent") return "Private event";
-  if (type === "Reservation") return "Reservation";
-  return "Class / event";
-}
-
-function formatDates(booking: ICustomer): string {
-  // Reservations carry the booked day(s) on the customer record.
-  if (booking.selectedDates && booking.selectedDates.length > 0) {
-    return booking.selectedDates
-      .map((entry) => new Date(entry.date).toLocaleDateString())
-      .join(", ");
-  }
-  // Events / private events: fall back to the event's own start date.
-  const start = asPopulated(booking.event)?.dates?.startDate;
-  return start ? new Date(start).toLocaleDateString() : "—";
 }
 
 export default async function MyBookingsPage(): Promise<ReactElement> {
@@ -92,19 +62,20 @@ export default async function MyBookingsPage(): Promise<ReactElement> {
               {bookings.map((booking) => {
                 const showRefund =
                   booking.refundStatus && booking.refundStatus !== "none";
+                const past = isBookingPast(booking);
                 return (
                   <tr key={bookingId(booking)} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-800">
-                        {eventName(booking)}
+                        {bookingEventName(booking)}
                       </div>
                       <div className="text-xs text-gray-500">
-                        {eventTypeLabel(booking.eventType)} · booked{" "}
+                        {bookingTypeLabel(booking.eventType)} · booked{" "}
                         {new Date(booking.createdAt).toLocaleDateString()}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-gray-600">
-                      {formatDates(booking)}
+                      {bookingDates(booking)}
                     </td>
                     <td className="px-4 py-3 text-center text-gray-600">
                       {booking.quantity}
@@ -117,6 +88,10 @@ export default async function MyBookingsPage(): Promise<ReactElement> {
                         <span className="inline-flex items-center rounded-full border border-red-200 bg-red-100 px-2.5 py-0.5 text-xs font-medium capitalize text-red-800">
                           {booking.refundStatus} refund
                         </span>
+                      ) : past ? (
+                        <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
+                          Completed
+                        </span>
                       ) : (
                         <span className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
                           Confirmed
@@ -126,9 +101,10 @@ export default async function MyBookingsPage(): Promise<ReactElement> {
                     <td className="px-4 py-3 text-right">
                       <BookingRefundRequestButton
                         bookingId={bookingId(booking)}
-                        referenceLabel={eventName(booking)}
+                        referenceLabel={bookingEventName(booking)}
                         pending={pendingBookingIds.has(bookingId(booking))}
                         refunded={booking.refundStatus === "full"}
+                        eventPassed={past}
                       />
                     </td>
                   </tr>
