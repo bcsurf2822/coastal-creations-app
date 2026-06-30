@@ -81,16 +81,18 @@ export function bookingEndDate(booking: ICustomer): Date | null {
 }
 
 /**
- * True once the booked event/day is in the past. Refund *requests* are for
- * cancelling an upcoming booking, so they're disallowed after this is true.
- * Unknown dates return false (don't block a legitimate cancellation).
+ * True only when the booking is known to be UPCOMING (its last date is now or
+ * later). Self-service refund requests are cancellations, so they're offered
+ * only for upcoming bookings. A past date — or an unknown one (legacy/orphaned
+ * records whose event was deleted) — is treated as NOT upcoming, so the request
+ * control is withheld in both cases.
  */
-export function isBookingPast(
+export function isBookingUpcoming(
   booking: ICustomer,
   now: Date = new Date()
 ): boolean {
   const end = bookingEndDate(booking);
-  return end !== null && end.getTime() < now.getTime();
+  return end !== null && end.getTime() >= now.getTime();
 }
 
 export interface OrderItemLike {

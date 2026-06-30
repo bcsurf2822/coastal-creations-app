@@ -10,8 +10,8 @@ interface BookingRefundRequestButtonProps {
   referenceLabel: string;
   pending: boolean;
   refunded: boolean;
-  /** The event/class has already taken place — refund requests (cancellations) are closed. */
-  eventPassed?: boolean;
+  /** Only upcoming bookings can be cancelled; false hides the request control. */
+  eligible?: boolean;
 }
 
 export default function BookingRefundRequestButton({
@@ -19,7 +19,7 @@ export default function BookingRefundRequestButton({
   referenceLabel,
   pending,
   refunded,
-  eventPassed = false,
+  eligible = true,
 }: BookingRefundRequestButtonProps): ReactElement {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -34,9 +34,9 @@ export default function BookingRefundRequestButton({
       </span>
     );
   }
-  // A refund request cancels an UPCOMING booking; once the event has passed it
-  // is no longer eligible (use the studio's standard policy for those).
-  if (eventPassed) {
+  // A refund request cancels an UPCOMING booking; past/undated bookings are not
+  // eligible for self-service cancellation.
+  if (!eligible) {
     return <span className="text-xs text-gray-400">—</span>;
   }
 

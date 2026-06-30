@@ -9,7 +9,7 @@ import "@/lib/models/PrivateEvent";
 import "@/lib/models/Reservations";
 import RefundRequest from "@/lib/models/RefundRequest";
 import { emailMatch, getMyRefundRequests } from "@/lib/account/queries";
-import { isBookingPast } from "@/lib/account/display";
+import { isBookingUpcoming } from "@/lib/account/display";
 import { formatCents } from "@/lib/utils/moneyHelpers";
 import { sendRefundRequestAdmin } from "@/lib/email/sendRefundRequestAdmin";
 
@@ -151,12 +151,13 @@ export async function POST(request: Request): Promise<NextResponse> {
         { status: 400 }
       );
     }
-    // Refund requests are cancellations for UPCOMING bookings only.
-    if (isBookingPast(booking as unknown as ICustomer)) {
+    // Refund requests are cancellations for UPCOMING bookings only (a past or
+    // undated booking is not eligible for self-service cancellation).
+    if (!isBookingUpcoming(booking as unknown as ICustomer)) {
       return NextResponse.json(
         {
           error:
-            "This event has already taken place, so it is no longer eligible for a refund request.",
+            "This booking is no longer eligible for a refund request (the event has already taken place).",
         },
         { status: 400 }
       );
