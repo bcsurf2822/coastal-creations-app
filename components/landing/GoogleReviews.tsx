@@ -100,8 +100,8 @@ const GoogleReviews = async (): Promise<ReactElement> => {
         </div>
 
         <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:grid md:grid-cols-2 md:overflow-visible md:pb-0 md:snap-none lg:grid-cols-3 xl:grid-cols-5">
-          {reviews.map((review) => (
-            <ReviewCard key={review.name} review={review} />
+          {reviews.map((review, i) => (
+            <ReviewCard key={`${review.name}-${i}`} review={review} />
           ))}
         </div>
       </div>
