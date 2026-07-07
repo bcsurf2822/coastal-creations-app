@@ -386,6 +386,7 @@ export default function NewCalendar() {
     switch (eventType) {
       case "kid-class":
       case "adult-class":
+      case "adult-kid-class":
       case "class":
         return "#0c4a6e"; // --color-primary
       case "camp":

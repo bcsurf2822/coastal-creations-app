@@ -30,7 +30,7 @@ export default function KidClassesPage() {
             title: "",
             sectionTitle: "",
             eventTypeFilter: (eventType) => {
-              return eventType === "kid-class";
+              return eventType === "kid-class" || eventType === "adult-kid-class";
             },
             layout: "list",
             cardConfig: {
