@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, type ReactElement } from "react";
+import type { ReactElement } from "react";
 import styled from "@emotion/styled";
 import { Box } from "@mui/material";
 import { PrivateEvent } from "@/types/interfaces";
@@ -21,14 +21,14 @@ const urlFor = (source: SanityImageSource) =>
 
 const TITLE_ICONS = [FaBirthdayCake, GiCupcake, GiBalloons, GiPartyPopper];
 
-const TRUNCATE_LENGTH = 180;
-
 // --- Styled Components ---
 
 const CardWrapper = styled("div")({
   borderRadius: "16px",
   overflow: "hidden",
   height: "100%",
+  display: "flex",
+  flexDirection: "column",
   position: "relative",
   backgroundColor: "white",
   boxShadow: "0 2px 12px rgba(0, 0, 0, 0.08)",
@@ -83,11 +83,17 @@ const TitleIcon = styled("span")({
   color: "#326C85",
 });
 
+// Cap long descriptions and let the overflow scroll inside the card (same
+// pattern as the Shop grid card) so card heights stay aligned across the row.
 const Description = styled("p")({
   marginTop: "0.75rem",
   color: "#4b5563",
   lineHeight: 1.65,
-  flex: "1 1 auto",
+  maxHeight: "9rem",
+  overflowY: "auto",
+  overscrollBehavior: "contain",
+  paddingRight: "0.25rem",
+  scrollbarWidth: "thin",
   textAlign: "left",
   fontWeight: "400",
   fontSize: "0.9rem",
@@ -126,19 +132,8 @@ const PrivateEventCard = ({
   privateEvent,
   index,
 }: PrivateEventCardProps): ReactElement => {
-  const [isExpanded, setIsExpanded] = useState(false);
-
   const IconComponent = TITLE_ICONS[index % TITLE_ICONS.length];
   const descriptionText = (privateEvent.description || "").trim();
-
-  const needsTruncation = descriptionText.length > TRUNCATE_LENGTH;
-  const displayText =
-    !isExpanded && needsTruncation
-      ? descriptionText.slice(
-          0,
-          descriptionText.lastIndexOf(" ", TRUNCATE_LENGTH),
-        ) + "..."
-      : descriptionText;
 
   return (
     <div className="animate-fade-in-up" style={{ height: "100%", animationDelay: `${index * 60}ms` }}>
@@ -177,25 +172,7 @@ const PrivateEventCard = ({
             <Price>${privateEvent.price}/person</Price>
           </div>
 
-          <Description>
-            {displayText}
-            {needsTruncation && (
-              <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "#326C85",
-                  cursor: "pointer",
-                  fontWeight: "600",
-                  fontSize: "0.85rem",
-                  padding: "0 0.25rem",
-                }}
-              >
-                {isExpanded ? "Read less" : "Read more"}
-              </button>
-            )}
-          </Description>
+          <Description>{descriptionText}</Description>
 
           {privateEvent.options && privateEvent.options.length > 0 && (
             <div className="mt-4 space-y-3">
@@ -233,22 +210,26 @@ const PrivateEventCard = ({
           )}
 
           {privateEvent.isDepositRequired && privateEvent.depositAmount && (
-            <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-blue-800">
-                    <strong>Deposit Required:</strong> $
-                    {privateEvent.depositAmount}
-                  </p>
+            // mt-auto pins the deposit row to the card bottom so the Pay
+            // Deposit buttons align across the row regardless of card content.
+            <div className="mt-auto pt-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-blue-800">
+                      <strong>Deposit Required:</strong> $
+                      {privateEvent.depositAmount}
+                    </p>
+                  </div>
+                  <Link
+                    href={`/payments?eventId=${privateEvent._id}&eventTitle=${encodeURIComponent(privateEvent.title)}&price=${privateEvent.depositAmount}&isPrivateEvent=true`}
+                    style={{ textDecoration: "none" }}
+                  >
+                    <Button variant="primary" size="sm">
+                      Pay Deposit
+                    </Button>
+                  </Link>
                 </div>
-                <Link
-                  href={`/payments?eventId=${privateEvent._id}&eventTitle=${encodeURIComponent(privateEvent.title)}&price=${privateEvent.depositAmount}&isPrivateEvent=true`}
-                  style={{ textDecoration: "none" }}
-                >
-                  <Button variant="primary" size="sm">
-                    Pay Deposit
-                  </Button>
-                </Link>
               </div>
             </div>
           )}
