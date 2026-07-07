@@ -63,8 +63,10 @@ export default function ShopProductCard({
       {/* Centered gallery caption */}
       <div className="flex flex-1 flex-col px-1 pt-4 text-center">
         <Link href={href}>
+          {/* min-h reserves space for 2 lines so 1-line and 2-line titles
+              still leave the description/price/CTA aligned across the row */}
           <h3
-            className="text-lg font-semibold italic leading-tight text-[var(--color-primary)] transition-colors hover:text-[var(--color-secondary)]"
+            className="line-clamp-2 min-h-[2.5rem] text-lg font-semibold italic leading-tight text-[var(--color-primary)] transition-colors hover:text-[var(--color-secondary)]"
             style={{ fontFamily: "var(--font-eb-garamond)" }}
           >
             {product.name}

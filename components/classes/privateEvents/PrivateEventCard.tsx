@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, type ReactElement } from "react";
+import React, { type ReactElement } from "react";
 import styled from "@emotion/styled";
 import { Box } from "@mui/material";
 import { PrivateEvent } from "@/types/interfaces";
@@ -20,8 +20,6 @@ const urlFor = (source: SanityImageSource) =>
     : null;
 
 const TITLE_ICONS = [FaBirthdayCake, GiCupcake, GiBalloons, GiPartyPopper];
-
-const TRUNCATE_LENGTH = 180;
 
 // --- Styled Components ---
 
@@ -50,6 +48,23 @@ const CardContent = styled(Box)({
   display: "flex",
   flexDirection: "column",
   flex: "1 1 auto",
+  minHeight: "400px",
+});
+
+const TitleRow = styled("div")({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  minHeight: "3rem",
+  marginBottom: "0.75rem",
+});
+
+const ScrollableBody = styled("div")({
+  flex: "1 1 auto",
+  minHeight: 0,
+  maxHeight: "260px",
+  overflowY: "auto",
+  paddingRight: "0.5rem",
 });
 
 const ImageContainer = styled("div")({
@@ -76,6 +91,7 @@ const PartyTitle = styled("h2")({
   display: "flex",
   alignItems: "center",
   gap: "0.5rem",
+  minHeight: "2.5rem",
 });
 
 const TitleIcon = styled("span")({
@@ -87,7 +103,6 @@ const Description = styled("p")({
   marginTop: "0.75rem",
   color: "#4b5563",
   lineHeight: 1.65,
-  flex: "1 1 auto",
   textAlign: "left",
   fontWeight: "400",
   fontSize: "0.9rem",
@@ -126,19 +141,8 @@ const PrivateEventCard = ({
   privateEvent,
   index,
 }: PrivateEventCardProps): ReactElement => {
-  const [isExpanded, setIsExpanded] = useState(false);
-
   const IconComponent = TITLE_ICONS[index % TITLE_ICONS.length];
   const descriptionText = (privateEvent.description || "").trim();
-
-  const needsTruncation = descriptionText.length > TRUNCATE_LENGTH;
-  const displayText =
-    !isExpanded && needsTruncation
-      ? descriptionText.slice(
-          0,
-          descriptionText.lastIndexOf(" ", TRUNCATE_LENGTH),
-        ) + "..."
-      : descriptionText;
 
   return (
     <div className="animate-fade-in-up" style={{ height: "100%", animationDelay: `${index * 60}ms` }}>
@@ -161,13 +165,7 @@ const PrivateEventCard = ({
         </ImageContainer>
 
         <CardContent>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
+          <TitleRow>
             <PartyTitle>
               <TitleIcon>
                 <IconComponent />
@@ -175,66 +173,50 @@ const PrivateEventCard = ({
               {privateEvent.title}
             </PartyTitle>
             <Price>${privateEvent.price}/person</Price>
-          </div>
+          </TitleRow>
 
-          <Description>
-            {displayText}
-            {needsTruncation && (
-              <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "#326C85",
-                  cursor: "pointer",
-                  fontWeight: "600",
-                  fontSize: "0.85rem",
-                  padding: "0 0.25rem",
-                }}
-              >
-                {isExpanded ? "Read less" : "Read more"}
-              </button>
-            )}
-          </Description>
+          <ScrollableBody>
+            <Description>{descriptionText}</Description>
 
-          {privateEvent.options && privateEvent.options.length > 0 && (
-            <div className="mt-4 space-y-3">
-              <h4 className="text-md font-semibold text-gray-800">
-                Available Options:
-              </h4>
-              {privateEvent.options.map((category, categoryIndex) => (
-                <div key={categoryIndex} className="bg-gray-50 rounded-lg p-3">
-                  <h5 className="font-medium text-gray-900 mb-2">
-                    {category.categoryName}
-                  </h5>
-                  {category.categoryDescription && (
-                    <p className="text-sm text-gray-600 mb-2">
-                      {category.categoryDescription}
-                    </p>
-                  )}
-                  <div className="space-y-1">
-                    {category.choices.map((choice, choiceIndex) => (
-                      <div
-                        key={choiceIndex}
-                        className="flex justify-between items-center text-sm"
-                      >
-                        <span className="text-gray-700">{choice.name}</span>
-                        {choice.price && choice.price > 0 && (
-                          <span className="font-medium text-gray-900">
-                            +${choice.price}
-                          </span>
-                        )}
-                      </div>
-                    ))}
+            {privateEvent.options && privateEvent.options.length > 0 && (
+              <div className="mt-4 space-y-3">
+                <h4 className="text-md font-semibold text-gray-800">
+                  Available Options:
+                </h4>
+                {privateEvent.options.map((category, categoryIndex) => (
+                  <div key={categoryIndex} className="bg-gray-50 rounded-lg p-3">
+                    <h5 className="font-medium text-gray-900 mb-2">
+                      {category.categoryName}
+                    </h5>
+                    {category.categoryDescription && (
+                      <p className="text-sm text-gray-600 mb-2">
+                        {category.categoryDescription}
+                      </p>
+                    )}
+                    <div className="space-y-1">
+                      {category.choices.map((choice, choiceIndex) => (
+                        <div
+                          key={choiceIndex}
+                          className="flex justify-between items-center text-sm"
+                        >
+                          <span className="text-gray-700">{choice.name}</span>
+                          {choice.price && choice.price > 0 && (
+                            <span className="font-medium text-gray-900">
+                              +${choice.price}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </ScrollableBody>
 
           {privateEvent.isDepositRequired && privateEvent.depositAmount && (
-            <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <div className="flex items-center justify-between">
+            <div className="mt-auto pt-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between">
                 <div className="flex-1">
                   <p className="text-sm font-medium text-blue-800">
                     <strong>Deposit Required:</strong> $
