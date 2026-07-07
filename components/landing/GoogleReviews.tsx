@@ -46,16 +46,8 @@ const ReviewCard = ({ review }: { review: PlacesReview }): ReactElement => (
     <p className="mt-3 flex-1 text-sm leading-relaxed text-slate-600">
       &ldquo;{review.text}&rdquo;
     </p>
-    <div className="mt-4 flex items-center gap-1.5 border-t border-slate-100 pt-3">
-      <GoogleIcon />
-      <span className="text-xs text-slate-400">Posted on Google</span>
-    </div>
   </article>
 );
-
-const WRITE_REVIEW_URL = `https://search.google.com/local/writereview?placeid=${
-  process.env.GOOGLE_PLACE_ID ?? "ChIJreLuJwzrwIkRzL7k9yS2olw"
-}`;
 
 const GoogleReviews = async (): Promise<ReactElement> => {
   const reviews = await getGoogleReviews();
@@ -63,7 +55,7 @@ const GoogleReviews = async (): Promise<ReactElement> => {
   return (
     <section className="py-10 md:py-16">
       <div className="mx-auto w-full max-w-[var(--container-max)] px-4 sm:px-6 lg:px-8">
-        <div className="mb-10 flex flex-col items-center gap-6 text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
+        <div className="mb-10 flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
           <div>
             <div className="mb-3 flex items-center justify-center gap-2 sm:justify-start">
               <GoogleIcon />
@@ -71,32 +63,10 @@ const GoogleReviews = async (): Promise<ReactElement> => {
                 Google Reviews
               </p>
             </div>
-            <h2 className="mb-3 text-4xl font-bold text-primary md:text-5xl">
+            <h2 className="text-4xl font-bold text-primary md:text-5xl">
               What Our Guests Are Saying
             </h2>
-            <div className="flex items-center justify-center gap-2 sm:justify-start">
-              <div className="flex gap-0.5" aria-label="5 out of 5 stars average">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <svg key={i} className="h-5 w-5" viewBox="0 0 24 24" fill="#FBBC04" aria-hidden="true">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                  </svg>
-                ))}
-              </div>
-              <span className="text-sm font-semibold text-slate-600">5.0 on Google</span>
-            </div>
           </div>
-
-          <a
-            href={WRITE_REVIEW_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex flex-shrink-0 items-center gap-2 rounded-full bg-[var(--color-accent)] px-6 py-3 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-            Leave a Review
-          </a>
         </div>
 
         <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:grid md:grid-cols-2 md:overflow-visible md:pb-0 md:snap-none lg:grid-cols-3 xl:grid-cols-5">
