@@ -10,18 +10,30 @@ export interface ContactFormValues {
   phone: string;
 }
 
+/**
+ * Strip to digits, dropping the "1" US country code from an 11-digit number —
+ * browser autofill often supplies E.164 ("+15093207586"), which would otherwise
+ * truncate to the wrong 10 digits ("(150) 932-0758").
+ */
+function usPhoneDigits(input: string): string {
+  const digits = input.replace(/\D/g, "");
+  return digits.length === 11 && digits.startsWith("1")
+    ? digits.slice(1)
+    : digits;
+}
+
 /** Format a US phone as the user types: (XXX) XXX-XXXX, capped at 10 digits. */
 export function formatUsPhone(input: string): string {
-  const digits = input.replace(/\D/g, "").slice(0, 10);
+  const digits = usPhoneDigits(input).slice(0, 10);
   if (digits.length === 0) return "";
   if (digits.length < 4) return `(${digits}`;
   if (digits.length < 7) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
 }
 
-/** True when the phone contains exactly 10 digits. */
+/** True when the phone contains exactly 10 digits (a leading +1 is ignored). */
 export function isValidUsPhone(phone: string): boolean {
-  return phone.replace(/\D/g, "").length === 10;
+  return usPhoneDigits(phone).length === 10;
 }
 
 interface ContactFormProps {
@@ -110,7 +122,6 @@ export default function ContactForm({
             inputMode="tel"
             autoComplete="tel"
             placeholder="(555) 555-5555"
-            maxLength={14}
             value={values.phone}
             error={errors?.phone}
             disabled={disabled}

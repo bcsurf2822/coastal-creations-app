@@ -73,7 +73,6 @@ export default function ContactFields({
             inputMode="tel"
             autoComplete="tel"
             placeholder="(555) 555-5555"
-            maxLength={14}
             value={values.phone}
             onChange={(e) => onChange("phone", formatUsPhone(e.target.value))}
             onBlur={() => touch("phone")}
