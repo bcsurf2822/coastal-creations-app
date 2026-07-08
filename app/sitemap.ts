@@ -9,6 +9,7 @@ const BASE_URL = "https://coastalcreationsstudio.com";
 const EVENT_TYPE_PATHS: Record<string, string> = {
   "adult-class": "adult-classes",
   "kid-class": "kid-classes",
+  "adult-kid-class": "classes-workshops",
   camp: "camps",
   event: "events",
   artist: "live-artist",
