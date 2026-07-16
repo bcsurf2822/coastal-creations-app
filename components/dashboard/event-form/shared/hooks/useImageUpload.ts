@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 interface UseImageUploadOptions {
   eventName: string;
   apiEndpoint?: string;
-  onSuccess?: (imageUrl: string) => void;
+  onSuccess?: (imageUrl: string | null) => void;
   onError?: (error: string) => void;
 }
 
@@ -78,6 +78,7 @@ export const useImageUpload = ({
       }
 
       setUploadedImageUrl(null);
+      onSuccess?.(null);
       toast.dismiss(loadingToastId);
       toast.success("Image deleted successfully!");
     } catch (error) {
@@ -85,7 +86,7 @@ export const useImageUpload = ({
       toast.dismiss(loadingToastId);
       toast.error("Failed to delete image");
     }
-  }, [uploadedImageUrl]);
+  }, [uploadedImageUrl, onSuccess]);
 
   const setImageUrl = useCallback((url: string | null) => {
     setUploadedImageUrl(url);

@@ -1,4 +1,4 @@
-import { ReactElement } from "react";
+import { ReactElement, useLayoutEffect } from "react";
 import Image from "next/image";
 import { EventFormState, EventFormActions } from "../types/eventForm.types";
 import { useImageUpload } from "../hooks/useImageUpload";
@@ -35,10 +35,17 @@ const EventImageUpload = ({
     },
   });
 
-  // Set existing image URL if provided (for edit mode)
-  if (existingImageUrl && !uploadedImageUrl) {
-    setImageUrl(existingImageUrl);
-  }
+  // Seed the local image state from the event's saved image once (edit
+  // mode). Keyed only on existingImageUrl, which is set once per event load
+  // and never changes again during the session — so this can't re-fire (and
+  // silently undo an explicit delete) just because uploadedImageUrl went
+  // back to null. useLayoutEffect keeps the timing identical to the old
+  // render-body assignment (no flash of the empty state on mount).
+  useLayoutEffect(() => {
+    if (existingImageUrl) {
+      setImageUrl(existingImageUrl);
+    }
+  }, [existingImageUrl, setImageUrl]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -50,7 +57,10 @@ const EventImageUpload = ({
     }
   };
 
-  const displayImageUrl = uploadedImageUrl || existingImageUrl;
+  // uploadedImageUrl is now the single source of truth (seeded from
+  // existingImageUrl above): null means "no image" — including right after
+  // a delete — rather than falling back to the stale existingImageUrl prop.
+  const displayImageUrl = uploadedImageUrl;
 
   return (
     <div>
