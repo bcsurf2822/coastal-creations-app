@@ -100,6 +100,7 @@ const EventFormBase = ({
             actions={actions}
             errors={errors}
             existingImageUrl={existingImageUrl}
+            autosaveEventId={mode === "edit" ? eventId : undefined}
           />
 
           <EventInstagramField

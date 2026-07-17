@@ -71,11 +71,23 @@ export async function DELETE(request: NextRequest) {
       }
     }
 
-    // Then delete the asset itself if we have the asset ID
+    // Then delete the asset itself, but only if no other document still
+    // references it (the same photo can be reused across eventPictures docs).
     let assetDeleted = false;
     if (fullAssetId) {
       try {
-        assetDeleted = true;
+        const stillReferenced = await client.fetch(
+          `count(*[references($fullAssetId)])`,
+          { fullAssetId }
+        );
+        if (stillReferenced === 0) {
+          await client.delete(fullAssetId);
+          assetDeleted = true;
+        } else {
+          console.log(
+            `[DELETE-IMAGE-ROUTE] Skipped asset delete for ${fullAssetId} — still referenced by ${stillReferenced} document(s)`
+          );
+        }
       } catch (assetError) {
         console.error(`[DELETE-IMAGE-ROUTE] Error deleting asset ${fullAssetId}:`, assetError);
       }

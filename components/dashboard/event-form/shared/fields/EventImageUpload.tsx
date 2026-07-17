@@ -8,6 +8,9 @@ interface EventImageUploadProps {
   actions: EventFormActions;
   errors: { [key: string]: string };
   existingImageUrl?: string | null;
+  // Existing event's id (edit mode only) — enables immediate autosave of
+  // just the image field, independent of the rest of the form's Save.
+  autosaveEventId?: string;
 }
 
 const EventImageUpload = ({
@@ -15,6 +18,7 @@ const EventImageUpload = ({
   actions,
   errors,
   existingImageUrl,
+  autosaveEventId,
 }: EventImageUploadProps): ReactElement => {
   const {
     uploadedImageUrl,
@@ -27,6 +31,7 @@ const EventImageUpload = ({
     setIsImageLoading,
   } = useImageUpload({
     eventName: formData.eventName,
+    autosaveEventId,
     onSuccess: (imageUrl) => {
       actions.handleInputChange("imageUrl", imageUrl);
     },
