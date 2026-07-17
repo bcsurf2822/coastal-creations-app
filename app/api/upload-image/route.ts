@@ -31,18 +31,52 @@ export async function POST(request: NextRequest) {
       contentType: file.type,
     });
 
-    // Create eventPictures document with the uploaded image
-    const document = await client.create({
-      _type: "eventPictures",
-      title: title,
-      image: {
-        _type: "image",
-        asset: {
-          _type: "reference",
-          _ref: asset._id,
-        },
+    // Reuse the existing eventPictures doc for this title instead of piling
+    // up a new document on every re-upload; drop the previous asset once
+    // nothing else references it.
+    const existing = await client.fetch(
+      `*[_type == "eventPictures" && title == $title][0]{_id, "previousAssetId": image.asset._ref}`,
+      { title }
+    );
+
+    const imagePayload = {
+      _type: "image",
+      asset: {
+        _type: "reference",
+        _ref: asset._id,
       },
-    });
+    };
+
+    let document;
+    if (existing) {
+      document = await client
+        .patch(existing._id)
+        .set({ image: imagePayload })
+        .commit();
+
+      if (existing.previousAssetId && existing.previousAssetId !== asset._id) {
+        try {
+          const stillReferenced = await client.fetch(
+            `count(*[references($previousAssetId)])`,
+            { previousAssetId: existing.previousAssetId }
+          );
+          if (stillReferenced === 0) {
+            await client.delete(existing.previousAssetId);
+          }
+        } catch (assetError) {
+          console.error(
+            `[UPLOAD-IMAGE-ROUTE] Error deleting previous asset ${existing.previousAssetId}:`,
+            assetError
+          );
+        }
+      }
+    } else {
+      document = await client.create({
+        _type: "eventPictures",
+        title: title,
+        image: imagePayload,
+      });
+    }
 
     return NextResponse.json({
       success: true,
