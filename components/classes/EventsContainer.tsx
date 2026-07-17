@@ -216,10 +216,16 @@ const EventsContainer: React.FC<EventsContainerProps> = ({ config }) => {
 
   const renderCards = (): ReactElement => {
     const cards = filteredEvents.map((event, index) => {
+      // event.image (the event's own saved picture) is authoritative and
+      // takes priority — matches EventDetails.tsx. Sanity eventPictures is
+      // only a fallback for events that predate the per-event image field,
+      // not a second source of truth to race against it.
       const matchingPicture = findMatchingEventPicture(event.eventName);
-      const imageUrl = matchingPicture?.image
-        ? urlFor(matchingPicture.image)?.width(800).height(600).url()
-        : event.image || null;
+      const imageUrl =
+        event.image ||
+        (matchingPicture?.image
+          ? urlFor(matchingPicture.image)?.width(800).height(600).url()
+          : null);
 
       return (
         <UniversalEventCard
