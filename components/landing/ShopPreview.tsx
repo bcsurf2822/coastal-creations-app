@@ -15,11 +15,11 @@ const PANEL =
 const DISPLAY_FONT =
   'Impact, Haettenschweiler, "Arial Narrow Bold", var(--font-anton), sans-serif';
 
-/** Full-bleed strip across the top of the panel while the shop launch gate is down. */
+/** Right-aligned note at the top of the panel while the shop launch gate is down. */
 const ComingSoonStrip = (): ReactElement => (
-  <div className="-mx-6 -mt-10 mb-8 bg-[var(--color-primary)] px-6 py-3 text-center text-white md:-mx-10 lg:-mx-14">
+  <div className="mb-4 text-right">
     <span
-      className="text-xl tracking-wider sm:text-2xl"
+      className="text-xl tracking-wider text-[var(--color-primary)] sm:text-2xl"
       style={{ fontFamily: DISPLAY_FONT }}
     >
       Coming Soon

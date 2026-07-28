@@ -18,9 +18,9 @@ export default function ShopComingSoon(): ReactElement {
           Our Online Store is Coming Soon
         </h1>
         <p className="mt-4 leading-relaxed text-slate-700">
-          We&apos;re putting the finishing touches on our shop of art kits,
-          workbooks, mosaics, stickers, and more. Check back soon — in the
-          meantime, come create with us in the studio!
+          We&apos;re putting the finishing touches on our shop of art kits and
+          more. Check back soon — in the meantime, come create with us in the
+          studio!
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link href="/events/classes-workshops">
