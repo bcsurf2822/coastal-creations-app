@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectMongo } from "@/lib/mongoose";
 import Customer from "@/lib/models/Customer";
-import { Client, Environment } from "square/legacy";
+// Registered so the refunded customer's `event` ref can be populated for the email.
+import "@/lib/models/Event";
+import "@/lib/models/PrivateEvent";
+import "@/lib/models/Reservations";
+import { getSquareClient } from "@/lib/square/client";
+import { SquareError } from "square";
 import { randomUUID } from "crypto";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
+import { sendRefundConfirmation } from "@/lib/email/sendRefundConfirmation";
 
-const { refundsApi } = new Client({
-  accessToken: process.env.SQUARE_ACCESS_TOKEN,
-  environment:
-    process.env.SQUARE_ENVIRONMENT === "sandbox"
-      ? Environment.Sandbox
-      : Environment.Production,
-});
+const client = getSquareClient();
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const session = await getServerSession(authOptions);
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const customer = await Customer.findById(customerId);
+    const customer = await Customer.findById(customerId).populate("event");
 
     if (!customer) {
       return NextResponse.json(
@@ -40,9 +40,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    if (!customer.squarePaymentId) {
+    // Reject refunds for bookings with no real card payment: free events and
+    // gift-card-covered bookings carry a synthetic id ("FREE-EVENT" / "GIFTCARD-<id>"),
+    // which Square has no payment for. There is nothing to refund to a card.
+    if (
+      !customer.squarePaymentId ||
+      customer.squarePaymentId.startsWith("FREE-EVENT") ||
+      customer.squarePaymentId.startsWith("GIFTCARD-")
+    ) {
       return NextResponse.json(
-        { error: "No Square payment ID found for this customer" },
+        {
+          error:
+            "This booking has no card payment to refund (it was free or covered by a gift card).",
+        },
         { status: 400 }
       );
     }
@@ -58,7 +68,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       ? BigInt(Math.round(refundAmount * 100))
       : BigInt(Math.round((customer.total - (customer.refundAmount || 0)) * 100));
 
-    const refundResult = await refundsApi.refundPayment({
+    const refundResult = await client.refunds.refundPayment({
       idempotencyKey: randomUUID(),
       paymentId: customer.squarePaymentId,
       amountMoney: {
@@ -68,7 +78,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       reason: reason || "Customer requested refund",
     });
 
-    if (refundResult.result?.refund) {
+    if (refundResult.refund) {
       const refundAmountDollars = refundAmount || customer.total - (customer.refundAmount || 0);
       const totalRefundedAmount = (customer.refundAmount || 0) + refundAmountDollars;
 
@@ -79,8 +89,25 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       customer.refundedAt = new Date();
       await customer.save();
 
+      // Refund confirmation email (non-blocking — the refund already succeeded).
+      const populatedEvent =
+        customer.event && typeof customer.event === "object"
+          ? (customer.event as { eventName?: string; title?: string })
+          : null;
+      await sendRefundConfirmation({
+        customerEmail: customer.billingInfo?.emailAddress,
+        data: {
+          customerName: customer.billingInfo?.firstName || "there",
+          referenceLabel:
+            populatedEvent?.eventName || populatedEvent?.title || "your booking",
+          refundAmountFormatted: `$${refundAmountDollars.toFixed(2)}`,
+          reason: reason || undefined,
+          isFullRefund,
+        },
+      });
+
       const refundData = JSON.parse(
-        JSON.stringify(refundResult.result.refund, (key, value) =>
+        JSON.stringify(refundResult.refund, (key, value) =>
           typeof value === "bigint" ? value.toString() : value
         )
       );
@@ -111,18 +138,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     let errorMessage = "Error processing refund";
     let statusCode = 500;
 
-    if (error && typeof error === "object" && "result" in error) {
-      const errorObj = error as {
-        result?: {
-          errors?: Array<{
-            code?: string;
-            detail?: string;
-            category?: string;
-          }>;
-        };
-      };
-      if (errorObj.result?.errors && Array.isArray(errorObj.result.errors)) {
-        const firstError = errorObj.result.errors[0];
+    if (error instanceof SquareError) {
+      const firstError = error.errors[0];
+      if (firstError) {
         errorMessage = firstError.detail || firstError.code || errorMessage;
 
         if (

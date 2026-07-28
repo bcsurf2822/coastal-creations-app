@@ -58,6 +58,8 @@
   --shadow-card: 0px 4px 6px -1px rgba(0, 0, 0, 0.1);
   --shadow-event-card: 0px 8px 24px 0px #42a5f5;
   --shadow-price-badge: 0px 4px 15px 0px #326c85;
+  --shadow-review-card: 0 4px 20px rgba(12, 74, 110, 0.10);
+  --shadow-review-card-hover: 0 8px 30px rgba(12, 74, 110, 0.15);
 
   /* Border Radius */
   --radius-sm: 4px;
@@ -131,6 +133,64 @@
   --font-anton: var(--font-anton);
   --font-abril-fatface: var(--font-abril-fatface);
   --font-eb-garamond: var(--font-eb-garamond);
+}
+
+/* ── shadcn/ui semantic tokens ──────────────────────────────────────────────
+   Maps shadcn primitives (components/ui/shadcn) onto the Coastal Creations
+   palette so they render on-brand. `--color-accent` (brand orange) is left
+   untouched; shadcn's Skeleton is repointed to `bg-muted` (see skeleton.tsx)
+   so loading states stay soft-sky rather than orange. */
+@theme {
+  --color-card: #ffffff;
+  --color-card-foreground: #171717;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #171717;
+  --color-muted: #f0f9ff;
+  --color-muted-foreground: #4b5563;
+  --color-primary-foreground: #ffffff;
+  --color-secondary-foreground: #ffffff;
+  --color-accent-foreground: #ffffff;
+  --color-destructive: #dc2626;
+  --color-input: #d1d5db;
+  --color-ring: #0c4a6e;
+}
+
+/* shadcn primitives use a bare `border` utility that expects a default border
+   color from shadcn's global base layer. We deliberately did NOT inject that
+   global layer (to avoid altering the rest of the app), so scope the default
+   border color to shadcn component roots only. */
+@layer base {
+  [data-slot] {
+    border-color: var(--color-border);
+  }
+}
+
+/* Cart "item added" feedback — badge / button pop. */
+@keyframes cartBump {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.35);
+  }
+  60% {
+    transform: scale(0.92);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Cart row entry — a newly added item slides + fades into the drawer. */
+@keyframes cartRowIn {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 body {
@@ -239,6 +299,38 @@ html {
 
 .animate-fade-in-up {
   animation: fade-in-up 0.4s ease-out both;
+}
+
+/* Continuous right-to-left marquee. The track holds TWO copies of the content,
+   so translating by -50% loops seamlessly. Duration is set inline per usage. */
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee-scroll linear infinite;
+  will-change: transform;
+}
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none;
+  }
+}
+
+@keyframes btn-shine {
+  0%   { transform: translateX(-150%) skewX(-15deg); }
+  100% { transform: translateX(200%) skewX(-15deg); }
+}
+
+.btn-shine-sweep {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.38) 50%, transparent 100%);
+  animation: btn-shine 0.55s ease-out forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {

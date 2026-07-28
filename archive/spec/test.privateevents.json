@@ -1,0 +1,95 @@
+[{
+  "_id": {
+    "$oid": "696ff86c4a89040f2fdbe903"
+  },
+  "title": "Adult Mosaic Private Event",
+  "description": "Have your own Mosaic Party at Coastal Creations Studio! Everyone can have the option to pick their own board or do a workshop where everyone does the same piece! Decorate the board with colorful tiles and an instructor will be there to guide you through the process. Private Events are BYOB! The Studio will grout your projects & they will be available at a later date!",
+  "price": 40,
+  "isDepositRequired": true,
+  "depositAmount": 100,
+  "image": "https://cdn.sanity.io/images/vmqep02a/production/41d380e2ad9a8a37de5e0351b1a9ea6322935070-769x1024.jpg",
+  "options": [],
+  "createdAt": {
+    "$date": "2026-01-20T21:49:32.845Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-20T21:49:32.845Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "696ffb6b05d12e1983ddb127"
+  },
+  "title": "Adult Private Paint Night",
+  "description": "Have your own Private Paint Night at Coastal Creations Studio! Contact ashley@coastalcreationsstudio.com what canvas is best to do for your group. This will be a 2 hour workshop where you will be lead by an experienced instructor. BYOB ",
+  "price": 45,
+  "isDepositRequired": true,
+  "depositAmount": 100,
+  "image": "https://cdn.sanity.io/images/vmqep02a/production/090b6b6a308832cc5e9898d6d35b6df1de9a5f0a-769x1024.jpg",
+  "options": [],
+  "createdAt": {
+    "$date": "2026-01-20T22:02:19.326Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-20T22:11:19.067Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "696ffd130bf8c81d14e2c020"
+  },
+  "title": "Kids Mosaic Birthday Party",
+  "description": "Have your own Mosaic Party at Coastal Creations Studio! Everyone gets to choose through a variety of board shapes. Decorate the board with colorful tiles and an instructor will be there to guide you through the process. The Studio will grout your projects & they will be available at a later date! This Party is 1.5 hours long. You can bring food & beverages! Up to 16 kids 8 Kid Max",
+  "price": 40,
+  "isDepositRequired": true,
+  "depositAmount": 100,
+  "image": "https://cdn.sanity.io/images/vmqep02a/production/d17978db5eb0f83929089c964f217b400afc2636-769x1024.jpg",
+  "options": [],
+  "createdAt": {
+    "$date": "2026-01-20T22:09:23.802Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-20T22:13:32.939Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "696ffeac49d970d782a7dafb"
+  },
+  "title": "Kids Paint Nights",
+  "description": "Have your own Paint Party at Coastal Creations Studio! Email ashley@coastalcreationsstudio.com to decide what canvas is best for your party! An experienced Instructor will be there to guide you through the process. This Party is 1.5 hours long. You can bring food & beverages! Up to 16 kids Minimum 8 Kids for a party  ",
+  "price": 35,
+  "isDepositRequired": true,
+  "image": "https://cdn.sanity.io/images/vmqep02a/production/3c1607f66a872f443e22ea80363f1fff11cebb69-769x1024.jpg",
+  "options": [],
+  "createdAt": {
+    "$date": "2026-01-20T22:16:12.959Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-20T22:18:04.514Z"
+  },
+  "__v": 0,
+  "depositAmount": 100
+},
+{
+  "_id": {
+    "$oid": "69700077912390c167100dd6"
+  },
+  "title": "Coorporate  Mosaic Parties",
+  "description": "We offer Larger Offsite Mosaic Parties! We bring the boards, tiles and all supplies to you. Choose from a variety of boards and tiles to create your mosaic. Instructors will be able to guide you through the whole process! We bring the pieces back to the studio & grout them for you. A Mosaic Party is two hours.",
+  "price": 40,
+  "isDepositRequired": true,
+  "depositAmount": 100,
+  "image": "",
+  "options": [],
+  "createdAt": {
+    "$date": "2026-01-20T22:23:51.595Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-20T22:23:51.595Z"
+  },
+  "__v": 0
+}]

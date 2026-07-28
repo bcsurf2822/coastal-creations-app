@@ -3,18 +3,14 @@
  * GET: List all gift cards with pagination and filtering
  */
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
+import { requireAdmin } from "@/lib/auth/guards";
 import { giftCardService } from "@/lib/square/gift-cards";
 
 export async function GET(request: Request): Promise<Response> {
-  try {
-    // Verify admin session
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
 
+  try {
     const { searchParams } = new URL(request.url);
     const cursor = searchParams.get("cursor") || undefined;
     const state = searchParams.get("state") || undefined;

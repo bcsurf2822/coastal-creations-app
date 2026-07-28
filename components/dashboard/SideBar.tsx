@@ -18,6 +18,12 @@ import {
   RiTimeFill,
   RiFileTextLine,
   RiFileTextFill,
+  RiStore2Line,
+  RiStore2Fill,
+  RiShoppingCartLine,
+  RiShoppingCartFill,
+  RiRefund2Line,
+  RiRefund2Fill,
 } from "react-icons/ri";
 
 interface NavItem {
@@ -57,6 +63,27 @@ const STORE_ITEMS: NavItem[] = [
     icon: <RiTeamLine className="w-5 h-5" />,
     activeIcon: <RiTeamFill className="w-5 h-5" />,
   },
+  {
+    path: "/admin/dashboard/refunds",
+    label: "Refund Requests",
+    icon: <RiRefund2Line className="w-5 h-5" />,
+    activeIcon: <RiRefund2Fill className="w-5 h-5" />,
+  },
+];
+
+const SHOP_ITEMS: NavItem[] = [
+  {
+    path: "/admin/dashboard/store/products",
+    label: "Products",
+    icon: <RiStore2Line className="w-5 h-5" />,
+    activeIcon: <RiStore2Fill className="w-5 h-5" />,
+  },
+  {
+    path: "/admin/dashboard/store/orders",
+    label: "Orders",
+    icon: <RiShoppingCartLine className="w-5 h-5" />,
+    activeIcon: <RiShoppingCartFill className="w-5 h-5" />,
+  },
 ];
 
 const WEBSITE_ITEMS: NavItem[] = [
@@ -85,6 +112,7 @@ const BOTTOM_ITEMS: NavItem[] = [
 
 const NAV_SECTIONS: NavSection[] = [
   { label: "Store", items: STORE_ITEMS },
+  { label: "Shop", items: SHOP_ITEMS },
   { label: "Website", items: WEBSITE_ITEMS },
 ];
 

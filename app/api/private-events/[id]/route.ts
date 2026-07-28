@@ -40,6 +40,4 @@ export async function GET(
   }
 }
 
-export const config = {
-  maxDuration: 60,
-};
+export const maxDuration = 60; // Maximum execution time in seconds (default is 10s)

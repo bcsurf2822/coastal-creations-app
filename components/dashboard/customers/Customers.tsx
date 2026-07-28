@@ -9,6 +9,7 @@ import {
   RiCalendarLine,
   RiUserLine,
   RiRefundLine,
+  RiDownload2Line,
 } from "react-icons/ri";
 import { useCustomers } from "@/hooks/queries";
 import { useProcessRefund } from "@/hooks/mutations";
@@ -86,6 +87,49 @@ export default function Customers() {
     setSearchTerm("");
     setStartDate("");
     setEndDate("");
+  };
+
+  const exportToCSV = () => {
+    const headers = [
+      "First Name", "Last Name", "Email", "Phone",
+      "Address", "City", "State", "Zip",
+      "Event Name", "Event Type",
+      "Quantity", "Total", "Refund Status", "Refund Amount",
+      "Booking Date",
+    ];
+
+    const escape = (val: string | number | undefined | null) => {
+      const s = String(val ?? "").replace(/"/g, '""');
+      return `"${s}"`;
+    };
+
+    const rows = filteredCustomers.map((c) => [
+      escape(c.billingInfo.firstName),
+      escape(c.billingInfo.lastName),
+      escape(c.billingInfo.emailAddress),
+      escape(c.billingInfo.phoneNumber),
+      escape(c.billingInfo.addressLine1),
+      escape(c.billingInfo.city),
+      escape(c.billingInfo.stateProvince),
+      escape(c.billingInfo.postalCode),
+      escape(getEventName(c)),
+      escape(c.eventType === "PrivateEvent" ? "Private Event" : (c.event?.eventType ?? "")),
+      escape(c.quantity),
+      escape(formatCurrency(c.total)),
+      escape(c.refundStatus ?? "none"),
+      escape(c.refundAmount ? formatCurrency(c.refundAmount) : ""),
+      escape(c.createdAt ? new Date(c.createdAt).toLocaleDateString("en-US") : ""),
+    ].join(","));
+
+    const csv = [headers.map((h) => `"${h}"`).join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const dateStr = new Date().toISOString().slice(0, 10);
+    link.href = url;
+    link.download = `customers-${dateStr}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const toggleExpand = (id: string) => {
@@ -195,6 +239,15 @@ export default function Customers() {
             {customers.length !== 1 ? "s" : ""} shown
           </p>
         </div>
+        {filteredCustomers.length > 0 && (
+          <button
+            onClick={exportToCSV}
+            className="flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--color-primary-dark)] transition-colors"
+          >
+            <RiDownload2Line className="h-4 w-4" />
+            Export CSV ({filteredCustomers.length})
+          </button>
+        )}
       </div>
 
       {/* Filters Section */}

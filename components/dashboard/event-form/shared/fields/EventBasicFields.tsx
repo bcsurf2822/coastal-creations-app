@@ -6,7 +6,7 @@ interface EventBasicFieldsProps {
   formData: EventFormState;
   actions: EventFormActions;
   errors: { [key: string]: string };
-  onEventTypeChange: (eventType: "adult-class" | "kid-class" | "event" | "camp" | "artist") => void;
+  onEventTypeChange: (eventType: "adult-class" | "kid-class" | "adult-kid-class" | "event" | "camp" | "artist") => void;
 }
 
 const EventBasicFields = ({
@@ -43,6 +43,7 @@ const EventBasicFields = ({
         >
           <option value="adult-class">Adult Class</option>
           <option value="kid-class">Kid Class</option>
+          <option value="adult-kid-class">Adult & Kid Class</option>
           <option value="event">Event</option>
           <option value="camp">Camp</option>
           <option value="artist">Live Artist Event</option>

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/auth/guards";
 import {
   squareCustomerService,
   CreateSquareCustomerInput,
@@ -9,6 +10,9 @@ import {
  * Create or find an existing customer in Square Customer Directory
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
+
   try {
     const data = await request.json();
 
@@ -92,6 +96,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
  * Search for customers by email or phone
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
+
   try {
     const { searchParams } = new URL(request.url);
     const email = searchParams.get("email");

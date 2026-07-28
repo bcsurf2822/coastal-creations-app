@@ -18,7 +18,12 @@ describe("useCreateCustomer", () => {
 
     await act(async () => {
       result.current.mutate({
-        event: "test-event-id-1",
+        event: {
+          _id: "test-event-id-1",
+          eventName: "Paint & Sip Night",
+          eventType: "class",
+          price: 45,
+        },
         eventType: "Event",
         quantity: 2,
         total: 90,
@@ -27,8 +32,13 @@ describe("useCreateCustomer", () => {
         billingInfo: {
           firstName: "John",
           lastName: "Doe",
-          email: "john@example.com",
-          phone: "555-1234",
+          addressLine1: "123 Main St",
+          city: "Ocean City",
+          stateProvince: "NJ",
+          postalCode: "08226",
+          country: "US",
+          emailAddress: "john@example.com",
+          phoneNumber: "555-1234",
         },
       });
     });
@@ -49,10 +59,23 @@ describe("useCreateCustomer", () => {
 
     await act(async () => {
       result.current.mutate({
-        event: "test-id",
+        event: {
+          _id: "test-id",
+          eventType: "class",
+          price: 45,
+        },
         eventType: "Event",
         quantity: 1,
-        billingInfo: { email: "test@test.com" },
+        billingInfo: {
+          firstName: "Test",
+          lastName: "User",
+          addressLine1: "123 Main St",
+          city: "Ocean City",
+          stateProvince: "NJ",
+          postalCode: "08226",
+          country: "US",
+          emailAddress: "test@test.com",
+        },
       });
     });
 
@@ -76,7 +99,11 @@ describe("useCreateCustomer", () => {
 
     await act(async () => {
       result.current.mutate({
-        event: "test-id",
+        event: {
+          _id: "test-id",
+          eventType: "class",
+          price: 45,
+        },
         eventType: "Event",
         quantity: 1,
       });
@@ -96,7 +123,11 @@ describe("useCreateCustomer", () => {
 
     await act(async () => {
       result.current.mutate({
-        event: "test-id",
+        event: {
+          _id: "test-id",
+          eventType: "class",
+          price: 45,
+        },
         eventType: "Event",
         quantity: 1,
       });

@@ -1,11 +1,17 @@
+import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/auth/guards";
 import { EmailTemplate } from "@/components/email-templates/EmailTemplate";
 import { Resend } from "resend";
 import { render } from "@react-email/render";
 import * as React from "react";
+import { EMAIL_FROM } from "@/lib/email/recipients";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST() {
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
+
   try {
     const emailHtml = await render(
       React.createElement(EmailTemplate, { firstName: "John" })
@@ -24,7 +30,7 @@ export async function POST() {
     }
 
     const { data, error } = await resend.emails.send({
-      from: "Coastal Creations <no-reply@resend.coastalcreationsstudio.com>",
+      from: EMAIL_FROM,
       to: [recipient],
       subject: "Welcome to Coastal Creations Studio",
       html: emailHtml,
@@ -41,6 +47,9 @@ export async function POST() {
 }
 
 export async function GET() {
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
+
   try {
     const emailHtml = await render(
       React.createElement(EmailTemplate, { firstName: "Visitor" })
@@ -59,7 +68,7 @@ export async function GET() {
     }
 
     const { data, error } = await resend.emails.send({
-      from: "Coastal Creations <no-reply@resend.coastalcreationsstudio.com>",
+      from: EMAIL_FROM,
       to: [recipient],
       subject: "Welcome to Coastal Creations Studio",
       html: emailHtml,

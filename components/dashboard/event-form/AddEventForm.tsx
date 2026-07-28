@@ -4,11 +4,11 @@ import EventFormBase from "./EventFormBase";
 
 const AddEventForm = (): ReactElement => {
   const [, setSelectedEventType] = useState<
-    "adult-class" | "kid-class" | "event" | "camp" | "artist"
+    "adult-class" | "kid-class" | "adult-kid-class" | "event" | "camp" | "artist"
   >("adult-class");
 
   const handleEventTypeChange = (
-    eventType: "adult-class" | "kid-class" | "event" | "camp" | "artist"
+    eventType: "adult-class" | "kid-class" | "adult-kid-class" | "event" | "camp" | "artist"
   ) => {
     setSelectedEventType(eventType);
   };

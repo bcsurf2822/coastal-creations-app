@@ -1,4 +1,5 @@
-import { Client, Environment } from "square/legacy";
+import { getSquareClient } from "@/lib/square/client";
+import { type Square } from "square";
 import { randomUUID } from "crypto";
 
 // Square Customer types
@@ -47,15 +48,7 @@ export interface FindOrCreateResult {
   customer: SquareCustomer;
 }
 
-const squareClient = new Client({
-  accessToken: process.env.SQUARE_ACCESS_TOKEN,
-  environment:
-    process.env.SQUARE_ENVIRONMENT === "sandbox"
-      ? Environment.Sandbox
-      : Environment.Production,
-});
-
-const { customersApi } = squareClient;
+const client = getSquareClient();
 
 /**
  * Square Customer Service
@@ -79,7 +72,7 @@ export class SquareCustomerService {
    */
   async searchByEmail(email: string): Promise<SquareCustomer | null> {
     try {
-      const response = await customersApi.searchCustomers({
+      const response = await client.customers.search({
         query: {
           filter: {
             emailAddress: { exact: email },
@@ -88,7 +81,7 @@ export class SquareCustomerService {
         limit: BigInt(1),
       });
 
-      const customer = response.result.customers?.[0];
+      const customer = response.customers?.[0];
       if (!customer) return null;
 
       return this.mapSquareCustomer(customer);
@@ -105,7 +98,7 @@ export class SquareCustomerService {
   async searchByPhone(phone: string): Promise<SquareCustomer | null> {
     try {
       const e164Phone = this.formatE164(phone);
-      const response = await customersApi.searchCustomers({
+      const response = await client.customers.search({
         query: {
           filter: {
             phoneNumber: { exact: e164Phone },
@@ -114,7 +107,7 @@ export class SquareCustomerService {
         limit: BigInt(1),
       });
 
-      const customer = response.result.customers?.[0];
+      const customer = response.customers?.[0];
       if (!customer) return null;
 
       return this.mapSquareCustomer(customer);
@@ -130,7 +123,7 @@ export class SquareCustomerService {
   async createCustomer(
     input: CreateSquareCustomerInput
   ): Promise<SquareCustomer> {
-    const response = await customersApi.createCustomer({
+    const response = await client.customers.create({
       idempotencyKey: randomUUID(),
       givenName: input.firstName,
       familyName: input.lastName,
@@ -143,18 +136,18 @@ export class SquareCustomerService {
             locality: input.address.city,
             administrativeDistrictLevel1: input.address.state,
             postalCode: input.address.postalCode,
-            country: input.address.country || "US",
+            country: (input.address.country || "US") as Square.Country,
           }
         : undefined,
       referenceId: input.referenceId,
       note: input.note,
     });
 
-    if (!response.result.customer) {
+    if (!response.customer) {
       throw new Error("Failed to create customer in Square");
     }
 
-    return this.mapSquareCustomer(response.result.customer);
+    return this.mapSquareCustomer(response.customer);
   }
 
   /**
@@ -212,11 +205,11 @@ export class SquareCustomerService {
    */
   async getCustomer(customerId: string): Promise<SquareCustomer | null> {
     try {
-      const response = await customersApi.retrieveCustomer(customerId);
+      const response = await client.customers.get({ customerId });
 
-      if (!response.result.customer) return null;
+      if (!response.customer) return null;
 
-      return this.mapSquareCustomer(response.result.customer);
+      return this.mapSquareCustomer(response.customer);
     } catch (error) {
       console.error("[SQUARE-CUSTOMERS-getCustomer] Error:", error);
       return null;
@@ -230,7 +223,8 @@ export class SquareCustomerService {
     customerId: string,
     input: Partial<CreateSquareCustomerInput>
   ): Promise<SquareCustomer> {
-    const response = await customersApi.updateCustomer(customerId, {
+    const response = await client.customers.update({
+      customerId,
       givenName: input.firstName,
       familyName: input.lastName,
       emailAddress: input.email,
@@ -242,18 +236,18 @@ export class SquareCustomerService {
             locality: input.address.city,
             administrativeDistrictLevel1: input.address.state,
             postalCode: input.address.postalCode,
-            country: input.address.country || "US",
+            country: (input.address.country || "US") as Square.Country,
           }
         : undefined,
       referenceId: input.referenceId,
       note: input.note,
     });
 
-    if (!response.result.customer) {
+    if (!response.customer) {
       throw new Error("Failed to update customer in Square");
     }
 
-    return this.mapSquareCustomer(response.result.customer);
+    return this.mapSquareCustomer(response.customer);
   }
 
   /**
@@ -262,7 +256,7 @@ export class SquareCustomerService {
    */
   async deleteCustomer(customerId: string): Promise<boolean> {
     try {
-      await customersApi.deleteCustomer(customerId);
+      await client.customers.delete({ customerId });
       return true;
     } catch (error) {
       console.error("[SQUARE-CUSTOMERS-deleteCustomer] Error:", error);

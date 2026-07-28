@@ -6,6 +6,16 @@ import { IReservation } from "./Reservations";
 export interface ICustomer extends Document {
   event: IEvent | IPrivateEvent | IReservation | string;
   eventType: "Event" | "PrivateEvent" | "Reservation";
+  /**
+   * Name + date snapshot captured at booking time. Lets order history stay
+   * readable even if the referenced event is later edited or deleted (a deleted
+   * event makes the `event` populate resolve to null). Optional: legacy records
+   * predate it and fall back to the populated event / generic copy.
+   */
+  eventSnapshot?: {
+    name?: string;
+    startDate?: Date;
+  };
   selectedDates?: Array<{
     date: Date;
     numberOfParticipants: number;
@@ -28,17 +38,18 @@ export interface ICustomer extends Document {
   billingInfo: {
     firstName: string;
     lastName: string;
-    addressLine1: string;
+    addressLine1?: string;
     addressLine2?: string;
-    city: string;
-    stateProvince: string;
-    postalCode: string;
-    country: string;
+    city?: string;
+    stateProvince?: string;
+    postalCode?: string;
+    country?: string;
     emailAddress?: string;
     phoneNumber?: string;
   };
   squarePaymentId?: string;
   squareCustomerId?: string;
+  squareReceiptUrl?: string;
   refundStatus?: "none" | "partial" | "full";
   refundAmount?: number;
   refundedAt?: Date;
@@ -58,9 +69,12 @@ const BillingInfoSchema = new Schema({
     required: true,
     trim: true,
   },
+  // Address is OPTIONAL for bookings. Square does not require a billing address to
+  // charge a card (the Web Payments card form collects the postal code itself for
+  // AVS); address is only needed for the physical store (shipping). Kept on the
+  // schema for legacy records + admin-entered bookings, but no longer required.
   addressLine1: {
     type: String,
-    required: true,
     trim: true,
   },
   addressLine2: {
@@ -69,22 +83,18 @@ const BillingInfoSchema = new Schema({
   },
   city: {
     type: String,
-    required: true,
     trim: true,
   },
   stateProvince: {
     type: String,
-    required: true,
     trim: true,
   },
   postalCode: {
     type: String,
-    required: true,
     trim: true,
   },
   country: {
     type: String,
-    required: true,
     trim: true,
   },
   emailAddress: {
@@ -157,6 +167,16 @@ const CustomerSchema = new Schema<ICustomer>(
       required: true,
       default: "Event",
     },
+    eventSnapshot: {
+      type: new Schema(
+        {
+          name: { type: String, trim: true },
+          startDate: { type: Date },
+        },
+        { _id: false }
+      ),
+      required: false,
+    },
     selectedDates: {
       type: [
         {
@@ -204,6 +224,11 @@ const CustomerSchema = new Schema<ICustomer>(
       trim: true,
     },
     squareCustomerId: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    squareReceiptUrl: {
       type: String,
       required: false,
       trim: true,

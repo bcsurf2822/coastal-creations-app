@@ -1,7 +1,7 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'destructive' | 'pill';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'destructive';
   size?: 'sm' | 'md' | 'lg' | 'xl';
   isLoading?: boolean;
   leftIcon?: ReactNode;
@@ -13,7 +13,6 @@ const variantClasses = {
   secondary: 'bg-white text-[var(--color-primary)] border-2 border-[var(--color-primary)] hover:bg-[var(--color-light)]',
   ghost: 'bg-transparent text-[var(--color-primary)] border-transparent hover:bg-[var(--color-light)]',
   destructive: 'bg-[var(--color-error-dark)] text-white border-transparent hover:bg-[#b91c1c]',
-  pill: 'bg-white text-[var(--color-primary)] border-2 border-[var(--color-primary)]/40 rounded-full hover:bg-[var(--color-light)]',
 };
 
 const sizeClasses = {
@@ -36,13 +35,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ...props
   }, ref) => {
     const baseClasses = 'inline-flex items-center justify-center gap-2 font-medium transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 disabled:opacity-50 disabled:cursor-not-allowed';
-    const radiusClass = variant === 'pill' ? '' : 'rounded-[var(--radius-default)]';
 
     return (
       <button
         ref={ref}
         disabled={disabled || isLoading}
-        className={`${baseClasses} ${radiusClass} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+        className={`${baseClasses} rounded-[var(--radius-default)] ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
         {...props}
       >
         {isLoading ? (

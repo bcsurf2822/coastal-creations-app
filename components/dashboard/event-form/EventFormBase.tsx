@@ -17,7 +17,7 @@ interface EventFormBaseProps extends EventFormProps {
   existingImageUrl?: string | null;
   initialData?: EventFormState;
   onEventTypeChange?: (
-    eventType: "adult-class" | "kid-class" | "event" | "camp" | "artist",
+    eventType: "adult-class" | "kid-class" | "adult-kid-class" | "event" | "camp" | "artist",
   ) => void;
 }
 
@@ -47,7 +47,7 @@ const EventFormBase = ({
   const imagePreviewUrl = useImagePreview(formData.image);
 
   const handleEventTypeChange = (
-    eventType: "adult-class" | "kid-class" | "event" | "camp" | "artist",
+    eventType: "adult-class" | "kid-class" | "adult-kid-class" | "event" | "camp" | "artist",
   ) => {
     if (onEventTypeChange) {
       onEventTypeChange(eventType);

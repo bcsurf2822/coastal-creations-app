@@ -19,6 +19,8 @@ export default function Dashboard() {
       <div className="mt-8">
         <EventContainer />
       </div>
+
+      {/* Store Products (Phase B0) */}
     </div>
   );
 }

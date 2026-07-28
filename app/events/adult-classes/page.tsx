@@ -30,7 +30,7 @@ export default function AdultClassesPage() {
             title: "",
             sectionTitle: "",
             eventTypeFilter: (eventType) => {
-              return eventType === "adult-class";
+              return eventType === "adult-class" || eventType === "adult-kid-class";
             },
             layout: "list",
             cardConfig: {

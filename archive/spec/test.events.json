@@ -1,0 +1,255 @@
+[{
+  "_id": {
+    "$oid": "696fca5bb681e71e47a6a25c"
+  },
+  "eventName": "After School Art Camp",
+  "eventType": "camp",
+  "description": "Afterschool Art Camp is 5 Weeks of Creative Fun & Expression!\n\nWe are going to tap into clay modeling, paper mache, painting & more. This camp is 5 Weeks Every Thursday Starting February 26th 3:00 pm - 5:00pm\n",
+  "price": 175,
+  "numberOfParticipants": 10,
+  "dates": {
+    "startDate": {
+      "$date": "2026-02-26T10:00:00.000Z"
+    },
+    "isRecurring": true,
+    "recurringPattern": "weekly",
+    "recurringEndDate": {
+      "$date": "2026-04-02T08:00:00.000Z"
+    },
+    "excludeDates": [],
+    "specificDates": [],
+    "_id": {
+      "$oid": "69790385cb7117858affaf01"
+    }
+  },
+  "time": {
+    "startTime": "15:00",
+    "endTime": "17:00",
+    "_id": {
+      "$oid": "69790385cb7117858affaf00"
+    }
+  },
+  "isDiscountAvailable": true,
+  "discount": {
+    "type": "fixed",
+    "value": 150,
+    "minParticipants": 2,
+    "name": "Sibling Discount",
+    "description": "Save $25 per sibling when you sign up multiple children!"
+  },
+  "options": [],
+  "createdAt": {
+    "$date": "2026-01-20T18:32:59.832Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-27T18:27:17.102Z"
+  },
+  "__v": 0,
+  "image": "https://cdn.sanity.io/images/vmqep02a/production/dfe24ba3036b9692e2bd020f93181bff2b55bbab-769x1024.jpg",
+  "isFree": false
+},
+{
+  "_id": {
+    "$oid": "696fcd68b681e71e47a6a276"
+  },
+  "eventName": "Taylor Swift Lover Party !",
+  "eventType": "kid-class",
+  "description": "Join us for an evening of singing to Taylor Swift, trading friendship braccelets & painting! Paint a Disco Ball with step by step guidance from an Instructor. Make friendship braccelets to trade with friends & of course sing your heart out! This workshop is for swifties.",
+  "price": 35,
+  "numberOfParticipants": 15,
+  "dates": {
+    "startDate": {
+      "$date": "2026-02-20T10:00:00.000Z"
+    },
+    "isRecurring": false,
+    "excludeDates": [],
+    "specificDates": [],
+    "_id": {
+      "$oid": "69931678c95283287a3e7e3b"
+    }
+  },
+  "time": {
+    "startTime": "17:00",
+    "endTime": "18:30",
+    "_id": {
+      "$oid": "69931678c95283287a3e7e3a"
+    }
+  },
+  "isDiscountAvailable": false,
+  "options": [],
+  "createdAt": {
+    "$date": "2026-01-20T18:46:00.062Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-16T13:07:04.370Z"
+  },
+  "__v": 0,
+  "image": "https://cdn.sanity.io/images/vmqep02a/production/af2167bd4f791bbfa0d87018c806f51b6d0bd325-735x1008.png",
+  "isFree": false
+},
+{
+  "_id": {
+    "$oid": "696fd726ef26652d71e07b6c"
+  },
+  "eventName": "Mosaic Flower Pot Workshop",
+  "eventType": "adult-class",
+  "description": "Mosaic your own Flower Pot for Spring! The studio will grout it for you & your piece will be ready within a week!",
+  "price": 50,
+  "numberOfParticipants": 15,
+  "dates": {
+    "startDate": {
+      "$date": "2026-03-21T08:00:00.000Z"
+    },
+    "isRecurring": false,
+    "excludeDates": [],
+    "specificDates": [],
+    "_id": {
+      "$oid": "696fd726ef26652d71e07b6d"
+    }
+  },
+  "time": {
+    "startTime": "18:00",
+    "endTime": "20:00",
+    "_id": {
+      "$oid": "696fd726ef26652d71e07b6e"
+    }
+  },
+  "isDiscountAvailable": false,
+  "options": [],
+  "createdAt": {
+    "$date": "2026-01-20T19:27:34.114Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-20T19:27:34.114Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6979012ad4a49e0e1f5efb00"
+  },
+  "eventName": "Dr Seuss Toddler Time",
+  "eventType": "kid-class",
+  "description": "We are hosting a Toddler Time inspired by Dr Seuss. Enjoy a story time that will include Green Eggs and Ham & Red Fish Blue Fish. We will create a Fish Suncatcher and have additional activities available\nBest for Ages 1 -5",
+  "isFree": false,
+  "price": 20,
+  "numberOfParticipants": 10,
+  "dates": {
+    "startDate": {
+      "$date": "2026-03-03T10:00:00.000Z"
+    },
+    "isRecurring": false,
+    "excludeDates": [],
+    "specificDates": [],
+    "_id": {
+      "$oid": "69931f4e80e867d74c5c3848"
+    }
+  },
+  "time": {
+    "startTime": "10:00",
+    "endTime": "11:00",
+    "_id": {
+      "$oid": "69931f4e80e867d74c5c3847"
+    }
+  },
+  "isDiscountAvailable": true,
+  "discount": {
+    "type": "fixed",
+    "value": 5,
+    "minParticipants": 2,
+    "name": "Sibling Discount",
+    "description": ""
+  },
+  "options": [],
+  "createdAt": {
+    "$date": "2026-01-27T18:17:14.672Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-16T13:44:46.755Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69790178d166e67f28dbae79"
+  },
+  "eventName": "Saint Pattys Toddler Time Workshop",
+  "eventType": "kid-class",
+  "description": "Enjoy a Story Time & Four Leaf Clover Craft! An hour full of fun & creativity. Best for ages 1-5",
+  "isFree": false,
+  "price": 20,
+  "numberOfParticipants": 10,
+  "dates": {
+    "startDate": {
+      "$date": "2026-03-17T08:00:00.000Z"
+    },
+    "isRecurring": false,
+    "excludeDates": [],
+    "specificDates": [],
+    "_id": {
+      "$oid": "69790178d166e67f28dbae7a"
+    }
+  },
+  "time": {
+    "startTime": "10:00",
+    "endTime": "11:00",
+    "_id": {
+      "$oid": "69790179d166e67f28dbae7b"
+    }
+  },
+  "isDiscountAvailable": true,
+  "discount": {
+    "type": "fixed",
+    "value": 5,
+    "minParticipants": 2,
+    "name": "Sibling Discount ",
+    "description": ""
+  },
+  "options": [],
+  "createdAt": {
+    "$date": "2026-01-27T18:18:33.034Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-27T18:18:33.034Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69790366b3e74353c8d1085a"
+  },
+  "eventName": "Kids Saint Pattys Gnome Canvas",
+  "eventType": "kid-class",
+  "description": "Learn how to paint a gnome for Saint Pattys Day! An instructor will be able to guide you through the whole process! Best for ages 7-11",
+  "isFree": false,
+  "price": 30,
+  "numberOfParticipants": 18,
+  "dates": {
+    "startDate": {
+      "$date": "2026-03-14T08:00:00.000Z"
+    },
+    "isRecurring": false,
+    "excludeDates": [],
+    "specificDates": [],
+    "_id": {
+      "$oid": "69790366b3e74353c8d1085b"
+    }
+  },
+  "time": {
+    "startTime": "16:00",
+    "endTime": "17:30",
+    "_id": {
+      "$oid": "69790366b3e74353c8d1085c"
+    }
+  },
+  "image": "https://cdn.sanity.io/images/vmqep02a/production/9c7f4077507d727fbd61265427ec05da7da3d6be-1200x1591.jpg",
+  "isDiscountAvailable": false,
+  "options": [],
+  "createdAt": {
+    "$date": "2026-01-27T18:26:46.513Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-27T18:26:46.513Z"
+  },
+  "__v": 0
+}]

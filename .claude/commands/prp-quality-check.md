@@ -6,6 +6,9 @@
 
 Execute the PRP Quality Agent to perform comprehensive multi-phase validation ensuring the specified PRP meets the highest quality standards for successful TypeScript/Next.js implementation.
 
+> **Archon is not required.** The quality agent grades locally using Bash/Read/Grep against the
+> PRP file + codebase. Archon is opt-in only.
+
 ## Command Execution
 
 Run the PRP Quality Agent with the provided PRP file:
@@ -174,7 +177,7 @@ const errorHandling = {
   },
   'Invalid PRP format': {
     message: 'PRP file is not valid Markdown or missing required structure',
-    resolution: 'Use PRPs/templates/prp_base_typescript.md as template'
+    resolution: 'Use PRPs/templates/prp_base.md as template'
   },
   'Quality agent error': {
     message: 'Error executing quality validation logic',

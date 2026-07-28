@@ -2,14 +2,19 @@ import { ReactElement } from "react";
 import Link from "next/link";
 
 interface Props {
-  searchParams: Promise<{ bookingId?: string; total?: string; name?: string }>;
+  searchParams: Promise<{
+    bookingId?: string;
+    total?: string;
+    name?: string;
+    receiptUrl?: string;
+  }>;
 }
 
 export default async function ConfirmationPage({
   searchParams,
 }: Props): Promise<ReactElement> {
   const params = await searchParams;
-  const { bookingId, total, name } = params;
+  const { bookingId, total, name, receiptUrl } = params;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white px-4 py-12">
@@ -71,6 +76,17 @@ export default async function ConfirmationPage({
                 ${parseFloat(total).toFixed(2)}
               </p>
             </div>
+          )}
+
+          {receiptUrl && (
+            <a
+              href={receiptUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full text-center px-5 py-2.5 border border-sky-200 text-[var(--color-secondary)] font-semibold rounded-lg hover:bg-sky-50 transition-colors"
+            >
+              View Square Receipt
+            </a>
           )}
 
           <div className="mt-6 pt-6 border-t border-gray-200">

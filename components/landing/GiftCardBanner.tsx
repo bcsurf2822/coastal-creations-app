@@ -12,11 +12,7 @@ const GiftCardBanner = (): ReactElement => {
     <section id="gift-cards" className="bg-transparent py-10 md:py-16">
       <div className="mx-auto w-full max-w-[var(--container-max)] px-4 sm:px-6 lg:px-8">
         <div className="relative overflow-hidden rounded-[2rem] border border-white/65 bg-white/82 px-6 py-10 shadow-[0_18px_34px_rgba(12,74,110,0.14)] backdrop-blur-[2px] md:px-10 lg:px-14">
-          <div className="pointer-events-none absolute -left-6 top-8 hidden md:block">
-
-          </div>
-
-          <div className="grid items-center gap-8 lg:grid-cols-[1.15fr_0.85fr]">
+          <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
             <div>
               <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-secondary">
                 Gift Cards
@@ -24,9 +20,9 @@ const GiftCardBanner = (): ReactElement => {
               <h2 className="mb-4 text-4xl font-bold leading-tight text-primary md:text-5xl">
                 Give the gift of creativity.
               </h2>
-              <p className="mb-7 max-w-xl text-lg leading-relaxed text-slate-700">
-                Send a digital gift card that can be used for classes, camps, workshops,
-                private events, and walk-in studio time.
+              <p className="mb-8 max-w-xl text-lg leading-relaxed text-slate-700">
+                Send a digital gift card that can be used for classes, camps,
+                workshops, private events, and walk-in studio time.
               </p>
               <Button
                 variant="primary"
@@ -34,10 +30,11 @@ const GiftCardBanner = (): ReactElement => {
                 className="transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
                 onClick={() => router.push("/gift-cards")}
               >
-                Buy Gift Card
+                Buy a Gift Card
               </Button>
             </div>
 
+            {/* Gift card visual */}
             <div className="flex justify-center lg:justify-end">
               <div className="w-full max-w-sm rounded-2xl border border-sky-100 bg-white p-3 shadow-[0_14px_24px_rgba(12,74,110,0.14)]">
                 <div className="rounded-xl border border-slate-200 bg-[linear-gradient(155deg,#ffffff_0%,#f3f9fd_70%,#e7f3fa_100%)] p-7">
@@ -54,14 +51,15 @@ const GiftCardBanner = (): ReactElement => {
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-secondary">
                       Digital Gift Card
                     </p>
-                    <p className="text-2xl font-bold text-primary">Coastal Creations Studio</p>
+                    <p className="text-2xl font-bold text-primary">
+                      Coastal Creations Studio
+                    </p>
                   </div>
-
                 </div>
               </div>
             </div>
           </div>
-        </div>  
+        </div>
       </div>
     </section>
   );

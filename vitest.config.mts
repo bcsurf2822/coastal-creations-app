@@ -9,7 +9,8 @@ export default defineConfig({
     globals: true,
     setupFiles: ["./vitest.setup.ts"],
     include: ["**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"],
-    exclude: ["node_modules", ".next", "dist"],
+    // Playwright specs live in e2e/ (.spec.ts) and must NOT be collected by Vitest.
+    exclude: ["node_modules", ".next", "dist", "e2e/**"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],

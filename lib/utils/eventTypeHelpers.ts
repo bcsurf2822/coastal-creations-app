@@ -3,7 +3,7 @@
  */
 
 export type OldEventType = "class" | "workshop";
-export type NewEventType = "adult-class" | "kid-class" | "event" | "camp" | "artist";
+export type NewEventType = "adult-class" | "kid-class" | "adult-kid-class" | "event" | "camp" | "artist";
 export type EventType = OldEventType | NewEventType;
 
 /**
@@ -25,6 +25,7 @@ export function normalizeEventType(eventType: string): NewEventType {
   if (
     eventType === "adult-class" ||
     eventType === "kid-class" ||
+    eventType === "adult-kid-class" ||
     eventType === "event" ||
     eventType === "camp" ||
     eventType === "artist"
@@ -58,6 +59,7 @@ export function getEventTypeDisplayName(eventType: string): string {
   const displayNames: Record<NewEventType, string> = {
     "adult-class": "Adult Class",
     "kid-class": "Kid Class",
+    "adult-kid-class": "Adult & Kid Class",
     event: "Event",
     camp: "Camp",
     artist: "Live Artist Event",

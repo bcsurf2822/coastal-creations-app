@@ -3,10 +3,12 @@
  * @module lib/types/eventTypes
  */
 
+import { isValidEmail } from "@/lib/utils/validation";
+
 /**
  * Event type enumeration.
  */
-export type EventType = "adult-class" | "kid-class" | "event" | "camp" | "artist";
+export type EventType = "adult-class" | "kid-class" | "adult-kid-class" | "event" | "camp" | "artist";
 
 /**
  * Recurring pattern enumeration.
@@ -157,8 +159,7 @@ export const validators = {
 
   email: (value: string | undefined): string | null => {
     if (!value) return null;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(value)) {
+    if (!isValidEmail(value)) {
       return "Invalid email address";
     }
     return null;
@@ -357,6 +358,11 @@ export function getDefaultValuesForEventType(
       return {
         ...defaultEventFormValues,
         eventType: "kid-class" as const,
+      };
+    case "adult-kid-class":
+      return {
+        ...defaultEventFormValues,
+        eventType: "adult-kid-class" as const,
       };
     case "event":
       return {

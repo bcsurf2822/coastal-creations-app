@@ -8,7 +8,7 @@ import { ParticipantInfo, BillingInfo, SelectedDate } from "./types";
 import ParticipantFields from "./ParticipantFields";
 import BillingFields from "./BillingFields";
 import WalletPayButtons from "@/components/payment/WalletPayButtons";
-import GiftCardRedemption from "@/components/payment/GiftCardRedemption";
+import GiftCardRedemption from "@/components/checkout/GiftCardRedemption";
 import { submitPayment } from "@/app/actions/actions";
 
 interface AppliedGiftCard {
@@ -76,6 +76,10 @@ export default function PaymentForm({
   const [applicationId, setApplicationId] = useState<string>("");
   const [locationId, setLocationId] = useState<string>("");
   const [baseUrl, setBaseUrl] = useState<string>("");
+  // One stable idempotency key per mount — reused across re-tokenizations within
+  // this reservation attempt so a lost-response retry returns the original charge.
+  // Redirecting to the confirmation page unmounts → a new attempt gets a fresh key.
+  const [idempotencyKey] = useState(() => crypto.randomUUID());
 
   // Gift card state
   const [appliedGiftCard, setAppliedGiftCard] =
@@ -472,23 +476,48 @@ export default function PaymentForm({
       console.log(
         "[PaymentForm-handleCardTokenizeResponse] Processing payment..."
       );
-      const paymentResult = await submitPayment(token.token, {
-        addressLine1: billingInfo.addressLine1,
-        addressLine2: billingInfo.addressLine2,
-        givenName: billingInfo.firstName,
-        familyName: billingInfo.lastName,
-        countryCode: billingInfo.country,
-        city: billingInfo.city,
-        state: billingInfo.stateProvince,
-        postalCode: billingInfo.postalCode,
-        email: billingInfo.emailAddress,
-        phoneNumber: billingInfo.phoneNumber,
-        eventId: reservation._id,
-        eventTitle: reservation.eventName,
-        // Charge only remaining amount after gift card
-        eventPrice: remainingAmount.toFixed(2),
-        squareCustomerId,
-      });
+      const reservationParticipants = participantsByDate.flatMap(
+        (dayData) => dayData.participants
+      );
+      const paymentResult = await submitPayment(
+        token.token,
+        {
+          addressLine1: billingInfo.addressLine1,
+          addressLine2: billingInfo.addressLine2,
+          givenName: billingInfo.firstName,
+          familyName: billingInfo.lastName,
+          countryCode: billingInfo.country,
+          city: billingInfo.city,
+          state: billingInfo.stateProvince,
+          postalCode: billingInfo.postalCode,
+          email: billingInfo.emailAddress,
+          phoneNumber: billingInfo.phoneNumber,
+          eventId: reservation._id,
+          eventTitle: reservation.eventName,
+          eventPrice: remainingAmount.toFixed(2),
+          squareCustomerId,
+        },
+        // Price-determining selection — the server recomputes the reservation
+        // charge from pricePerDayPerParticipant × participants + options, then
+        // subtracts the validated gift card. eventPrice is ignored server-side.
+        {
+          eventId: reservation._id,
+          eventType: "Reservation",
+          selectedDates: selectedDates.map((sd) => ({
+            numberOfParticipants: sd.participants,
+          })),
+          participants: reservationParticipants.map((p) => ({
+            selectedOptions: p.selectedOptions,
+          })),
+          giftCard: appliedGiftCard
+            ? {
+                giftCardId: appliedGiftCard.giftCardId,
+                amountCents: appliedGiftCard.amountApplied,
+              }
+            : undefined,
+        },
+        idempotencyKey
+      );
 
       if (
         !paymentResult ||
@@ -504,6 +533,7 @@ export default function PaymentForm({
       }
 
       const squarePaymentId = paymentResult.result.payment.id;
+      const squareReceiptUrl = paymentResult.result.payment.receiptUrl;
       console.log(
         "[PaymentForm-handleCardTokenizeResponse] Payment completed:",
         squarePaymentId
@@ -585,9 +615,13 @@ export default function PaymentForm({
       }
 
       setPaymentStatus("success");
-      router.push(
-        `/reservations/confirmation?bookingId=${result.data._id}&total=${grandTotal}&name=${encodeURIComponent(reservation.eventName)}`
-      );
+      const confirmParams = new URLSearchParams({
+        bookingId: result.data._id,
+        total: String(grandTotal),
+        name: reservation.eventName,
+      });
+      if (squareReceiptUrl) confirmParams.set("receiptUrl", squareReceiptUrl);
+      router.push(`/reservations/confirmation?${confirmParams.toString()}`);
     } catch (error) {
       console.error(
         "[PaymentForm-handleSubmit] Error processing payment:",

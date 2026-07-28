@@ -54,13 +54,26 @@ const HERO_BUBBLES: BubbleConfig[] = [
   { left: "90%", size: 18, duration: 6.3, delay: 1.6, drift: -11 },
 ];
 
-const CTA_BUTTON_CLASS =
-  "min-w-[170px] shadow-md hover:shadow-xl hover:scale-105 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer";
+const HERO_CTAS: { href: string; label: string; variant: "primary" | "secondary" }[] = [
+  { href: "/events/classes-workshops", label: "Explore Classes", variant: "primary" },
+  { href: "/walk-in", label: "Walk In and Create", variant: "secondary" },
+  { href: "/about", label: "About Us", variant: "secondary" },
+  { href: "/shop", label: "Shop", variant: "secondary" },
+  { href: "/gift-cards", label: "Gift Cards", variant: "secondary" },
+];
 
 const Hero = (): ReactElement => {
   const [showLiveEventPopup, setShowLiveEventPopup] = useState(false);
   const [upcomingArtistEvent, setUpcomingArtistEvent] = useState<CalendarEvent | null>(null);
   const { content } = usePageContent();
+
+  const heading =
+    content?.homepage?.hero?.heading || DEFAULT_TEXT.homepage.hero.heading;
+  // "Welcome to" stays on its own line, the studio name on the second.
+  const headingMatch = heading.match(/^(welcome to)\s+(.+)$/i);
+  const headingLines = headingMatch
+    ? [headingMatch[1], headingMatch[2]]
+    : [heading];
 
   useEffect(() => {
     let popupTimer: number | null = null;
@@ -191,34 +204,27 @@ const Hero = (): ReactElement => {
       <div className="container relative z-10 mx-auto flex w-full items-center px-6 py-8 md:px-12 md:py-12">
         <div className="mx-auto max-w-4xl text-center">
           <div className="relative mb-12 flex h-[320px] items-center justify-center rounded-[2rem] border border-slate-100 bg-white/82 px-3 py-3 shadow-[0_10px_28px_rgba(12,74,110,0.14)] sm:mb-14 md:mb-16 md:h-[280px]">
-            <ThreeHeroText
-              text={
-                content?.homepage?.hero?.heading || DEFAULT_TEXT.homepage.hero.heading
-              }
-            />
+            <ThreeHeroText lines={headingLines} />
           </div>
 
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link href="/events/classes-workshops">
-              <Button variant="pill" size="lg" className={CTA_BUTTON_CLASS}>
-                Explore Classes
-              </Button>
-            </Link>
-            <Link href="/walk-in">
-              <Button variant="pill" size="lg" className={CTA_BUTTON_CLASS}>
-                Walk In and Create
-              </Button>
-            </Link>
-            <Link href="/about">
-              <Button variant="pill" size="lg" className={CTA_BUTTON_CLASS}>
-                About Us
-              </Button>
-            </Link>
-            <Link href="/gift-cards">
-              <Button variant="pill" size="lg" className={CTA_BUTTON_CLASS}>
-                Gift Cards
-              </Button>
-            </Link>
+          {/* 6-col grid, every button spans 2 cols → equal widths, 2 on the
+              top row (centered) and 3 on the bottom at every screen size. */}
+          <div className="mx-auto grid w-full max-w-2xl auto-rows-fr grid-cols-6 gap-3 sm:gap-4">
+            {HERO_CTAS.map((cta, index) => (
+              <Link
+                key={cta.href}
+                href={cta.href}
+                className={`block h-full ${index === 0 ? "col-span-2 col-start-2" : "col-span-2"}`}
+              >
+                <Button
+                  variant={cta.variant}
+                  size="lg"
+                  className="h-full! min-h-12 w-full px-2! py-2 text-[clamp(0.875rem,1.9vw,1rem)]!"
+                >
+                  {cta.label}
+                </Button>
+              </Link>
+            ))}
           </div>
         </div>
       </div>

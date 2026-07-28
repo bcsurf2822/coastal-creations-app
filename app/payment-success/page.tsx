@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
+import { FaCheck, FaCalendarAlt, FaClock, FaRegEnvelope } from "react-icons/fa";
 
 // Define interface for event details
 interface EventDetails {
@@ -20,11 +21,29 @@ interface EventDetails {
   [key: string]: string | number | boolean | object | undefined;
 }
 
+const formatClockTime = (value: string): string => {
+  if (!value) return "";
+  const [hours, minutes] = value.split(":");
+  const hour = parseInt(hours, 10);
+  if (isNaN(hour)) return value;
+  const ampm = hour >= 12 ? "PM" : "AM";
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${minutes ?? "00"} ${ampm}`;
+};
+
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const paymentId = searchParams.get("paymentId");
   const receiptUrl = searchParams.get("receiptUrl");
   const eventId = searchParams.get("eventId");
+  const firstName = searchParams.get("firstName");
+  const eventTitle = searchParams.get("eventTitle");
+  const email = searchParams.get("email");
+  const last4 = searchParams.get("last4");
+  const cardBrand = searchParams.get("cardBrand");
+  const paymentMethod = searchParams.get("paymentMethod");
+  const totalPrice = searchParams.get("totalPrice");
+  const amount = searchParams.get("amount");
 
   const [eventDetails, setEventDetails] = useState<EventDetails | null>(null);
   const [loading, setLoading] = useState(false);
@@ -44,121 +63,178 @@ function PaymentSuccessContent() {
     }
   }, [eventId]);
 
-  // Helper function to format time object
   const formatTime = (
     time: { startTime: string; endTime: string; _id: string } | string | unknown
   ): string => {
     if (!time) return "";
-
-    // If time is an object with startTime and endTime properties
     if (typeof time === "object" && "startTime" in time && "endTime" in time) {
-      return `${time.startTime} - ${time.endTime}`;
+      const t = time as { startTime: string; endTime: string };
+      const start = formatClockTime(t.startTime);
+      const end = formatClockTime(t.endTime);
+      return end ? `${start} - ${end}` : start;
     }
-
-    // If time is a string
-    if (typeof time === "string") {
-      return time;
-    }
-
-    // Fallback
+    if (typeof time === "string") return time;
     return JSON.stringify(time).replace(/[{}"\\]/g, "");
   };
 
-  // Helper function to format dates for recurring events
   const formatRecurringDates = (event: EventDetails): string => {
     if (!event.dates?.isRecurring || !event.dates.startDate) return "";
-
     const startDate = new Date(event.dates.startDate);
-    let dateInfo = `Starts: ${startDate.toLocaleDateString()}`;
-
+    let dateInfo = `Starts ${startDate.toLocaleDateString()}`;
     if (event.dates.recurringEndDate) {
       const endDate = new Date(event.dates.recurringEndDate);
-      dateInfo += ` | Ends: ${endDate.toLocaleDateString()}`;
+      dateInfo += ` · Ends ${endDate.toLocaleDateString()}`;
     }
-
     if (event.dates.recurringPattern) {
-      dateInfo += ` | ${event.dates.recurringPattern.charAt(0).toUpperCase() + event.dates.recurringPattern.slice(1)}`;
+      dateInfo += ` · ${event.dates.recurringPattern.charAt(0).toUpperCase() + event.dates.recurringPattern.slice(1)}`;
     }
-
     return dateInfo;
   };
 
+  const displayTitle = eventDetails?.eventName || eventDetails?.title || eventTitle;
+  const displayAmount =
+    totalPrice || (amount ? (parseInt(amount, 10) / 100).toFixed(2) : null);
+  const dateLine = eventDetails?.dates?.isRecurring
+    ? formatRecurringDates(eventDetails)
+    : eventDetails?.date
+      ? new Date(eventDetails.date).toLocaleDateString("en-US", {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        })
+      : "";
+  const timeLine = eventDetails?.time ? formatTime(eventDetails.time) : "";
+  const paidWith =
+    paymentMethod === "gift_card"
+      ? "Gift card"
+      : paymentMethod === "free"
+        ? "No payment required"
+        : last4
+          ? `${cardBrand ? cardBrand : "Card"} ending in ${last4}`
+          : null;
+
   return (
-    <div className="max-w-lg mx-auto p-8 text-center">
-      <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
-        <svg
-          className="w-16 h-16 text-green-500 mx-auto mb-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M5 13l4 4L19 7"
-          />
-        </svg>
-        <h1 className="text-2xl font-bold text-green-800 mb-2">
-          Payment Successful!
-        </h1>
-        <p className="text-gray-600 mb-4">
-          Thank you for your payment. Your registration is now complete.
-        </p>
-
-        {/* Event Details Section */}
-        {eventDetails && (
-          <div className="mt-4 p-4 bg-white rounded-lg">
-            <h2 className="text-xl font-semibold mb-2">
-              {eventDetails.eventName || eventDetails.title}
-            </h2>
-            {eventDetails.time && (
-              <p className="text-gray-700 mb-1">
-                Time: {formatTime(eventDetails.time)}
-              </p>
-            )}
-            {eventDetails.dates?.isRecurring && (
-              <p className="text-gray-700 mb-1">
-                {formatRecurringDates(eventDetails)}
-              </p>
-            )}
-            {!eventDetails.dates?.isRecurring && eventDetails.date && (
-              <p className="text-gray-700 mb-1">
-                Date: {new Date(eventDetails.date).toLocaleDateString()}
-              </p>
-            )}
+    <div className="min-h-[70vh] bg-gradient-to-b from-[#e0f2fe] via-[#f0f9ff] to-white py-12 px-4">
+      <div className="max-w-xl mx-auto">
+        {/* Success header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100 ring-8 ring-green-50 mb-5">
+            <span className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-green-500 shadow-lg shadow-green-500/30">
+              <FaCheck className="text-white text-2xl" />
+            </span>
           </div>
-        )}
-
-        {loading && (
-          <p className="text-gray-500 mt-2">Loading event details...</p>
-        )}
-
-        {paymentId && (
-          <p className="text-sm text-gray-500 mt-4 mb-2">
-            Payment ID: <span className="font-mono">{paymentId}</span>
+          <h1 className="text-3xl font-bold text-[var(--color-primary)] mb-2">
+            {firstName ? `Thank you, ${firstName}!` : "Payment Successful!"}
+          </h1>
+          <p className="text-gray-600 max-w-md mx-auto">
+            Your registration is confirmed and your spot is secured.
+            {email ? (
+              <>
+                {" "}
+                A confirmation email is on its way to{" "}
+                <span className="font-medium text-gray-800">{email}</span>.
+              </>
+            ) : null}
           </p>
-        )}
-        {receiptUrl && (
-          <a
-            href={receiptUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 underline block mb-4"
-          >
-            View Receipt
-          </a>
-        )}
-      </div>
+        </div>
 
-      <div className="mt-8">
-        <Link
-          href="/"
-          className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-        >
-          Return to Home
-        </Link>
+        {/* Summary card */}
+        <div className="bg-white rounded-2xl shadow-[var(--shadow-card)] border border-sky-100 overflow-hidden">
+          {displayTitle && (
+            <div className="bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] px-6 py-5">
+              <p className="text-sky-100 text-xs font-semibold uppercase tracking-wider mb-1">
+                Booking Confirmed
+              </p>
+              <h2 className="text-white text-xl font-bold leading-tight">
+                {displayTitle}
+              </h2>
+            </div>
+          )}
+
+          <div className="px-6 py-5 space-y-4">
+            {(dateLine || timeLine) && (
+              <div className="flex flex-wrap gap-2">
+                {dateLine && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 border border-sky-100 rounded-lg text-sm font-medium text-gray-700">
+                    <FaCalendarAlt className="text-[var(--color-primary)] text-xs" />
+                    {dateLine}
+                  </span>
+                )}
+                {timeLine && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 border border-sky-100 rounded-lg text-sm font-medium text-gray-700">
+                    <FaClock className="text-[var(--color-primary)] text-xs" />
+                    {timeLine}
+                  </span>
+                )}
+              </div>
+            )}
+            {loading && (
+              <p className="text-gray-400 text-sm">Loading event details…</p>
+            )}
+
+            <dl className="divide-y divide-gray-100">
+              {displayAmount && (
+                <div className="flex items-center justify-between py-2.5">
+                  <dt className="text-sm text-gray-500">Amount paid</dt>
+                  <dd className="text-base font-bold text-gray-900">
+                    ${displayAmount}
+                  </dd>
+                </div>
+              )}
+              {paidWith && (
+                <div className="flex items-center justify-between py-2.5">
+                  <dt className="text-sm text-gray-500">Paid with</dt>
+                  <dd className="text-sm font-medium text-gray-800">
+                    {paidWith}
+                  </dd>
+                </div>
+              )}
+              {paymentId && (
+                <div className="flex items-center justify-between py-2.5 gap-4">
+                  <dt className="text-sm text-gray-500">Confirmation #</dt>
+                  <dd className="text-xs font-mono text-gray-600 truncate">
+                    {paymentId}
+                  </dd>
+                </div>
+              )}
+            </dl>
+          </div>
+
+          {receiptUrl && (
+            <div className="px-6 pb-5">
+              <a
+                href={receiptUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full text-center px-5 py-2.5 border border-sky-200 text-[var(--color-secondary)] font-semibold rounded-lg hover:bg-sky-50 transition-colors"
+              >
+                View Square Receipt
+              </a>
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="mt-6 flex flex-col sm:flex-row gap-3">
+          <Link
+            href="/"
+            className="flex-1 text-center px-6 py-3 bg-[var(--color-primary)] text-white font-semibold rounded-lg hover:bg-[var(--color-primary-dark)] transition-colors"
+          >
+            Return Home
+          </Link>
+          <Link
+            href="/events/classes-workshops"
+            className="flex-1 text-center px-6 py-3 bg-white border border-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Browse More Classes
+          </Link>
+        </div>
+
+        <p className="mt-6 text-center text-xs text-gray-400 flex items-center justify-center gap-1.5">
+          <FaRegEnvelope className="text-gray-300" />
+          Questions? Reply to your confirmation email and we&apos;ll help.
+        </p>
       </div>
     </div>
   );
@@ -168,7 +244,9 @@ export default function PaymentSuccessPage() {
   return (
     <Suspense
       fallback={
-        <div className="max-w-lg mx-auto p-8 text-center">Loading...</div>
+        <div className="max-w-lg mx-auto p-8 text-center text-gray-500">
+          Loading…
+        </div>
       }
     >
       <PaymentSuccessContent />

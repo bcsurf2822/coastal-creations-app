@@ -10,7 +10,7 @@ describe("useReservations", () => {
   });
 
   it("should fetch all reservations successfully", async () => {
-    mockFetch({ success: true, reservations: mockReservations });
+    mockFetch({ success: true, data: mockReservations });
 
     const { result } = renderHook(() => useReservations(), {
       wrapper: createWrapper(),
@@ -27,7 +27,7 @@ describe("useReservations", () => {
   });
 
   it("should fetch reservations with type filter", async () => {
-    mockFetch({ success: true, reservations: mockReservations });
+    mockFetch({ success: true, data: mockReservations });
 
     renderHook(() => useReservations({ type: "walk-in" }), {
       wrapper: createWrapper(),
@@ -41,7 +41,7 @@ describe("useReservations", () => {
   });
 
   it("should fetch reservations with date range", async () => {
-    mockFetch({ success: true, reservations: mockReservations });
+    mockFetch({ success: true, data: mockReservations });
 
     renderHook(
       () => useReservations({ fromDate: "2024-12-01", toDate: "2024-12-31" }),
@@ -56,7 +56,7 @@ describe("useReservations", () => {
   });
 
   it("should call base URL when no filters", async () => {
-    mockFetch({ success: true, reservations: mockReservations });
+    mockFetch({ success: true, data: mockReservations });
 
     renderHook(() => useReservations(), {
       wrapper: createWrapper(),
@@ -68,7 +68,7 @@ describe("useReservations", () => {
   });
 
   it("should handle enabled option", async () => {
-    mockFetch({ success: true, reservations: mockReservations });
+    mockFetch({ success: true, data: mockReservations });
 
     const { result } = renderHook(
       () => useReservations({ enabled: false }),

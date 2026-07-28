@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/auth/guards";
 import { connectMongo } from "@/lib/mongoose";
 import Reservation from "@/lib/models/Reservations";
 import dayjs from "dayjs";
@@ -220,6 +221,9 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
+
   try {
     await connectMongo();
 

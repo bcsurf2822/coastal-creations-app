@@ -4,7 +4,7 @@
 
 ## PRP Creation Mission
 
-Create a comprehensive TypeScript PRP that enables **one-pass implementation success** through systematic research and context curation. After are done creating the PRP save the PRP in Archon in the project specified in the initial.md document
+Create a comprehensive TypeScript PRP that enables **one-pass implementation success** through systematic research and context curation. When done, **save the PRP as a file under `PRPs/`** (see Output). Archon is optional — see "Task Tracking & Archon (optional)" below.
 
 **Critical Understanding**: The executing AI agent only receives:
 
@@ -15,10 +15,25 @@ Create a comprehensive TypeScript PRP that enables **one-pass implementation suc
 
 **Therefore**: Your research and context curation directly determines implementation success. Incomplete context = implementation failure.
 
+## Task Tracking & Archon (optional)
+
+> **Default (no Archon):** This workflow does NOT require Archon. Track work with the
+> built-in task tools — `TaskCreate` / `TaskUpdate` (or `TodoWrite`) — and keep the PRP as a
+> local file under `PRPs/`. This is the standard path.
+>
+> **Opt-in (Archon):** Only if the user explicitly asks to use Archon, also mirror the PRP /
+> tasks into Archon (`mcp__archon__*`) in the project named in `PRPs/INITIAL.md`. If Archon is
+> not connected, silently fall back to the local file + native tasks — never block on it.
+
 ## Research Process
 
-## IMPORTANT: USE ARCHON FIRST FOR DOCUMENTATION RESEARCH, IF THE DOCUMENTATION IS UNAVAILABLE USE BRAVE SEARCH TO LOCATE THE DOCUMENTATION
-> During the research process, create clear tasks and spawn as many agents and subagents as needed using the batch tools. The deeper research we do here the better the PRP will be. we optminize for chance of success and not for speed.
+## IMPORTANT: RESEARCH WITH WEBSEARCH/WEBFETCH + CODEBASE ANALYSIS
+> Use `WebSearch` / `WebFetch` for external documentation and the codebase search tools for
+> internal patterns. (Optional: if the user uses Archon, you may query its docs too — but it is
+> not required and must not block research.) During research, create clear tasks with
+> `TaskCreate`/`TaskUpdate` (or `TodoWrite`) and spawn as many agents and subagents as needed
+> using the batch tools. The deeper the research, the better the PRP — optimize for chance of
+> success, not speed.
 
 1. **TypeScript/React Codebase Analysis in depth**
    - Create clear todos and spawn subagents to search the codebase for similar features/patterns Think hard and plan your approach
@@ -45,7 +60,7 @@ Create a comprehensive TypeScript PRP that enables **one-pass implementation suc
 
 ### Step 1: Choose Template
 
-Use `PRPs/templates/prp_base_typescript.md` as your template structure - it contains all necessary sections and formatting specific to TypeScript/React development.
+Use `PRPs/templates/prp_base.md` as your template structure (adapt its sections to TypeScript/React: types → components → pages → tests). Mirror the house style of a recent PRP such as `PRPs/authentication-customer-profiles.md`.
 
 ### Step 2: Context Completeness Validation
 
@@ -113,9 +128,9 @@ Save as: `PRPs/{feature-name}.md`
 
 ### Step 6: Run Quality Assessment
 
-After completing the PRP generation, **MANDATORY**: Run the PRP Quality Agent to validate the created PRP meets all quality standards.
+After completing the PRP generation, **MANDATORY**: Run the PRP Quality Agent to validate the created PRP meets all quality standards. The quality agent runs locally (Bash/Read/Grep) and does **not** require Archon.
 
-/Users/benjamincorbett/code/cedesigns/coastal-creations-app/.claude/agents/prp-quality-agent/prp-quality-agent.md
+Agent: `.claude/agents/prp-quality-agent/prp-quality-agent.md` (invoke via the `prp-quality-agent` subagent type, or the `/prp-quality-check` command).
 
 ```bash
 # Execute quality validation with detailed reporting

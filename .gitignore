@@ -1,5 +1,9 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Local mockups and scratch docs
+/DOCUMENTATION/
+/docs/
+
 # dependencies
 /node_modules
 /.pnp
@@ -33,8 +37,10 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
-# MCP configuration with sensitive tokens
-.mcp.json
+# MCP configuration with sensitive tokens (matches .mcp.json AND suffixed
+# variants like .mcp.json.square.coastal.prod, anywhere in the tree)
+.mcp.json*
+**/.mcp.json*
 
 # vercel
 .vercel
@@ -44,6 +50,15 @@ yarn-error.log*
 next-env.d.ts
 
 # reference files
-referenceFiles/
-spec/
-PRPs/
+# referenceFiles/
+# spec/
+# PRPs/
+
+# Local MCP server configs (contain secrets — never commit)
+spec/mcp/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

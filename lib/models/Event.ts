@@ -11,7 +11,7 @@ dayjs.extend(timezone);
 const LOCAL_TIMEZONE = "America/New_York"; 
 export interface IEvent extends Document {
   eventName: string;
-  eventType: "adult-class" | "kid-class" | "event" | "camp" | "artist" | "class" | "workshop"; // Temporarily allow old values
+  eventType: "adult-class" | "kid-class" | "adult-kid-class" | "event" | "camp" | "artist" | "class" | "workshop"; // Temporarily allow old values
   description: string;
   isFree?: boolean;
   price?: number;
@@ -191,7 +191,7 @@ const EventSchema = new Schema<IEvent>(
     eventType: {
       type: String,
       required: true,
-      enum: ["adult-class", "kid-class", "event", "camp", "artist", "class", "workshop"], // Temporarily allow old values for migration
+      enum: ["adult-class", "kid-class", "adult-kid-class", "event", "camp", "artist", "class", "workshop"], // Temporarily allow old values for migration
     },
     description: {
       type: String,

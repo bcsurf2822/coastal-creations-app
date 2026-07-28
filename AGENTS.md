@@ -4,17 +4,22 @@
 
 ## Project Purpose
 
-Full-featured event booking system for Coastal Creations Studio (Ocean City, NJ):
+Full-featured event booking + e-commerce platform for Coastal Creations Studio (Ocean City, NJ):
 
-- **Customer-facing**: Browse/book classes, camps, workshops, private events, reservations with Square payments
-- **Admin**: Event management, customer tracking, payment monitoring, refunds, content management
-- **Tech Stack**: Next.js 15, React 18, TypeScript, MongoDB (Mongoose), NextAuth, Square, Sanity CMS, Resend, TanStack Query
+- **Customer-facing**: Browse/book classes, camps, workshops, private events, reservations with Square payments; shop physical products (Art Kits, etc.) through a Square-catalog-driven online store with Shippo-rated shipping; **apply gift cards at any checkout** (events, store, reservations); optionally sign in (Google or passwordless magic link) to track bookings & orders in a customer account
+- **Admin**: Event management, customer tracking, payment monitoring, refunds, content management, store product/order management
+- **Tech Stack**: Next.js 16, React 19, TypeScript, MongoDB (Mongoose), NextAuth (Google + magic link, DB-backed roles), **Square v44 native SDK** (Payments + Catalog), Shippo (shipping), Sanity CMS, Resend, shadcn/ui (customer console), TanStack Query
+
+> **Square SDK:** all server Square code uses the **v44 native client** via `lib/square/client.ts` (`getSquareClient()`) — `square/legacy` is no longer used. The client Web Payments SDK (`react-square-web-payments-sdk`) is unaffected.
+> **Unified checkout:** events, the store, and reservations share `components/checkout/*` (summary-right / payment-left layout). Event/booking checkout is server-orchestrated through the atomic `/api/checkout/booking` route; the store keeps `/api/store/checkout`. See [Unified Checkout](#unified-checkout).
+
+> **Two independent systems share this codebase:** the original **booking** system (Events / Customers / Reservations / Private Events) and an **additive, independent online store** (Square Catalog + Shippo). The store does not touch the booking models. See the [Online Store](#online-store-e-commerce) section.
 
 ## Project Structure
 
 ```
 coastal-creations-app/
-├── app/                          # Next.js 15 App Router
+├── app/                          # Next.js 16 App Router
 │   ├── [slug]/                   # CMS dynamic pages (Sanity)
 │   ├── about/                    # About page
 │   ├── blog/                     # Blog pages
@@ -36,6 +41,18 @@ coastal-creations-app/
 │   │
 │   ├── gift-cards/               # Gift card purchase & balance check
 │   │   └── balance/              # Balance lookup page
+│   │
+│   ├── store/                    # Online store (physical products)
+│   │   └── [slug]/               # Product detail page
+│   ├── cart/                     # Shopping cart page
+│   ├── checkout/                 # 3-step checkout (address → rate → payment)
+│   ├── order-confirmation/       # Post-purchase confirmation
+│   │
+│   ├── login/                    # Customer sign-in (Google + magic link)
+│   ├── account/                  # Customer console (auth-protected)
+│   │   ├── orders/[orderNumber]/ # My Orders + read-only order detail w/ tracking
+│   │   ├── bookings/             # My Bookings
+│   │   └── profile/              # Profile
 │   │
 │   ├── contact-us/               # Contact form
 │   ├── walk-in/                  # Walk-in offerings (Mosaics, Canvas Mixed Media, Art Kits)
@@ -60,6 +77,9 @@ coastal-creations-app/
 │   │   ├── upload-images/        # Gallery upload
 │   │   ├── page-descriptions/    # CMS content editing
 │   │   ├── hours/                # Business hours
+│   │   ├── store/                # Store admin (products + orders)
+│   │   │   ├── products/         # Toggle online-sellable, parcel preset
+│   │   │   └── orders/[id]/      # Order detail (auto-refreshing) + status
 │   │   └── error-logs/           # Error monitoring
 │   │
 │   ├── api/                      # API Routes
@@ -69,7 +89,7 @@ coastal-creations-app/
 │   │   ├── customer/             # Customer bookings
 │   │   ├── reservations/         # Reservation CRUD + [id]
 │   │   ├── private-events/       # Private event CRUD + [id]
-│   │   ├── payments/             # Process payments
+│   │   ├── checkout/booking/     # Atomic booking checkout (charge + Customer + gift card + email)
 │   │   ├── payment-config/       # Square SDK config
 │   │   ├── payment-errors/       # Error logging
 │   │   ├── refunds/              # Square refund processing
@@ -90,7 +110,14 @@ coastal-creations-app/
 │   │   ├── contact/              # Contact form submission
 │   │   ├── subscribe/            # Newsletter subscription
 │   │   ├── hours/                # Business hours management
-│   │   └── page-content/         # CMS page content
+│   │   ├── page-content/         # CMS page content
+│   │   ├── store/                # Store APIs (customer-facing)
+│   │   │   ├── products/         # List sellable catalog items + [id]
+│   │   │   ├── shipping-rates/   # Shippo live rate quotes
+│   │   │   ├── shipping-label/   # Manual label purchase (admin fallback)
+│   │   │   └── checkout/         # Square payment + Order + auto-label
+│   │   ├── admin/store/          # Admin store APIs (products, orders, status)
+│   │   └── webhooks/shippo/      # Shippo tracking webhook receiver
 │   │
 │   ├── actions/actions.ts        # Server Actions
 │   ├── providers.tsx             # React Query + Auth providers
@@ -108,21 +135,25 @@ coastal-creations-app/
 │   │   ├── Card.tsx              # 3 variants (standard, featured, event)
 │   │   ├── Badge.tsx             # 5 status variants (available, fewSpots, soldOut, newClass, upcoming)
 │   │   ├── PriceBadge.tsx        # Gradient price display
-│   │   └── index.ts              # Barrel export
+│   │   ├── index.ts              # Barrel export
+│   │   └── shadcn/               # shadcn/ui primitives (new-york) — customer console only
+│   ├── account/                  # Customer console UI (AccountNav, OrderStatusBadge)
 │   ├── landing/                  # Homepage: Hero, Calendar, Offerings
 │   ├── calendar/                 # Calendar views & event details
 │   ├── classes/                  # Event display (EventCard, PageHeader, etc.)
 │   ├── reservations/             # Reservation booking flow
 │   ├── walk-in/                  # Walk-in page (WalkIn, WalkInCard, WalkInImageSlot)
-│   ├── payment/                  # Square payment components
+│   ├── checkout/                 # Unified checkout: CheckoutLayout, ContactForm, PaymentStep, GiftCardRedemption, EventCheckout, EventParticipantsFields, EventSummary
+│   ├── payment/                  # Shared payment bits (EventPreview, WalletPayButtons)
 │   ├── gift-cards/               # Gift card UI components
+│   ├── store/                    # Storefront + cart (CartProvider, CheckoutForm, ShippingRateStep, CartSummary); payment via components/checkout
 │   ├── gallery/                  # Gallery display
 │   ├── contact/                  # Contact form
 │   ├── about/                    # About page
 │   ├── blog/                     # Blog components
 │   ├── email-templates/          # React Email templates
 │   ├── layout/                   # Nav & Footer
-│   ├── authentication/           # Auth components
+│   ├── authentication/           # LoginForm, AccountNavLink, LogoutButton
 │   ├── providers/                # Context providers
 │   ├── dashboard/                # Admin components
 │   │   ├── home/                 # Dashboard home
@@ -184,7 +215,30 @@ coastal-creations-app/
 │   │   ├── Customer.ts           # Customer bookings with refunds
 │   │   ├── Reservations.ts       # Day-by-day reservations
 │   │   ├── PrivateEvent.ts       # Private event offerings
+│   │   ├── Order.ts              # Store orders (Square + Shippo lifecycle)
+│   │   ├── StoreProductSettings.ts # Website overlay on Square catalog items
 │   │   └── PaymentError.ts       # Error tracking
+│   │
+│   ├── auth/                     # guards.ts (requireAdmin/requireUser + page variants), roles.ts (DB-backed roles)
+│   ├── account/                  # queries.ts (session-scoped: getMyOrders/getMyBookings)
+│   │
+│   ├── shippo/                   # Shippo shipping SDK utilities
+│   │   ├── rates.ts             # getShippingRates (live rate quotes)
+│   │   └── labels.ts            # purchaseLabelForOrder (buy label)
+│   │
+│   ├── square/                   # Square v44 native SDK utilities (off square/legacy; see also below)
+│   │   ├── client.ts            # getSquareClient() — single configured SquareClient (v44)
+│   │   └── catalog.ts           # listCatalogItems, getInventoryCounts
+│   │
+│   ├── checkout/                 # Pricing + booking helpers
+│   │   ├── resolveBookingCharge.ts # authoritative server charge (price recompute + gift-card validate)
+│   │   ├── eventPricing.ts      # compute{Event,PrivateEvent,Reservation}ChargeCents
+│   │   ├── storePricing.ts      # priceCartFromCatalog, resolveShippingRate (price integrity)
+│   │   ├── reservationAvailability.ts # validate + bulkWrite decrement ops
+│   │   ├── idempotency.ts       # normalizeIdempotencyKey
+│   │   ├── bookingFlow.ts       # client booking helpers + buildSuccessUrl
+│   │   └── errors.ts            # PriceIntegrityError
+│   ├── email/                   # sendBookingConfirmation (booking confirmation emails)
 │   │
 │   ├── types/                    # Type definitions
 │   │   ├── eventTypes.ts         # Event type definitions
@@ -197,6 +251,8 @@ coastal-creations-app/
 │   │
 │   ├── utils/                    # Helper utilities
 │   │   ├── eventTypeHelpers.ts   # Event type utilities
+│   │   ├── moneyHelpers.ts       # cents↔dollars, formatCents, BigInt money conversions
+│   │   ├── isCheckoutRoute.ts    # checkout-page detection (nav/layout share it)
 │   │   ├── slugify.ts            # URL slug generation
 │   │   ├── galleryHelpers.ts     # Gallery utilities
 │   │   └── portableTextHelpers.ts # Sanity content helpers
@@ -217,9 +273,10 @@ coastal-creations-app/
 ├── sanity/                       # Sanity CMS
 │   └── client.ts                 # Sanity client config
 │
-├── __tests__/                    # Test files
+├── __tests__/                    # Test files (incl. __tests__/auth, __tests__/account)
 │
-├── auth.ts                       # NextAuth configuration
+├── scripts/                      # One-off scripts (grant-admin.ts — DB-backed admin grant)
+├── auth.ts                       # NextAuth configuration (Google + magic link, DB roles)
 ├── next.config.ts                # Next.js config
 ├── tsconfig.json                 # TypeScript config
 ├── vitest.config.mts             # Vitest test config
@@ -232,22 +289,29 @@ coastal-creations-app/
 | Model | Purpose | Key Fields |
 |-------|---------|------------|
 | **Event.ts** | Classes, camps, workshops | eventName, eventType, price, dates, time, recurring, options, discount |
-| **Customer.ts** | Booking/registration | event (ref), eventType, selectedDates, participants[], billingInfo, squarePaymentId, refundStatus |
+| **Customer.ts** | Booking/registration | event (ref), eventType, selectedDates, participants[], billingInfo, squarePaymentId, refundStatus. **billingInfo address fields are OPTIONAL** — bookings collect only name + email + phone (Square needs no billing address to charge; the card form captures the postal code for AVS) |
 | **Reservations.ts** | Day-by-day availability | eventName, pricePerDayPerParticipant, dailyAvailability[], timeType |
 | **PrivateEvent.ts** | Private party offerings | options, deposit, image |
+| **Order.ts** | Online store orders | orderNumber, items[], customer, shippingAddress, square{}, **giftCard{ giftCardId, amountCents }**, shippo{}, status, shippedAt, deliveredAt (money in **cents**) |
+| **StoreProductSettings.ts** | Website overlay on a Square catalog item | squareItemId, isOnlineSellable, parcelPreset (SMALL/MEDIUM/LARGE), slug, displayOrder |
 | **PaymentError.ts** | Payment failure tracking | error details, customer info |
+
+> **Auth collections** (`users`, `accounts`, `sessions`, `verification_tokens`) are managed by the **NextAuth MongoDB adapter**, not Mongoose models. `users` additionally carries `role` / `isAdmin` (see [Authentication](#authentication--authorization)).
 
 ## API Routes Summary
 
+> Admin/privileged routes (`/api/admin/*`, plus writes on events/reservations/private-events/refunds/gift-cards/square-customers/send/gallery/uploads/hours/page-content) enforce admin via `requireAdmin` (see Authentication). Customer-facing reads + checkout/booking stay public.
+
 | Route | Methods | Purpose |
 |-------|---------|---------|
+| `/api/auth/[...nextauth]` | GET, POST | NextAuth — Google + magic-link sign-in, session, callbacks |
 | `/api/events` | GET, POST | List/create events |
 | `/api/events/[id]` | GET, PUT, DELETE | Single event operations |
 | `/api/customer` | GET, POST | Customer bookings |
 | `/api/reservations` | GET, POST | Reservation CRUD |
 | `/api/reservations/[id]` | GET, PUT, DELETE | Single reservation |
 | `/api/private-events` | GET, POST, PUT, DELETE | Private event offerings |
-| `/api/payments` | POST | Process Square payments |
+| `/api/checkout/booking` | POST | Atomic event/private-event/reservation checkout: recompute charge → Square charge → create Customer → redeem gift card → confirmation email |
 | `/api/payment-config` | GET | Square SDK config |
 | `/api/refunds` | GET, POST | Process refunds |
 | `/api/gift-cards` | GET, POST | Gift card operations |
@@ -259,6 +323,14 @@ coastal-creations-app/
 | `/api/page-content` | GET, PUT | CMS content |
 | `/api/send-confirmation` | POST | Booking confirmation email |
 | `/api/contact` | POST | Contact form |
+| `/api/store/products` | GET | List online-sellable Square catalog items |
+| `/api/store/shipping-rates` | POST | Shippo live rate quotes for a destination + cart |
+| `/api/store/checkout` | POST | Square payment → create Order → auto-buy label → emails |
+| `/api/store/shipping-label` | POST | Manual label purchase (admin fallback) |
+| `/api/admin/store/products` | GET, POST, PUT | Manage store product settings (visibility, parcel) |
+| `/api/admin/store/orders` | GET | List store orders |
+| `/api/admin/store/orders/[id]` | GET, PATCH | Order detail; PATCH `mark_shipped` or status override |
+| `/api/webhooks/shippo` | POST | Shippo tracking webhook → drive order status + emails |
 
 ## React Query Hooks
 
@@ -296,10 +368,13 @@ Cache invalidation is automatic - mutations invalidate related queries.
 | Package | Purpose |
 |---------|---------|
 | `@tanstack/react-query` | Server state management, caching |
-| `next-auth` | Authentication (Google OAuth) |
+| `next-auth` (v4) | Auth: Google OAuth + magic link; DB-backed roles (database sessions) |
+| `nodemailer` | Dormant peer dep of NextAuth EmailProvider (we send magic links via Resend, not SMTP) |
+| `radix-ui` + `lucide-react` | Primitives/icons for shadcn/ui (customer console) |
 | `mongoose` | MongoDB ODM |
-| `square` | Payment processing |
-| `react-square-web-payments-sdk` | Payment UI |
+| `square` (v44) | Payments + Catalog — **v44 native client** (`lib/square/client.ts`); `square/legacy` not used |
+| `react-square-web-payments-sdk` | Payment UI (client card form) |
+| `shippo` | Shipping rate quotes, label purchase, tracking webhooks |
 | `resend` | Transactional emails |
 | `next-sanity` | CMS integration |
 | `@fullcalendar/*` | Calendar UI |
@@ -313,15 +388,33 @@ Cache invalidation is automatic - mutations invalidate related queries.
 
 ```
 MONGODB_URI              # MongoDB connection
+NEXTAUTH_URL             # Base origin only, e.g. http://localhost:3000 (do NOT append /api/auth)
 NEXTAUTH_SECRET          # Auth secret
-GOOGLE_CLIENT_ID         # OAuth
-GOOGLE_CLIENT_SECRET     # OAuth
+ADMIN_EMAILS             # Comma-separated admin SEED emails (bootstrap only; roles live in the DB)
+GOOGLE_CLIENT_ID         # Google OAuth (customer + admin sign-in)
+GOOGLE_CLIENT_SECRET     # Google OAuth
 SQUARE_ACCESS_TOKEN      # Square API
 SQUARE_APPLICATION_ID    # Square SDK
 SQUARE_LOCATION_ID       # Square location
 SANITY_PROJECT_ID        # Sanity CMS
 SANITY_DATASET           # Sanity dataset
-RESEND_API_KEY           # Email service
+RESEND_API_KEY           # Email service (transactional emails + magic-link sign-in)
+
+# --- Online store (Shippo shipping) ---
+SHIPPO_API_KEY           # Shippo API (test key for dev/stage, live for prod)
+SHIPPO_WEBHOOK_SECRET    # Shared secret echoed in the webhook URL (?token=)
+MERCHANT_SHIP_FROM_NAME  # Ship-from origin (rates + labels)
+MERCHANT_SHIP_FROM_STREET
+MERCHANT_SHIP_FROM_CITY
+MERCHANT_SHIP_FROM_STATE
+MERCHANT_SHIP_FROM_ZIP
+MERCHANT_SHIP_FROM_COUNTRY   # default US
+MERCHANT_SHIP_FROM_PHONE     # REQUIRED by USPS or label purchase fails
+MERCHANT_SHIP_FROM_EMAIL     # REQUIRED by USPS or label purchase fails
+
+# --- Email routing ---
+STUDIO_EMAIL             # Admin/owner recipient in production
+DEV_EMAIL                # In dev/stage, ALL store emails redirect here
 ```
 
 ### Scripts
@@ -372,6 +465,11 @@ await connectMongo();
 
 // Success: { success: true, data: ... }
 // Error: { error: "message" }
+
+// Admin-only route? Guard FIRST (see Authentication & Authorization):
+//   import { requireAdmin } from "@/lib/auth/guards";
+//   const g = await requireAdmin();
+//   if (g instanceof NextResponse) return g;   // 401/403
 ```
 
 ### Date Handling
@@ -391,21 +489,158 @@ const date = dayjs.tz(dateString, "America/New_York");
 | Customers | `lib/models/Customer.ts` | `/api/customer/` | `app/admin/dashboard/customers/` | `components/dashboard/customers/` |
 | Reservations | `lib/models/Reservations.ts` | `/api/reservations/` | `app/reservations/` | `components/reservations/` |
 | Private Events | `lib/models/PrivateEvent.ts` | `/api/private-events/` | `app/events/private-events/` | `components/dashboard/private-event-form/` |
-| Payments | - | `/api/payments/`, `/api/refunds/` | `app/payments/` | `components/payment/` |
-| Gift Cards | - | `/api/gift-cards/` | `app/gift-cards/` | `components/gift-cards/` |
+| Store Orders | `lib/models/Order.ts` | `/api/store/checkout/`, `/api/admin/store/orders/` | `app/checkout/`, `app/admin/dashboard/store/orders/` | `components/store/` |
+| Store Products | `lib/models/StoreProductSettings.ts` | `/api/store/products/`, `/api/admin/store/products/` | `app/store/`, `app/admin/dashboard/store/products/` | `components/store/` |
+| Shipping | - | `/api/store/shipping-rates/`, `/api/webhooks/shippo/` | - | `lib/shippo/`, `lib/utils/parcelHelpers.ts` |
+| Checkout (events/booking) | `lib/models/Customer.ts` | `/api/checkout/booking/` | `app/payments/` | `components/checkout/` (EventCheckout) |
+| Checkout (shared UI) | - | - | - | `components/checkout/` (CheckoutLayout, ContactForm, PaymentStep, GiftCardRedemption) |
+| Payments / Refunds | - | `/api/refunds/`, `/api/payment-config/` | `app/payments/` | `components/payment/`, `lib/square/` |
+| Gift Cards | - | `/api/gift-cards/` (purchase, balance, redeem) | `app/gift-cards/` | `components/gift-cards/`, `components/checkout/GiftCardRedemption.tsx` |
 | Gallery | - | `/api/gallery/` | `app/gallery/` | `components/gallery/` |
 | CMS Content | - | `/api/page-content/`, `/api/hours/` | - | `components/dashboard/page-descriptions/` |
+| Auth & Accounts | NextAuth `users` (`role`) | `/api/auth/*` | `app/login/`, `app/account/` | `lib/auth/`, `lib/account/`, `components/authentication/`, `components/account/` |
 
-## Authentication
+## Unified Checkout
 
-- **Provider**: Google OAuth
-- **Whitelist**: `crystaledgedev22@gmail.com`, `ashley@coastalcreationsstudio.com`
-- **Session**: JWT strategy
-- **Protected Routes**: `/admin/*`
+All three checkout surfaces (events/private events, the store, and reservations) share one
+visual pattern and one set of building blocks in `components/checkout/`: a **summary-right /
+payment-left** `CheckoutLayout`, a Square card widget (`PaymentStep`), a minimal `ContactForm`
+(name + email + phone, **no billing address**), and a reusable `GiftCardRedemption`. Money is in
+**cents**; the client total is display-only — the server always recomputes the authoritative charge.
+
+### Event / booking checkout (server-orchestrated)
+- **Page:** `app/payments` renders `components/checkout/EventCheckout.tsx` (reads `eventId` /
+  `eventTitle` / `price` / `isPrivateEvent` / `isFree` from search params).
+- **Route:** `POST /api/checkout/booking` does everything atomically (mirrors the store):
+  `resolveBookingCharge` (price recompute + gift-card balance validation) → reservation
+  availability check (if applicable) → Square customer link → charge the card portion (skipped
+  when free or fully gift-card-covered) → redeem gift card → create `Customer` → decrement
+  reservation availability → confirmation email (`lib/email/sendBookingConfirmation`). This
+  replaced the old fragile client orchestration (`submitPayment` action → `/api/customer` →
+  `/api/send-confirmation`), where a successful charge could be followed by a failed booking write.
+- **Reservations** still render their own page (`app/reservations/[id]/payment` →
+  `components/reservations/PaymentForm.tsx`) on the `submitPayment` **server action**
+  (`app/actions/actions.ts`) + `/api/customer`; they use the shared `GiftCardRedemption`. Migrating
+  this page onto `EventCheckout` + `/api/checkout/booking` is the remaining consolidation step.
+
+### Gift cards (everywhere)
+Apply at events, the store, and reservations via `components/checkout/GiftCardRedemption.tsx`
+(GAN → `GET /api/gift-cards/balance` → apply). The server (`resolveBookingCharge` for bookings,
+inline in `/api/store/checkout` for the store) re-validates against Square's real balance and
+clamps `min(requested, available, total)`, then redeems (`giftCardService.redeem`). A card that
+fully covers the total swaps the card form for a "Complete / Place order with gift card" button
+(no Square charge). The redeemed amount is recorded on `Order.giftCard` / the booking record.
+
+### Price integrity (both checkouts)
+Client-supplied prices are never trusted. Bookings recompute from the DB via
+`lib/checkout/eventPricing.ts`; the store recomputes the subtotal from the Square catalog and
+shipping from a fresh Shippo re-quote via `lib/checkout/storePricing.ts`. A mismatch / unsellable
+item / vanished rate throws `PriceIntegrityError` → 400 (no charge).
+
+## Online Store (E-commerce)
+
+An **additive, independent** physical-product store layered on the existing app. It does **not** touch the Event/Customer/Reservation booking models. Money is stored in **cents** everywhere (Square-native); convert only at the UI boundary via `lib/utils/moneyHelpers.ts`.
+
+### Catalog-driven (Square owns the products)
+
+- **Square Catalog** is the source of truth for products: name, price, photos, variations, inventory.
+- **`StoreProductSettings`** (`lib/models/StoreProductSettings.ts`) is a thin website overlay keyed by `squareItemId`, holding only website-only fields: `isOnlineSellable` (the Shop visibility flag), `parcelPreset` (box size for Shippo), optional `slug`, `displayOrder`, and an optional exact shipping override.
+- To sell any catalog item online, the merchant flips `isOnlineSellable` — no code change. `/api/store/products` lists items that are both a sellable physical good (`lib/utils/catalogHelpers.ts`) and online-enabled.
+
+### Order lifecycle (`lib/models/Order.ts`, `status` field)
+
+```
+pending -> paid -> label_created -> shipped -> delivered
+(cancelled and refunded are terminal off-ramps reachable by admin action)
+```
+
+| Status | Set by |
+|--------|--------|
+| `pending` → `paid` | `/api/store/checkout` after Square captures payment |
+| `label_created` | Shippo label auto-purchased at checkout (or manual fallback) |
+| `shipped` | **Shippo webhook** on first carrier scan (TRANSIT) — auto |
+| `delivered` | **Shippo webhook** on DELIVERED — auto |
+| `cancelled` / `refunded` | Admin action |
+
+`shipped`/`delivered` are driven automatically by carrier tracking — the admin no longer toggles them manually. A manual status dropdown remains in admin as a fallback/override.
+
+### Shipping (Shippo)
+
+- **Rates**: `lib/shippo/rates.ts` → `getShippingRates()` quotes live rates from the merchant origin (`MERCHANT_SHIP_FROM_*`) to the customer, using the cart's heaviest parcel preset. Rates are sorted cheapest-first; checkout pre-selects the cheapest.
+- **Labels**: `lib/shippo/labels.ts` → `purchaseLabelForOrder()` buys the label (idempotent — returns the existing label if already bought). Auto-invoked at checkout; `/api/store/shipping-label` is the admin-only manual fallback.
+- **Parcel presets**: SMALL/MEDIUM/LARGE dimensions+weights in `lib/utils/parcelHelpers.ts` (default MEDIUM ~3lb).
+- **Tracking webhook**: `/api/webhooks/shippo` receives `track_updated` events and drives the order:
+  - `TRANSIT` (first scan) → mark `shipped`, email customer tracking + notify admin
+  - `DELIVERED` → mark `delivered`, email customer (backfills `shippedAt` if no prior TRANSIT)
+  - `FAILURE` / `RETURNED` → admin-only exception alert, **no** status change
+  - Handlers are idempotent on `shippedAt`/`deliveredAt`. Auth: Shippo can't sign requests, so the secret rides in the URL as `?token=` and is checked against `SHIPPO_WEBHOOK_SECRET`. Register the webhook in the Shippo dashboard (Event: Track Updated; **Test** mode for stage, **Live** for prod) pointing at `<origin>/api/webhooks/shippo?token=<secret>`.
+
+### Checkout flow (`components/store/CheckoutForm.tsx`)
+
+3 steps: **Contact & Shipping** (`ShippingAddressStep`) → **Shipping Method** (`ShippingRateStep`, collapsed to the recommended rate with a "choose another" toggle) → **Payment** (the shared `components/checkout/PaymentStep`, Square Web Payments SDK). A `GiftCardRedemption` appears once shipping is known; `/api/store/checkout` validates + redeems it and charges only the remainder (or skips Square entirely when fully covered → no `square.paymentId`). Cart state lives in `CartProvider` (React Context, persisted client-side). See [Unified Checkout](#unified-checkout).
+
+### Transactional emails (`components/email-templates/`)
+
+| Template | Trigger | Recipient |
+|----------|---------|-----------|
+| `OrderConfirmationEmail` | checkout success | customer |
+| `StoreOrderAdminEmail` | checkout success | admin (label link / action-needed) |
+| `ShippingConfirmationEmail` | TRANSIT → shipped | customer + admin |
+| `DeliveryConfirmationEmail` | DELIVERED | customer |
+| `ShipmentExceptionEmail` | FAILURE / RETURNED | admin only |
+
+In dev/stage, **all** store emails redirect to `DEV_EMAIL`; in production, customer emails go to the customer and admin emails to `STUDIO_EMAIL`.
+
+### Admin
+
+`app/admin/dashboard/store/` — product visibility/parcel management and an order list + detail view. The order detail page **auto-refreshes** (15s polling) so webhook-driven status changes appear without a manual refresh; polling stops on terminal statuses and pauses when the tab is hidden.
+
+## Authentication & Authorization
+
+NextAuth v4 + MongoDB adapter, **`database` session strategy** (NOT JWT). One system serves
+both **admins** and **customers**; a DB-backed role decides access. Config lives in `auth.ts`.
+
+### Sign-in (`auth.ts`)
+- **Google OAuth** and **passwordless magic link** (NextAuth `EmailProvider` with a custom
+  `sendVerificationRequest` that sends via **Resend** — no SMTP; `nodemailer` is only a dormant
+  peer dep). Magic links are single-use, ~10-min TTL, with a DB-backed per-email rate limit.
+- **Anyone can sign in** (customers + admins). New users default to `role: "customer"`.
+
+### Roles are DB-backed (`lib/auth/roles.ts`)
+- The NextAuth `users` collection carries `role: "customer" | "admin"` (+ `isAdmin`).
+- Admins are seeded from `ADMIN_EMAILS` via `events.createUser` + a sign-in promotion, with a
+  session fallback. **`ADMIN_EMAILS` is a bootstrap SEED ONLY — never the request-time gate.**
+- Grant/revoke admin in the DB with `scripts/grant-admin.ts <email> [--revoke]` (no redeploy).
+
+### Authorization is enforced in code, NOT middleware (`lib/auth/guards.ts`)
+Because sessions are DB-backed, Edge `middleware.ts` can't read the role — so authz lives in
+route handlers and server components:
+- API routes: `const g = await requireAdmin(); if (g instanceof NextResponse) return g;`
+  (`requireAdmin` → 401 if not signed in, 403 if signed-in-but-not-admin; `requireUser` → 401 only).
+- Server components/pages: `requireAdminPage()` / `requireUserPage()` (redirect variants).
+- **Every** admin route + the `/admin/dashboard` shell uses these; there is NO `NODE_ENV` dev
+  bypass. `__tests__/auth/` asserts a customer session gets 403 on every admin route.
+
+### Customer accounts (`app/login/`, `app/account/`)
+- `/login` — Google + magic link (`components/authentication/LoginForm.tsx`).
+- `/account` (protected by `requireUserPage`) — **Overview**, **My Orders** (live status + a detail
+  page with tracking and an ownership re-check), **My Bookings**, **Profile**. Reads are scoped
+  strictly to the session email via `lib/account/queries.ts` (case-insensitive; never client-supplied).
+- Nav shows "Sign in / My Account" (`components/authentication/AccountNavLink.tsx`).
+- Guest checkout/booking still work without an account. Bookings/orders are linked to a user by
+  **email** (a `userId` stamp is a future enhancement); store checkout also sets
+  `Order.square.customerId` for unified Square history.
+- The customer console uses **shadcn/ui** (`components/ui/shadcn/`), kept separate from the
+  storefront `components/ui/*` design system — both coexist (see Design System).
+
+### Protected routes
+- `/admin/*` (admin role required) · `/account/*` (any authenticated user).
 
 ## Design System
 
 The application uses a custom design system with CSS variables and reusable UI components. **Always use these components and tokens for consistency.**
+
+> **Two UI systems coexist.** The **storefront, booking, and admin** surfaces use this custom design system (`components/ui/*`, `--color-*` tokens). The **customer console** (`/account`, `/login`) uses **shadcn/ui** (`components/ui/shadcn/*`, new-york style) themed on-brand in `app/globals.css` — its shadcn tokens (`--background`, `--foreground`, `--card`, `--primary`, etc.) are defined **without** overwriting the storefront `--color-*` tokens. Use the custom system for storefront/admin work; use shadcn only inside the customer console.
 
 ### Design Tokens (app/globals.css)
 

@@ -6,6 +6,7 @@ declare module "next-auth" {
    */
   interface User {
     isAdmin?: boolean;
+    role?: "customer" | "admin";
   }
 
   /**
@@ -18,6 +19,7 @@ declare module "next-auth" {
       name?: string | null;
       image?: string | null;
       isAdmin?: boolean;
+      role?: "customer" | "admin";
     };
   }
 }
