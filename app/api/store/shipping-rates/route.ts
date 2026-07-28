@@ -3,6 +3,7 @@
  * POST: Returns live Shippo carrier rates for the destination address + cart items.
  */
 import { NextResponse } from "next/server";
+import { isShopEnabled } from "@/lib/constants/featureFlags";
 import { connectMongo } from "@/lib/mongoose";
 import StoreProductSettings from "@/lib/models/StoreProductSettings";
 import { getShippingRates } from "@/lib/shippo/rates";
@@ -16,6 +17,13 @@ interface ShippingRatesRequest {
 }
 
 export async function POST(request: Request): Promise<Response> {
+  // Launch gate: no store purchases until the shop flag is lifted.
+  if (!isShopEnabled()) {
+    return NextResponse.json(
+      { error: "The online store is not open yet. Check back soon!" },
+      { status: 503 }
+    );
+  }
   try {
     const body: ShippingRatesRequest = await request.json();
 

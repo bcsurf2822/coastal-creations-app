@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import type { ReactElement } from "react";
 import ProductDetail from "@/components/store/ProductDetail";
+import ShopComingSoon from "@/components/store/ShopComingSoon";
+import { isShopEnabled } from "@/lib/constants/featureFlags";
 import { extractSquareItemIdFromSlug } from "@/lib/utils/slugify";
 import { retrieveCatalogItem } from "@/lib/square/catalog";
 
@@ -9,6 +11,9 @@ interface Props {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  if (!isShopEnabled()) {
+    return { title: "Shop | Coastal Creations Studio" };
+  }
   const { slug } = await params;
   const squareItemId = extractSquareItemIdFromSlug(slug);
 
@@ -32,6 +37,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function StoreProductPage({
   params,
 }: Props): Promise<ReactElement> {
+  if (!isShopEnabled()) {
+    return <ShopComingSoon />;
+  }
   const { slug } = await params;
   const squareItemId = extractSquareItemIdFromSlug(slug);
 

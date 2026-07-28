@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     "The Terms of Service governing your use of the Coastal Creations Studio website, class and event bookings, and online store in Ocean City, NJ.",
 };
 
-const LAST_UPDATED = "June 23, 2026";
+const LAST_UPDATED = "July 28, 2026";
 const CONTACT_EMAIL = "info@coastalcreationsstudio.com";
 
 type Section = {
@@ -168,12 +168,19 @@ const sections: Section[] = [
     body: (
       <>
         <p className="leading-relaxed text-black">
-          If you cancel a class, camp, or workshop booking, you will receive a
-          refund. We encourage you to let us know as early as possible so we can
-          offer your spot to someone else. Private events and parties are
-          non-refundable. If a participant does not show up for a booked class,
-          camp, workshop, or event without cancelling, the amount paid is
-          non-refundable.
+          To cancel a class, camp, workshop, or event booking and request a
+          refund, email us at{" "}
+          <a href={`mailto:${CONTACT_EMAIL}`} className={linkClass}>
+            {CONTACT_EMAIL}
+          </a>{" "}
+          at least 72 hours before the start of the event. Cancellation and
+          refund requests are handled by email only and cannot be submitted
+          through your online account. Requests made less than 72 hours before
+          the event are not eligible for a refund. We encourage you to let us
+          know as early as possible so we can offer your spot to someone else.
+          Private events and parties are non-refundable. If a participant does
+          not show up for a booked class, camp, workshop, or event without
+          cancelling, the amount paid is non-refundable.
         </p>
         <p className="mt-4 leading-relaxed text-black">
           The studio may cancel or reschedule a class or event for reasons

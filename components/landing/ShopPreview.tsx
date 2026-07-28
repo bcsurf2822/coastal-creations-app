@@ -6,9 +6,26 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
 import { useProducts } from "@/hooks/queries/use-products";
+import { isShopEnabled } from "@/lib/constants/featureFlags";
 
 const PANEL =
   "relative overflow-hidden rounded-[2rem] border border-white/65 bg-white/82 shadow-[0_18px_34px_rgba(12,74,110,0.14)] backdrop-blur-[2px]";
+
+// Matches the hero heading (Impact with the globally-loaded Anton fallback).
+const DISPLAY_FONT =
+  'Impact, Haettenschweiler, "Arial Narrow Bold", var(--font-anton), sans-serif';
+
+/** Right-aligned note at the top of the panel while the shop launch gate is down. */
+const ComingSoonStrip = (): ReactElement => (
+  <div className="mb-4 text-right">
+    <span
+      className="text-xl tracking-wider text-[var(--color-primary)] sm:text-2xl"
+      style={{ fontFamily: DISPLAY_FONT }}
+    >
+      Coming Soon
+    </span>
+  </div>
+);
 
 const ShopPreview = (): ReactElement => {
   const router = useRouter();
@@ -25,6 +42,7 @@ const ShopPreview = (): ReactElement => {
     <section id="shop-preview" className="bg-transparent py-10 md:py-16">
       <div className="mx-auto w-full max-w-[var(--container-max)] px-4 sm:px-6 lg:px-8">
         <div className={`${PANEL} px-6 py-10 md:px-10 lg:px-14`}>
+          {!isShopEnabled() && <ComingSoonStrip />}
           {/* Header: copy left, CTA right (CTA drops below on mobile) */}
           <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>

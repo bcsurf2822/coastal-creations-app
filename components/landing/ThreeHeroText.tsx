@@ -2,15 +2,14 @@
 
 import type { ReactElement } from "react";
 import { useEffect, useRef, useCallback } from "react";
-import { Abril_Fatface } from "next/font/google";
 
-const abrilFatface = Abril_Fatface({
-  subsets: ["latin"],
-  weight: "400",
-});
+// Impact is a system font (no Google Fonts equivalent); Anton — already loaded
+// globally in app/layout.tsx — is the closest web fallback for devices without it.
+const HERO_FONT_FAMILY =
+  'Impact, Haettenschweiler, "Arial Narrow Bold", var(--font-anton), sans-serif';
 
 interface ThreeHeroTextProps {
-  text: string;
+  lines: string[];
   className?: string;
 }
 
@@ -35,15 +34,20 @@ const WAVE_PAUSE_MAX = 5000;
 const WAVE_STEP_MS = 60;
 const WAVE_HOLD_MS = 350;
 
-const ThreeHeroText = ({ text, className = "" }: ThreeHeroTextProps): ReactElement => {
+const ThreeHeroText = ({ lines, className = "" }: ThreeHeroTextProps): ReactElement => {
   const spansRef = useRef<(HTMLSpanElement | null)[]>([]);
   const isHoveringRef = useRef(false);
   const mountedRef = useRef(true);
 
-  const words = text.trim().split(/\s+/);
+  const lineWords = lines.map((line) => line.trim().split(/\s+/).filter(Boolean));
 
-  const totalChars = words.reduce(
-    (sum, word, i) => sum + word.length + (i < words.length - 1 ? 1 : 0),
+  const totalChars = lineWords.reduce(
+    (sum, words) =>
+      sum +
+      words.reduce(
+        (lineSum, word, i) => lineSum + word.length + (i < words.length - 1 ? 1 : 0),
+        0,
+      ),
     0,
   );
 
@@ -185,63 +189,69 @@ const ThreeHeroText = ({ text, className = "" }: ThreeHeroTextProps): ReactEleme
     };
   }, [totalChars, applyRipple, clearRipple]);
 
-  // Pre-compute word groups with stable global indices
-  const wordGroups: { chars: { char: string; idx: number }[]; spaceIdx: number | null }[] = [];
+  // Pre-compute word groups per line with stable global indices
+  type WordGroup = { chars: { char: string; idx: number }[]; spaceIdx: number | null };
   let idx = 0;
-  words.forEach((word, wordIdx) => {
-    const group: { chars: { char: string; idx: number }[]; spaceIdx: number | null } = {
-      chars: [],
-      spaceIdx: null,
-    };
-    Array.from(word).forEach((char) => {
-      group.chars.push({ char, idx: idx++ });
-    });
-    if (wordIdx < words.length - 1) {
-      group.spaceIdx = idx++;
-    }
-    wordGroups.push(group);
-  });
+  const lineGroups: WordGroup[][] = lineWords.map((words) =>
+    words.map((word, wordIdx) => {
+      const group: WordGroup = { chars: [], spaceIdx: null };
+      Array.from(word).forEach((char) => {
+        group.chars.push({ char, idx: idx++ });
+      });
+      if (wordIdx < words.length - 1) {
+        group.spaceIdx = idx++;
+      }
+      return group;
+    }),
+  );
 
   return (
     <div className={`relative flex h-full w-full items-center justify-center ${className}`}>
       <h1
-        className={`${abrilFatface.className} flex flex-wrap items-center justify-center px-4 text-center text-4xl leading-tight sm:text-5xl md:text-6xl`}
-        style={{ color: BASE_COLOR }}
-        aria-label={text}
+        className="px-4 text-center leading-tight text-[clamp(1.25rem,6.5vw,3.75rem)]"
+        style={{ color: BASE_COLOR, fontFamily: HERO_FONT_FAMILY }}
+        aria-label={lines.join(" ")}
       >
-        {wordGroups.map((group, wordIdx) => (
+        {lineGroups.map((groups, lineIdx) => (
           <span
-            key={wordIdx}
-            className="inline-flex"
-            style={{ whiteSpace: "nowrap" }}
+            key={lineIdx}
+            className="flex flex-nowrap items-center justify-center whitespace-nowrap"
           >
-            {group.chars.map(({ char, idx: charIdx }) => (
+            {groups.map((group, wordIdx) => (
               <span
-                key={charIdx}
-                ref={(el) => {
-                  spansRef.current[charIdx] = el;
-                }}
-                className="inline-block cursor-default"
-                style={{
-                  display: "inline-block",
-                  willChange: "transform, color",
-                }}
+                key={wordIdx}
+                className="inline-flex"
+                style={{ whiteSpace: "nowrap" }}
               >
-                {char}
+                {group.chars.map(({ char, idx: charIdx }) => (
+                  <span
+                    key={charIdx}
+                    ref={(el) => {
+                      spansRef.current[charIdx] = el;
+                    }}
+                    className="inline-block cursor-default"
+                    style={{
+                      display: "inline-block",
+                      willChange: "transform, color",
+                    }}
+                  >
+                    {char}
+                  </span>
+                ))}
+                {group.spaceIdx !== null && (
+                  <span
+                    key={`space-${wordIdx}`}
+                    ref={(el) => {
+                      spansRef.current[group.spaceIdx!] = el;
+                    }}
+                    className="inline-block"
+                    style={{ minWidth: "0.6em", display: "inline-block" }}
+                  >
+                    {"\u00A0"}
+                  </span>
+                )}
               </span>
             ))}
-            {group.spaceIdx !== null && (
-              <span
-                key={`space-${wordIdx}`}
-                ref={(el) => {
-                  spansRef.current[group.spaceIdx!] = el;
-                }}
-                className="inline-block"
-                style={{ minWidth: "0.6em", display: "inline-block" }}
-              >
-                {"\u00A0"}
-              </span>
-            )}
           </span>
         ))}
       </h1>

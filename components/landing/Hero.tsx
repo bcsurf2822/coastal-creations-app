@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, ReactElement } from "react";
+import type { ReactElement } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
@@ -54,25 +54,26 @@ const HERO_BUBBLES: BubbleConfig[] = [
   { left: "90%", size: 18, duration: 6.3, delay: 1.6, drift: -11 },
 ];
 
-const CTA_BUTTON_CLASS =
-  "min-w-[210px] text-lg hover:scale-105 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer";
-
-// Hero CTAs — each gets its own paint-splat color so the row reads as a
-// hand-painted set (the --paint-splat-color var is consumed by .paint-pill).
-// `nudge` staggers each button vertically + rotates it slightly so the row looks
-// scattered/hand-placed rather than perfectly aligned.
-const HERO_CTAS: { href: string; label: string; splat: string; nudge: string }[] = [
-  { href: "/events/classes-workshops", label: "Explore Classes", splat: "#42A5F5", nudge: "translate-y-2 -rotate-2" },
-  { href: "/walk-in", label: "Walk In and Create", splat: "#FB923C", nudge: "-translate-y-2 rotate-1" },
-  { href: "/about", label: "About Us", splat: "#2DD4BF", nudge: "translate-y-3 -rotate-1" },
-  { href: "/shop", label: "Shop", splat: "#FB7185", nudge: "-translate-y-1 rotate-2" },
-  { href: "/gift-cards", label: "Gift Cards", splat: "#FBBF24", nudge: "translate-y-2 -rotate-1" },
+const HERO_CTAS: { href: string; label: string; variant: "primary" | "secondary" }[] = [
+  { href: "/events/classes-workshops", label: "Explore Classes", variant: "primary" },
+  { href: "/walk-in", label: "Walk In and Create", variant: "secondary" },
+  { href: "/about", label: "About Us", variant: "secondary" },
+  { href: "/shop", label: "Shop", variant: "secondary" },
+  { href: "/gift-cards", label: "Gift Cards", variant: "secondary" },
 ];
 
 const Hero = (): ReactElement => {
   const [showLiveEventPopup, setShowLiveEventPopup] = useState(false);
   const [upcomingArtistEvent, setUpcomingArtistEvent] = useState<CalendarEvent | null>(null);
   const { content } = usePageContent();
+
+  const heading =
+    content?.homepage?.hero?.heading || DEFAULT_TEXT.homepage.hero.heading;
+  // "Welcome to" stays on its own line, the studio name on the second.
+  const headingMatch = heading.match(/^(welcome to)\s+(.+)$/i);
+  const headingLines = headingMatch
+    ? [headingMatch[1], headingMatch[2]]
+    : [heading];
 
   useEffect(() => {
     let popupTimer: number | null = null;
@@ -203,27 +204,22 @@ const Hero = (): ReactElement => {
       <div className="container relative z-10 mx-auto flex w-full items-center px-6 py-8 md:px-12 md:py-12">
         <div className="mx-auto max-w-4xl text-center">
           <div className="relative mb-12 flex h-[320px] items-center justify-center rounded-[2rem] border border-slate-100 bg-white/82 px-3 py-3 shadow-[0_10px_28px_rgba(12,74,110,0.14)] sm:mb-14 md:mb-16 md:h-[280px]">
-            <ThreeHeroText
-              text={
-                content?.homepage?.hero?.heading || DEFAULT_TEXT.homepage.hero.heading
-              }
-            />
+            <ThreeHeroText lines={headingLines} />
           </div>
 
-          <div className="mx-auto flex max-w-2xl flex-wrap justify-center gap-4">
-            {HERO_CTAS.map((cta) => (
+          {/* 6-col grid, every button spans 2 cols → equal widths, 2 on the
+              top row (centered) and 3 on the bottom at every screen size. */}
+          <div className="mx-auto grid w-full max-w-2xl auto-rows-fr grid-cols-6 gap-3 sm:gap-4">
+            {HERO_CTAS.map((cta, index) => (
               <Link
                 key={cta.href}
                 href={cta.href}
-                className={`inline-block ${cta.nudge}`}
+                className={`block h-full ${index === 0 ? "col-span-2 col-start-2" : "col-span-2"}`}
               >
                 <Button
-                  variant="pill"
-                  size="xl"
-                  className={CTA_BUTTON_CLASS}
-                  style={
-                    { "--paint-splat-color": cta.splat } as CSSProperties
-                  }
+                  variant={cta.variant}
+                  size="lg"
+                  className="h-full! min-h-12 w-full px-2! py-2 text-[clamp(0.875rem,1.9vw,1rem)]!"
                 >
                   {cta.label}
                 </Button>

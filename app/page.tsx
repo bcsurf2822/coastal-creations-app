@@ -9,6 +9,7 @@ import GiftCardBanner from "@/components/landing/GiftCardBanner";
 import GoogleReviews from "@/components/landing/GoogleReviews";
 import SectionDivider from "@/components/landing/SectionDivider";
 import PhotoCorral from "@/components/gallery/PhotoCorral";
+import { isShopEnabled } from "@/lib/constants/featureFlags";
 
 export const metadata: Metadata = {
   title: "Coastal Creations Studio | Art Classes & Workshops in Ocean City, NJ",
@@ -32,8 +33,13 @@ export default function Home() {
       </div>
       <PhotoCorral destination="home-page" />
       <SectionDivider />
-      <GoogleReviews />
-      <SectionDivider />
+      {/* Hidden behind the shop launch gate alongside the store (client request). */}
+      {isShopEnabled() && (
+        <>
+          <GoogleReviews />
+          <SectionDivider />
+        </>
+      )}
       <Offerings />
       <SectionDivider />
       <ShopPreview />
