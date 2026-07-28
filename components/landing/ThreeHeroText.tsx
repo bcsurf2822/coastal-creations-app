@@ -208,14 +208,14 @@ const ThreeHeroText = ({ lines, className = "" }: ThreeHeroTextProps): ReactElem
   return (
     <div className={`relative flex h-full w-full items-center justify-center ${className}`}>
       <h1
-        className="px-4 text-center text-4xl leading-tight sm:text-5xl md:text-6xl"
+        className="px-4 text-center leading-tight text-[clamp(1.25rem,6.5vw,3.75rem)]"
         style={{ color: BASE_COLOR, fontFamily: HERO_FONT_FAMILY }}
         aria-label={lines.join(" ")}
       >
         {lineGroups.map((groups, lineIdx) => (
           <span
             key={lineIdx}
-            className="flex flex-wrap items-center justify-center"
+            className="flex flex-nowrap items-center justify-center whitespace-nowrap"
           >
             {groups.map((group, wordIdx) => (
               <span

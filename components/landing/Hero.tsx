@@ -207,10 +207,20 @@ const Hero = (): ReactElement => {
             <ThreeHeroText lines={headingLines} />
           </div>
 
-          <div className="mx-auto flex max-w-2xl flex-wrap justify-center gap-3 sm:gap-4">
-            {HERO_CTAS.map((cta) => (
-              <Link key={cta.href} href={cta.href}>
-                <Button variant={cta.variant} size="lg">
+          {/* 6-col grid, every button spans 2 cols → equal widths, 2 on the
+              top row (centered) and 3 on the bottom at every screen size. */}
+          <div className="mx-auto grid w-full max-w-2xl auto-rows-fr grid-cols-6 gap-3 sm:gap-4">
+            {HERO_CTAS.map((cta, index) => (
+              <Link
+                key={cta.href}
+                href={cta.href}
+                className={`block h-full ${index === 0 ? "col-span-2 col-start-2" : "col-span-2"}`}
+              >
+                <Button
+                  variant={cta.variant}
+                  size="lg"
+                  className="h-full! min-h-12 w-full px-2! py-2 text-[clamp(0.875rem,1.9vw,1rem)]!"
+                >
                   {cta.label}
                 </Button>
               </Link>
