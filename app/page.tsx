@@ -5,6 +5,7 @@ import MainSection from "@/components/landing/MainSection";
 import Offerings from "@/components/landing/Offerings";
 import Calendar from "@/components/landing/Calendar";
 import ShopPreview from "@/components/landing/ShopPreview";
+import ShopComingSoonBanner from "@/components/landing/ShopComingSoonBanner";
 import GiftCardBanner from "@/components/landing/GiftCardBanner";
 import GoogleReviews from "@/components/landing/GoogleReviews";
 import SectionDivider from "@/components/landing/SectionDivider";
@@ -42,7 +43,7 @@ export default function Home() {
       )}
       <Offerings />
       <SectionDivider />
-      <ShopPreview />
+      {isShopEnabled() ? <ShopPreview /> : <ShopComingSoonBanner />}
       <SectionDivider />
       <GiftCardBanner />
       <SectionDivider />
