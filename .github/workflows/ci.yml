@@ -43,6 +43,10 @@ env:
   MERCHANT_SHIP_FROM_EMAIL: "ci@example.com"
   STUDIO_EMAIL: "studio@example.com"
   DEV_EMAIL: "dev@example.com"
+  # Shop launch gate (lib/constants/featureFlags.ts). Lifted in CI so the store
+  # pages, checkout routes, and e2e flows are tested as they will behave once
+  # the shop opens; production stays gated until the var is set there.
+  NEXT_PUBLIC_SHOP_ENABLED: "true"
 
 jobs:
   # Required gate: static checks + unit/integration tests + production build.
