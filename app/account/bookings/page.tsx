@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import Link from "next/link";
 import { requireUserPage } from "@/lib/auth/guards";
-import { getMyBookings, getMyRefundRequests } from "@/lib/account/queries";
+import { getMyBookings } from "@/lib/account/queries";
 import type { ICustomer } from "@/lib/models/Customer";
 import {
   bookingEventName,
@@ -9,7 +9,6 @@ import {
   bookingDates,
   isBookingUpcoming,
 } from "@/lib/account/display";
-import BookingRefundRequestButton from "@/components/account/BookingRefundRequestButton";
 
 function bookingId(booking: ICustomer): string {
   return String((booking as unknown as { _id: unknown })._id);
@@ -17,15 +16,7 @@ function bookingId(booking: ICustomer): string {
 
 export default async function MyBookingsPage(): Promise<ReactElement> {
   const user = await requireUserPage();
-  const [bookings, refundRequests] = await Promise.all([
-    getMyBookings(user.email),
-    getMyRefundRequests(user.email),
-  ]);
-  const pendingBookingIds = new Set(
-    refundRequests
-      .filter((r) => r.status === "pending" && r.type === "booking")
-      .map((r) => String(r.targetId))
-  );
+  const bookings = await getMyBookings(user.email);
 
   if (bookings.length === 0) {
     return (
@@ -55,7 +46,6 @@ export default async function MyBookingsPage(): Promise<ReactElement> {
                 <th className="px-4 py-3 text-center">Participants</th>
                 <th className="px-4 py-3 text-right">Amount</th>
                 <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 text-right">Refund</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -97,15 +87,6 @@ export default async function MyBookingsPage(): Promise<ReactElement> {
                           Completed
                         </span>
                       )}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <BookingRefundRequestButton
-                        bookingId={bookingId(booking)}
-                        referenceLabel={bookingEventName(booking)}
-                        pending={pendingBookingIds.has(bookingId(booking))}
-                        refunded={booking.refundStatus === "full"}
-                        eligible={upcoming}
-                      />
                     </td>
                   </tr>
                 );

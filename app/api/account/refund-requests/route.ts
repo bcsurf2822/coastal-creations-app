@@ -2,14 +2,8 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth/guards";
 import { connectMongo } from "@/lib/mongoose";
 import Order, { type IOrderItem } from "@/lib/models/Order";
-import Customer, { type ICustomer } from "@/lib/models/Customer";
-// Registered so the booking's `event` ref can be populated for the label.
-import "@/lib/models/Event";
-import "@/lib/models/PrivateEvent";
-import "@/lib/models/Reservations";
 import RefundRequest from "@/lib/models/RefundRequest";
 import { emailMatch, getMyRefundRequests } from "@/lib/account/queries";
-import { isBookingUpcoming } from "@/lib/account/display";
 import { formatCents } from "@/lib/utils/moneyHelpers";
 import { sendRefundRequestAdmin } from "@/lib/email/sendRefundRequestAdmin";
 
@@ -20,7 +14,12 @@ interface RequestBody {
   reason?: string;
 }
 
-/** Customer submits a refund request for one of their orders or bookings. */
+/**
+ * Customer submits a refund request for one of their store orders.
+ * Booking/event refunds are no longer self-service — customers email the studio
+ * (up to 72 hours before the event, per the Terms); admins issue refunds from
+ * the dashboard.
+ */
 export async function POST(request: Request): Promise<NextResponse> {
   const guard = await requireUser();
   if (guard instanceof NextResponse) return guard;
@@ -34,6 +33,15 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (!body.type || !body.targetId) {
       return NextResponse.json(
         { error: "Missing request type or target" },
+        { status: 400 }
+      );
+    }
+    if (body.type !== "order") {
+      return NextResponse.json(
+        {
+          error:
+            "Booking refunds can no longer be requested online. Please email the studio at least 72 hours before your event to request a cancellation or refund.",
+        },
         { status: 400 }
       );
     }
@@ -56,139 +64,81 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    if (body.type === "order") {
-      const order = await Order.findOne({
-        _id: body.targetId,
-        "customer.email": emailMatch(user.email),
-      });
-      if (!order) {
-        return NextResponse.json({ error: "Order not found" }, { status: 404 });
-      }
-      if (order.refundStatus === "full") {
-        return NextResponse.json(
-          { error: "This order has already been fully refunded" },
-          { status: 400 }
-        );
-      }
-
-      // Validate selected items against remaining refundable qty.
-      const requested = (body.items ?? []).filter((i) => i.quantity > 0);
-      if (requested.length === 0) {
-        return NextResponse.json(
-          { error: "Select at least one item to request a refund for" },
-          { status: 400 }
-        );
-      }
-      let amountCents = 0;
-      const requestedItems: Array<{
-        squareVariationId: string;
-        name: string;
-        quantity: number;
-      }> = [];
-      for (const req of requested) {
-        const item = order.items.find(
-          (i: IOrderItem) => i.squareVariationId === req.squareVariationId
-        );
-        if (!item) {
-          return NextResponse.json(
-            { error: "Item is not part of this order" },
-            { status: 400 }
-          );
-        }
-        const remaining = item.quantity - (item.refundedQuantity ?? 0);
-        const qty = Math.min(req.quantity, remaining);
-        if (qty <= 0) continue;
-        amountCents += item.unitPriceCents * qty;
-        requestedItems.push({
-          squareVariationId: item.squareVariationId,
-          name: item.variationName ? `${item.name} (${item.variationName})` : item.name,
-          quantity: qty,
-        });
-      }
-      if (requestedItems.length === 0) {
-        return NextResponse.json(
-          { error: "Selected items are no longer refundable" },
-          { status: 400 }
-        );
-      }
-
-      const created = await RefundRequest.create({
-        type: "order",
-        targetId: order._id,
-        orderNumber: order.orderNumber,
-        referenceLabel: `Order ${order.orderNumber}`,
-        customerName: `${order.customer.firstName} ${order.customer.lastName}`.trim(),
-        customerEmail: user.email,
-        requestedItems,
-        requestedAmountCents: amountCents,
-        reason,
-      });
-
-      await sendRefundRequestAdmin({
-        referenceLabel: created.referenceLabel,
-        type: "order",
-        customerName: created.customerName,
-        customerEmail: created.customerEmail,
-        requestedAmountFormatted: formatCents(amountCents),
-        reason,
-        lineItems: requestedItems.map((i) => ({ name: i.name, quantity: i.quantity })),
-      });
-
-      return NextResponse.json({ success: true, status: created.status });
-    }
-
-    // --- booking ---
-    const booking = await Customer.findOne({
+    const order = await Order.findOne({
       _id: body.targetId,
-      "billingInfo.emailAddress": emailMatch(user.email),
-    }).populate("event");
-    if (!booking) {
-      return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+      "customer.email": emailMatch(user.email),
+    });
+    if (!order) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
-    if (booking.refundStatus === "full") {
+    if (order.refundStatus === "full") {
       return NextResponse.json(
-        { error: "This booking has already been fully refunded" },
-        { status: 400 }
-      );
-    }
-    // Refund requests are cancellations for UPCOMING bookings only (a past or
-    // undated booking is not eligible for self-service cancellation).
-    if (!isBookingUpcoming(booking as unknown as ICustomer)) {
-      return NextResponse.json(
-        {
-          error:
-            "This booking is no longer eligible for a refund request (the event has already taken place).",
-        },
+        { error: "This order has already been fully refunded" },
         { status: 400 }
       );
     }
 
-    const remainingDollars = booking.total - (booking.refundAmount || 0);
-    const amountCents = Math.max(0, Math.round(remainingDollars * 100));
-    const ev =
-      booking.event && typeof booking.event === "object"
-        ? (booking.event as { eventName?: string; title?: string })
-        : null;
-    const referenceLabel = ev?.eventName || ev?.title || "Booking";
-    const customerName = `${booking.billingInfo.firstName} ${booking.billingInfo.lastName}`.trim();
+    // Validate selected items against remaining refundable qty.
+    const requested = (body.items ?? []).filter((i) => i.quantity > 0);
+    if (requested.length === 0) {
+      return NextResponse.json(
+        { error: "Select at least one item to request a refund for" },
+        { status: 400 }
+      );
+    }
+    let amountCents = 0;
+    const requestedItems: Array<{
+      squareVariationId: string;
+      name: string;
+      quantity: number;
+    }> = [];
+    for (const req of requested) {
+      const item = order.items.find(
+        (i: IOrderItem) => i.squareVariationId === req.squareVariationId
+      );
+      if (!item) {
+        return NextResponse.json(
+          { error: "Item is not part of this order" },
+          { status: 400 }
+        );
+      }
+      const remaining = item.quantity - (item.refundedQuantity ?? 0);
+      const qty = Math.min(req.quantity, remaining);
+      if (qty <= 0) continue;
+      amountCents += item.unitPriceCents * qty;
+      requestedItems.push({
+        squareVariationId: item.squareVariationId,
+        name: item.variationName ? `${item.name} (${item.variationName})` : item.name,
+        quantity: qty,
+      });
+    }
+    if (requestedItems.length === 0) {
+      return NextResponse.json(
+        { error: "Selected items are no longer refundable" },
+        { status: 400 }
+      );
+    }
 
     const created = await RefundRequest.create({
-      type: "booking",
-      targetId: booking._id,
-      referenceLabel,
-      customerName,
+      type: "order",
+      targetId: order._id,
+      orderNumber: order.orderNumber,
+      referenceLabel: `Order ${order.orderNumber}`,
+      customerName: `${order.customer.firstName} ${order.customer.lastName}`.trim(),
       customerEmail: user.email,
+      requestedItems,
       requestedAmountCents: amountCents,
       reason,
     });
 
     await sendRefundRequestAdmin({
-      referenceLabel,
-      type: "booking",
-      customerName,
-      customerEmail: user.email,
+      referenceLabel: created.referenceLabel,
+      type: "order",
+      customerName: created.customerName,
+      customerEmail: created.customerEmail,
       requestedAmountFormatted: formatCents(amountCents),
       reason,
+      lineItems: requestedItems.map((i) => ({ name: i.name, quantity: i.quantity })),
     });
 
     return NextResponse.json({ success: true, status: created.status });
