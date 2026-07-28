@@ -4,7 +4,6 @@ import type { ReactElement } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "motion/react";
 import { Button } from "@/components/ui";
 import { useProducts } from "@/hooks/queries/use-products";
 import { isShopEnabled } from "@/lib/constants/featureFlags";
@@ -18,37 +17,12 @@ const DISPLAY_FONT =
 
 /** Full-bleed strip across the top of the panel while the shop launch gate is down. */
 const ComingSoonStrip = (): ReactElement => (
-  <div className="relative -mx-6 -mt-10 mb-8 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 overflow-hidden bg-gradient-to-r from-[#0c4a6e] via-sky-500 to-teal-400 px-6 py-3.5 text-white md:-mx-10 lg:-mx-14">
-    {/* soft shine that sweeps across the strip */}
-    <motion.span
-      aria-hidden
-      className="pointer-events-none absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-      animate={{ left: ["-35%", "105%"] }}
-      transition={{
-        duration: 3.2,
-        repeat: Number.POSITIVE_INFINITY,
-        repeatDelay: 1.4,
-        ease: "easeInOut",
-      }}
-    />
-    <motion.span
-      aria-hidden
-      className="h-2.5 w-2.5 rounded-full bg-[#FBBF24]"
-      animate={{ opacity: [1, 0.35, 1], scale: [1, 1.3, 1] }}
-      transition={{
-        duration: 1.8,
-        repeat: Number.POSITIVE_INFINITY,
-        ease: "easeInOut",
-      }}
-    />
+  <div className="-mx-6 -mt-10 mb-8 bg-[var(--color-primary)] px-6 py-3 text-center text-white md:-mx-10 lg:-mx-14">
     <span
       className="text-xl tracking-wider sm:text-2xl"
       style={{ fontFamily: DISPLAY_FONT }}
     >
       Coming Soon
-    </span>
-    <span className="text-sm font-medium text-sky-50 sm:text-base">
-      — take a sneak peek below, online ordering opens soon!
     </span>
   </div>
 );
