@@ -19,6 +19,7 @@
  */
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
+import { isShopEnabled } from "@/lib/constants/featureFlags";
 import { getSquareClient } from "@/lib/square/client";
 import { getSessionUser } from "@/lib/auth/guards";
 import { Resend } from "resend";
@@ -98,6 +99,13 @@ interface CheckoutRequest {
 }
 
 export async function POST(request: Request): Promise<Response> {
+  // Launch gate: no store purchases until the shop flag is lifted.
+  if (!isShopEnabled()) {
+    return NextResponse.json(
+      { error: "The online store is not open yet. Check back soon!" },
+      { status: 503 }
+    );
+  }
   try {
     const body: CheckoutRequest = await request.json();
 

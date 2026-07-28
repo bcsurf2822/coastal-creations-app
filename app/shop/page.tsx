@@ -3,6 +3,8 @@ import PageHeader from "@/components/classes/PageHeader";
 import Store from "@/components/store/Store";
 import StoreCartButton from "@/components/store/StoreCartButton";
 import ShopGiftCardCTA from "@/components/store/ShopGiftCardCTA";
+import ShopComingSoon from "@/components/store/ShopComingSoon";
+import { isShopEnabled } from "@/lib/constants/featureFlags";
 import { FaShoppingBag } from "react-icons/fa";
 import { GiPaintBrush } from "react-icons/gi";
 
@@ -13,6 +15,9 @@ export const metadata = {
 };
 
 export default function StorePage(): ReactElement {
+  if (!isShopEnabled()) {
+    return <ShopComingSoon />;
+  }
   return (
     <div className="min-h-screen">
       <PageHeader

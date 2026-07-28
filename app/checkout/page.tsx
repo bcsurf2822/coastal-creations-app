@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import type { ReactElement } from "react";
 import CheckoutForm from "@/components/store/CheckoutForm";
+import ShopComingSoon from "@/components/store/ShopComingSoon";
+import { isShopEnabled } from "@/lib/constants/featureFlags";
 import type { ContactValues } from "@/components/store/ContactFields";
 import type { AddressFormValues } from "@/components/store/ShippingAddressStep";
 import { getSessionUser } from "@/lib/auth/guards";
@@ -70,6 +72,9 @@ async function resolvePrefill(): Promise<{
 }
 
 export default async function CheckoutPage(): Promise<ReactElement> {
+  if (!isShopEnabled()) {
+    return <ShopComingSoon />;
+  }
   const { contact, shipping } = await resolvePrefill();
 
   return (
