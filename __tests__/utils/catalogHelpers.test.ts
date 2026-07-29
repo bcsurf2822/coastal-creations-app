@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   isSellablePhysicalGood,
+  isInOnlineSalesCategory,
   deriveAvailability,
   toStoreProductSummary,
 } from "@/lib/utils/catalogHelpers";
@@ -53,6 +54,56 @@ describe("isSellablePhysicalGood", () => {
     expect(
       isSellablePhysicalGood({ ...baseItem, productType: "LEGACY_SQUARE_ONLINE_SERVICE" })
     ).toBe(false);
+  });
+});
+
+describe("isInOnlineSalesCategory", () => {
+  it("returns true for items in an 'Online Sales …' category", () => {
+    expect(
+      isInOnlineSalesCategory({
+        ...baseItem,
+        categoryNames: ["Online Sales - Art Kits"],
+      })
+    ).toBe(true);
+  });
+
+  it("matches the prefix case-insensitively", () => {
+    expect(
+      isInOnlineSalesCategory({
+        ...baseItem,
+        categoryNames: ["ONLINE SALES - Stickers"],
+      })
+    ).toBe(true);
+    expect(
+      isInOnlineSalesCategory({
+        ...baseItem,
+        categoryNames: ["online sales - art kits"],
+      })
+    ).toBe(true);
+  });
+
+  it("returns true when any of several categories matches", () => {
+    expect(
+      isInOnlineSalesCategory({
+        ...baseItem,
+        categoryNames: ["Coastal Creations", "Online Sales - Art Kits"],
+      })
+    ).toBe(true);
+  });
+
+  it("returns false for non-matching categories", () => {
+    expect(
+      isInOnlineSalesCategory({
+        ...baseItem,
+        categoryNames: ["Coastal Creations"],
+      })
+    ).toBe(false);
+  });
+
+  it("returns false for items with no categories", () => {
+    expect(isInOnlineSalesCategory({ ...baseItem, categoryNames: [] })).toBe(
+      false
+    );
   });
 });
 

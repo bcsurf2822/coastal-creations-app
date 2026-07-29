@@ -17,13 +17,31 @@ import { formatCents } from "@/lib/utils/moneyHelpers";
 const LOW_STOCK_THRESHOLD = 5;
 
 /**
+ * Square category-name prefix that controls Shop visibility. The merchant adds an
+ * item to any Square category whose name starts with this prefix (e.g.
+ * "Online Sales - Art Kits", "Online Sales - Stickers") to put it in the online Shop.
+ * This is the SINGLE source of truth for what is sellable online — managed entirely
+ * from the Square dashboard, no app-side toggle. See spec/ecommerce/00-STATUS.md.
+ */
+export const ONLINE_SALES_CATEGORY_PREFIX = "Online Sales";
+
+/**
  * Returns true for items that should be allowed in the Shop:
  * REGULAR physical goods, not archived, present at the merchant's location.
- * The Shop now shows ALL such items — there is no longer an "Online Sales …"
- * category gate (removed so the client sees a realistic view of full inventory).
+ * Shop visibility additionally requires isInOnlineSalesCategory — both gates
+ * apply on the storefront product routes.
  */
 export function isSellablePhysicalGood(item: RawCatalogItem): boolean {
   return item.productType === "REGULAR" && !item.isArchived;
+}
+
+/**
+ * True when the item belongs to an "Online Sales …" Square category — i.e. the
+ * merchant has flagged it for the online Shop from the Square dashboard.
+ */
+export function isInOnlineSalesCategory(item: RawCatalogItem): boolean {
+  const prefix = ONLINE_SALES_CATEGORY_PREFIX.toLowerCase();
+  return item.categoryNames.some((name) => name.toLowerCase().startsWith(prefix));
 }
 
 /**
