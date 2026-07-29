@@ -4,6 +4,7 @@ import StoreProductSettings from "@/lib/models/StoreProductSettings";
 import { retrieveCatalogItem, getInventoryCounts } from "@/lib/square/catalog";
 import {
   isSellablePhysicalGood,
+  isInOnlineSalesCategory,
   toStoreProduct,
 } from "@/lib/utils/catalogHelpers";
 import type { IStoreProductSettings } from "@/lib/models/StoreProductSettings";
@@ -21,9 +22,8 @@ export async function GET(
   try {
     const item = await retrieveCatalogItem(id);
 
-    // Visible for any REGULAR, non-archived physical good — matches the Shop grid,
-    // which no longer gates on the "Online Sales …" Square category.
-    if (!item || !isSellablePhysicalGood(item)) {
+    // Visible only if it's a physical good in an "Online Sales …" Square category.
+    if (!item || !isSellablePhysicalGood(item) || !isInOnlineSalesCategory(item)) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 

@@ -7,6 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
 import CartIcon from "@/components/store/CartIcon";
+import { isShopEnabled } from "@/lib/constants/featureFlags";
 import AccountNavLink from "@/components/authentication/AccountNavLink";
 import { useReservations } from "@/hooks/queries";
 import { Reservation } from "@/lib/types/reservationTypes";
@@ -342,14 +343,14 @@ export default function NavBar() {
               className="flex items-center gap-4 border-l border-gray-200 pl-5 xl:pl-8 2xl:pl-10"
             >
               <AccountNavLink />
-              <CartIcon />
+              {isShopEnabled() && <CartIcon />}
             </motion.div>
           </motion.nav>
 
           {/* Mobile Menu Button */}
           <div className="lg:hidden flex items-center gap-3">
             <AccountNavLink />
-            <CartIcon />
+            {isShopEnabled() && <CartIcon />}
             <motion.button
             className="flex items-center"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
