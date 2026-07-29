@@ -53,8 +53,7 @@ const ShopPreview = (): ReactElement => {
                 Take home a little creativity.
               </h2>
               <p className="max-w-xl text-lg leading-relaxed text-slate-700">
-                Art kits, studio goods, and works of art from local artists —
-                shipped right to your door.
+                Art kits and studio goods shipped to your door.
               </p>
             </div>
             <Button

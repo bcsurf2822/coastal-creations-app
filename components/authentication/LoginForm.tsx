@@ -56,7 +56,7 @@ export default function LoginForm(): ReactElement {
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Sign in</CardTitle>
         <CardDescription>
-          Access your bookings and orders. No password needed.
+          Access your bookings and orders.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
