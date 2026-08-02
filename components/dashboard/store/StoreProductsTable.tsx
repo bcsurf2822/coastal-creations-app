@@ -119,7 +119,7 @@ export default function StoreProductsTable(): ReactElement {
               ) : (
                 products.map(({ catalogItem, settings }) => {
                   const isSaving = saving.has(catalogItem.id);
-                  const preset = settings?.parcelPreset ?? "MEDIUM";
+                  const preset = settings?.parcelPreset ?? "SMALL";
 
                   return (
                     <tr key={catalogItem.id} className="hover:bg-gray-50">

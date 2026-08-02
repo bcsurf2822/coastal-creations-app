@@ -5,7 +5,9 @@
 import { NextResponse } from "next/server";
 import { isShopEnabled } from "@/lib/constants/featureFlags";
 import { connectMongo } from "@/lib/mongoose";
-import StoreProductSettings from "@/lib/models/StoreProductSettings";
+import StoreProductSettings, {
+  DEFAULT_PARCEL_PRESET,
+} from "@/lib/models/StoreProductSettings";
 import { getShippingRates } from "@/lib/shippo/rates";
 import type { ShipToAddress } from "@/lib/shippo/rates";
 import type { ParcelPreset } from "@/lib/models/StoreProductSettings";
@@ -42,7 +44,7 @@ export async function POST(request: Request): Promise<Response> {
     const presets: ParcelPreset[] = [];
     for (const cartItem of body.cartItems) {
       const setting = settings.find((s) => s.squareItemId === cartItem.squareCatalogItemId);
-      const preset = setting?.parcelPreset ?? "MEDIUM";
+      const preset = setting?.parcelPreset ?? DEFAULT_PARCEL_PRESET;
       for (let i = 0; i < cartItem.quantity; i++) {
         presets.push(preset);
       }

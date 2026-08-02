@@ -11,7 +11,9 @@
  * BEFORE charging. See ecommerce/09-checkout-price-integrity.md.
  */
 import { listCatalogItems } from "@/lib/square/catalog";
-import StoreProductSettings from "@/lib/models/StoreProductSettings";
+import StoreProductSettings, {
+  DEFAULT_PARCEL_PRESET,
+} from "@/lib/models/StoreProductSettings";
 import type { ParcelPreset } from "@/lib/models/StoreProductSettings";
 import { getShippingRates } from "@/lib/shippo/rates";
 import type { ShipToAddress, ShippingRate } from "@/lib/shippo/rates";
@@ -133,7 +135,7 @@ export async function resolveShippingRate(
     const setting = settings.find(
       (s) => s.squareItemId === item.squareCatalogItemId
     );
-    const preset = (setting?.parcelPreset ?? "MEDIUM") as ParcelPreset;
+    const preset = (setting?.parcelPreset ?? DEFAULT_PARCEL_PRESET) as ParcelPreset;
     const quantity = validateQuantity(item.quantity, item.productName);
     for (let i = 0; i < quantity; i++) presets.push(preset);
   }

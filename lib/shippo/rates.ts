@@ -1,6 +1,6 @@
 import { Shippo } from "shippo";
 import type { ParcelPreset } from "@/lib/models/StoreProductSettings";
-import { getParcelDimensions } from "@/lib/utils/parcelHelpers";
+import { resolveParcel } from "@/lib/utils/parcelHelpers";
 
 const shippoClient = new Shippo({
   apiKeyHeader: process.env.SHIPPO_API_KEY ?? "",
@@ -47,21 +47,11 @@ export interface ShippingRate {
   estimatedDays?: number;
 }
 
-// Picks the heaviest parcel preset in the cart to produce a single-parcel shipment.
-function heaviestPreset(presets: ParcelPreset[]): ParcelPreset {
-  const order: ParcelPreset[] = ["LARGE", "MEDIUM", "SMALL"];
-  for (const p of order) {
-    if (presets.includes(p)) return p;
-  }
-  return "MEDIUM";
-}
-
 export async function getShippingRates(
   destination: ShipToAddress,
   parcelPresets: ParcelPreset[]
 ): Promise<ShippingRate[]> {
-  const preset = heaviestPreset(parcelPresets);
-  const dims = getParcelDimensions(preset);
+  const dims = resolveParcel(parcelPresets);
 
   const shipment = await shippoClient.shipments.create({
     addressFrom: MERCHANT_SHIP_FROM,
