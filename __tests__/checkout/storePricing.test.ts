@@ -14,7 +14,7 @@ vi.mock("@/lib/shippo/rates", () => ({
 const settingsSelect = vi.fn();
 vi.mock("@/lib/models/StoreProductSettings", () => ({
   default: { find: () => ({ select: settingsSelect }) },
-  DEFAULT_PARCEL_PRESET: "MEDIUM",
+  DEFAULT_PARCEL_PRESET: "SMALL",
 }));
 
 import {
@@ -166,5 +166,22 @@ describe("resolveShippingRate", () => {
     await expect(
       resolveShippingRate(destination, [cartItem()], clientRate)
     ).rejects.toBeInstanceOf(PriceIntegrityError);
+  });
+
+  it("falls back to DEFAULT_PARCEL_PRESET when an item has no StoreProductSettings row", async () => {
+    settingsSelect.mockResolvedValue([]); // no matching setting for ITEM1
+    getShippingRates.mockResolvedValue([
+      {
+        rateId: "FRESH_ID",
+        carrier: "USPS",
+        service: "usps_priority",
+        serviceName: "USPS Priority",
+        rateCents: 899,
+      },
+    ]);
+
+    await resolveShippingRate(destination, [cartItem({ quantity: 1 })], clientRate);
+
+    expect(getShippingRates).toHaveBeenCalledWith(destination, ["SMALL"]);
   });
 });
