@@ -13,10 +13,12 @@ import mongoose, { Document, Model, Schema } from "mongoose";
 
 // Box-size presets used to build Shippo parcels without per-item measuring.
 // Default dimensions/weights for each preset live in lib/utils/parcelHelpers.ts.
-// Default for a brand-new product is "MEDIUM" (~5lb) so live rates never break.
+// Default for a brand-new product is "SMALL" (~1lb) — the current catalog is 100%
+// micro art-kit items under 1lb. Revisit this default once heavier items are added
+// (per-product weight will eventually come from Square directly, not this field).
 export type ParcelPreset = "SMALL" | "MEDIUM" | "LARGE";
 
-export const DEFAULT_PARCEL_PRESET: ParcelPreset = "MEDIUM";
+export const DEFAULT_PARCEL_PRESET: ParcelPreset = "SMALL";
 
 export type WeightUnit = "oz" | "lb";
 export type DistanceUnit = "in" | "cm";
@@ -34,7 +36,7 @@ export interface IProductShipping {
 export interface IStoreProductSettings extends Document {
   squareItemId: string; // links to a Square Catalog ITEM (unique)
   isOnlineSellable: boolean; // THE Shop visibility flag
-  parcelPreset: ParcelPreset; // default MEDIUM (5lb)
+  parcelPreset: ParcelPreset; // default SMALL (1lb)
   shipping?: IProductShipping; // optional exact override of the preset
   slug?: string; // optional pretty URL for /shop/[slug]
   displayOrder?: number; // optional manual sort within the Shop
