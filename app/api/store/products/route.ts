@@ -36,6 +36,10 @@ export async function GET(): Promise<Response> {
 
     const products: StoreProductSummary[] = items
       .map((item) => toStoreProductSummary(item, byId.get(item.id), stock))
+      // Sold-out items (all variations out of stock) don't show up while browsing —
+      // still directly reachable at /shop/[slug] via toStoreProduct/getInventoryCounts,
+      // just not surfaced in the grid.
+      .filter((product) => product.availability !== "sold_out")
       .sort((a, b) => a.displayOrder - b.displayOrder);
 
     return NextResponse.json({ success: true, products });
