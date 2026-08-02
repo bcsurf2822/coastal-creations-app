@@ -36,11 +36,15 @@ export async function GET(): Promise<Response> {
 
     const products: StoreProductSummary[] = items
       .map((item) => toStoreProductSummary(item, byId.get(item.id), stock))
-      // Sold-out items (all variations out of stock) don't show up while browsing —
-      // still directly reachable at /shop/[slug] via toStoreProduct/getInventoryCounts,
-      // just not surfaced in the grid.
-      .filter((product) => product.availability !== "sold_out")
-      .sort((a, b) => a.displayOrder - b.displayOrder);
+      // Sold-out items still display, but always sink to the end of the grid —
+      // available/low-stock items sort first; displayOrder only breaks ties
+      // within each group.
+      .sort((a, b) => {
+        const aSoldOut = a.availability === "sold_out" ? 1 : 0;
+        const bSoldOut = b.availability === "sold_out" ? 1 : 0;
+        if (aSoldOut !== bSoldOut) return aSoldOut - bSoldOut;
+        return a.displayOrder - b.displayOrder;
+      });
 
     return NextResponse.json({ success: true, products });
   } catch (error) {
