@@ -78,7 +78,7 @@ coastal-creations-app/
 │   │   ├── page-descriptions/    # CMS content editing
 │   │   ├── hours/                # Business hours
 │   │   ├── store/                # Store admin (products + orders)
-│   │   │   ├── products/         # Toggle online-sellable, parcel preset
+│   │   │   ├── products/         # Set parcel preset per product (visibility is Square-side)
 │   │   │   └── orders/[id]/      # Order detail (auto-refreshing) + status
 │   │   └── error-logs/           # Error monitoring
 │   │
@@ -146,7 +146,7 @@ coastal-creations-app/
 │   ├── checkout/                 # Unified checkout: CheckoutLayout, ContactForm, PaymentStep, GiftCardRedemption, EventCheckout, EventParticipantsFields, EventSummary
 │   ├── payment/                  # Shared payment bits (EventPreview, WalletPayButtons)
 │   ├── gift-cards/               # Gift card UI components
-│   ├── store/                    # Storefront + cart (CartProvider, CheckoutForm, ShippingRateStep, CartSummary); payment via components/checkout
+│   ├── store/                    # Storefront + cart (CartProvider, CheckoutForm, CartSummary); payment via components/checkout
 │   ├── gallery/                  # Gallery display
 │   ├── contact/                  # Contact form
 │   ├── about/                    # About page
@@ -293,7 +293,7 @@ coastal-creations-app/
 | **Reservations.ts** | Day-by-day availability | eventName, pricePerDayPerParticipant, dailyAvailability[], timeType |
 | **PrivateEvent.ts** | Private party offerings | options, deposit, image |
 | **Order.ts** | Online store orders | orderNumber, items[], customer, shippingAddress, square{}, **giftCard{ giftCardId, amountCents }**, shippo{}, status, shippedAt, deliveredAt (money in **cents**) |
-| **StoreProductSettings.ts** | Website overlay on a Square catalog item | squareItemId, isOnlineSellable, parcelPreset (SMALL/MEDIUM/LARGE), slug, displayOrder |
+| **StoreProductSettings.ts** | Website overlay on a Square catalog item (visibility is Square-driven, not this model — see [Online Store](#online-store-e-commerce)) | squareItemId, parcelPreset (SMALL/MEDIUM/LARGE), slug, displayOrder |
 | **PaymentError.ts** | Payment failure tracking | error details, customer info |
 
 > **Auth collections** (`users`, `accounts`, `sessions`, `verification_tokens`) are managed by the **NextAuth MongoDB adapter**, not Mongoose models. `users` additionally carries `role` / `isAdmin` (see [Authentication](#authentication--authorization)).
@@ -327,7 +327,7 @@ coastal-creations-app/
 | `/api/store/shipping-rates` | POST | Shippo live rate quotes for a destination + cart |
 | `/api/store/checkout` | POST | Square payment → create Order → auto-buy label → emails |
 | `/api/store/shipping-label` | POST | Manual label purchase (admin fallback) |
-| `/api/admin/store/products` | GET, POST, PUT | Manage store product settings (visibility, parcel) |
+| `/api/admin/store/products` | GET, POST, PUT | Manage store product settings (parcel preset, slug, display order — not visibility, that's Square-side) |
 | `/api/admin/store/orders` | GET | List store orders |
 | `/api/admin/store/orders/[id]` | GET, PATCH | Order detail; PATCH `mark_shipped` or status override |
 | `/api/webhooks/shippo` | POST | Shippo tracking webhook → drive order status + emails |
@@ -380,7 +380,8 @@ Cache invalidation is automatic - mutations invalidate related queries.
 | `@fullcalendar/*` | Calendar UI |
 | `@mui/material` | UI components |
 | `dayjs` | Date handling (America/New_York timezone) |
-| `vitest` | Testing framework |
+| `vitest` | Unit/integration test framework (`__tests__/`) |
+| `@playwright/test` | E2E test framework (`e2e/`) |
 
 ## Configuration
 
@@ -396,6 +397,8 @@ GOOGLE_CLIENT_SECRET     # Google OAuth
 SQUARE_ACCESS_TOKEN      # Square API
 SQUARE_APPLICATION_ID    # Square SDK
 SQUARE_LOCATION_ID       # Square location
+SQUARE_ENVIRONMENT       # "sandbox" | "production" — read by lib/square/client.ts, payment-config.ts, CSP host selection
+NEXT_PUBLIC_SHOP_ENABLED # Store launch gate — shop, checkout, and shipping-rates APIs all 503 until "true"
 SANITY_PROJECT_ID        # Sanity CMS
 SANITY_DATASET           # Sanity dataset
 RESEND_API_KEY           # Email service (transactional emails + magic-link sign-in)
@@ -420,11 +423,15 @@ DEV_EMAIL                # In dev/stage, ALL store emails redirect here
 ### Scripts
 
 ```bash
-pnpm run dev         # Development with Turbopack
-pnpm run build       # Production build
-pnpm run lint        # ESLint check
-pnpm run test        # Run Vitest tests
-pnpm run test:run    # Run tests once
+pnpm run dev            # Development with Turbopack
+pnpm run build          # Production build
+pnpm run lint           # ESLint check
+pnpm run typecheck      # tsc --noEmit
+pnpm run test           # Vitest, watch mode
+pnpm run test:run       # Vitest, single run
+pnpm run test:coverage  # Vitest with coverage
+pnpm run test:e2e       # Playwright e2e (e2e/*.spec.ts)
+pnpm run test:e2e:ui    # Playwright e2e, interactive UI mode
 ```
 
 ## Development Guidelines
@@ -480,6 +487,32 @@ import timezone from "dayjs/plugin/timezone";
 dayjs.extend(timezone);
 const date = dayjs.tz(dateString, "America/New_York");
 ```
+
+### Git Workflow
+
+`main` (production) and `develop` (integration) are both protected in practice — no direct commits
+to either. Every change lands on a fresh `agent/<slug>` branch cut from `develop`, opened as a
+**draft PR into `develop`** (see the many `agent/*` branches in the repo's history). An agent never
+merges its own PR or calls `gh pr merge` — a human reviews and merges. Promoting `develop` → `main`
+is its own separate draft PR, opened only once `develop` is in a state ready to ship.
+
+## Working Principles (Agent Steering)
+
+*Drafted from observed working patterns in this repo — confirm or adjust.*
+
+- **Verify before claiming done.** Typecheck + the relevant test suite at minimum; for anything
+  observable in the UI, actually load it in a browser against real data before reporting a fix
+  works, not just a code read.
+- **Reproduce against real data before proposing a fix.** Pull the actual state (live catalog,
+  live inventory, a real API response) rather than reasoning from the code alone — several bugs in
+  this app only showed up against real Square/Shippo data, not synthetic fixtures.
+- **One fix, one PR.** Keep each change scoped to the thing it fixes rather than bundling unrelated
+  cleanup into the same branch, so each PR stays independently reviewable and revertable.
+- **Don't guess on money, tax, or legal/compliance calls.** Surface the tradeoff and the business
+  decision it requires; wait for an explicit go-ahead rather than assuming (sales tax stayed off
+  for weeks pending the owner's confirmation, not a coding gap).
+- **Keep this file honest.** Run `/rules-check-drift` before merging anything that changes
+  behavior this file describes.
 
 ## Finding Things
 
@@ -537,6 +570,14 @@ Client-supplied prices are never trusted. Bookings recompute from the DB via
 shipping from a fresh Shippo re-quote via `lib/checkout/storePricing.ts`. A mismatch / unsellable
 item / vanished rate throws `PriceIntegrityError` → 400 (no charge).
 
+**Sales tax (store checkout only, owner-confirmed 2026-08-02):** `lib/utils/salesTax.ts` —
+`computeSalesTaxCents(state, taxableCents)` — charges NJ's flat 6.625% on orders shipping to NJ
+(items + shipping combined; NJ taxes delivery charges), $0 everywhere else. Server-authoritative in
+`/api/store/checkout`; `CheckoutForm.tsx` uses the same function client-side as a **preview only**
+(so the amount shown to Square's payment form for SCA verification matches the real charge). Every
+other state stays untaxed until sales into it cross that state's own economic-nexus threshold — see
+`ecommerce/nj-sales-tax-research.md`. Bookings/events are not taxed (services, not goods).
+
 ## Online Store (E-commerce)
 
 An **additive, independent** physical-product store layered on the existing app. It does **not** touch the Event/Customer/Reservation booking models. Money is stored in **cents** everywhere (Square-native); convert only at the UI boundary via `lib/utils/moneyHelpers.ts`.
@@ -544,8 +585,8 @@ An **additive, independent** physical-product store layered on the existing app.
 ### Catalog-driven (Square owns the products)
 
 - **Square Catalog** is the source of truth for products: name, price, photos, variations, inventory.
-- **`StoreProductSettings`** (`lib/models/StoreProductSettings.ts`) is a thin website overlay keyed by `squareItemId`, holding only website-only fields: `isOnlineSellable` (the Shop visibility flag), `parcelPreset` (box size for Shippo), optional `slug`, `displayOrder`, and an optional exact shipping override.
-- To sell any catalog item online, the merchant flips `isOnlineSellable` — no code change. `/api/store/products` lists items that are both a sellable physical good (`lib/utils/catalogHelpers.ts`) and online-enabled.
+- **Shop visibility is driven entirely by Square**, not the app: an item appears online when the merchant adds it to any Square category whose name starts with `"Online Sales"` (case-insensitive prefix match — e.g. `"Online Sales - Art Kits"`), via `isInOnlineSalesCategory()` in `lib/utils/catalogHelpers.ts`. No app-side toggle, no code change. `/api/store/products` lists items that are both a sellable physical good (`isSellablePhysicalGood()`, same file) and in an Online Sales category.
+- **`StoreProductSettings`** (`lib/models/StoreProductSettings.ts`) is a thin website overlay keyed by `squareItemId`, holding only website-only fields: `parcelPreset` (box size for Shippo), optional `slug`, `displayOrder`, and an optional exact shipping override. It does **not** control visibility — its `isOnlineSellable` field is vestigial (still in the schema + indexed, but unread anywhere outside the model file; predates the category-gate mechanism).
 
 ### Order lifecycle (`lib/models/Order.ts`, `status` field)
 
@@ -566,9 +607,9 @@ pending -> paid -> label_created -> shipped -> delivered
 
 ### Shipping (Shippo)
 
-- **Rates**: `lib/shippo/rates.ts` → `getShippingRates()` quotes live rates from the merchant origin (`MERCHANT_SHIP_FROM_*`) to the customer, using the cart's heaviest parcel preset. Rates are sorted cheapest-first; checkout pre-selects the cheapest.
+- **Rates**: `lib/shippo/rates.ts` → `getShippingRates()` quotes live rates from the merchant origin (`MERCHANT_SHIP_FROM_*`) to the customer, via `resolveParcel()` in `lib/utils/parcelHelpers.ts` — sums the true weight across every cart item (quantity-expanded), sized to the largest individual item's box, stepped up a tier if the summed weight would overflow it. Rates are sorted cheapest-first; checkout pre-selects the cheapest.
 - **Labels**: `lib/shippo/labels.ts` → `purchaseLabelForOrder()` buys the label (idempotent — returns the existing label if already bought). Auto-invoked at checkout; `/api/store/shipping-label` is the admin-only manual fallback.
-- **Parcel presets**: SMALL/MEDIUM/LARGE dimensions+weights in `lib/utils/parcelHelpers.ts` (default MEDIUM ~3lb).
+- **Parcel presets**: SMALL/MEDIUM/LARGE dimensions+weights in `lib/utils/parcelHelpers.ts` (default **SMALL** ~1lb — the current catalog is all micro art-kit items; revisit if heavier products are added, `DEFAULT_PARCEL_PRESET` in `lib/models/StoreProductSettings.ts`).
 - **Tracking webhook**: `/api/webhooks/shippo` receives `track_updated` events and drives the order:
   - `TRANSIT` (first scan) → mark `shipped`, email customer tracking + notify admin
   - `DELIVERED` → mark `delivered`, email customer (backfills `shippedAt` if no prior TRANSIT)
@@ -577,7 +618,7 @@ pending -> paid -> label_created -> shipped -> delivered
 
 ### Checkout flow (`components/store/CheckoutForm.tsx`)
 
-3 steps: **Contact & Shipping** (`ShippingAddressStep`) → **Shipping Method** (`ShippingRateStep`, collapsed to the recommended rate with a "choose another" toggle) → **Payment** (the shared `components/checkout/PaymentStep`, Square Web Payments SDK). A `GiftCardRedemption` appears once shipping is known; `/api/store/checkout` validates + redeems it and charges only the remainder (or skips Square entirely when fully covered → no `square.paymentId`). Cart state lives in `CartProvider` (React Context, persisted client-side). See [Unified Checkout](#unified-checkout).
+One page, `components/store/CheckoutForm.tsx`, progressively revealing: **Contact & Shipping** (`ShippingAddressStep`) → **Shipping Method** (inline `<select>`, rates auto-fetched 600ms after the address completes, pre-selecting the cheapest) → **Payment** (the shared `components/checkout/PaymentStep`, Square Web Payments SDK). A `GiftCardRedemption` appears once shipping is known; `/api/store/checkout` validates + redeems it and charges only the remainder (or skips Square entirely when fully covered → no `square.paymentId`). Cart state lives in `CartProvider` (React Context, persisted client-side). `components/store/ShippingRateStep.tsx` still exists on disk but is dead code — not imported anywhere. See [Unified Checkout](#unified-checkout).
 
 ### Transactional emails (`components/email-templates/`)
 
@@ -593,7 +634,7 @@ In dev/stage, **all** store emails redirect to `DEV_EMAIL`; in production, custo
 
 ### Admin
 
-`app/admin/dashboard/store/` — product visibility/parcel management and an order list + detail view. The order detail page **auto-refreshes** (15s polling) so webhook-driven status changes appear without a manual refresh; polling stops on terminal statuses and pauses when the tab is hidden.
+`app/admin/dashboard/store/` — product parcel-size management (`StoreProductsTable.tsx`; visibility is Square-side, not managed here) and an order list + detail view. The order detail page **auto-refreshes** (15s polling) so webhook-driven status changes appear without a manual refresh; polling stops on terminal statuses and pauses when the tab is hidden.
 
 ## Authentication & Authorization
 
