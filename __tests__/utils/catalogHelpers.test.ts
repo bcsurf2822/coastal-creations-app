@@ -231,4 +231,28 @@ describe("toStoreProductSummary", () => {
     expect(summary.defaultVariation?.id).toBe("V1");
     expect(summary.availability).toBe("sold_out");
   });
+
+  it("labels remaining stock from defaultVariation, not the sum across all flavors", () => {
+    // Regression: "Mini Travel Art Kits" in prod showed "Only 3 remaining" (3
+    // different flavors with 1 unit each) but quick-add always adds ONE specific
+    // flavor (defaultVariation), which only had 1 unit — the badge overpromised
+    // what the button could actually deliver.
+    const item: RawCatalogItem = {
+      ...baseItem,
+      variations: [
+        { ...baseVariation, id: "V1", ordinal: 0, trackInventory: true }, // sold out
+        { ...baseVariation, id: "V2", ordinal: 1, trackInventory: true }, // 1 left
+        { ...baseVariation, id: "V3", ordinal: 2, trackInventory: true }, // 1 left
+        { ...baseVariation, id: "V4", ordinal: 3, trackInventory: true }, // 1 left
+      ],
+    };
+    const stock = new Map([
+      ["V2", 1],
+      ["V3", 1],
+      ["V4", 1],
+    ]); // V1 absent -> sold_out; total across all flavors = 3
+    const summary = toStoreProductSummary(item, baseSettings, stock);
+    expect(summary.defaultVariation?.id).toBe("V2");
+    expect(summary.availabilityLabel).toBe("Only 1 remaining");
+  });
 });

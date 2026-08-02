@@ -189,9 +189,14 @@ export function toStoreProductSummary(
     priceRange: priceRange(item.variations),
     hasMultipleVariations: item.variations.length > 1,
     availability,
+    // The "Only N remaining" count must match what quick-add from the grid can
+    // actually deliver — the stock of defaultVariation specifically, not the sum
+    // across every flavor. A multi-variation item can show 3 total units spread
+    // across 3 different flavors while the one flavor quick-add would add only
+    // has 1 — showing "3 remaining" there overpromises what the button can do.
     availabilityLabel: buildAvailabilityLabel(
       availability,
-      totalInStock(item.variations, stock)
+      defaultVariation?.inStockQuantity ?? totalInStock(item.variations, stock)
     ),
     displayOrder: (settings?.displayOrder as number | undefined) ?? 0,
     defaultVariation,
