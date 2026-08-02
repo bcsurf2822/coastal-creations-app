@@ -161,7 +161,18 @@ export function toStoreProductSummary(
 
   // First variation by ordinal — lets the grid card add to cart directly with a
   // real Square variation id (checkout-correct) without loading the detail payload.
-  const firstRaw = [...item.variations].sort((a, b) => a.ordinal - b.ordinal)[0];
+  // Prefer the first variation that's actually in stock: if ordinal 0 happens to be
+  // sold out while other flavors aren't, quick-add from the grid must not silently
+  // pick the sold-out one (CartProvider.addItem refuses sold-out variations, so that
+  // used to fail with no feedback). Only fall back to the sorted-first variation when
+  // every variation is sold out, matching rollupAvailability's own "sold_out" rule.
+  const sortedVariations = [...item.variations].sort(
+    (a, b) => a.ordinal - b.ordinal
+  );
+  const firstRaw =
+    sortedVariations.find(
+      (v) => deriveAvailability(v, stock.get(v.id)) !== "sold_out"
+    ) ?? sortedVariations[0];
   const defaultVariation = firstRaw
     ? toStoreProductVariation(firstRaw, stock.get(firstRaw.id))
     : undefined;

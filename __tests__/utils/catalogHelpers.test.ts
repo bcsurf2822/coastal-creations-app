@@ -200,4 +200,35 @@ describe("toStoreProductSummary", () => {
     const summary = toStoreProductSummary(item, baseSettings, stock);
     expect(summary.availability).toBe("sold_out");
   });
+
+  it("skips a sold-out first-ordinal variation when picking defaultVariation", () => {
+    // Regression: grid quick-add must not silently pick a sold-out flavor just
+    // because it's ordinal 0 — CartProvider refuses to add sold-out variations,
+    // so this used to fail with no feedback (see Mini Travel Art Kits in prod).
+    const item: RawCatalogItem = {
+      ...baseItem,
+      variations: [
+        { ...baseVariation, id: "V1", ordinal: 0, trackInventory: true }, // sold out
+        { ...baseVariation, id: "V2", ordinal: 1, trackInventory: true }, // in stock
+      ],
+    };
+    const stock = new Map([["V2", 3]]); // V1 absent -> no inventory record -> sold_out
+    const summary = toStoreProductSummary(item, baseSettings, stock);
+    expect(summary.defaultVariation?.id).toBe("V2");
+    expect(summary.defaultVariation?.availability).not.toBe("sold_out");
+  });
+
+  it("falls back to the ordinal-first variation when every variation is sold out", () => {
+    const item: RawCatalogItem = {
+      ...baseItem,
+      variations: [
+        { ...baseVariation, id: "V1", ordinal: 0, trackInventory: true },
+        { ...baseVariation, id: "V2", ordinal: 1, trackInventory: true },
+      ],
+    };
+    const stock = new Map<string, number>();
+    const summary = toStoreProductSummary(item, baseSettings, stock);
+    expect(summary.defaultVariation?.id).toBe("V1");
+    expect(summary.availability).toBe("sold_out");
+  });
 });
