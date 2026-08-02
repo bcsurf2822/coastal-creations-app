@@ -6,10 +6,13 @@ import Offerings from "@/components/landing/Offerings";
 import Calendar from "@/components/landing/Calendar";
 import ShopPreview from "@/components/landing/ShopPreview";
 import GiftCardBanner from "@/components/landing/GiftCardBanner";
-import GoogleReviews from "@/components/landing/GoogleReviews";
+// TEMP DISABLED (Ben, 2026-08-02): Google Reviews isn't wired to real data yet —
+// keep it out of prod until the Places API key is actually configured.
+// import GoogleReviews from "@/components/landing/GoogleReviews";
 import SectionDivider from "@/components/landing/SectionDivider";
 import PhotoCorral from "@/components/gallery/PhotoCorral";
-import { isShopEnabled } from "@/lib/constants/featureFlags";
+// Only referenced inside the disabled GoogleReviews block below — commented out with it.
+// import { isShopEnabled } from "@/lib/constants/featureFlags";
 
 export const metadata: Metadata = {
   title: "Coastal Creations Studio | Art Classes & Workshops in Ocean City, NJ",
@@ -33,13 +36,15 @@ export default function Home() {
       </div>
       <PhotoCorral destination="home-page" />
       <SectionDivider />
-      {/* Hidden behind the shop launch gate alongside the store (client request). */}
-      {isShopEnabled() && (
+      {/* TEMP DISABLED (Ben, 2026-08-02): not wired to real data yet, don't show in prod.
+          Was previously gated behind the shop launch flag alongside the store (client request);
+          re-enable that gate (isShopEnabled()) once real reviews are wired up. */}
+      {/* {isShopEnabled() && (
         <>
           <GoogleReviews />
           <SectionDivider />
         </>
-      )}
+      )} */}
       <Offerings />
       <SectionDivider />
       <ShopPreview />
