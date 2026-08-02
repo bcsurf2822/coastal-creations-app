@@ -36,7 +36,15 @@ export async function GET(): Promise<Response> {
 
     const products: StoreProductSummary[] = items
       .map((item) => toStoreProductSummary(item, byId.get(item.id), stock))
-      .sort((a, b) => a.displayOrder - b.displayOrder);
+      // Sold-out items still display, but always sink to the end of the grid —
+      // available/low-stock items sort first; displayOrder only breaks ties
+      // within each group.
+      .sort((a, b) => {
+        const aSoldOut = a.availability === "sold_out" ? 1 : 0;
+        const bSoldOut = b.availability === "sold_out" ? 1 : 0;
+        if (aSoldOut !== bSoldOut) return aSoldOut - bSoldOut;
+        return a.displayOrder - b.displayOrder;
+      });
 
     return NextResponse.json({ success: true, products });
   } catch (error) {
