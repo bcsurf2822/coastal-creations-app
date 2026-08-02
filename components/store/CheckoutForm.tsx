@@ -21,6 +21,7 @@ import type { AppliedGiftCard } from "@/components/checkout/eventCheckoutTypes";
 import CartSummary from "@/components/store/CartSummary";
 import { Button } from "@/components/ui";
 import { formatCents } from "@/lib/utils/moneyHelpers";
+import { computeSalesTaxCents } from "@/lib/utils/salesTax";
 import type { ShippingRate } from "@/lib/shippo/rates";
 
 const EMPTY_CONTACT: ContactValues = {
@@ -95,8 +96,14 @@ export default function CheckoutForm({
   const recipientLastName = isGift ? shipping.lastName : contact.lastName;
   const recipientName = `${recipientFirstName} ${recipientLastName}`.trim();
 
-  // Gift cards apply to the PRODUCT SUBTOTAL ONLY — never to shipping.
-  const orderTotalCents = subtotalCents + (selectedRate?.rateCents ?? 0);
+  // Preview only — the server recomputes tax authoritatively at checkout (same
+  // price-integrity pattern as subtotal/shipping). Needed here so the amount
+  // shown to Square's payment form (and used for SCA verification) matches what
+  // will actually be charged; a mismatch there is a hard failure, not cosmetic.
+  const taxableCents = subtotalCents + (selectedRate?.rateCents ?? 0);
+  const taxCents = computeSalesTaxCents(shipping.state, taxableCents);
+  // Gift cards apply to the PRODUCT SUBTOTAL ONLY — never to shipping or tax.
+  const orderTotalCents = taxableCents + taxCents;
   const giftCardCents = appliedGiftCard
     ? Math.min(appliedGiftCard.amountApplied, subtotalCents)
     : 0;
@@ -525,6 +532,7 @@ export default function CheckoutForm({
           items={items}
           subtotalCents={subtotalCents}
           selectedRate={selectedRate}
+          taxCents={taxCents}
           giftCardCents={giftCardCents}
         />
       </div>

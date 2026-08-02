@@ -9,6 +9,8 @@ interface CartSummaryProps {
   items: CartItem[];
   subtotalCents: number;
   selectedRate: ShippingRate | null;
+  /** Sales tax preview (cents) — 0 for out-of-state orders. */
+  taxCents?: number;
   /** Gift card applied at checkout (cents) — shown as a deduction. */
   giftCardCents?: number;
 }
@@ -17,10 +19,11 @@ export default function CartSummary({
   items,
   subtotalCents,
   selectedRate,
+  taxCents = 0,
   giftCardCents = 0,
 }: CartSummaryProps): ReactElement {
   const totalCents = selectedRate
-    ? Math.max(0, subtotalCents + selectedRate.rateCents - giftCardCents)
+    ? Math.max(0, subtotalCents + selectedRate.rateCents + taxCents - giftCardCents)
     : null;
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
 
@@ -95,6 +98,13 @@ export default function CartSummary({
             </span>
           )}
         </div>
+
+        {taxCents > 0 && (
+          <div className="flex justify-between text-[var(--color-text-primary)]">
+            <span>Sales Tax</span>
+            <span>{formatCents(taxCents)}</span>
+          </div>
+        )}
 
         {giftCardCents > 0 && (
           <div className="flex justify-between">
