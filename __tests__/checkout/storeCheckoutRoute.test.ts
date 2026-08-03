@@ -11,8 +11,18 @@ vi.mock("@/lib/checkout/storePricing", () => ({
 }));
 
 const paymentsCreate = vi.fn();
+const ordersCreate = vi.fn();
+const ordersUpdate = vi.fn();
+const ordersPay = vi.fn();
 vi.mock("@/lib/square/client", () => ({
-  getSquareClient: () => ({ payments: { create: (...a: unknown[]) => paymentsCreate(...a) } }),
+  getSquareClient: () => ({
+    payments: { create: (...a: unknown[]) => paymentsCreate(...a) },
+    orders: {
+      create: (...a: unknown[]) => ordersCreate(...a),
+      update: (...a: unknown[]) => ordersUpdate(...a),
+      pay: (...a: unknown[]) => ordersPay(...a),
+    },
+  }),
 }));
 
 const findOrCreateCustomer = vi.fn();
@@ -141,6 +151,7 @@ beforeEach(() => {
   // Launch gate: the route 503s unless the shop is enabled (lib/constants/
   // featureFlags.ts). Every test here exercises the route past that gate.
   vi.stubEnv("NEXT_PUBLIC_SHOP_ENABLED", "true");
+  vi.stubEnv("SQUARE_LOCATION_ID", "loc_test_1");
   priceCartFromCatalog.mockResolvedValue({
     items: [
       { squareCatalogItemId: "item_1", squareVariationId: "var_1", name: "Garden Art Kit", variationName: "Regular", quantity: 1, unitPriceCents: 8800 },
@@ -148,6 +159,9 @@ beforeEach(() => {
     subtotalCents: 8800,
   });
   resolveShippingRate.mockResolvedValue(RATE);
+  ordersCreate.mockResolvedValue({ order: { id: "sqorder_1", version: 1 } });
+  ordersUpdate.mockResolvedValue({ order: { id: "sqorder_1", version: 2, state: "CANCELED" } });
+  ordersPay.mockResolvedValue({ order: { id: "sqorder_1", state: "COMPLETED" } });
   paymentsCreate.mockResolvedValue({
     payment: { id: "pay_1", status: "COMPLETED", receiptUrl: "https://squareup.com/receipt/pay_1" },
   });
@@ -183,6 +197,30 @@ describe("POST /api/store/checkout", () => {
     expect(paymentsCreate).toHaveBeenCalledTimes(1);
     expect(paymentsCreate.mock.calls[0][0].amountMoney.amount).toBe(BigInt(9991));
 
+    // A real Square Order is created BEFORE the charge, with catalog-linked line
+    // items — this is the inventory-decrement fix. One line per cart item, plus a
+    // plain shipping+tax line, no gift-card discount on this order.
+    expect(ordersCreate).toHaveBeenCalledTimes(1);
+    const orderRequest = ordersCreate.mock.calls[0][0];
+    expect(orderRequest.order.locationId).toBe("loc_test_1");
+    expect(orderRequest.order.lineItems).toEqual([
+      {
+        catalogObjectId: "var_1",
+        quantity: "1",
+        basePriceMoney: { amount: BigInt(8800), currency: "USD" },
+      },
+      {
+        name: "Shipping & Tax",
+        quantity: "1",
+        basePriceMoney: { amount: BigInt(1191), currency: "USD" },
+      },
+    ]);
+    expect(orderRequest.order.discounts).toBeUndefined();
+
+    // The payment is linked to that order.
+    expect(paymentsCreate.mock.calls[0][0].orderId).toBe("sqorder_1");
+    expect(paymentsCreate.mock.calls[0][0].locationId).toBe("loc_test_1");
+
     expect(orderCreate).toHaveBeenCalledTimes(1);
     const order = orderCreate.mock.calls[0][0];
     expect(order.totalCents).toBe(9991);
@@ -192,9 +230,63 @@ describe("POST /api/store/checkout", () => {
     expect(order.status).toBe("paid");
     expect(purchaseLabelForOrder).toHaveBeenCalledWith("order_1");
 
-    // Square receipt captured on the order + returned for the confirmation page.
+    // Square receipt + order id captured on the order + receipt returned for the
+    // confirmation page.
     expect(order.square.receiptUrl).toBe("https://squareup.com/receipt/pay_1");
+    expect(order.square.orderId).toBe("sqorder_1");
     expect(data.receiptUrl).toBe("https://squareup.com/receipt/pay_1");
+  });
+
+  it("reuses the same idempotency key for the Square order and the payment", async () => {
+    await POST(req(baseBody({ idempotencyKey: "idem-shared" })));
+    expect(ordersCreate.mock.calls[0][0].idempotencyKey).toBe("idem-shared");
+    expect(paymentsCreate.mock.calls[0][0].idempotencyKey).toBe("idem-shared");
+  });
+
+  it("maps a multi-item cart to one Square order line item per line", async () => {
+    priceCartFromCatalog.mockResolvedValue({
+      items: [
+        { squareCatalogItemId: "item_1", squareVariationId: "var_1", name: "Garden Art Kit", variationName: "Regular", quantity: 2, unitPriceCents: 8800 },
+        { squareCatalogItemId: "item_2", squareVariationId: "var_2", name: "Mushroom Kit", variationName: "Regular", quantity: 1, unitPriceCents: 1500 },
+      ],
+      subtotalCents: 19100,
+    });
+    const res = await POST(req(baseBody()));
+    expect(res.status).toBe(200);
+
+    const lineItems = ordersCreate.mock.calls[0][0].order.lineItems;
+    expect(lineItems[0]).toEqual({
+      catalogObjectId: "var_1",
+      quantity: "2",
+      basePriceMoney: { amount: BigInt(8800), currency: "USD" },
+    });
+    expect(lineItems[1]).toEqual({
+      catalogObjectId: "var_2",
+      quantity: "1",
+      basePriceMoney: { amount: BigInt(1500), currency: "USD" },
+    });
+  });
+
+  it("fails closed (no charge, no order saved) when Square order creation fails", async () => {
+    ordersCreate.mockRejectedValue(new Error("Square Orders API down"));
+    const res = await POST(req(baseBody()));
+
+    expect(res.status).toBe(500);
+    expect(paymentsCreate).not.toHaveBeenCalled();
+    expect(orderCreate).not.toHaveBeenCalled();
+  });
+
+  it("best-effort cancels the Square order when the payment is not COMPLETED (non-fatal on cancel failure)", async () => {
+    paymentsCreate.mockResolvedValue({ payment: { id: "pay_x", status: "FAILED" } });
+    ordersUpdate.mockRejectedValue(new Error("cancel also failed"));
+
+    const res = await POST(req(baseBody()));
+
+    expect(res.status).toBe(400);
+    expect(orderCreate).not.toHaveBeenCalled();
+    expect(ordersUpdate).toHaveBeenCalledTimes(1);
+    expect(ordersUpdate.mock.calls[0][0].orderId).toBe("sqorder_1");
+    expect(ordersUpdate.mock.calls[0][0].order.state).toBe("CANCELED");
   });
 
   it("ships to the RECIPIENT on a gift order while charging the BUYER (A1)", async () => {
@@ -233,6 +325,80 @@ describe("POST /api/store/checkout", () => {
     expect(giftCardRedeem).toHaveBeenCalledWith("gc_1", 8800, "buyer@example.com");
     const order = orderCreate.mock.calls[0][0];
     expect(order.giftCard).toEqual({ giftCardId: "gc_1", amountCents: 8800 });
+
+    // The Square order carries an ORDER-scoped FIXED_AMOUNT discount for the
+    // applied gift card, so numbers (never Square's own tax/discount engine)
+    // stay the single source of truth for what's charged.
+    const orderRequest = ordersCreate.mock.calls[0][0];
+    expect(orderRequest.order.discounts).toEqual([
+      {
+        name: "Gift Card Applied",
+        type: "FIXED_AMOUNT",
+        scope: "ORDER",
+        amountMoney: { amount: BigInt(8800), currency: "USD" },
+      },
+    ]);
+  });
+
+  it("completes the Square order with no linked payment when a gift card covers the entire total ($0 charge)", async () => {
+    // Free shipping + $0 tax + a gift card covering the full subtotal exactly.
+    resolveShippingRate.mockResolvedValue({ ...RATE, rateCents: 0 });
+    priceCartFromCatalog.mockResolvedValue({
+      items: [
+        { squareCatalogItemId: "item_1", squareVariationId: "var_1", name: "Garden Art Kit", variationName: "Regular", quantity: 1, unitPriceCents: 8800 },
+      ],
+      subtotalCents: 8800,
+    });
+    giftCardGetById.mockResolvedValue({ state: "ACTIVE", balanceMoney: { amount: 8800 } });
+    giftCardRedeem.mockResolvedValue({});
+
+    const res = await POST(
+      req({
+        ...baseBody({ giftCard: { giftCardId: "gc_1", amountCents: 8800 } }),
+        shippingAddress: { ...SELF_ADDRESS, stateProvince: "NY" }, // no NJ tax
+      })
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(paymentsCreate).not.toHaveBeenCalled();
+    expect(ordersPay).toHaveBeenCalledTimes(1);
+    expect(ordersPay.mock.calls[0][0]).toEqual({
+      orderId: "sqorder_1",
+      idempotencyKey: "idem-1",
+      paymentIds: [],
+    });
+
+    const order = orderCreate.mock.calls[0][0];
+    expect(order.status).toBe("paid");
+    expect(order.square.orderId).toBe("sqorder_1");
+    expect(order.square.paymentId).toBeUndefined();
+  });
+
+  it("cancels the Square order and never saves it when gift card redemption fails on a $0-charge order", async () => {
+    resolveShippingRate.mockResolvedValue({ ...RATE, rateCents: 0 });
+    priceCartFromCatalog.mockResolvedValue({
+      items: [
+        { squareCatalogItemId: "item_1", squareVariationId: "var_1", name: "Garden Art Kit", variationName: "Regular", quantity: 1, unitPriceCents: 8800 },
+      ],
+      subtotalCents: 8800,
+    });
+    giftCardGetById.mockResolvedValue({ state: "ACTIVE", balanceMoney: { amount: 8800 } });
+    giftCardRedeem.mockRejectedValue(new Error("redemption failed"));
+
+    const res = await POST(
+      req({
+        ...baseBody({ giftCard: { giftCardId: "gc_1", amountCents: 8800 } }),
+        shippingAddress: { ...SELF_ADDRESS, stateProvince: "NY" },
+      })
+    );
+
+    expect(res.status).toBe(400);
+    expect(ordersPay).not.toHaveBeenCalled();
+    expect(ordersUpdate).toHaveBeenCalledTimes(1);
+    expect(ordersUpdate.mock.calls[0][0].order.state).toBe("CANCELED");
+    expect(orderCreate).not.toHaveBeenCalled();
   });
 
   it("rejects (400) and never charges when the cart fails price integrity", async () => {
@@ -242,6 +408,7 @@ describe("POST /api/store/checkout", () => {
 
     expect(res.status).toBe(400);
     expect(data.error).toBe("Item unavailable");
+    expect(ordersCreate).not.toHaveBeenCalled();
     expect(paymentsCreate).not.toHaveBeenCalled();
     expect(orderCreate).not.toHaveBeenCalled();
   });
@@ -250,6 +417,7 @@ describe("POST /api/store/checkout", () => {
     resolveShippingRate.mockRejectedValue(new PriceIntegrityError("Shipping rate unavailable"));
     const res = await POST(req(baseBody()));
     expect(res.status).toBe(400);
+    expect(ordersCreate).not.toHaveBeenCalled();
     expect(paymentsCreate).not.toHaveBeenCalled();
     expect(orderCreate).not.toHaveBeenCalled();
   });
