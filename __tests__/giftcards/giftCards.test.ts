@@ -1,4 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { NextResponse } from "next/server";
+
+const requireAdmin = vi.fn();
+vi.mock("@/lib/auth/guards", () => ({
+  requireAdmin: (...a: unknown[]) => requireAdmin(...a),
+}));
 
 const getBalance = vi.fn();
 const getById = vi.fn();
@@ -13,6 +19,9 @@ vi.mock("@/lib/square/gift-cards", () => ({
 
 import { GET as balanceGET } from "@/app/api/gift-cards/balance/route";
 import { POST as redeemPOST } from "@/app/api/gift-cards/redeem/route";
+
+const ADMIN = { id: "admin_1", email: "admin@example.com", isAdmin: true, role: "admin" };
+const UNAUTH = NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
 function balanceReq(gan?: string): Request {
   const url = gan
@@ -29,7 +38,10 @@ function redeemReq(body: Record<string, unknown>): Request {
   });
 }
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  requireAdmin.mockResolvedValue(ADMIN);
+});
 
 describe("GET /api/gift-cards/balance", () => {
   it("400s when no GAN is provided", async () => {
@@ -62,6 +74,14 @@ describe("GET /api/gift-cards/balance", () => {
 });
 
 describe("POST /api/gift-cards/redeem", () => {
+  it("401s when the caller is not an authenticated admin", async () => {
+    requireAdmin.mockResolvedValue(UNAUTH);
+    const res = await redeemPOST(redeemReq({ giftCardId: "gc_1", amountCents: 100 }));
+    expect(res.status).toBe(401);
+    expect(getById).not.toHaveBeenCalled();
+    expect(redeem).not.toHaveBeenCalled();
+  });
+
   it("400s without a gift card id", async () => {
     const res = await redeemPOST(redeemReq({ amountCents: 100 }));
     expect(res.status).toBe(400);

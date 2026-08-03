@@ -1,8 +1,16 @@
 /**
  * Gift Card Redeem API Route
  * POST: Redeem a gift card amount
+ *
+ * Admin-only. Every checkout path that legitimately redeems a gift card
+ * (app/api/store/checkout, app/api/checkout/booking) calls
+ * giftCardService.redeem() directly, server-side — this HTTP route is not on
+ * any live customer flow. It stayed reachable with no auth check, and since
+ * gift-card balance/lookup is public (GET /api/gift-cards/balance), that made
+ * it a bare "drain any card to $0" primitive for anyone who knows a GAN.
  */
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/auth/guards";
 import { giftCardService } from "@/lib/square/gift-cards";
 
 interface RedeemRequest {
@@ -12,6 +20,9 @@ interface RedeemRequest {
 }
 
 export async function POST(request: Request): Promise<Response> {
+  const guard = await requireAdmin();
+  if (guard instanceof NextResponse) return guard;
+
   try {
     const body: RedeemRequest = await request.json();
 
