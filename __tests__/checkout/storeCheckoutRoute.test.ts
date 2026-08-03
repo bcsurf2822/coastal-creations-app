@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { PriceIntegrityError } from "@/lib/checkout/errors";
 
 // --- Mock every dependency the store checkout route orchestrates ---
@@ -138,6 +138,9 @@ function baseBody(overrides: Record<string, unknown> = {}): Record<string, unkno
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Launch gate: the route 503s unless the shop is enabled (lib/constants/
+  // featureFlags.ts). Every test here exercises the route past that gate.
+  vi.stubEnv("NEXT_PUBLIC_SHOP_ENABLED", "true");
   priceCartFromCatalog.mockResolvedValue({
     items: [
       { squareCatalogItemId: "item_1", squareVariationId: "var_1", name: "Garden Art Kit", variationName: "Regular", quantity: 1, unitPriceCents: 8800 },
@@ -158,6 +161,10 @@ beforeEach(() => {
   resolveUserSquareCustomerId.mockResolvedValue("acct_cust_1");
   cardGetCard.mockResolvedValue({ id: "ccof:1", customerId: "acct_cust_1" });
   cardCreateCard.mockResolvedValue({ id: "ccof:new" });
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
 
 const SIGNED_IN = { id: "user_1", email: "u@example.com", isAdmin: false, role: "customer" };
@@ -259,6 +266,24 @@ describe("POST /api/store/checkout", () => {
 
   it("returns 400 on missing required fields and never charges", async () => {
     const res = await POST(req({ customer: BUYER, items: [] }));
+    expect(res.status).toBe(400);
+    expect(paymentsCreate).not.toHaveBeenCalled();
+    expect(orderCreate).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 and never charges when a required nested field is blank (e.g. shippingAddress.city)", async () => {
+    const res = await POST(
+      req(baseBody({ shippingAddress: { ...SELF_ADDRESS, city: "" } }))
+    );
+    expect(res.status).toBe(400);
+    expect(paymentsCreate).not.toHaveBeenCalled();
+    expect(orderCreate).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 and never charges when a required customer field is missing", async () => {
+    const res = await POST(
+      req(baseBody({ customer: { ...BUYER, lastName: undefined } }))
+    );
     expect(res.status).toBe(400);
     expect(paymentsCreate).not.toHaveBeenCalled();
     expect(orderCreate).not.toHaveBeenCalled();

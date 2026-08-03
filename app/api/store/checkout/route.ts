@@ -118,6 +118,32 @@ export async function POST(request: Request): Promise<Response> {
       return NextResponse.json({ error: "Missing required checkout fields" }, { status: 400 });
     }
 
+    // Deep-validate every field the Order schema actually requires, BEFORE
+    // charging Square. A shallow truthiness check on the top-level objects
+    // above is not enough — a blank nested field (e.g. shippingAddress.city)
+    // passes that check, then trips Mongoose's required-field validation on
+    // Order.create() AFTER the card has already been charged, leaving a paid
+    // customer with no order record. Fail closed here instead.
+    const requiredStringFields: Array<[string, unknown]> = [
+      ["customer.firstName", customer.firstName],
+      ["customer.lastName", customer.lastName],
+      ["customer.email", customer.email],
+      ["shippingAddress.name", shippingAddress.name],
+      ["shippingAddress.addressLine1", shippingAddress.addressLine1],
+      ["shippingAddress.city", shippingAddress.city],
+      ["shippingAddress.stateProvince", shippingAddress.stateProvince],
+      ["shippingAddress.postalCode", shippingAddress.postalCode],
+      ["shippingAddress.country", shippingAddress.country],
+    ];
+    for (const [label, value] of requiredStringFields) {
+      if (typeof value !== "string" || value.trim().length === 0) {
+        return NextResponse.json(
+          { error: `Missing required checkout field: ${label}` },
+          { status: 400 }
+        );
+      }
+    }
+
     // Mongo is needed to read parcel presets for the shipping re-quote.
     await connectMongo();
 
