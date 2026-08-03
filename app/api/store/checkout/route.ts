@@ -6,7 +6,9 @@
  * from the Square catalog and shipping from a fresh Shippo re-quote (lib/checkout/
  * storePricing.ts). The body's `subtotalCents` and `selectedRate.rateCents` are
  * ignored for charging; only `selectedRate.carrier`/`service` select which fresh
- * rate to charge. See ecommerce/09-checkout-price-integrity.md.
+ * rate to charge. Sales tax is computed server-side too, from the ship-to state
+ * (lib/utils/salesTax.ts) — see ecommerce/09-checkout-price-integrity.md and
+ * ecommerce/nj-sales-tax-research.md.
  *
  * Request body:
  *   paymentToken   — Square nonce from the card form
@@ -40,6 +42,7 @@ import {
   PriceIntegrityError,
 } from "@/lib/checkout/storePricing";
 import { normalizeIdempotencyKey } from "@/lib/checkout/idempotency";
+import { computeSalesTaxCents } from "@/lib/utils/salesTax";
 import { resolveEmailRecipients, EMAIL_FROM } from "@/lib/email/recipients";
 import type { LabelResult } from "@/lib/shippo/labels";
 import type { CartItem } from "@/lib/types/cartTypes";
@@ -115,6 +118,32 @@ export async function POST(request: Request): Promise<Response> {
       return NextResponse.json({ error: "Missing required checkout fields" }, { status: 400 });
     }
 
+    // Deep-validate every field the Order schema actually requires, BEFORE
+    // charging Square. A shallow truthiness check on the top-level objects
+    // above is not enough — a blank nested field (e.g. shippingAddress.city)
+    // passes that check, then trips Mongoose's required-field validation on
+    // Order.create() AFTER the card has already been charged, leaving a paid
+    // customer with no order record. Fail closed here instead.
+    const requiredStringFields: Array<[string, unknown]> = [
+      ["customer.firstName", customer.firstName],
+      ["customer.lastName", customer.lastName],
+      ["customer.email", customer.email],
+      ["shippingAddress.name", shippingAddress.name],
+      ["shippingAddress.addressLine1", shippingAddress.addressLine1],
+      ["shippingAddress.city", shippingAddress.city],
+      ["shippingAddress.stateProvince", shippingAddress.stateProvince],
+      ["shippingAddress.postalCode", shippingAddress.postalCode],
+      ["shippingAddress.country", shippingAddress.country],
+    ];
+    for (const [label, value] of requiredStringFields) {
+      if (typeof value !== "string" || value.trim().length === 0) {
+        return NextResponse.json(
+          { error: `Missing required checkout field: ${label}` },
+          { status: 400 }
+        );
+      }
+    }
+
     // Mongo is needed to read parcel presets for the shipping re-quote.
     await connectMongo();
 
@@ -146,9 +175,15 @@ export async function POST(request: Request): Promise<Response> {
 
     const subtotalCents = pricedCart.subtotalCents;
 
-    // Sales tax temporarily disabled (pending the studio's nexus/rate decision — see
-    // ecommerce/ecommerce-sales-tax-guide.md). Order keeps taxCents: 0 for now.
-    const totalCents = subtotalCents + serverRate.rateCents;
+    // NJ sales tax (6.625%, flat statewide) on items + shipping combined — the
+    // only taxed state right now (physical nexus; owner-confirmed 2026-08-02).
+    // Ship-to state, not billing (destination-based sourcing). See
+    // ecommerce/nj-sales-tax-research.md for the full research + sign-off.
+    const taxCents = computeSalesTaxCents(
+      shippingAddress.stateProvince,
+      subtotalCents + serverRate.rateCents
+    );
+    const totalCents = subtotalCents + serverRate.rateCents + taxCents;
 
     console.log("[API-STORE-CHECKOUT-POST] Processing checkout for:", customer.email, "Server total:", totalCents);
 
@@ -307,7 +342,7 @@ export async function POST(request: Request): Promise<Response> {
       items: orderItems,
       subtotalCents,
       shippingCents: serverRate.rateCents,
-      taxCents: 0,
+      taxCents,
       totalCents,
       customer: {
         firstName: customer.firstName,
@@ -412,6 +447,7 @@ export async function POST(request: Request): Promise<Response> {
             })),
             subtotalCents,
             shippingCents: serverRate.rateCents,
+            taxCents,
             totalCents,
             shippingAddress: {
               name: shippingAddress.name,
@@ -434,6 +470,7 @@ export async function POST(request: Request): Promise<Response> {
           items: orderItems,
           subtotalCents,
           shippingCents: serverRate.rateCents,
+          taxCents,
           totalCents,
           shippingAddress: {
             name: shippingAddress.name,

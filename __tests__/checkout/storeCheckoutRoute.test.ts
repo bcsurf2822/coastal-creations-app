@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { PriceIntegrityError } from "@/lib/checkout/errors";
 
 // --- Mock every dependency the store checkout route orchestrates ---
@@ -138,6 +138,9 @@ function baseBody(overrides: Record<string, unknown> = {}): Record<string, unkno
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Launch gate: the route 503s unless the shop is enabled (lib/constants/
+  // featureFlags.ts). Every test here exercises the route past that gate.
+  vi.stubEnv("NEXT_PUBLIC_SHOP_ENABLED", "true");
   priceCartFromCatalog.mockResolvedValue({
     items: [
       { squareCatalogItemId: "item_1", squareVariationId: "var_1", name: "Garden Art Kit", variationName: "Regular", quantity: 1, unitPriceCents: 8800 },
@@ -160,6 +163,10 @@ beforeEach(() => {
   cardCreateCard.mockResolvedValue({ id: "ccof:new" });
 });
 
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
 const SIGNED_IN = { id: "user_1", email: "u@example.com", isAdmin: false, role: "customer" };
 
 describe("POST /api/store/checkout", () => {
@@ -171,15 +178,17 @@ describe("POST /api/store/checkout", () => {
     expect(data.success).toBe(true);
     expect(data.orderNumber).toBe("CC-TEST-1");
 
-    // Charged subtotal + shipping (8800 + 570) as BigInt cents.
+    // Charged subtotal + shipping + NJ tax (8800 + 570 + 621 = 9991) as BigInt cents.
+    // SELF_ADDRESS ships to NJ; 6.625% on the taxable base of 9370 rounds to 621.
     expect(paymentsCreate).toHaveBeenCalledTimes(1);
-    expect(paymentsCreate.mock.calls[0][0].amountMoney.amount).toBe(BigInt(9370));
+    expect(paymentsCreate.mock.calls[0][0].amountMoney.amount).toBe(BigInt(9991));
 
     expect(orderCreate).toHaveBeenCalledTimes(1);
     const order = orderCreate.mock.calls[0][0];
-    expect(order.totalCents).toBe(9370);
+    expect(order.totalCents).toBe(9991);
     expect(order.subtotalCents).toBe(8800);
     expect(order.shippingCents).toBe(570);
+    expect(order.taxCents).toBe(621);
     expect(order.status).toBe("paid");
     expect(purchaseLabelForOrder).toHaveBeenCalledWith("order_1");
 
@@ -216,9 +225,10 @@ describe("POST /api/store/checkout", () => {
     );
     expect(res.status).toBe(200);
 
-    // Card charged only the shipping remainder (570), never $0.
+    // Gift card offsets the subtotal only — never shipping or tax. Card charged
+    // the shipping + NJ tax remainder (570 + 621 = 1191), never $0.
     expect(paymentsCreate).toHaveBeenCalledTimes(1);
-    expect(paymentsCreate.mock.calls[0][0].amountMoney.amount).toBe(BigInt(570));
+    expect(paymentsCreate.mock.calls[0][0].amountMoney.amount).toBe(BigInt(1191));
     // Redeemed exactly the subtotal.
     expect(giftCardRedeem).toHaveBeenCalledWith("gc_1", 8800, "buyer@example.com");
     const order = orderCreate.mock.calls[0][0];
@@ -256,6 +266,24 @@ describe("POST /api/store/checkout", () => {
 
   it("returns 400 on missing required fields and never charges", async () => {
     const res = await POST(req({ customer: BUYER, items: [] }));
+    expect(res.status).toBe(400);
+    expect(paymentsCreate).not.toHaveBeenCalled();
+    expect(orderCreate).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 and never charges when a required nested field is blank (e.g. shippingAddress.city)", async () => {
+    const res = await POST(
+      req(baseBody({ shippingAddress: { ...SELF_ADDRESS, city: "" } }))
+    );
+    expect(res.status).toBe(400);
+    expect(paymentsCreate).not.toHaveBeenCalled();
+    expect(orderCreate).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 and never charges when a required customer field is missing", async () => {
+    const res = await POST(
+      req(baseBody({ customer: { ...BUYER, lastName: undefined } }))
+    );
     expect(res.status).toBe(400);
     expect(paymentsCreate).not.toHaveBeenCalled();
     expect(orderCreate).not.toHaveBeenCalled();

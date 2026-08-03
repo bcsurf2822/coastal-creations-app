@@ -7,9 +7,9 @@ import "@/lib/models/PrivateEvent";
 import "@/lib/models/Reservations";
 import { getSquareClient } from "@/lib/square/client";
 import { SquareError } from "square";
-import { randomUUID } from "crypto";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
+import { refundIdempotencyKey } from "@/lib/checkout/idempotency";
 import { sendRefundConfirmation } from "@/lib/email/sendRefundConfirmation";
 
 const client = getSquareClient();
@@ -64,22 +64,48 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const refundAmountCents = refundAmount
-      ? BigInt(Math.round(refundAmount * 100))
-      : BigInt(Math.round((customer.total - (customer.refundAmount || 0)) * 100));
+    // Bound the refund to what's actually left to refund on this booking —
+    // a client-supplied `refundAmount` is never trusted past the remaining
+    // balance, whether that's from a stale UI, a replayed request, or drift
+    // between the local `customer.total` and Square's real payment.
+    const alreadyRefundedCents = Math.round((customer.refundAmount || 0) * 100);
+    const totalCents = Math.round(customer.total * 100);
+    const remainingCents = totalCents - alreadyRefundedCents;
+
+    const requestedCents =
+      refundAmount != null ? Math.round(refundAmount * 100) : remainingCents;
+
+    if (!Number.isFinite(requestedCents) || requestedCents <= 0) {
+      return NextResponse.json(
+        { error: "Refund amount must be greater than zero" },
+        { status: 400 }
+      );
+    }
+    if (requestedCents > remainingCents) {
+      return NextResponse.json(
+        {
+          error: `Refund exceeds the remaining refundable balance ($${(remainingCents / 100).toFixed(2)})`,
+        },
+        { status: 400 }
+      );
+    }
 
     const refundResult = await client.refunds.refundPayment({
-      idempotencyKey: randomUUID(),
+      idempotencyKey: refundIdempotencyKey({
+        paymentId: customer.squarePaymentId,
+        amountCents: requestedCents,
+        alreadyRefundedCents,
+      }),
       paymentId: customer.squarePaymentId,
       amountMoney: {
-        amount: refundAmountCents,
+        amount: BigInt(requestedCents),
         currency: "USD",
       },
       reason: reason || "Customer requested refund",
     });
 
     if (refundResult.refund) {
-      const refundAmountDollars = refundAmount || customer.total - (customer.refundAmount || 0);
+      const refundAmountDollars = requestedCents / 100;
       const totalRefundedAmount = (customer.refundAmount || 0) + refundAmountDollars;
 
       const isFullRefund = totalRefundedAmount >= customer.total;

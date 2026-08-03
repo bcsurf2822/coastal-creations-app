@@ -70,6 +70,14 @@ export default function ShopProductCard({
             {product.name}
           </h3>
         </Link>
+        {/* Multi-variation items (e.g. "Mini Travel Art Kits") quick-add ONE
+            specific flavor (defaultVariation) — show which one, so the customer
+            knows what they're actually getting without opening the product page. */}
+        {product.hasMultipleVariations && product.defaultVariation && (
+          <p className="mt-0.5 text-xs font-medium text-[var(--color-text-subtle)]">
+            {product.defaultVariation.name}
+          </p>
+        )}
         {product.description && (
           // Cap long descriptions at ~4 lines and let the overflow scroll inside
           // the card, so the whole blurb is readable without breaking the

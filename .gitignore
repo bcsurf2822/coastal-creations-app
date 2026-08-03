@@ -36,6 +36,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # MCP configuration with sensitive tokens (matches .mcp.json AND suffixed
 # variants like .mcp.json.square.coastal.prod, anywhere in the tree)

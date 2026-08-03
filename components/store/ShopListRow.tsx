@@ -57,6 +57,13 @@ export default function ShopListRow({
               {product.name}
             </h3>
           </Link>
+          {/* Multi-variation items quick-add ONE specific flavor (defaultVariation) —
+              show which one, matching ShopProductCard's grid-view treatment. */}
+          {product.hasMultipleVariations && product.defaultVariation && (
+            <span className="text-xs font-medium text-[var(--color-text-subtle)]">
+              {product.defaultVariation.name}
+            </span>
+          )}
           {tag && (
             <span className="rounded-full bg-[var(--color-light)] px-2 py-0.5 text-xs font-medium text-[var(--color-primary)]">
               {tag}
