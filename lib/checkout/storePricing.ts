@@ -10,7 +10,7 @@
  * service) a PriceIntegrityError is thrown so the caller rejects the order
  * BEFORE charging. See ecommerce/09-checkout-price-integrity.md.
  */
-import { listCatalogItems } from "@/lib/square/catalog";
+import { listCatalogItems, getInventoryCounts } from "@/lib/square/catalog";
 import StoreProductSettings, {
   DEFAULT_PARCEL_PRESET,
 } from "@/lib/models/StoreProductSettings";
@@ -67,10 +67,16 @@ export async function priceCartFromCatalog(
   const itemIds = Array.from(new Set(items.map((i) => i.squareCatalogItemId)));
   const catalogItems = await listCatalogItems(itemIds);
 
-  // Map every variation id -> { name, variationName, priceCents } from the catalog.
+  // Map every variation id -> { name, variationName, priceCents, trackInventory }
+  // from the catalog.
   const variationById = new Map<
     string,
-    { name: string; variationName: string; priceCents: number | null }
+    {
+      name: string;
+      variationName: string;
+      priceCents: number | null;
+      trackInventory: boolean;
+    }
   >();
   for (const item of catalogItems) {
     for (const v of item.variations) {
@@ -78,6 +84,7 @@ export async function priceCartFromCatalog(
         name: item.name,
         variationName: v.name,
         priceCents: v.priceCents,
+        trackInventory: v.trackInventory,
       });
     }
   }
@@ -105,6 +112,38 @@ export async function priceCartFromCatalog(
       unitPriceCents: match.priceCents,
     };
   });
+
+  // Stock check: reject any line whose requested quantity exceeds Square's
+  // IN_STOCK count, for variations with inventory tracking enabled. Combine
+  // quantities per variation first so a cart split across multiple lines for
+  // the same variation can't slip past the check line-by-line. This closes
+  // the "sold-out item charges forever" gap but is a point-in-time read, not
+  // a hold — two checkouts racing for the last unit can still both pass.
+  const requestedByVariation = new Map<string, number>();
+  for (const item of pricedItems) {
+    requestedByVariation.set(
+      item.squareVariationId,
+      (requestedByVariation.get(item.squareVariationId) ?? 0) + item.quantity
+    );
+  }
+  const trackedVariationIds = Array.from(requestedByVariation.keys()).filter(
+    (id) => variationById.get(id)?.trackInventory
+  );
+  if (trackedVariationIds.length > 0) {
+    const counts = await getInventoryCounts(trackedVariationIds);
+    for (const variationId of trackedVariationIds) {
+      const requested = requestedByVariation.get(variationId) ?? 0;
+      const available = counts.get(variationId) ?? 0;
+      if (requested > available) {
+        const match = variationById.get(variationId);
+        throw new PriceIntegrityError(
+          `Not enough stock for ${match?.name ?? "this item"}${
+            match?.variationName ? ` (${match.variationName})` : ""
+          } — only ${available} left.`
+        );
+      }
+    }
+  }
 
   const subtotalCents = pricedItems.reduce(
     (sum, i) => sum + i.unitPriceCents * i.quantity,

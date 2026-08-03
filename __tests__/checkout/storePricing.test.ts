@@ -2,8 +2,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // --- Mocks for the authoritative sources storePricing reads from ---
 const listCatalogItems = vi.fn();
+const getInventoryCounts = vi.fn();
 vi.mock("@/lib/square/catalog", () => ({
   listCatalogItems: (...args: unknown[]) => listCatalogItems(...args),
+  getInventoryCounts: (...args: unknown[]) => getInventoryCounts(...args),
 }));
 
 const getShippingRates = vi.fn();
@@ -108,6 +110,71 @@ describe("priceCartFromCatalog", () => {
     await expect(priceCartFromCatalog([])).rejects.toBeInstanceOf(
       PriceIntegrityError
     );
+  });
+
+  it("does not check inventory for a variation with tracking disabled", async () => {
+    listCatalogItems.mockResolvedValue([
+      {
+        id: "ITEM1",
+        name: "Art Kit",
+        variations: [
+          { id: "VAR1", name: "Default", priceCents: 5000, variablePricing: false, trackInventory: false },
+        ],
+      },
+    ]);
+    await priceCartFromCatalog([cartItem({ quantity: 5 })]);
+    expect(getInventoryCounts).not.toHaveBeenCalled();
+  });
+
+  it("rejects when the requested quantity exceeds IN_STOCK count for a tracked variation", async () => {
+    listCatalogItems.mockResolvedValue([
+      {
+        id: "ITEM1",
+        name: "Art Kit",
+        variations: [
+          { id: "VAR1", name: "Default", priceCents: 5000, variablePricing: false, trackInventory: true },
+        ],
+      },
+    ]);
+    getInventoryCounts.mockResolvedValue(new Map([["VAR1", 1]]));
+
+    await expect(
+      priceCartFromCatalog([cartItem({ quantity: 2 })])
+    ).rejects.toBeInstanceOf(PriceIntegrityError);
+  });
+
+  it("allows checkout when a tracked variation has enough stock", async () => {
+    listCatalogItems.mockResolvedValue([
+      {
+        id: "ITEM1",
+        name: "Art Kit",
+        variations: [
+          { id: "VAR1", name: "Default", priceCents: 5000, variablePricing: false, trackInventory: true },
+        ],
+      },
+    ]);
+    getInventoryCounts.mockResolvedValue(new Map([["VAR1", 2]]));
+
+    const result = await priceCartFromCatalog([cartItem({ quantity: 2 })]);
+    expect(result.subtotalCents).toBe(10000);
+  });
+
+  it("combines quantities for the same variation across split cart lines before checking stock", async () => {
+    listCatalogItems.mockResolvedValue([
+      {
+        id: "ITEM1",
+        name: "Art Kit",
+        variations: [
+          { id: "VAR1", name: "Default", priceCents: 5000, variablePricing: false, trackInventory: true },
+        ],
+      },
+    ]);
+    getInventoryCounts.mockResolvedValue(new Map([["VAR1", 3]]));
+
+    // Two lines of 2 each = 4 requested, but only 3 in stock.
+    await expect(
+      priceCartFromCatalog([cartItem({ quantity: 2 }), cartItem({ quantity: 2 })])
+    ).rejects.toBeInstanceOf(PriceIntegrityError);
   });
 });
 
