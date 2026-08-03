@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { SquareError } from "square";
 import { requireAdmin } from "@/lib/auth/guards";
 import { connectMongo } from "@/lib/mongoose";
 import Order, { type IOrderItem } from "@/lib/models/Order";
 import { getSquareClient } from "@/lib/square/client";
 import { formatCents } from "@/lib/utils/moneyHelpers";
+import { refundIdempotencyKey } from "@/lib/checkout/idempotency";
 import { sendRefundConfirmation } from "@/lib/email/sendRefundConfirmation";
 
 const client = getSquareClient();
@@ -131,7 +131,11 @@ export async function POST(
 
     // --- Square refund ---
     const refundResult = await client.refunds.refundPayment({
-      idempotencyKey: randomUUID(),
+      idempotencyKey: refundIdempotencyKey({
+        paymentId: order.square.paymentId,
+        amountCents: refundCents,
+        alreadyRefundedCents: alreadyRefunded,
+      }),
       paymentId: order.square.paymentId,
       amountMoney: {
         amount: BigInt(refundCents),

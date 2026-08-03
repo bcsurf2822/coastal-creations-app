@@ -138,4 +138,30 @@ describe("POST /api/refunds — refund processing", () => {
     expect(doc.refundStatus).toBe("partial");
     expect(doc.refundAmount).toBe(30);
   });
+
+  it("400s and never calls Square when refundAmount exceeds the remaining balance", async () => {
+    mockCustomer(customerDoc({ total: 100, refundAmount: 80 })); // only $20 left
+    const res = await POST(req({ customerId: "c1", refundAmount: 50 }) as never);
+    expect(res.status).toBe(400);
+    expect(refundPayment).not.toHaveBeenCalled();
+  });
+
+  it("400s on a zero or negative refundAmount", async () => {
+    mockCustomer(customerDoc());
+    const res = await POST(req({ customerId: "c1", refundAmount: 0 }) as never);
+    expect(res.status).toBe(400);
+    expect(refundPayment).not.toHaveBeenCalled();
+  });
+
+  it("uses the same idempotency key for two identical requests (double-click safe)", async () => {
+    mockCustomer(customerDoc());
+    await POST(req({ customerId: "c1" }) as never);
+    const firstKey = refundPayment.mock.calls[0][0].idempotencyKey;
+
+    mockCustomer(customerDoc()); // fresh unmodified doc — same starting state
+    await POST(req({ customerId: "c1" }) as never);
+    const secondKey = refundPayment.mock.calls[1][0].idempotencyKey;
+
+    expect(firstKey).toBe(secondKey);
+  });
 });
