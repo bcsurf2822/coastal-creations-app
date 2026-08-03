@@ -1,6 +1,13 @@
 /**
  * Store Checkout API
- * POST: Charges Square, saves the Order to MongoDB, and sends the confirmation email.
+ * POST: Creates a Square Order, charges Square, saves the Order to MongoDB, and
+ * sends the confirmation email.
+ *
+ * SQUARE ORDER LINKING: every charge is linked to a real Square Order whose line
+ * items reference the actual catalog objects being sold (lib/square/storeOrders.ts),
+ * mirroring the pattern in lib/square/gift-cards.ts. This is what makes Square's own
+ * per-item inventory count decrement on a sale — a bare payments.create() with no
+ * orderId/catalogObjectId does NOT touch inventory at all.
  *
  * PRICE INTEGRITY: client-supplied money is NOT trusted. The subtotal is recomputed
  * from the Square catalog and shipping from a fresh Shippo re-quote (lib/checkout/
@@ -36,6 +43,11 @@ import { squareCustomerService } from "@/lib/square/customers";
 import { squareCardService } from "@/lib/square/cards";
 import { resolveUserSquareCustomerId } from "@/lib/square/userCustomer";
 import { giftCardService } from "@/lib/square/gift-cards";
+import {
+  createSquareOrderForCart,
+  cancelSquareOrderBestEffort,
+  completeZeroChargeOrder,
+} from "@/lib/square/storeOrders";
 import {
   priceCartFromCatalog,
   resolveShippingRate,
@@ -233,19 +245,39 @@ export async function POST(request: Request): Promise<Response> {
       }
     }
 
+    // Build the idempotency key ONCE and reuse it for both the Square order and
+    // the payment/pay-order call below — Square scopes idempotency per endpoint,
+    // so this is safe, and it keeps a client retry (lost response) from ever
+    // creating a second, orphaned order while the payment call dedupes to the
+    // original.
+    const squareIdempotencyKey = normalizeIdempotencyKey(body.idempotencyKey);
+
+    // Create the real Square Order FIRST, with catalog-linked line items, so a
+    // completed sale decrements Square's own inventory (lib/square/storeOrders.ts).
+    // FAIL CLOSED: if this throws, the outer catch returns an error and no charge
+    // is ever attempted — never fall back to a bare, catalog-less payment.
+    const shippingAndTaxCents = serverRate.rateCents + taxCents;
+    const squareOrder = await createSquareOrderForCart({
+      pricedItems: pricedCart.items,
+      shippingAndTaxCents,
+      giftCardAppliedCents,
+      idempotencyKey: squareIdempotencyKey,
+    });
+
     // Step 1: Charge the card portion (skipped when a gift card covers the full total).
     let squarePaymentId: string | undefined;
     let squareReceiptUrl: string | undefined;
     if (chargeCents > 0) {
       const usingSavedCard = Boolean(body.savedCardId);
       if (!usingSavedCard && !paymentToken) {
+        await cancelSquareOrderBestEffort(squareOrder.orderId, squareOrder.version);
         return NextResponse.json(
           { error: "Payment information is required" },
           { status: 400 }
         );
       }
       const paymentResult = await squareClient.payments.create({
-        idempotencyKey: normalizeIdempotencyKey(body.idempotencyKey),
+        idempotencyKey: squareIdempotencyKey,
         // A saved card charges by its card id; a new card by the one-time nonce.
         sourceId: body.savedCardId ?? (paymentToken as string),
         ...(accountCustomerId ? { customerId: accountCustomerId } : {}),
@@ -256,6 +288,8 @@ export async function POST(request: Request): Promise<Response> {
           amount: BigInt(chargeCents),
           currency: "USD",
         },
+        orderId: squareOrder.orderId,
+        locationId: squareOrder.locationId,
         buyerEmailAddress: customer.email,
         shippingAddress: {
           addressLine1: shippingAddress.addressLine1,
@@ -275,6 +309,7 @@ export async function POST(request: Request): Promise<Response> {
       const payment = paymentResult.payment;
       if (payment?.status !== "COMPLETED") {
         console.error("[API-STORE-CHECKOUT-POST] Square payment not completed:", payment?.status);
+        await cancelSquareOrderBestEffort(squareOrder.orderId, squareOrder.version);
         return NextResponse.json(
           { error: "Payment was not completed", status: payment?.status },
           { status: 400 }
@@ -315,12 +350,21 @@ export async function POST(request: Request): Promise<Response> {
       } catch (giftCardError) {
         console.error("[API-STORE-CHECKOUT-POST] Gift card redemption failed:", giftCardError);
         if (chargeCents === 0) {
+          await cancelSquareOrderBestEffort(squareOrder.orderId, squareOrder.version);
           return NextResponse.json(
             { error: "Gift card could not be redeemed. No charge was made." },
             { status: 400 }
           );
         }
       }
+    }
+
+    // When a gift card covers the entire total, there's no payment to link the
+    // order to — complete it directly so Square's inventory decrement still
+    // fires. Runs AFTER gift-card redemption (and its failure/cancel path above)
+    // so the order is only ever finalized once the free order is actually real.
+    if (chargeCents === 0) {
+      await completeZeroChargeOrder(squareOrder.orderId, squareIdempotencyKey);
     }
 
     // Step 2: Save Order to MongoDB — with SERVER-derived prices and the FRESH
@@ -353,6 +397,7 @@ export async function POST(request: Request): Promise<Response> {
       shippingAddress,
       square: {
         paymentId: squarePaymentId,
+        orderId: squareOrder.orderId,
         receiptUrl: squareReceiptUrl,
       },
       giftCard:
