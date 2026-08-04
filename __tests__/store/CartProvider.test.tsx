@@ -50,7 +50,7 @@ function createWrapper(): ({ children }: { children: ReactNode }) => ReactNode {
 
 describe("CartProvider — cart operations", () => {
   beforeEach(() => {
-    localStorage.clear();
+    sessionStorage.clear();
   });
 
   it("starts with an empty cart", () => {
@@ -231,12 +231,12 @@ describe("CartProvider — cart operations", () => {
   });
 });
 
-describe("CartProvider — localStorage persistence", () => {
+describe("CartProvider — sessionStorage persistence", () => {
   beforeEach(() => {
-    localStorage.clear();
+    sessionStorage.clear();
   });
 
-  it("persists cart to localStorage when items change", () => {
+  it("persists cart to sessionStorage when items change", () => {
     const { result } = renderHook(() => useCart(), {
       wrapper: createWrapper(),
     });
@@ -245,14 +245,14 @@ describe("CartProvider — localStorage persistence", () => {
       result.current.addItem(mockProduct, mockVariation);
     });
 
-    const stored = localStorage.getItem("cc_cart");
+    const stored = sessionStorage.getItem("cc_cart");
     expect(stored).not.toBeNull();
     const parsed = JSON.parse(stored!);
     expect(parsed).toHaveLength(1);
     expect(parsed[0].squareVariationId).toBe("VAR1");
   });
 
-  it("hydrates cart from localStorage on mount", () => {
+  it("hydrates cart from sessionStorage on mount", () => {
     const savedItems = [
       {
         squareCatalogItemId: "ITEM1",
@@ -264,7 +264,7 @@ describe("CartProvider — localStorage persistence", () => {
         quantity: 3,
       },
     ];
-    localStorage.setItem("cc_cart", JSON.stringify(savedItems));
+    sessionStorage.setItem("cc_cart", JSON.stringify(savedItems));
 
     const { result } = renderHook(() => useCart(), {
       wrapper: createWrapper(),
@@ -277,8 +277,8 @@ describe("CartProvider — localStorage persistence", () => {
     expect(result.current.items[0].quantity).toBe(3);
   });
 
-  it("handles corrupted localStorage gracefully", () => {
-    localStorage.setItem("cc_cart", "not-valid-json{{{");
+  it("handles corrupted sessionStorage gracefully", () => {
+    sessionStorage.setItem("cc_cart", "not-valid-json{{{");
 
     expect(() => {
       renderHook(() => useCart(), {

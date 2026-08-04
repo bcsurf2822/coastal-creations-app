@@ -4,11 +4,11 @@ import type { ReactElement } from "react";
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
+import toast from "react-hot-toast";
 import { useProduct } from "@/hooks/queries/use-products";
-import { useCart } from "@/components/store/CartProvider";
+import { useCart, useVariationCartStatus } from "@/components/store/CartProvider";
 import { Badge, Button } from "@/components/ui";
 import { formatCents } from "@/lib/utils/moneyHelpers";
-import { buildAvailabilityLabel } from "@/lib/utils/catalogHelpers";
 import type { StoreProductAvailability } from "@/lib/types/storeTypes";
 
 interface ProductDetailProps {
@@ -39,6 +39,21 @@ export default function ProductDetail({
   // am I even buying" confusion the grid change was meant to remove.
   const requestedVariationId = useSearchParams().get("variation");
 
+  // Priority: the flavor the card was clicked from (?variation=), then the
+  // stock-aware default (never a sold-out variation just because it happens
+  // to be ordinal 0 — product.variations is ordinal-sorted, so variations[0]
+  // alone would silently land on a sold-out flavor whenever it's first,
+  // showing "Sold Out" on load even though other flavors are in stock).
+  // Computed ahead of the loading/error early returns (rather than after)
+  // because useVariationCartStatus below is a hook and must run every render.
+  const requestedVariation =
+    product && requestedVariationId
+      ? product.variations.find((v) => v.id === requestedVariationId)
+      : undefined;
+  const activeVariation =
+    requestedVariation ?? product?.defaultVariation ?? product?.variations[0] ?? null;
+  const cartStatus = useVariationCartStatus(activeVariation);
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-16 flex justify-center">
@@ -59,16 +74,6 @@ export default function ProductDetail({
     );
   }
 
-  // Priority: the flavor the card was clicked from (?variation=), then the
-  // stock-aware default (never a sold-out variation just because it happens
-  // to be ordinal 0 — product.variations is ordinal-sorted, so variations[0]
-  // alone would silently land on a sold-out flavor whenever it's first,
-  // showing "Sold Out" on load even though other flavors are in stock).
-  const requestedVariation = requestedVariationId
-    ? product.variations.find((v) => v.id === requestedVariationId)
-    : undefined;
-  const activeVariation =
-    requestedVariation ?? product.defaultVariation ?? product.variations[0] ?? null;
   const displayPrice = activeVariation
     ? formatCents(activeVariation.priceCents)
     : null;
@@ -161,13 +166,12 @@ export default function ProductDetail({
             )}
             {activeVariation && (
               <Badge
-                variant={availabilityVariant[activeVariation.availability]}
+                variant={
+                  availabilityVariant[cartStatus.availability ?? activeVariation.availability]
+                }
                 showDot={false}
               >
-                {buildAvailabilityLabel(
-                  activeVariation.availability,
-                  activeVariation.inStockQuantity ?? 0
-                ) ?? undefined}
+                {cartStatus.label ?? undefined}
               </Badge>
             )}
           </div>
@@ -181,22 +185,31 @@ export default function ProductDetail({
           {/* Add to cart */}
           <div className="mt-2">
             {(() => {
+              // Truly sold out (Square stock is 0) vs. cartExhausted (stock
+              // exists but the shopper's cart already holds all of it) get
+              // distinct labels — "Sold Out" would wrongly suggest no one can
+              // buy it, when really this shopper's cart already claimed it all.
               const isSoldOut = activeVariation?.availability === "sold_out";
-              const canAddToCart = !!activeVariation && !isSoldOut;
+              const cartExhausted = !isSoldOut && cartStatus.atCap;
+              const canAddToCart = !!activeVariation && !isSoldOut && !cartExhausted;
               return (
                 <Button
                   variant="primary"
                   disabled={!canAddToCart}
                   className="w-full"
                   onClick={() => {
-                    if (!canAddToCart || !product) return;
+                    if (!activeVariation || !product) return;
+                    if (!canAddToCart) {
+                      toast.error("Sorry, no more items available.");
+                      return;
+                    }
                     // Don't auto-open the cart drawer on add — the cart icon
                     // badge animates as feedback; opening is reserved for the
                     // cart icon itself (consistent with the shop grid).
-                    addItem(product, activeVariation!);
+                    addItem(product, activeVariation);
                   }}
                 >
-                  {isSoldOut ? "Sold Out" : "Add to Cart"}
+                  {isSoldOut ? "Sold Out" : cartExhausted ? "Max in Cart" : "Add to Cart"}
                 </Button>
               );
             })()}

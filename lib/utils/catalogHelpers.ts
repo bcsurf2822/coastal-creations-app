@@ -14,7 +14,7 @@ import type {
 import { createProductSlug } from "@/lib/utils/slugify";
 import { formatCents } from "@/lib/utils/moneyHelpers";
 
-const LOW_STOCK_THRESHOLD = 5;
+export const LOW_STOCK_THRESHOLD = 5;
 
 /**
  * Square category-name prefix that controls Shop visibility. The merchant adds an
@@ -141,6 +141,33 @@ export function buildAvailabilityLabel(
   if (availability === "sold_out") return "Sold out";
   if (availability === "low_stock") return `Only ${remaining} remaining`;
   return null;
+}
+
+/**
+ * Re-derives a variation's availability/label after subtracting whatever the
+ * shopper already holds in their own cart. Square's stock count (and the
+ * availability/label derived from it) is fetched once per page load and never
+ * knows about the cart — without this, "Only 2 remaining" stays put even after
+ * both units are sitting in the cart, and Add to Cart keeps accepting clicks
+ * past what's actually available. This is a client-side reservation view only;
+ * it never writes to Square inventory (that happens at checkout).
+ */
+export function clientAvailabilityAfterCart(
+  variation: Pick<StoreProductVariation, "availability" | "inStockQuantity">,
+  cartQuantity: number
+): { availability: StoreProductAvailability; label: string | null } {
+  if (variation.availability === "sold_out" || variation.inStockQuantity === undefined) {
+    return {
+      availability: variation.availability,
+      label: buildAvailabilityLabel(variation.availability, variation.inStockQuantity ?? 0),
+    };
+  }
+
+  const remaining = Math.max(0, variation.inStockQuantity - cartQuantity);
+  const availability: StoreProductAvailability =
+    remaining <= 0 ? "sold_out" : remaining <= LOW_STOCK_THRESHOLD ? "low_stock" : "available";
+
+  return { availability, label: buildAvailabilityLabel(availability, remaining) };
 }
 
 /**

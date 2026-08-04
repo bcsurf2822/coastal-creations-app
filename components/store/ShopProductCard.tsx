@@ -10,6 +10,7 @@ import type { ReactElement } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { AddToCartButton } from "./AddToCartButton";
+import { useVariationCartStatus } from "./CartProvider";
 import { formatPriceRange } from "@/lib/utils/catalogHelpers";
 import type { StoreProductSummary } from "@/lib/types/storeTypes";
 
@@ -22,8 +23,13 @@ export default function ShopProductCard({
   product,
   priority = false,
 }: ShopProductCardProps): ReactElement {
-  const tag = product.availabilityLabel;
-  const soldOut = product.availability === "sold_out";
+  // Re-derived against the cart so the badge counts down as units get added,
+  // instead of showing the stock count from whenever the page first loaded.
+  const cartStatus = useVariationCartStatus(product.defaultVariation);
+  const tag = product.defaultVariation ? cartStatus.label : product.availabilityLabel;
+  const soldOut = product.defaultVariation
+    ? cartStatus.availability === "sold_out"
+    : product.availability === "sold_out";
   // The slug always resolves to the parent Square item; a variation id pins
   // the detail page to the specific flavor this card represents (relevant
   // for multi-variation items, harmless no-op for single-variation ones).
