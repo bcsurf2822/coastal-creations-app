@@ -72,13 +72,22 @@ export default function ProductDetail({
   const displayPrice = activeVariation
     ? formatCents(activeVariation.priceCents)
     : null;
+  // Only prefer the variation's own name on a genuinely multi-variation item
+  // (e.g. "Mini Beach Art Kit") — Square defaults a single-variation item's
+  // one-and-only variation to a generic internal name like "Regular", which
+  // would replace a real product name ("Tiny Easel Painter Box") with
+  // meaningless placeholder text if shown unconditionally.
+  const displayName =
+    product.hasMultipleVariations && activeVariation
+      ? activeVariation.name
+      : product.name;
 
   // Default the hero to the active variation's OWN photo (e.g. the actual
   // lizard art kit, not item.images[0] — which may be a different flavor or
   // an unrelated promotional shot on multi-variation items). Once the
   // shopper picks a thumbnail, that choice takes over.
   const variationImage = activeVariation?.imageUrl
-    ? { id: `variation-${activeVariation.id}`, url: activeVariation.imageUrl, altText: activeVariation.name }
+    ? { id: `variation-${activeVariation.id}`, url: activeVariation.imageUrl, altText: displayName }
     : undefined;
   const activeImage =
     activeImageIndex === 0
@@ -94,7 +103,7 @@ export default function ProductDetail({
             {activeImage ? (
               <Image
                 src={activeImage.url}
-                alt={activeImage.altText ?? product.name}
+                alt={activeImage.altText ?? displayName}
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover"
@@ -141,7 +150,7 @@ export default function ProductDetail({
           )}
 
           <h1 className="text-3xl font-bold text-[var(--color-primary)]">
-            {product.name}
+            {displayName}
           </h1>
 
           <div className="flex items-center gap-3">
