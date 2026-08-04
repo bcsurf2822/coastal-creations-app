@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-// Seed a cart in localStorage (key cc_cart) before the app hydrates, then reach
+// Seed a cart in sessionStorage (key cc_cart) before the app hydrates, then reach
 // checkout via the cart's "Proceed to Checkout" link (client nav keeps cart
 // state — a hard nav to /checkout can bounce to /cart before hydration).
 const CART_ITEM = {
@@ -19,7 +19,7 @@ const CART_ITEM = {
 test.describe("store checkout — gift shipping", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript((item) => {
-      window.localStorage.setItem("cc_cart", JSON.stringify([item]));
+      window.sessionStorage.setItem("cc_cart", JSON.stringify([item]));
     }, CART_ITEM);
   });
 

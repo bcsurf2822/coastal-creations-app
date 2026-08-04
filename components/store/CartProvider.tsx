@@ -52,22 +52,25 @@ export function CartProvider({ children }: CartProviderProps): ReactElement {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  // Hydrate from localStorage on mount (client-only)
+  // Hydrate from sessionStorage on mount (client-only). sessionStorage (not
+  // localStorage) is deliberate: it survives reloads/navigation within the
+  // same tab but is wiped once the tab/browser closes, so an abandoned cart
+  // doesn't linger indefinitely across visits.
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-      const raw = localStorage.getItem(CART_STORAGE_KEY);
+      const raw = sessionStorage.getItem(CART_STORAGE_KEY);
       if (raw) setItems(JSON.parse(raw) as CartItem[]);
     } catch {
       // corrupted storage — start fresh
     }
   }, []);
 
-  // Persist to localStorage whenever items change
+  // Persist to sessionStorage whenever items change
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+      sessionStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
     } catch {
       // storage full or private mode — fail silently
     }
