@@ -32,6 +32,12 @@ export interface StoreProductVariation {
   availability: StoreProductAvailability;
   inStockQuantity?: number; // present only when Square tracks inventory
   ordinal: number; // display order within the item (from Square)
+  /** The variation's OWN Square image, when it has one distinct from the
+   * item's shared gallery (e.g. each Mini Travel Art Kit flavor has its own
+   * photo) — lets the detail page's hero default to the actual flavor shown,
+   * not just item.imageUrls[0], which may be unrelated (a different flavor,
+   * or a promotional shot). */
+  imageUrl?: string;
 }
 
 /**
