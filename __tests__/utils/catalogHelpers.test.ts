@@ -5,6 +5,7 @@ import {
   deriveAvailability,
   toStoreProductSummary,
   toStoreProductSummaries,
+  toStoreProductVariation,
 } from "@/lib/utils/catalogHelpers";
 import type { RawCatalogItem, RawVariation } from "@/lib/square/catalog";
 import type { IStoreProductSettings } from "@/lib/models/StoreProductSettings";
@@ -135,6 +136,17 @@ describe("deriveAvailability", () => {
   it("returns available when quantity is above threshold", () => {
     const v = { ...baseVariation, trackInventory: true };
     expect(deriveAvailability(v, 10)).toBe("available");
+  });
+});
+
+describe("toStoreProductVariation", () => {
+  it("carries the variation's own first image", () => {
+    const v = { ...baseVariation, imageUrls: ["https://example.com/lizard.jpg", "https://example.com/lizard-2.jpg"] };
+    expect(toStoreProductVariation(v, undefined).imageUrl).toBe("https://example.com/lizard.jpg");
+  });
+
+  it("leaves imageUrl undefined when the variation has no image", () => {
+    expect(toStoreProductVariation(baseVariation, undefined).imageUrl).toBeUndefined();
   });
 });
 

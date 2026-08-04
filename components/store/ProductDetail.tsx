@@ -9,10 +9,7 @@ import { useCart } from "@/components/store/CartProvider";
 import { Badge, Button } from "@/components/ui";
 import { formatCents } from "@/lib/utils/moneyHelpers";
 import { buildAvailabilityLabel } from "@/lib/utils/catalogHelpers";
-import type {
-  StoreProductAvailability,
-  StoreProductVariation,
-} from "@/lib/types/storeTypes";
+import type { StoreProductAvailability } from "@/lib/types/storeTypes";
 
 interface ProductDetailProps {
   squareItemId: string;
@@ -32,12 +29,14 @@ export default function ProductDetail({
 }: ProductDetailProps): ReactElement {
   const { data: product, isLoading, isError } = useProduct(squareItemId);
   const { addItem } = useCart();
-  const [selectedVariation, setSelectedVariation] =
-    useState<StoreProductVariation | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   // A grid/list card links here with ?variation=<id> to pin the specific
   // flavor it represents, e.g. clicking "Mini Beach Art Kit" shouldn't land
-  // you on whichever variation this page would otherwise default to.
+  // you on whichever variation this page would otherwise default to. There
+  // is deliberately no way to switch to a different variation from this page
+  // — each flavor is presented as its own independent product (matching the
+  // shop grid), so offering a picker here would just reopen the "which one
+  // am I even buying" confusion the grid change was meant to remove.
   const requestedVariationId = useSearchParams().get("variation");
 
   if (isLoading) {
@@ -60,26 +59,31 @@ export default function ProductDetail({
     );
   }
 
-  // Priority: an explicit user pick, then the flavor the card was clicked
-  // from (?variation=), then the stock-aware default (never a sold-out
-  // variation just because it happens to be ordinal 0 — product.variations
-  // is ordinal-sorted, so variations[0] alone would silently land on a
-  // sold-out flavor whenever it's first, showing "Sold Out" on load even
-  // though other flavors are in stock).
+  // Priority: the flavor the card was clicked from (?variation=), then the
+  // stock-aware default (never a sold-out variation just because it happens
+  // to be ordinal 0 — product.variations is ordinal-sorted, so variations[0]
+  // alone would silently land on a sold-out flavor whenever it's first,
+  // showing "Sold Out" on load even though other flavors are in stock).
   const requestedVariation = requestedVariationId
     ? product.variations.find((v) => v.id === requestedVariationId)
     : undefined;
   const activeVariation =
-    selectedVariation ??
-    requestedVariation ??
-    product.defaultVariation ??
-    product.variations[0] ??
-    null;
+    requestedVariation ?? product.defaultVariation ?? product.variations[0] ?? null;
   const displayPrice = activeVariation
     ? formatCents(activeVariation.priceCents)
     : null;
 
-  const activeImage = product.images[activeImageIndex] ?? product.primaryImage;
+  // Default the hero to the active variation's OWN photo (e.g. the actual
+  // lizard art kit, not item.images[0] — which may be a different flavor or
+  // an unrelated promotional shot on multi-variation items). Once the
+  // shopper picks a thumbnail, that choice takes over.
+  const variationImage = activeVariation?.imageUrl
+    ? { id: `variation-${activeVariation.id}`, url: activeVariation.imageUrl, altText: activeVariation.name }
+    : undefined;
+  const activeImage =
+    activeImageIndex === 0
+      ? (variationImage ?? product.images[0] ?? product.primaryImage)
+      : (product.images[activeImageIndex] ?? product.primaryImage);
 
   return (
     <section className="container mx-auto px-4 py-12 max-w-5xl">
@@ -163,38 +167,6 @@ export default function ProductDetail({
             <p className="text-[var(--color-text-secondary)] leading-relaxed">
               {product.description}
             </p>
-          )}
-
-          {/* Variation selector */}
-          {product.hasMultipleVariations && product.variations.length > 0 && (
-            <div className="flex flex-col gap-2">
-              <p className="font-medium text-[var(--color-text-primary)]">
-                Choose an option:
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {product.variations.map((v) => (
-                  <button
-                    key={v.id}
-                    onClick={() => setSelectedVariation(v)}
-                    disabled={v.availability === "sold_out"}
-                    className={`px-3 py-1.5 rounded-[var(--radius-md)] border text-sm font-medium transition-colors ${
-                      activeVariation?.id === v.id
-                        ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
-                        : v.availability === "sold_out"
-                        ? "border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed"
-                        : "border-[var(--color-border-lighter)] hover:border-[var(--color-primary)] text-[var(--color-text-primary)]"
-                    }`}
-                  >
-                    {v.name}
-                    {v.priceCents > 0 && activeVariation?.id !== v.id && (
-                      <span className="ml-1 text-[var(--color-text-subtle)]">
-                        · {formatCents(v.priceCents)}
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
           )}
 
           {/* Add to cart */}

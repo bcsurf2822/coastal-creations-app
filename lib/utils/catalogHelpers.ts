@@ -74,6 +74,7 @@ export function toStoreProductVariation(
     availability: deriveAvailability(raw, inStockQty),
     inStockQuantity: raw.trackInventory ? (inStockQty ?? 0) : undefined,
     ordinal: raw.ordinal,
+    imageUrl: raw.imageUrls[0],
   };
 }
 
