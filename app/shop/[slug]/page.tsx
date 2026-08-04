@@ -8,23 +8,40 @@ import { retrieveCatalogItem } from "@/lib/square/catalog";
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ variation?: string }>;
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+  searchParams,
+}: Props): Promise<Metadata> {
   if (!isShopEnabled()) {
     return { title: "Shop | Coastal Creations Studio" };
   }
   const { slug } = await params;
+  const { variation: variationId } = await searchParams;
   const squareItemId = extractSquareItemIdFromSlug(slug);
 
   try {
     const item = await retrieveCatalogItem(squareItemId);
     if (item) {
+      // The grid always links here with ?variation=<id> for multi-variation
+      // items — use that flavor's own name so e.g. "Mini Beach Art Kit"
+      // doesn't show a browser tab / search-result title of the generic
+      // "Mini Travel Art Kits" item name it belongs to. Guarded to items
+      // with more than one variation: a single-SKU item's lone variation is
+      // often Square's generic internal placeholder name ("Regular"), which
+      // must never replace the item's real, customer-facing name.
+      const variationName =
+        variationId && item.variations.length > 1
+          ? item.variations.find((v) => v.id === variationId)?.name
+          : undefined;
+      const displayName = variationName ?? item.name;
       return {
-        title: `${item.name} | Shop | Coastal Creations Studio`,
+        title: `${displayName} | Shop | Coastal Creations Studio`,
         description: item.descriptionHtml
           ? item.descriptionHtml.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()
-          : `${item.name} — available in the Coastal Creations Studio shop.`,
+          : `${displayName} — available in the Coastal Creations Studio shop.`,
       };
     }
   } catch {
