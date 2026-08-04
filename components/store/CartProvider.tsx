@@ -14,6 +14,7 @@ import type {
   StoreProduct,
   StoreProductVariation,
 } from "@/lib/types/storeTypes";
+import { clientAvailabilityAfterCart } from "@/lib/utils/catalogHelpers";
 
 const CART_STORAGE_KEY = "cc_cart";
 
@@ -51,22 +52,25 @@ export function CartProvider({ children }: CartProviderProps): ReactElement {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  // Hydrate from localStorage on mount (client-only)
+  // Hydrate from sessionStorage on mount (client-only). sessionStorage (not
+  // localStorage) is deliberate: it survives reloads/navigation within the
+  // same tab but is wiped once the tab/browser closes, so an abandoned cart
+  // doesn't linger indefinitely across visits.
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-      const raw = localStorage.getItem(CART_STORAGE_KEY);
+      const raw = sessionStorage.getItem(CART_STORAGE_KEY);
       if (raw) setItems(JSON.parse(raw) as CartItem[]);
     } catch {
       // corrupted storage — start fresh
     }
   }, []);
 
-  // Persist to localStorage whenever items change
+  // Persist to sessionStorage whenever items change
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+      sessionStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
     } catch {
       // storage full or private mode — fail silently
     }
@@ -167,4 +171,36 @@ export function useCart(): CartContextValue {
   const ctx = useContext(CartContext);
   if (!ctx) throw new Error("[useCart] must be used inside CartProvider");
   return ctx;
+}
+
+interface VariationCartStatus {
+  cartQuantity: number;
+  /** True once this variation's cart quantity already equals its tracked stock. */
+  atCap: boolean;
+  availability: StoreProductVariation["availability"] | undefined;
+  /** "Only N remaining" / "Sold out", recomputed against the cart — null when fully in stock. */
+  label: string | null;
+}
+
+/**
+ * Cart-aware view of a single variation's availability. Square's stock count is a
+ * snapshot from page load; this subtracts what the shopper already has in their
+ * cart so the UI (badges, Add to Cart buttons) reflects what's actually left to add,
+ * not just what was left when the page rendered.
+ */
+export function useVariationCartStatus(
+  variation: StoreProductVariation | null | undefined
+): VariationCartStatus {
+  const { items } = useCart();
+
+  if (!variation) {
+    return { cartQuantity: 0, atCap: false, availability: undefined, label: null };
+  }
+
+  const cartQuantity =
+    items.find((i) => i.squareVariationId === variation.id)?.quantity ?? 0;
+  const { availability, label } = clientAvailabilityAfterCart(variation, cartQuantity);
+  const atCap = variation.availability !== "sold_out" && availability === "sold_out";
+
+  return { cartQuantity, atCap, availability, label };
 }
