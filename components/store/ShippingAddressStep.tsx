@@ -72,7 +72,6 @@ export default function ShippingAddressStep({
             required
             touched={!!touched.firstName}
             error={validateField("firstName", values.firstName)}
-            value={values.firstName}
           >
             <Input id="ship-firstName" autoComplete="off" {...fieldProps("firstName")} />
           </FieldWrapper>
@@ -83,7 +82,6 @@ export default function ShippingAddressStep({
             required
             touched={!!touched.lastName}
             error={validateField("lastName", values.lastName)}
-            value={values.lastName}
           >
             <Input id="ship-lastName" autoComplete="off" {...fieldProps("lastName")} />
           </FieldWrapper>
@@ -96,7 +94,6 @@ export default function ShippingAddressStep({
         required
         touched={!!touched.addressLine1}
         error={validateField("addressLine1", values.addressLine1)}
-        value={values.addressLine1}
       >
         <Input id="addressLine1" autoComplete="address-line1" {...fieldProps("addressLine1")} />
       </FieldWrapper>
@@ -118,35 +115,29 @@ export default function ShippingAddressStep({
           required
           touched={!!touched.city}
           error={validateField("city", values.city)}
-          value={values.city}
         >
           <Input id="city" autoComplete="address-level2" {...fieldProps("city")} />
         </FieldWrapper>
 
         <div>
           <Label htmlFor="state" required>State</Label>
-          <div className="relative">
-            <select
-              id="state"
-              value={values.state}
-              onChange={(e) => {
-                onChange("state", e.target.value);
-                touch("state");
-              }}
-              onBlur={() => touch("state")}
-              className="w-full h-[50px] px-4 bg-[var(--color-light)] border border-[var(--color-border)] rounded-[var(--radius-default)] text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:outline-none transition-colors text-sm appearance-none"
-            >
-              <option value="">State</option>
-              {US_STATES.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-            {values.state && (
-              <span className="absolute right-7 top-1/2 -translate-y-1/2 text-green-500 text-sm pointer-events-none">
-                ✓
-              </span>
-            )}
-          </div>
+          <select
+            id="state"
+            name="state"
+            autoComplete="off"
+            value={values.state}
+            onChange={(e) => {
+              onChange("state", e.target.value);
+              touch("state");
+            }}
+            onBlur={() => touch("state")}
+            className="w-full h-[50px] px-4 bg-[var(--color-light)] border border-[var(--color-border)] rounded-[var(--radius-default)] text-[var(--color-text-primary)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:outline-none transition-colors text-sm appearance-none"
+          >
+            <option value="">State</option>
+            {US_STATES.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
           {touched.state && !values.state && (
             <p className="text-[var(--color-error)] text-xs mt-1">Required</p>
           )}
@@ -158,7 +149,6 @@ export default function ShippingAddressStep({
           required
           touched={!!touched.zip}
           error={validateField("zip", values.zip)}
-          value={values.zip}
         >
           <Input id="zip" autoComplete="postal-code" maxLength={10} {...fieldProps("zip")} />
         </FieldWrapper>

@@ -188,6 +188,19 @@
   overflow: visible !important;
   position: relative;
   cursor: pointer;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+/* Reinforce the chip as the interactive origin of the popover on hover and
+   keyboard focus, independent of whether the popover itself is open yet. */
+.fc-event:hover {
+  box-shadow: 0 2px 8px rgba(12, 74, 110, 0.35);
+  transform: translateY(-1px);
+}
+
+.fc-event:focus-visible {
+  outline: 2px solid var(--color-primary, #0c4a6e);
+  outline-offset: 2px;
 }
 
 .fc-event-title {
@@ -250,55 +263,82 @@
 }
 
 /* ============================================
-   Tooltip -- clean, brand-aligned
+   Event Popover -- single surface for preview + sign-up
+   (replaces the old non-interactive tooltip + separate event-sheet modal)
    ============================================ */
-.event-tooltip {
+.event-popover {
   position: fixed;
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 16px 18px;
-  width: 280px;
+  width: 300px;
   max-width: 90vw;
+  max-height: 80vh;
   box-shadow: 0 8px 24px rgba(12, 74, 110, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
   font-size: 0.9em;
-  z-index: 99999 !important;
-  pointer-events: none;
+  z-index: 99999;
+  pointer-events: auto;
   white-space: normal;
   color: var(--color-text-primary, #111827);
   text-align: left;
   line-height: 1.5;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Tooltip title */
-.tooltip-title {
+.event-popover-type {
+  align-self: flex-start;
+  display: inline-block;
+  color: white;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 10px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.event-popover-title {
   font-weight: 700;
   font-size: 1.15em;
-  margin-bottom: 10px;
-  border-bottom: 2px solid #e5e7eb;
-  padding-bottom: 8px;
+  margin-bottom: 6px;
   color: var(--color-primary, #0c4a6e);
   letter-spacing: -0.01em;
 }
 
-/* Tooltip time */
-.tooltip-time {
-  margin-bottom: 6px;
+.event-popover-time {
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e5e7eb;
   color: var(--color-text-muted, #374151);
   font-weight: 600;
   font-size: 0.95em;
 }
 
-/* Tooltip type */
-.tooltip-type {
-  margin-bottom: 6px;
-  color: var(--color-text-subtle, #4b5563);
-  font-weight: 500;
-  text-transform: capitalize;
+.event-popover-body {
+  overflow-y: auto;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f3f4f6;
 }
 
-/* Tooltip price */
-.tooltip-price {
+.event-popover-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.event-popover-body::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+.event-popover-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.event-popover-price {
   margin-bottom: 8px;
   color: var(--color-primary, #0c4a6e);
   font-weight: 700;
@@ -307,18 +347,17 @@
   padding: 5px 10px;
   border-radius: 6px;
   border: 1px solid #e0f2fe;
+  display: inline-block;
 }
 
-/* Tooltip participants */
-.tooltip-participants {
+.event-popover-participants {
   margin-bottom: 6px;
   color: var(--color-text-subtle, #4b5563);
   font-weight: 500;
   font-size: 0.9em;
 }
 
-/* Tooltip recurring */
-.tooltip-recurring {
+.event-popover-recurring {
   margin-bottom: 8px;
   color: var(--color-secondary, #0369a1);
   font-weight: 600;
@@ -329,10 +368,8 @@
   border: 1px solid #e0f2fe;
 }
 
-/* Tooltip description */
-.tooltip-description {
+.event-popover-description {
   margin-top: 10px;
-  margin-bottom: 10px;
   color: var(--color-text-subtle, #4b5563);
   line-height: 1.6;
   font-size: 0.9em;
@@ -340,179 +377,128 @@
   padding: 10px 12px;
   border-radius: 8px;
   border: 1px solid #f3f4f6;
-  max-height: 100px;
-  overflow-y: auto;
   word-wrap: break-word;
-  scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 #f3f4f6;
 }
 
-.tooltip-description::-webkit-scrollbar {
-  width: 6px;
+.event-popover-actions {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding-top: 12px;
+  margin-top: 8px;
 }
 
-.tooltip-description::-webkit-scrollbar-track {
-  background: #f3f4f6;
-  border-radius: 3px;
-}
-
-.tooltip-description::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
-}
-
-.tooltip-description::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-/* Hint footer -- nudges the user to click for the full detail sheet */
-.tooltip-hint {
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid #f1f5f9;
-  color: var(--color-text-subtle, #64748b);
-  font-weight: 600;
-  font-size: 0.82em;
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-/* Sold out badge */
-.tooltip-soldout {
-  margin-top: 12px;
-}
-
-/* Signup button -- brand primary */
-.tooltip-signup {
-  margin-top: 12px;
-  text-align: center;
-}
-
-.tooltip-signup button {
+.event-popover-cta {
+  display: block;
+  width: 100%;
   background: var(--color-primary, #0c4a6e);
   color: white;
   border: none;
-  padding: 9px 20px;
+  padding: 10px 20px;
   border-radius: 8px;
   cursor: pointer;
-  font-weight: 600;
-  transition: background 0.2s ease, box-shadow 0.2s ease;
+  font-weight: 700;
   font-size: 0.9em;
-  box-shadow: 0 2px 8px rgba(12, 74, 110, 0.2);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 8px rgba(12, 74, 110, 0.2);
 }
 
-.tooltip-signup button:hover {
+.event-popover-cta:hover {
   background: var(--color-primary-dark, #073a58);
   box-shadow: 0 4px 14px rgba(12, 74, 110, 0.3);
 }
 
-.tooltip-signup button:active {
+.event-popover-cta:active {
   box-shadow: 0 2px 6px rgba(12, 74, 110, 0.2);
 }
 
-/* ============================================
-   Responsive Tooltip
-   ============================================ */
-@media (max-width: 1024px) {
-  .event-tooltip {
-    width: 260px;
-    max-width: 85vw;
+.event-popover-soldout {
+  display: block;
+  width: 100%;
+  padding: 10px 20px;
+  text-align: center;
+  background: linear-gradient(135deg, #d32f2f, #f44336);
+  color: white;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.9em;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.event-popover-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+}
+
+.event-popover-close:hover {
+  color: #475569;
+}
+
+/* Pinned popover (click/tap) reserves space for the close button. */
+.event-popover--pinned {
+  padding-right: 32px;
+}
+
+/* Compact = touch or narrow viewport: fixed bottom card instead of an
+   anchored floating popover (an anchored position is unreliable once there's
+   no precise hover point, and small screens don't have room beside a chip). */
+.event-popover--compact {
+  position: fixed !important;
+  left: 12px;
+  right: 12px;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  top: auto;
+  width: auto;
+  max-width: none;
+  max-height: min(75dvh, 560px);
+  border-radius: 16px;
+  padding: 20px 20px 16px;
+  animation: popoverSlideUp 0.25s ease;
+}
+
+.event-popover--compact.event-popover--pinned {
+  padding-right: 20px;
+}
+
+.event-popover--compact .event-popover-close {
+  top: 12px;
+  right: 14px;
+}
+
+.event-popover-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 99998;
+  animation: popoverFadeIn 0.2s ease;
+}
+
+@keyframes popoverFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes popoverSlideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@media (max-width: 1024px) and (min-width: 641px) {
+  .event-popover:not(.event-popover--compact) {
+    width: 270px;
     padding: 14px 16px;
     font-size: 0.85em;
-  }
-
-  .tooltip-title {
-    font-size: 1.1em;
-    margin-bottom: 8px;
-  }
-
-  .tooltip-description {
-    padding: 8px 10px;
-    font-size: 0.85em;
-  }
-}
-
-@media (max-width: 768px) {
-  .event-tooltip {
-    width: 240px;
-    max-width: 80vw;
-    padding: 12px 14px;
-    font-size: 0.8em;
-    border-radius: 10px;
-  }
-
-  .tooltip-title {
-    font-size: 1.05em;
-    margin-bottom: 6px;
-    padding-bottom: 6px;
-  }
-
-  .tooltip-time,
-  .tooltip-price,
-  .tooltip-recurring {
-    font-size: 0.9em;
-    margin-bottom: 5px;
-    padding: 4px 8px;
-  }
-
-  .tooltip-description {
-    padding: 6px 8px;
-    font-size: 0.8em;
-    margin-top: 8px;
-    margin-bottom: 8px;
-  }
-
-  .tooltip-signup {
-    margin-top: 10px;
-  }
-
-  .tooltip-signup button {
-    padding: 8px 16px;
-    font-size: 0.8em;
-  }
-}
-
-@media (max-width: 480px) {
-  .event-tooltip {
-    width: 220px;
-    max-width: 75vw;
-    padding: 10px 12px;
-    font-size: 0.75em;
-    border-radius: 8px;
-  }
-
-  .tooltip-title {
-    font-size: 1em;
-    margin-bottom: 5px;
-    padding-bottom: 4px;
-  }
-
-  .tooltip-time,
-  .tooltip-price,
-  .tooltip-recurring {
-    font-size: 0.85em;
-    margin-bottom: 4px;
-    padding: 3px 6px;
-  }
-
-  .tooltip-description {
-    padding: 5px 6px;
-    font-size: 0.75em;
-    margin-top: 6px;
-    margin-bottom: 6px;
-  }
-
-  .tooltip-signup {
-    margin-top: 8px;
-  }
-
-  .tooltip-signup button {
-    padding: 6px 12px;
-    font-size: 0.75em;
-    border-radius: 6px;
   }
 }
 
@@ -534,151 +520,3 @@
   }
 }
 
-/* ============================================
-   Event Detail Sheet (tap-to-view)
-   ============================================ */
-.event-sheet-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  z-index: 100000;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  animation: sheetFadeIn 0.2s ease;
-}
-
-.event-sheet {
-  background: white;
-  width: 100%;
-  max-width: 500px;
-  max-height: 85vh;
-  overflow-y: auto;
-  border-radius: 20px 20px 0 0;
-  padding: 24px 20px 32px;
-  position: relative;
-  animation: sheetSlideUp 0.3s ease;
-}
-
-@media (min-width: 769px) {
-  .event-sheet-overlay {
-    align-items: center;
-  }
-
-  .event-sheet {
-    border-radius: 16px;
-    max-width: 420px;
-    animation: sheetFadeIn 0.2s ease;
-  }
-}
-
-.event-sheet-close {
-  position: absolute;
-  top: 12px;
-  right: 16px;
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: #94a3b8;
-  cursor: pointer;
-  padding: 4px 8px;
-  line-height: 1;
-}
-
-.event-sheet-close:hover {
-  color: #475569;
-}
-
-.event-sheet-type {
-  display: inline-block;
-  color: white;
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 3px 10px;
-  border-radius: 4px;
-  margin-bottom: 8px;
-}
-
-.event-sheet-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--color-primary, #0c4a6e);
-  margin: 0 0 8px;
-  line-height: 1.3;
-  font-family: var(--font-eb-garamond);
-}
-
-.event-sheet-time {
-  color: #374151;
-  font-weight: 600;
-  font-size: 0.95rem;
-  margin: 0 0 6px;
-}
-
-.event-sheet-price {
-  color: var(--color-primary, #0c4a6e);
-  font-weight: 700;
-  font-size: 1.1rem;
-  margin: 0 0 12px;
-  background: var(--color-light, #f0f9ff);
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 6px;
-  border: 1px solid #e0f2fe;
-}
-
-.event-sheet-description {
-  color: #4b5563;
-  font-size: 0.9rem;
-  line-height: 1.6;
-  margin: 0 0 16px;
-  max-height: 120px;
-  overflow-y: auto;
-}
-
-.event-sheet-signup {
-  display: block;
-  width: 100%;
-  background: var(--color-primary, #0c4a6e);
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 700;
-  font-size: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  transition: background 0.2s ease;
-  box-shadow: 0 2px 8px rgba(12, 74, 110, 0.2);
-}
-
-.event-sheet-signup:hover {
-  background: var(--color-primary-dark, #073a58);
-}
-
-.event-sheet-soldout {
-  display: block;
-  width: 100%;
-  padding: 12px 24px;
-  text-align: center;
-  background: linear-gradient(135deg, #d32f2f, #f44336);
-  color: white;
-  border-radius: 10px;
-  font-weight: 700;
-  font-size: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-@keyframes sheetFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes sheetSlideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
