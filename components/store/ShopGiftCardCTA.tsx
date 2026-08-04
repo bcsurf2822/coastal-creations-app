@@ -37,12 +37,11 @@ export default function ShopGiftCardCTA(): ReactElement {
           {/* Copy + CTA */}
           <div className="flex flex-col items-center gap-4 md:items-start">
             <h2 className="text-2xl font-bold text-[var(--color-primary)] md:text-3xl">
-              Tough to buy for? Let them choose.
+              Coastal Creations Gift Cards
             </h2>
             <p className="max-w-xl text-base leading-relaxed text-[var(--color-text-muted)] md:text-lg">
-              A Coastal Creations gift card is always the right fit — use it here
-              in the shop, or for classes, camps, workshops, and walk-in studio
-              time.
+              Use it here in the shop, or for classes, camps, workshops, and
+              walk-in studio time.
             </p>
             <Link
               href="/gift-cards"
