@@ -4,6 +4,7 @@ import {
   isInOnlineSalesCategory,
   deriveAvailability,
   toStoreProductSummary,
+  toStoreProductSummaries,
 } from "@/lib/utils/catalogHelpers";
 import type { RawCatalogItem, RawVariation } from "@/lib/square/catalog";
 import type { IStoreProductSettings } from "@/lib/models/StoreProductSettings";
@@ -16,6 +17,7 @@ const baseVariation: RawVariation = {
   priceCents: 2000,
   variablePricing: false,
   trackInventory: false,
+  imageUrls: [],
 };
 
 const baseItem: RawCatalogItem = {
@@ -254,5 +256,93 @@ describe("toStoreProductSummary", () => {
     const summary = toStoreProductSummary(item, baseSettings, stock);
     expect(summary.defaultVariation?.id).toBe("V2");
     expect(summary.availabilityLabel).toBe("Only 1 remaining");
+  });
+});
+
+describe("toStoreProductSummaries", () => {
+  it("returns a single summary, unchanged, for a single-variation item", () => {
+    const summaries = toStoreProductSummaries(baseItem, baseSettings, new Map());
+    expect(summaries).toHaveLength(1);
+    expect(summaries[0]).toEqual(toStoreProductSummary(baseItem, baseSettings, new Map()));
+  });
+
+  it("returns one card per variation for a multi-variation item, each independently sellable", () => {
+    // Mirrors the real "Mini Travel Art Kits" prod bug: 9 flavors, only a few
+    // in stock. The old single-card-with-a-hidden-default behavior meant a
+    // shopper could only ever see/buy whichever flavor happened to be picked
+    // as the default — the others were invisible on the grid.
+    const item: RawCatalogItem = {
+      ...baseItem,
+      name: "Mini Travel Art Kits",
+      variations: [
+        { ...baseVariation, id: "UNICORN", name: "Mini Unicorn Art Kit", ordinal: 0, trackInventory: true }, // sold out
+        { ...baseVariation, id: "LIZARD", name: "Mini Lizard Art Kit", ordinal: 4, trackInventory: true, priceCents: 2500 },
+        { ...baseVariation, id: "BEACH", name: "Mini Beach Art Kit", ordinal: 5, trackInventory: true, priceCents: 2500 },
+        { ...baseVariation, id: "GIRAFFE", name: "Mini Giraffe Art Kit", ordinal: 7, trackInventory: true, priceCents: 2500 },
+      ],
+    };
+    const stock = new Map([
+      ["LIZARD", 1],
+      ["BEACH", 1],
+      ["GIRAFFE", 1],
+    ]); // UNICORN absent -> sold_out
+
+    const summaries = toStoreProductSummaries(item, baseSettings, stock);
+
+    expect(summaries).toHaveLength(4);
+    // Sorted by ordinal, not input order.
+    expect(summaries.map((s) => s.name)).toEqual([
+      "Mini Unicorn Art Kit",
+      "Mini Lizard Art Kit",
+      "Mini Beach Art Kit",
+      "Mini Giraffe Art Kit",
+    ]);
+    // Every flavor is its own independently-addable single-variation card —
+    // not a rolled-up multi-variation item hiding the others.
+    for (const s of summaries) {
+      expect(s.hasMultipleVariations).toBe(false);
+      expect(s.squareItemId).toBe(item.id);
+      expect(s.defaultVariation?.name).toBe(s.name);
+    }
+    const lizard = summaries.find((s) => s.name === "Mini Lizard Art Kit");
+    const unicorn = summaries.find((s) => s.name === "Mini Unicorn Art Kit");
+    // 1 unit is within LOW_STOCK_THRESHOLD (5) -> "low_stock", not "sold_out".
+    expect(lizard?.availability).toBe("low_stock");
+    expect(lizard?.availabilityLabel).toBe("Only 1 remaining");
+    expect(lizard?.priceRange).toEqual({ minCents: 2500, maxCents: 2500 });
+    expect(unicorn?.availability).toBe("sold_out");
+  });
+
+  it("produces a unique, correctly-decodable slug per flavor", () => {
+    const item: RawCatalogItem = {
+      ...baseItem,
+      id: "ITEM123",
+      variations: [
+        { ...baseVariation, id: "V1", name: "Mini Unicorn Art Kit", ordinal: 0 },
+        { ...baseVariation, id: "V2", name: "Mini Dino Art Kit", ordinal: 1 },
+      ],
+    };
+    const summaries = toStoreProductSummaries(item, undefined, new Map());
+    const slugs = summaries.map((s) => s.slug);
+    expect(new Set(slugs).size).toBe(2);
+    expect(slugs).toEqual(["mini-unicorn-art-kit-ITEM123", "mini-dino-art-kit-ITEM123"]);
+  });
+
+  it("prefers the variation's own image, falling back to the item's image", () => {
+    const item: RawCatalogItem = {
+      ...baseItem,
+      imageUrls: ["https://example.com/item-fallback.jpg"],
+      variations: [
+        { ...baseVariation, id: "V1", name: "Has Own Image", imageUrls: ["https://example.com/v1.jpg"] },
+        { ...baseVariation, id: "V2", name: "No Own Image", imageUrls: [] },
+      ],
+    };
+    const summaries = toStoreProductSummaries(item, undefined, new Map());
+    expect(summaries.find((s) => s.name === "Has Own Image")?.primaryImage?.url).toBe(
+      "https://example.com/v1.jpg"
+    );
+    expect(summaries.find((s) => s.name === "No Own Image")?.primaryImage?.url).toBe(
+      "https://example.com/item-fallback.jpg"
+    );
   });
 });

@@ -24,7 +24,12 @@ export default function ShopProductCard({
 }: ShopProductCardProps): ReactElement {
   const tag = product.availabilityLabel;
   const soldOut = product.availability === "sold_out";
-  const href = `/shop/${product.slug}`;
+  // The slug always resolves to the parent Square item; a variation id pins
+  // the detail page to the specific flavor this card represents (relevant
+  // for multi-variation items, harmless no-op for single-variation ones).
+  const href = product.defaultVariation
+    ? `/shop/${product.slug}?variation=${product.defaultVariation.id}`
+    : `/shop/${product.slug}`;
 
   return (
     <article className="group flex h-full flex-col rounded-2xl border border-[var(--color-border-light)] bg-white p-3 shadow-[0_2px_12px_rgba(12,74,110,0.06)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_28px_rgba(12,74,110,0.14)]">
@@ -70,14 +75,6 @@ export default function ShopProductCard({
             {product.name}
           </h3>
         </Link>
-        {/* Multi-variation items (e.g. "Mini Travel Art Kits") quick-add ONE
-            specific flavor (defaultVariation) — show which one, so the customer
-            knows what they're actually getting without opening the product page. */}
-        {product.hasMultipleVariations && product.defaultVariation && (
-          <p className="mt-0.5 text-xs font-medium text-[var(--color-text-subtle)]">
-            {product.defaultVariation.name}
-          </p>
-        )}
         {product.description && (
           // Cap long descriptions at ~4 lines and let the overflow scroll inside
           // the card, so the whole blurb is readable without breaking the

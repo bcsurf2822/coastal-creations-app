@@ -204,6 +204,67 @@ export function toStoreProductSummary(
 }
 
 /**
+ * Builds one StoreProductSummary PER VARIATION for a multi-variation item (e.g.
+ * "Mini Travel Art Kits" -> a separate grid card each for Unicorn, Dino, Lizard,
+ * ...), instead of one card that silently quick-adds a single flavor while the
+ * others go unseen. Single-variation items are returned unchanged, as a 1-item
+ * array, via toStoreProductSummary.
+ *
+ * Each flavor card is a self-contained single-variation summary: its own price,
+ * its own availability/label (not the item-level rollup), and its own image
+ * when Square has one for that variation (falling back to the item's image).
+ * The slug still encodes the parent item id (createProductSlug's id segment is
+ * always last, regardless of the variation-name prefix), so /shop/[slug]
+ * continues to resolve correctly — see extractSquareItemIdFromSlug.
+ */
+export function toStoreProductSummaries(
+  item: RawCatalogItem,
+  settings: IStoreProductSettings | undefined,
+  stock: Map<string, number>
+): StoreProductSummary[] {
+  if (item.variations.length <= 1) {
+    return [toStoreProductSummary(item, settings, stock)];
+  }
+
+  const itemPrimaryImage: StoreProductImage | undefined =
+    item.imageUrls.length > 0
+      ? { id: `img-${item.id}-0`, url: item.imageUrls[0], altText: item.name }
+      : undefined;
+  const description = item.descriptionHtml
+    ? stripHtml(item.descriptionHtml)
+    : undefined;
+  const displayOrder = (settings?.displayOrder as number | undefined) ?? 0;
+
+  return [...item.variations]
+    .sort((a, b) => a.ordinal - b.ordinal)
+    .map((raw) => {
+      const variation = toStoreProductVariation(raw, stock.get(raw.id));
+      const primaryImage: StoreProductImage | undefined =
+        raw.imageUrls.length > 0
+          ? { id: `img-${raw.id}-0`, url: raw.imageUrls[0], altText: raw.name }
+          : itemPrimaryImage;
+
+      return {
+        squareItemId: item.id,
+        name: raw.name,
+        slug: createProductSlug(raw.name, item.id),
+        primaryImage,
+        categoryName: item.categoryNames[0],
+        description,
+        priceRange: { minCents: variation.priceCents, maxCents: variation.priceCents },
+        hasMultipleVariations: false,
+        availability: variation.availability,
+        availabilityLabel: buildAvailabilityLabel(
+          variation.availability,
+          variation.inStockQuantity ?? 0
+        ),
+        displayOrder,
+        defaultVariation: variation,
+      };
+    });
+}
+
+/**
  * Builds the full StoreProduct (detail page shape) from a raw item + settings + stock map.
  */
 export function toStoreProduct(

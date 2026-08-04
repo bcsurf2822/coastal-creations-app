@@ -23,6 +23,7 @@ export interface RawVariation {
   priceCents: number | null; // null = VARIABLE_PRICING
   variablePricing: boolean;
   trackInventory: boolean;
+  imageUrls: string[]; // the variation's OWN image(s), distinct from the item's
 }
 
 export interface RawCatalogItem {
@@ -141,10 +142,15 @@ function mapRawItem(
           priceMoney?: { amount?: bigint | null } | null;
         }> | null;
         trackInventory?: boolean | null;
+        imageIds?: (string | null)[] | null;
       } | null;
     };
     const vd = vObj.itemVariationData;
     const variablePricing = vd?.pricingType === "VARIABLE_PRICING";
+    const variationImageUrls = (vd?.imageIds ?? [])
+      .filter(Boolean)
+      .map((id) => imageById.get(id as string))
+      .filter(Boolean) as string[];
     return {
       id: vObj.id ?? "",
       name: vd?.name ?? "",
@@ -153,6 +159,7 @@ function mapRawItem(
       priceCents: variablePricing ? null : variationPriceCents(vd),
       variablePricing,
       trackInventory: vd?.trackInventory ?? false,
+      imageUrls: variationImageUrls,
     };
   });
 
