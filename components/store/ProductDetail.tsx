@@ -2,6 +2,7 @@
 
 import type { ReactElement } from "react";
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { useProduct } from "@/hooks/queries/use-products";
 import { useCart } from "@/components/store/CartProvider";
@@ -34,6 +35,10 @@ export default function ProductDetail({
   const [selectedVariation, setSelectedVariation] =
     useState<StoreProductVariation | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  // A grid/list card links here with ?variation=<id> to pin the specific
+  // flavor it represents, e.g. clicking "Mini Beach Art Kit" shouldn't land
+  // you on whichever variation this page would otherwise default to.
+  const requestedVariationId = useSearchParams().get("variation");
 
   if (isLoading) {
     return (
@@ -55,7 +60,21 @@ export default function ProductDetail({
     );
   }
 
-  const activeVariation = selectedVariation ?? product.variations[0] ?? null;
+  // Priority: an explicit user pick, then the flavor the card was clicked
+  // from (?variation=), then the stock-aware default (never a sold-out
+  // variation just because it happens to be ordinal 0 — product.variations
+  // is ordinal-sorted, so variations[0] alone would silently land on a
+  // sold-out flavor whenever it's first, showing "Sold Out" on load even
+  // though other flavors are in stock).
+  const requestedVariation = requestedVariationId
+    ? product.variations.find((v) => v.id === requestedVariationId)
+    : undefined;
+  const activeVariation =
+    selectedVariation ??
+    requestedVariation ??
+    product.defaultVariation ??
+    product.variations[0] ??
+    null;
   const displayPrice = activeVariation
     ? formatCents(activeVariation.priceCents)
     : null;

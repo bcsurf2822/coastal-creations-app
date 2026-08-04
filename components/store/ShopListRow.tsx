@@ -21,7 +21,12 @@ export default function ShopListRow({
   priority = false,
 }: ShopListRowProps): ReactElement {
   const tag = product.availabilityLabel;
-  const href = `/shop/${product.slug}`;
+  // The slug always resolves to the parent Square item; a variation id pins
+  // the detail page to the specific flavor this card represents (relevant
+  // for multi-variation items, harmless no-op for single-variation ones).
+  const href = product.defaultVariation
+    ? `/shop/${product.slug}?variation=${product.defaultVariation.id}`
+    : `/shop/${product.slug}`;
 
   return (
     <div className="group flex flex-col items-center gap-4 rounded-xl px-3 py-5 transition-colors duration-150 hover:bg-gray-50 sm:flex-row sm:items-center sm:gap-5 sm:text-left">
@@ -57,13 +62,6 @@ export default function ShopListRow({
               {product.name}
             </h3>
           </Link>
-          {/* Multi-variation items quick-add ONE specific flavor (defaultVariation) —
-              show which one, matching ShopProductCard's grid-view treatment. */}
-          {product.hasMultipleVariations && product.defaultVariation && (
-            <span className="text-xs font-medium text-[var(--color-text-subtle)]">
-              {product.defaultVariation.name}
-            </span>
-          )}
           {tag && (
             <span className="rounded-full bg-[var(--color-light)] px-2 py-0.5 text-xs font-medium text-[var(--color-primary)]">
               {tag}
