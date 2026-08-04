@@ -4,7 +4,8 @@ import { useState, useCallback } from "react";
 import type { ReactElement, CSSProperties } from "react";
 import { FaCheck } from "react-icons/fa";
 import { FaShoppingCart } from "react-icons/fa";
-import { useCart } from "./CartProvider";
+import toast from "react-hot-toast";
+import { useCart, useVariationCartStatus } from "./CartProvider";
 import type { StoreProductSummary } from "@/lib/types/storeTypes";
 
 interface AddToCartButtonProps {
@@ -28,22 +29,32 @@ export function AddToCartButton({
   const [added, setAdded] = useState(false);
 
   const variation = product.defaultVariation;
-  const soldOut = product.availability === "sold_out" || !variation;
+  // Truly sold out (Square stock is 0) vs. cartExhausted (stock exists but this
+  // shopper's cart already holds every unit of it) get distinct treatment below —
+  // "Sold Out" would wrongly suggest no one can buy it right now.
+  const isSoldOut = product.availability === "sold_out" || !variation;
+  const cartStatus = useVariationCartStatus(variation);
+  const cartExhausted = !isSoldOut && cartStatus.atCap;
+  const blocked = isSoldOut || cartExhausted;
 
   // Adding an item does NOT open the cart drawer — that was disruptive while
   // browsing. The cart icon badge animates as feedback, and the button itself
   // flips to "Added!"; opening the drawer is reserved for clicking the cart.
   const handleClick = useCallback(() => {
-    if (added || !variation || soldOut) return;
+    if (added) return;
+    if (!variation || blocked) {
+      if (cartExhausted) toast.error("Sorry, no more items available.");
+      return;
+    }
     addItem(product, variation);
     setAdded(true);
     setTimeout(() => setAdded(false), 1800);
-  }, [added, variation, soldOut, product, addItem]);
+  }, [added, variation, blocked, cartExhausted, product, addItem]);
 
   return (
     <button
       onClick={handleClick}
-      disabled={soldOut}
+      disabled={blocked}
       className={`relative overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
       style={style}
     >
@@ -54,8 +65,10 @@ export function AddToCartButton({
             <FaCheck className={iconClassName} />
             Added!
           </>
-        ) : soldOut ? (
+        ) : isSoldOut ? (
           "Sold Out"
+        ) : cartExhausted ? (
+          "Max in Cart"
         ) : (
           <>
             {showCartIcon && <FaShoppingCart className={iconClassName} />}

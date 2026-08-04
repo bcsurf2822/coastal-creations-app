@@ -14,6 +14,7 @@ import type {
   StoreProduct,
   StoreProductVariation,
 } from "@/lib/types/storeTypes";
+import { clientAvailabilityAfterCart } from "@/lib/utils/catalogHelpers";
 
 const CART_STORAGE_KEY = "cc_cart";
 
@@ -167,4 +168,36 @@ export function useCart(): CartContextValue {
   const ctx = useContext(CartContext);
   if (!ctx) throw new Error("[useCart] must be used inside CartProvider");
   return ctx;
+}
+
+interface VariationCartStatus {
+  cartQuantity: number;
+  /** True once this variation's cart quantity already equals its tracked stock. */
+  atCap: boolean;
+  availability: StoreProductVariation["availability"] | undefined;
+  /** "Only N remaining" / "Sold out", recomputed against the cart — null when fully in stock. */
+  label: string | null;
+}
+
+/**
+ * Cart-aware view of a single variation's availability. Square's stock count is a
+ * snapshot from page load; this subtracts what the shopper already has in their
+ * cart so the UI (badges, Add to Cart buttons) reflects what's actually left to add,
+ * not just what was left when the page rendered.
+ */
+export function useVariationCartStatus(
+  variation: StoreProductVariation | null | undefined
+): VariationCartStatus {
+  const { items } = useCart();
+
+  if (!variation) {
+    return { cartQuantity: 0, atCap: false, availability: undefined, label: null };
+  }
+
+  const cartQuantity =
+    items.find((i) => i.squareVariationId === variation.id)?.quantity ?? 0;
+  const { availability, label } = clientAvailabilityAfterCart(variation, cartQuantity);
+  const atCap = variation.availability !== "sold_out" && availability === "sold_out";
+
+  return { cartQuantity, atCap, availability, label };
 }
