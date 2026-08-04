@@ -585,7 +585,7 @@ export default function NewCalendar() {
           const isSoldOut =
             eventType !== "artist" && currentSignups >= maxParticipants;
           tooltipContent += `<div class="tooltip-hint">${
-            isSoldOut ? "Sold out" : "Click for details"
+            isSoldOut ? "Sold out" : "Click the calendar event for details"
           }</div>`;
 
           tooltip.innerHTML = tooltipContent;

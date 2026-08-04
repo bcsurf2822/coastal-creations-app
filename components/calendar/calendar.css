@@ -188,6 +188,20 @@
   overflow: visible !important;
   position: relative;
   cursor: pointer;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+/* The event chip is the real click target (the hover tooltip above it is a
+   non-interactive preview) — reinforce that visually on hover/keyboard focus
+   so it's obvious what to click, since the tooltip's own text can't do it. */
+.fc-event:hover {
+  box-shadow: 0 2px 8px rgba(12, 74, 110, 0.35);
+  transform: translateY(-1px);
+}
+
+.fc-event:focus-visible {
+  outline: 2px solid var(--color-primary, #0c4a6e);
+  outline-offset: 2px;
 }
 
 .fc-event-title {
