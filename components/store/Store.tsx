@@ -124,7 +124,7 @@ export default function Store(): ReactElement {
             <div className="grid grid-cols-2 items-stretch gap-5 sm:gap-6 md:grid-cols-3 xl:grid-cols-4">
               {items.map((product, i) => (
                 <ShopProductCard
-                  key={product.squareItemId}
+                  key={product.slug}
                   product={product}
                   priority={i < 4}
                 />
@@ -136,7 +136,7 @@ export default function Store(): ReactElement {
             <div className="flex flex-col divide-y divide-gray-100">
               {items.map((product, i) => (
                 <ShopListRow
-                  key={product.squareItemId}
+                  key={product.slug}
                   product={product}
                   priority={i < 6}
                 />

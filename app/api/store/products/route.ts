@@ -5,7 +5,7 @@ import { listCatalogItems, getInventoryCounts } from "@/lib/square/catalog";
 import {
   isSellablePhysicalGood,
   isInOnlineSalesCategory,
-  toStoreProductSummary,
+  toStoreProductSummaries,
 } from "@/lib/utils/catalogHelpers";
 import type { StoreProductSummary } from "@/lib/types/storeTypes";
 import type { IStoreProductSettings } from "@/lib/models/StoreProductSettings";
@@ -35,7 +35,10 @@ export async function GET(): Promise<Response> {
     const stock = await getInventoryCounts(variationIds);
 
     const products: StoreProductSummary[] = items
-      .map((item) => toStoreProductSummary(item, byId.get(item.id), stock))
+      // Multi-variation items expand to one card per flavor (each a real,
+      // independently addable/sellable product) instead of one card that
+      // silently quick-adds a single flavor while the others go unseen.
+      .flatMap((item) => toStoreProductSummaries(item, byId.get(item.id), stock))
       // Sold-out items still display, but always sink to the end of the grid —
       // available/low-stock items sort first; displayOrder only breaks ties
       // within each group.
