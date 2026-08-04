@@ -165,6 +165,22 @@
   }
 }
 
+/* Browsers default <button> to cursor: default, not pointer (unlike <a> —
+   that's a common assumption, but it's wrong). Tailwind doesn't correct this
+   in Preflight either, so every button needs cursor-pointer added by hand or
+   it silently falls back to the arrow cursor — which is how this app ended
+   up with the inconsistency (some buttons styled it, most didn't, e.g. the
+   cart icon and several account-page buttons had no pointer at all). Set the
+   sane default here instead of chasing every instance; components in the
+   utilities layer (e.g. Button.tsx's disabled:cursor-not-allowed) still win
+   over this since utilities are declared after base in Tailwind's layer order. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
 /* Cart "item added" feedback — badge / button pop. */
 @keyframes cartBump {
   0% {

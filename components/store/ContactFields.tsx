@@ -47,7 +47,6 @@ export default function ContactFields({
           required
           touched={!!touched.email}
           error={contactError("email", values.email)}
-          value={values.email}
         >
           <Input
             id="contact-email"
@@ -65,7 +64,6 @@ export default function ContactFields({
           required
           touched={!!touched.phone}
           error={contactError("phone", values.phone)}
-          value={values.phone}
         >
           <Input
             id="contact-phone"
@@ -87,7 +85,6 @@ export default function ContactFields({
           required
           touched={!!touched.firstName}
           error={contactError("firstName", values.firstName)}
-          value={values.firstName}
         >
           <Input
             id="contact-firstName"
@@ -104,7 +101,6 @@ export default function ContactFields({
           required
           touched={!!touched.lastName}
           error={contactError("lastName", values.lastName)}
-          value={values.lastName}
         >
           <Input
             id="contact-lastName"
