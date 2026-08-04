@@ -9,6 +9,15 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import "./calendar.css";
 import { useRouter } from "next/navigation";
 import { CalendarEvent, ApiEvent } from "@/types/interfaces";
+import type { EventClickArg, EventHoveringArg } from "@fullcalendar/core";
+import EventPopover, { type PopoverEvent, type PopoverMode } from "./EventPopover";
+
+// Hover-intent delay: only open a preview once the pointer rests on an event,
+// so sweeping across stacked events doesn't spawn/flicker popovers.
+const HOVER_OPEN_DELAY_MS = 220;
+// Grace period before closing on pointer-leave, so crossing the gap between
+// the event chip and the popover (the "hover bridge") doesn't kill it early.
+const HOVER_CLOSE_DELAY_MS = 180;
 
 export default function NewCalendar() {
   const [calendarView, setCalendarView] = useState("dayGridMonth");
@@ -19,23 +28,82 @@ export default function NewCalendar() {
 
   const router = useRouter();
 
-  // Use refs for tooltip tracking so event listeners always see current values
-  const activeTooltipRef = useRef<HTMLElement | null>(null);
-  const tooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  // Hover-intent delay: only show a preview once the pointer rests on an event,
-  // so sweeping across stacked events doesn't spawn/flicker tooltips.
-  const tooltipShowTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const TOOLTIP_SHOW_DELAY_MS = 220;
-  const [selectedEvent, setSelectedEvent] = useState<{
-    title: string;
-    eventType: string;
-    timeDisplay: string;
-    price?: number;
-    isFree?: boolean;
-    description?: string;
-    _id: string;
-    isSoldOut: boolean;
+  const [popover, setPopover] = useState<{
+    event: PopoverEvent;
+    anchorRect: DOMRect;
+    mode: PopoverMode;
   } | null>(null);
+
+  const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearOpenTimer = useCallback(() => {
+    if (openTimerRef.current) {
+      clearTimeout(openTimerRef.current);
+      openTimerRef.current = null;
+    }
+  }, []);
+
+  const clearCloseTimer = useCallback(() => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  }, []);
+
+  const closePopover = useCallback(() => {
+    clearOpenTimer();
+    clearCloseTimer();
+    setPopover(null);
+  }, [clearOpenTimer, clearCloseTimer]);
+
+  // Cancel a pending close — called when the pointer (re)enters either the
+  // event chip or the popover itself, so moving between them never drops it.
+  const cancelClose = useCallback(() => {
+    clearCloseTimer();
+  }, [clearCloseTimer]);
+
+  const scheduleClose = useCallback(() => {
+    clearCloseTimer();
+    closeTimerRef.current = setTimeout(() => {
+      closeTimerRef.current = null;
+      setPopover(null);
+    }, HOVER_CLOSE_DELAY_MS);
+  }, [clearCloseTimer]);
+
+  const scheduleOpen = useCallback(
+    (event: PopoverEvent, anchorRect: DOMRect) => {
+      clearOpenTimer();
+      clearCloseTimer();
+      openTimerRef.current = setTimeout(() => {
+        openTimerRef.current = null;
+        setPopover({ event, anchorRect, mode: "hover" });
+      }, HOVER_OPEN_DELAY_MS);
+    },
+    [clearOpenTimer, clearCloseTimer]
+  );
+
+  useEffect(() => {
+    return () => {
+      clearOpenTimer();
+      clearCloseTimer();
+    };
+  }, [clearOpenTimer, clearCloseTimer]);
+
+  // Any popover (hover or pinned) is anchored to a specific chip's on-screen
+  // position captured at open time — scrolling, resizing, or paging the
+  // calendar to a new month all invalidate that position, so close rather
+  // than risk a stale, misplaced card.
+  useEffect(() => {
+    if (!popover) return;
+    const dismiss = (): void => closePopover();
+    window.addEventListener("scroll", dismiss, true);
+    window.addEventListener("resize", dismiss);
+    return () => {
+      window.removeEventListener("scroll", dismiss, true);
+      window.removeEventListener("resize", dismiss);
+    };
+  }, [popover, closePopover]);
 
   const resources = [
     { id: "class", title: "Classes", eventColor: "#0c4a6e" },
@@ -414,20 +482,35 @@ export default function NewCalendar() {
     router.push(`/payments?${params.toString()}`);
   };
 
-  useEffect(() => {
-    return () => {
-      // Remove any tooltips when component unmounts
-      if (activeTooltipRef.current && document.body.contains(activeTooltipRef.current)) {
-        document.body.removeChild(activeTooltipRef.current);
-      }
-      if (tooltipTimeoutRef.current) {
-        clearTimeout(tooltipTimeoutRef.current);
-      }
-      if (tooltipShowTimeoutRef.current) {
-        clearTimeout(tooltipShowTimeoutRef.current);
-      }
-    };
-  }, []);
+  // Shared by both the hover preview and the click/tap popover — previously
+  // duplicated between eventMouseEnter and eventClick, which is how they'd
+  // drifted into showing two different views of the same event.
+  const toPopoverEvent = useCallback(
+    (event: EventClickArg["event"] | EventHoveringArg["event"]): PopoverEvent => {
+      const props = event.extendedProps as Record<string, unknown>;
+      const eventType = (props?.eventType as string) || "";
+      const eventId = (props?._id as string) || "";
+      const currentSignups = eventId
+        ? eventParticipantCounts[eventId] || 0
+        : 0;
+      const maxParticipants = 20;
+      return {
+        title: event.title,
+        eventType,
+        timeDisplay: (props?.timeDisplay as string) || "",
+        price: props?.price as number | undefined,
+        isFree: props?.isFree as boolean | undefined,
+        description: props?.description as string | undefined,
+        currentSignups,
+        isRecurring: props?.isRecurring as boolean | undefined,
+        recurringPattern: props?.recurringPattern as string | undefined,
+        recurringEndDate: props?.recurringEndDate as string | Date | undefined,
+        _id: eventId,
+        isSoldOut: eventType !== "artist" && currentSignups >= maxParticipants,
+      };
+    },
+    [eventParticipantCounts]
+  );
 
   return (
     <div className="calendar-container">
@@ -452,6 +535,8 @@ export default function NewCalendar() {
         resources={calendarView.includes("resource") ? resources : undefined}
         datesSet={(dateInfo) => {
           setCalendarView(dateInfo.view.type);
+          // Paging to a new month invalidates any open popover's anchor position.
+          closePopover();
         }}
         height="auto"
         eventClassNames={(arg) => {
@@ -468,219 +553,38 @@ export default function NewCalendar() {
         }}
         eventClick={(info) => {
           info.jsEvent.preventDefault();
-          // Dismiss any active tooltip
-          if (activeTooltipRef.current && document.body.contains(activeTooltipRef.current)) {
-            document.body.removeChild(activeTooltipRef.current);
-            activeTooltipRef.current = null;
-          }
-          if (tooltipTimeoutRef.current) {
-            clearTimeout(tooltipTimeoutRef.current);
-            tooltipTimeoutRef.current = null;
-          }
-          if (tooltipShowTimeoutRef.current) {
-            clearTimeout(tooltipShowTimeoutRef.current);
-            tooltipShowTimeoutRef.current = null;
-          }
-          const props = info.event.extendedProps;
-          const eventId = props?._id || "";
-          const currentSignups = eventId
-            ? eventParticipantCounts[eventId] || 0
-            : 0;
-          const isSoldOut =
-            props?.eventType !== "artist" && currentSignups >= 20;
-          setSelectedEvent({
-            title: info.event.title,
-            eventType: props?.eventType || "",
-            timeDisplay: props?.timeDisplay || "",
-            price: props?.price,
-            isFree: props?.isFree,
-            description: props?.description,
-            _id: eventId,
-            isSoldOut,
+          clearOpenTimer();
+          clearCloseTimer();
+          setPopover({
+            event: toPopoverEvent(info.event),
+            anchorRect: info.el.getBoundingClientRect(),
+            mode: "pinned",
           });
         }}
         eventMouseEnter={(info) => {
-          // Only show hover previews on devices with a true hover-capable
-          // pointer (mouse). Touch devices use tap -> detail sheet, so a
-          // synthetic hover must never leave a stuck tooltip behind.
+          // A pinned (clicked/tapped) popover is only dismissed explicitly —
+          // hovering a different chip must not silently steal it away.
+          if (popover?.mode === "pinned") return;
+          // Only open hover previews on devices with a true hover-capable,
+          // fine pointer (mouse). Touch/coarse pointers rely on eventClick's
+          // pinned popover instead — a synthetic hover must never leave a
+          // stuck popover behind on a device that can't "leave" it.
           if (
             typeof window !== "undefined" &&
-            window.matchMedia("(hover: none)").matches
+            !window.matchMedia("(hover: hover) and (pointer: fine)").matches
           ) {
             return;
           }
-
-          // Remove any existing tooltip DOM element
-          if (activeTooltipRef.current && document.body.contains(activeTooltipRef.current)) {
-            document.body.removeChild(activeTooltipRef.current);
-            activeTooltipRef.current = null;
-          }
-
-          // Clear any pending hide timeout for a previous tooltip, as we are showing a new one.
-          if (tooltipTimeoutRef.current) {
-            clearTimeout(tooltipTimeoutRef.current);
-            tooltipTimeoutRef.current = null;
-          }
-
-          // Cancel a pending show from a previously-hovered event.
-          if (tooltipShowTimeoutRef.current) {
-            clearTimeout(tooltipShowTimeoutRef.current);
-            tooltipShowTimeoutRef.current = null;
-          }
-
-          // Hover-intent: only build + show the preview once the pointer has
-          // rested on this event for a beat. Quickly passing over neighbouring
-          // events is cancelled by eventMouseLeave before this fires.
-          tooltipShowTimeoutRef.current = setTimeout(() => {
-            tooltipShowTimeoutRef.current = null;
-
-          // Create new tooltip
-          const tooltip = document.createElement("div");
-          tooltip.className = "event-tooltip";
-
-          // Build tooltip content
-          let tooltipContent = `<div class="tooltip-title">${info.event.title}</div>`;
-
-          // Get event type early for use in multiple places
-          const eventType = info.event.extendedProps?.eventType;
-
-          if (info.event.extendedProps?.timeDisplay) {
-            tooltipContent += `<div class="tooltip-time">${info.event.extendedProps.timeDisplay}</div>`;
-          }
-
-          // if (info.event.extendedProps?.eventType) {
-          //   tooltipContent += `<div class="tooltip-type">Type: ${info.event.extendedProps.eventType}</div>`;
-          // }
-
-          if (info.event.extendedProps?.price) {
-            tooltipContent += `<div class="tooltip-price">Price: $${info.event.extendedProps.price}</div>`;
-          }
-
-          // Show participant count only if signups > 5 and not artist event
-          const eventId = info.event.extendedProps?._id;
-          const currentSignups = eventId
-            ? eventParticipantCounts[eventId] || 0
-            : 0;
-          if (currentSignups > 5 && eventType !== "artist") {
-            // We need to get the numberOfParticipants from the event data
-            // For now, we'll use the default of 20 if not available
-            tooltipContent += `<div class="tooltip-participants">${currentSignups} / 20 signed up</div>`;
-          }
-
-          if (info.event.extendedProps?.isRecurring) {
-            tooltipContent += `<div class="tooltip-recurring">
-              Recurring ${info.event.extendedProps.recurringPattern} 
-              ${info.event.extendedProps.recurringEndDate ? `until ${new Date(info.event.extendedProps.recurringEndDate).toLocaleDateString()}` : ""}
-            </div>`;
-          }
-
-          if (info.event.extendedProps?.description) {
-            tooltipContent += `<div class="tooltip-description">${info.event.extendedProps.description}</div>`;
-          }
-
-          // The hover tooltip is a non-interactive PREVIEW only. The actual
-          // sign-up / sold-out CTA lives in the click-to-open detail sheet, so
-          // there is no fragile "move the mouse onto a hovering button" path.
-          const maxParticipants = 20; // Default capacity
-          const isSoldOut =
-            eventType !== "artist" && currentSignups >= maxParticipants;
-          tooltipContent += `<div class="tooltip-hint">${
-            isSoldOut ? "Sold out" : "Click for details"
-          }</div>`;
-
-          tooltip.innerHTML = tooltipContent;
-
-          // Add to body first to get accurate dimensions
-          document.body.appendChild(tooltip);
-
-          // Position the tooltip with smart boundary checking
-          const rect = info.el.getBoundingClientRect();
-          const tooltipRect = tooltip.getBoundingClientRect();
-          const viewportWidth = window.innerWidth;
-          const viewportHeight = window.innerHeight;
-
-          // Calculate initial centered position
-          let left = rect.left + rect.width / 2;
-          let top = rect.top - 10;
-          let transformX = "-50%";
-          let transformY = "-100%";
-
-          // Check horizontal boundaries
-          const tooltipHalfWidth = tooltipRect.width / 2;
-          const margin = 16; // Minimum margin from screen edge
-
-          if (left - tooltipHalfWidth < margin) {
-            // Too far left - align to left edge with margin
-            left = margin;
-            transformX = "0%";
-          } else if (left + tooltipHalfWidth > viewportWidth - margin) {
-            // Too far right - align to right edge with margin
-            left = viewportWidth - margin;
-            transformX = "-100%";
-          }
-
-          // Check vertical boundaries
-          const tooltipHeight = tooltipRect.height;
-          const spaceAbove = rect.top;
-          const spaceBelow = viewportHeight - rect.bottom;
-
-          if (
-            spaceAbove < tooltipHeight + margin &&
-            spaceBelow > tooltipHeight + margin
-          ) {
-            // Not enough space above, position below
-            top = rect.bottom + 10;
-            transformY = "0%";
-          } else if (
-            spaceAbove < tooltipHeight + margin &&
-            spaceBelow < tooltipHeight + margin
-          ) {
-            // Not enough space above or below, center vertically
-            top = viewportHeight / 2;
-            transformY = "-50%";
-
-            // If centering vertically, also ensure we're not too close to edges horizontally
-            if (left < viewportWidth / 2) {
-              left = Math.max(margin, rect.right + 10);
-              transformX = "0%";
-            } else {
-              left = Math.min(viewportWidth - margin, rect.left - 10);
-              transformX = "-100%";
-            }
-          }
-
-          // Apply positioning. pointer-events:none keeps the preview from ever
-          // intercepting the mouse, so moving toward / clicking the event below
-          // always works — no hover-bridge flicker.
-          tooltip.style.position = "fixed";
-          tooltip.style.left = left + "px";
-          tooltip.style.top = top + "px";
-          tooltip.style.transform = `translate(${transformX}, ${transformY})`;
-          tooltip.style.zIndex = "99999";
-          tooltip.style.display = "block";
-          tooltip.style.pointerEvents = "none";
-
-          activeTooltipRef.current = tooltip;
-          }, TOOLTIP_SHOW_DELAY_MS);
+          scheduleOpen(toPopoverEvent(info.event), info.el.getBoundingClientRect());
         }}
         eventMouseLeave={() => {
-          // Cancel a not-yet-shown preview (the pointer was just passing over).
-          if (tooltipShowTimeoutRef.current) {
-            clearTimeout(tooltipShowTimeoutRef.current);
-            tooltipShowTimeoutRef.current = null;
-          }
-          // Pure preview — remove it as soon as the pointer leaves the event.
-          if (tooltipTimeoutRef.current) {
-            clearTimeout(tooltipTimeoutRef.current);
-            tooltipTimeoutRef.current = null;
-          }
-          if (
-            activeTooltipRef.current &&
-            document.body.contains(activeTooltipRef.current)
-          ) {
-            document.body.removeChild(activeTooltipRef.current);
-          }
-          activeTooltipRef.current = null;
+          // Never let hover tracking close a pinned popover — see eventMouseEnter.
+          if (popover?.mode === "pinned") return;
+          clearOpenTimer();
+          // Grace period, not immediate removal — gives the pointer time to
+          // cross the gap onto the popover itself (the "hover bridge") without
+          // the popover disappearing out from under it.
+          scheduleClose();
         }}
         eventDidMount={(info) => {
           // Set event color based on event type
@@ -696,85 +600,29 @@ export default function NewCalendar() {
         }}
       />
 
-      {selectedEvent && (
-        <div
-          className="event-sheet-overlay"
-          onClick={() => setSelectedEvent(null)}
-        >
-          <div
-            className="event-sheet"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className="event-sheet-close"
-              onClick={() => setSelectedEvent(null)}
-              type="button"
-              aria-label="Close"
-            >
-              &times;
-            </button>
-            <span
-              className="event-sheet-type"
-              style={{
-                backgroundColor: getEventColor(selectedEvent.eventType),
-              }}
-            >
-              {selectedEvent.eventType === "artist"
-                ? "Live Demo"
-                : selectedEvent.eventType === "camp"
-                  ? "Art Camp"
-                  : "Workshop"}
-            </span>
-            <h3 className="event-sheet-title">{selectedEvent.title}</h3>
-            {selectedEvent.timeDisplay && (
-              <p className="event-sheet-time">{selectedEvent.timeDisplay}</p>
-            )}
-            {(selectedEvent.price || selectedEvent.isFree) && (
-              <p className="event-sheet-price">
-                {selectedEvent.isFree || selectedEvent.price === 0
-                  ? "Free"
-                  : `$${selectedEvent.price}`}
-              </p>
-            )}
-            {selectedEvent.description && (
-              <p className="event-sheet-description">
-                {selectedEvent.description}
-              </p>
-            )}
-            {selectedEvent.eventType === "artist" ? (
-              <button
-                className="event-sheet-signup"
-                type="button"
-                onClick={() => {
-                  setSelectedEvent(null);
-                  router.push(
-                    `/events/live-artist/${selectedEvent._id}`
-                  );
-                }}
-              >
-                View Details
-              </button>
-            ) : selectedEvent.isSoldOut ? (
-              <div className="event-sheet-soldout">Sold Out</div>
-            ) : (
-              <button
-                className="event-sheet-signup"
-                type="button"
-                onClick={() => {
-                  setSelectedEvent(null);
-                  navigateToPayment(
-                    selectedEvent._id,
-                    selectedEvent.title,
-                    selectedEvent.price,
-                    selectedEvent.isFree
-                  );
-                }}
-              >
-                Sign Up
-              </button>
-            )}
-          </div>
-        </div>
+      {popover && (
+        <EventPopover
+          event={popover.event}
+          anchorRect={popover.anchorRect}
+          mode={popover.mode}
+          eventColor={getEventColor(popover.event.eventType)}
+          onRequestClose={closePopover}
+          // Bridge-safe dismissal only applies to a hover preview — a pinned
+          // (clicked/tapped) popover stays open regardless of pointer
+          // position until explicitly dismissed.
+          onPointerEnter={popover.mode === "hover" ? cancelClose : () => {}}
+          onPointerLeave={popover.mode === "hover" ? scheduleClose : () => {}}
+          onSignUp={() => {
+            const { _id, title, price, isFree } = popover.event;
+            closePopover();
+            navigateToPayment(_id, title, price, isFree);
+          }}
+          onViewDetails={() => {
+            const { _id } = popover.event;
+            closePopover();
+            router.push(`/events/live-artist/${_id}`);
+          }}
+        />
       )}
     </div>
   );
