@@ -23,7 +23,28 @@ vi.mock("@/lib/square/gift-cards", () => ({
 }));
 
 const customerCreate = vi.fn();
-vi.mock("@/lib/models/Customer", () => ({ default: { create: (...a: unknown[]) => customerCreate(...a) } }));
+const customerFind = vi.fn();
+vi.mock("@/lib/models/Customer", () => ({
+  default: {
+    create: (...a: unknown[]) => customerCreate(...a),
+    find: (...a: unknown[]) => customerFind(...a),
+  },
+}));
+
+const eventFindById = vi.fn();
+vi.mock("@/lib/models/Event", () => ({
+  default: { findById: (...a: unknown[]) => eventFindById(...a) },
+}));
+
+// Existing bookings summed by getEventParticipantCount — default to none so
+// tests that don't care about capacity aren't affected by it.
+function mockExistingBookings(quantities: number[]) {
+  customerFind.mockReturnValue({
+    select: () => ({
+      lean: () => Promise.resolve(quantities.map((quantity) => ({ quantity }))),
+    }),
+  });
+}
 
 const reservationFindById = vi.fn();
 const reservationBulkWrite = vi.fn();
@@ -82,6 +103,8 @@ beforeEach(() => {
   resolveUserSquareCustomerId.mockResolvedValue("acct_cust_1");
   cardGetCard.mockResolvedValue({ id: "ccof:1", customerId: "acct_cust_1" });
   cardCreateCard.mockResolvedValue({ id: "ccof:new" });
+  eventFindById.mockResolvedValue({ numberOfParticipants: 20 });
+  mockExistingBookings([]);
 });
 
 const SIGNED_IN = { id: "user_1", email: "u@example.com", isAdmin: false, role: "customer" };
@@ -164,6 +187,41 @@ describe("POST /api/checkout/booking", () => {
     const res = await POST(req({ booking: BOOKING, contact: CONTACT }));
     expect(res.status).toBe(400);
     expect(paymentsCreate).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/checkout/booking — event capacity", () => {
+  it("rejects (400) and never charges when the event is already full", async () => {
+    eventFindById.mockResolvedValue({ numberOfParticipants: 10 });
+    mockExistingBookings(Array(10).fill(1)); // 10/10 already booked
+    const res = await POST(req({ paymentToken: "cnon:tok", booking: BOOKING, contact: CONTACT }));
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/sold out/i);
+    expect(paymentsCreate).not.toHaveBeenCalled();
+    expect(customerCreate).not.toHaveBeenCalled();
+  });
+
+  it("allows a booking that exactly fills the last spot", async () => {
+    eventFindById.mockResolvedValue({ numberOfParticipants: 10 });
+    mockExistingBookings(Array(9).fill(1)); // 9/10 booked, this is #10
+    const res = await POST(req({ paymentToken: "cnon:tok", booking: BOOKING, contact: CONTACT }));
+
+    expect(res.status).toBe(200);
+    expect(customerCreate).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not apply the Event capacity check to Reservation bookings", async () => {
+    const res = await POST(
+      req({
+        paymentToken: "cnon:tok",
+        booking: { eventId: "ev1", eventType: "Reservation", quantity: 1, selectedDates: [{ date: "2026-08-25", numberOfParticipants: 1 }] },
+        contact: CONTACT,
+      })
+    );
+
+    expect(eventFindById).not.toHaveBeenCalled();
   });
 });
 

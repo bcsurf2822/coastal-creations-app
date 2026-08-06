@@ -10,6 +10,8 @@
  *   1. PRICE INTEGRITY: recompute the charge server-side from the DB (resolveBookingCharge);
  *      a client-supplied price is never trusted.
  *   2. Reservations: validate day/time-slot availability BEFORE charging.
+ *   2b. Events: validate the numberOfParticipants cap BEFORE charging (see
+ *       lib/checkout/eventAvailability.ts).
  *   3. Link/create the Square customer (non-fatal).
  *   4. Charge Square for the card portion (skipped when free or fully gift-card-covered).
  *   5. Redeem the applied gift card.
@@ -22,6 +24,7 @@
 import { NextResponse } from "next/server";
 import { connectMongo } from "@/lib/mongoose";
 import Customer from "@/lib/models/Customer";
+import Event from "@/lib/models/Event";
 import Reservation from "@/lib/models/Reservations";
 import { getSquareClient } from "@/lib/square/client";
 import { squareCustomerService } from "@/lib/square/customers";
@@ -39,6 +42,10 @@ import {
   type SelectedReservationDate,
   type ReservationDoc,
 } from "@/lib/checkout/reservationAvailability";
+import {
+  getEventParticipantCount,
+  validateEventCapacity,
+} from "@/lib/checkout/eventAvailability";
 
 interface SelectedOption {
   categoryName: string;
@@ -128,6 +135,30 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
       if (availabilityError) {
         return NextResponse.json({ error: availabilityError }, { status: 400 });
+      }
+    }
+
+    // 2b. Event capacity — validate BEFORE charging, same principle as the
+    // Reservation check above. PrivateEvent has no numberOfParticipants
+    // field/concept, so this only applies to eventType "Event". Previously
+    // unenforced here (or in the legacy /api/customer route) — the cap was
+    // only ever a client-side "Sold Out" UI badge (EventCard.tsx).
+    if (eventType === "Event") {
+      const event = await Event.findById(booking.eventId);
+      if (!event) {
+        return NextResponse.json({ error: "Event not found" }, { status: 404 });
+      }
+      const currentCount = await getEventParticipantCount(booking.eventId);
+      const capacityError = validateEventCapacity(
+        currentCount,
+        booking.quantity ?? 1,
+        event.numberOfParticipants
+      );
+      if (capacityError) {
+        console.error(
+          `[API-CHECKOUT-BOOKING-POST] Capacity exceeded for event ${booking.eventId}: ${capacityError}`
+        );
+        return NextResponse.json({ error: capacityError }, { status: 400 });
       }
     }
 
