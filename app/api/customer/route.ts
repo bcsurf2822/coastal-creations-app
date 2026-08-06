@@ -11,6 +11,10 @@ import {
   computePrivateEventChargeCents,
   computeReservationChargeCents,
 } from "@/lib/checkout/eventPricing";
+import {
+  getEventParticipantCount,
+  validateEventCapacity,
+} from "@/lib/checkout/eventAvailability";
 import { PriceIntegrityError } from "@/lib/checkout/errors";
 import mongoose from "mongoose";
 import dayjs from "dayjs";
@@ -311,6 +315,29 @@ export async function POST(request: NextRequest) {
         },
         { status: 404 }
       );
+    }
+
+    // Capacity check — PrivateEvent has no numberOfParticipants field/concept,
+    // so this only applies to eventType "Event". Previously the cap was only
+    // enforced as a client-side "Sold Out" UI badge (EventCard.tsx), never
+    // re-checked here, which is how Sew and Surf Class oversold 11/10.
+    if (eventType !== "PrivateEvent") {
+      const currentCount = await getEventParticipantCount(eventId);
+      // `quantity` is unvalidated request input here (validateCount() below only
+      // runs after this check) — `undefined > availableSpots` is `false` in JS, so
+      // an omitted quantity would silently pass a full event. Normalize the same
+      // way /api/checkout/booking/route.ts does before its capacity check.
+      const capacityError = validateEventCapacity(
+        currentCount,
+        quantity ?? 1,
+        (event as { numberOfParticipants?: number }).numberOfParticipants
+      );
+      if (capacityError) {
+        console.error(
+          `[CUSTOMER-API-POST] Capacity exceeded for event ${eventId}: ${capacityError}`
+        );
+        return NextResponse.json({ error: capacityError }, { status: 400 });
+      }
     }
 
     // Recompute `total` from the event/private-event doc so a tampered client
