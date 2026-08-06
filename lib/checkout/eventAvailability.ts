@@ -6,7 +6,9 @@
  *
  * Default cap of 20 when `numberOfParticipants` is unset matches EventCard's
  * existing display fallback (`event.numberOfParticipants || 20`) — parity
- * with current user-facing behavior, not a new policy.
+ * with current user-facing behavior, not a new policy. Unlike that display
+ * fallback, this check uses `??` rather than `||`: an explicitly configured
+ * `numberOfParticipants: 0` must mean "not open for booking," not "unset."
  */
 import Customer from "@/lib/models/Customer";
 
@@ -36,7 +38,7 @@ export function validateEventCapacity(
   requestedQuantity: number,
   numberOfParticipants: number | undefined
 ): string | null {
-  const cap = numberOfParticipants || DEFAULT_CAPACITY;
+  const cap = numberOfParticipants ?? DEFAULT_CAPACITY;
   const availableSpots = cap - currentCount;
 
   if (requestedQuantity > availableSpots) {

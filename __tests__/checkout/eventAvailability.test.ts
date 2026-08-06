@@ -28,6 +28,10 @@ describe("validateEventCapacity", () => {
     expect(validateEventCapacity(20, 1, undefined)).toMatch(/sold out/i);
   });
 
+  it("treats an explicit cap of 0 as sold out, not as unset (0 !== undefined)", () => {
+    expect(validateEventCapacity(0, 1, 0)).toMatch(/sold out/i);
+  });
+
   it("pluralizes the spots-left message correctly", () => {
     expect(validateEventCapacity(8, 3, 10)).toMatch(/Only 2 spots left/);
     expect(validateEventCapacity(9, 2, 10)).toMatch(/Only 1 spot left\./);
