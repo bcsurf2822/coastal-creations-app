@@ -323,9 +323,13 @@ export async function POST(request: NextRequest) {
     // re-checked here, which is how Sew and Surf Class oversold 11/10.
     if (eventType !== "PrivateEvent") {
       const currentCount = await getEventParticipantCount(eventId);
+      // `quantity` is unvalidated request input here (validateCount() below only
+      // runs after this check) — `undefined > availableSpots` is `false` in JS, so
+      // an omitted quantity would silently pass a full event. Normalize the same
+      // way /api/checkout/booking/route.ts does before its capacity check.
       const capacityError = validateEventCapacity(
         currentCount,
-        quantity,
+        quantity ?? 1,
         (event as { numberOfParticipants?: number }).numberOfParticipants
       );
       if (capacityError) {
